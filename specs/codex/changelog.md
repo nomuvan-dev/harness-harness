@@ -3,9 +3,36 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://developers.openai.com/codex/changelog
 
-最終更新: 2026-05-21
+最終更新: 2026-05-22
 
 ---
+
+## CLI 0.133.0 (2026-05-21)
+
+- **Goals がデフォルト有効化**: 専用ストレージにバックされ、アクティブターン横断で進捗を追跡。実験的フラグから卒業
+- **`codex remote-control` がフォアグラウンドコマンド化**: ready 待機・マシンステータス報告を行う通常コマンドとして動作。明示的な daemon 風 `start` / `stop` サブコマンドは引き続き利用可能
+- **Permission profiles の大幅強化**:
+  - 一覧 API、継承（inheritance）対応
+  - `requirements.toml` 経由の managed permission profile サポート
+  - ランタイムでのアクティブプロファイル更新
+  - Windows サンドボックスとのより強い統合（permission profile を elevated runner に渡す、profile-native elevated API 等）
+- **プラグイン discovery の可視化強化**:
+  - marketplace-aware な list 出力、インストール済みバージョン表示
+  - discovery が考慮する marketplace ルート一覧表示
+  - vertical remote plugin collection サポート
+  - プラグイン MCP tool metadata / tool call items に plugin id を含める
+- **拡張機能（extensions）が観測できるライフサイクルイベントを拡大**:
+  - **SubagentStart / SubagentStop hook 追加**
+  - **Compact SessionStart hook サポート**
+  - ツール実行、ターンメタデータ（turn_id, truncation_policy 含む）の公開
+  - 非同期 approval / turn item 処理 contributor 追加
+- **MITM hook ランタイム enforcement**: MITM hook config モデルと named MITM permissions config を導入し、ランタイムに組み込み
+- **`/btw` の side slash command alias 追加**
+- **app-server API 拡張**: `thread/settings/update` API、`codex-app-server --version` フラグ、CUA requirements 用 locked computer use の docs / schema 拡張
+- **`codex exec-server` に strict config モード追加**
+- **デフォルトの安全側変更**: filesystem permission entry のデフォルトを `deny` 側に統一。承認無効時の read-only fallback を拒否
+- **修正**: TUI の起動時カレントディレクトリ誤検出、plan-mode の Shift+Enter 等 modified Enter 誤送信、stale な background terminal poll events、raw code-mode exec 出力の保持、AGENTS.md 読み込みの信頼性向上（無効 UTF-8 警告等）、app-server 起動/シャットダウン競合、realtime v1 websocket 互換性
+- **ビルド/配布**: Codex package archive パイプライン導入（installers, npm packages, DotSlash, SDK runtimes が共通レイアウトへ移行）。Linux Python runtime wheel の glibc tag を修正
 
 ## CLI 0.132.0 (2026-05-20)
 

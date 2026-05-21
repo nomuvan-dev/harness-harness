@@ -1,5 +1,36 @@
 # harness-harness 更新履歴
 
+## 2026-05-22 — 公式ドキュメント巡回（差分のみ）
+
+### 巡回対象URL
+- Claude Code: changelog（**v2.1.146 リリース 2026-05-21** — `/simplify` を `/code-review` にリネーム + effort level 引数化 + MCP リスト系ページネーション修正 + `forceLoginOrgUUID`/`forceLoginMethod` enforcement 修正 + Windows PowerShell（winget/Store）の v2.1.124 リグレッション修正）
+- Claude Code: llms.txt（w21 digest 依然未公開 — Fri 2026-05-22）
+- Codex CLI: GitHub Releases（**0.133.0 stable リリース 2026-05-21** — Goals デフォルト有効化 + `codex remote-control` フォアグラウンド化 + permission profile の inheritance/managed `requirements.toml` + SubagentStart/SubagentStop/MITM hook + compact SessionStart + プラグイン discovery 強化）
+- スキルエコシステム: 前回 2026-05-16 から 6 日 → 7 日以内のため Phase 3.5 スキップ
+
+### 検出された変更と更新内容
+
+#### Claude Code v2.1.146
+- **specs/claude/changelog.md** — v2.1.146 エントリ追記、最終更新日を 2026-05-22 に
+- **specs/claude/skills-and-commands.md** — バンドルスキル表の `/simplify` を `/code-review [effort]` に置換（リネーム経緯を注記）
+
+#### Codex CLI 0.133.0
+- **specs/codex/changelog.md** — 0.133.0 エントリ追記、最終更新日を 2026-05-22 に
+- **specs/codex/configuration.md** — 対応イベント表に `SubagentStart` / `SubagentStop` / `MITM` を追加。`SessionStart` に compact 後発火対応を注記。Claude との比較も「6 イベント」に更新
+
+#### mapping/
+- **mapping/claude-to-codex.md** — Hooks 比較表を 0.133.0 反映。`SubagentStop`/`SubagentStart` の直接対応、`PreToolUse` の MITM hook による部分代替、未対応イベント数を 14+ → 11+ に修正
+
+#### キャッシュ
+- **.patrol-cache/url-metadata.json** — 巡回キャッシュ更新（v2.1.146 / 0.133.0 / w21 依然未公開）
+
+### 注記
+- ハーネス内 `.claude/skills/simplify/` などローカルにバンドルスキル参照がある場合は名称変更（Claude Code 内バンドルの `/simplify` → `/code-review`）の影響を受けないが、ドキュメント・チュートリアル類は表現更新を検討
+- Codex 0.133.0 の MITM hook は Claude の `PreToolUse` 相当の介入を可能にする初の機構。クロスプラットフォーム対応スキル/フックの設計時に再評価する価値あり
+- Codex 0.133.0 でファイルシステム permission entry のデフォルトが `deny` 側へ統一された点は、既存設定の挙動に影響しうる（明示 `allow` していない箇所が拒否される可能性）
+
+---
+
 ## 2026-05-21 — 公式ドキュメント巡回（差分のみ）
 
 ### 巡回対象URL

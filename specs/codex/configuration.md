@@ -465,11 +465,14 @@ command = "python3 scripts/postflight.py"
 
 | イベント | 説明 |
 |----------|------|
-| `SessionStart` | セッション開始時に実行 |
+| `SessionStart` | セッション開始時に実行。0.133.0+ で compact（コンテキスト要約）後の SessionStart も発火可能 |
 | `Stop` | セッション終了時に実行 |
 | `UserPromptSubmit` | ユーザーのプロンプト送信時に実行 |
+| `SubagentStart` | サブエージェント起動時に実行（0.133.0+） |
+| `SubagentStop` | サブエージェント終了時に実行（0.133.0+） |
+| `MITM` | ランタイム enforcement される MITM hook（0.133.0+、named MITM permissions config と組み合わせて使用） |
 
-> **比較**: Claude Code は 17 以上のイベント（`PreToolUse`, `PostToolUse`, `Notification` 等）をサポート。Codex は現時点で 3 イベントのみ。
+> **比較**: Claude Code は 17 以上のイベント（`PreToolUse`, `PostToolUse`, `Notification` 等）をサポート。Codex は 0.133.0 で 6 イベントに拡張。
 
 ### 7.4 ハンドラ種別
 
