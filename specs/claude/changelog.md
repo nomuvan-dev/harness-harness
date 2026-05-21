@@ -3,7 +3,27 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-05-21
+最終更新: 2026-05-22
+
+---
+
+## v2.1.146 (2026-05-21)
+
+- **`/simplify` → `/code-review` にリネーム**: オプションの effort level 引数を受け付ける（例: `/code-review high`）。バンドルスキルの命名を「コード品質レビュー＋修正」という実態に合わせた。既存の `/simplify` 呼び出し箇所は移行が必要
+- **Auto mode が `AskUserQuestion` を不要に抑制しなくなった**: ユーザーまたはスキルが明示的に依拠する場合は質問を発火させる
+- **MCP リスト系のページネーション修正**: `resources/list` / `resources/templates/list` / `prompts/list` がページ 1 以降の項目を取りこぼしていた問題
+- **`/background` の入力判定修正**: タイプ済み入力がスキルまたはカスタムスラッシュコマンドのみだったセッションを拒否していた問題
+- **バックグラウンドセッションの権限再プロンプト修正**: 「もう聞かない」で許可済みのツール権限が再プロンプトされる問題
+- **`forceLoginOrgUUID` / `forceLoginMethod` managed-settings の強制適用修正**: third-party-provider セッション・API キーセッションに対して enforcement されていなかった
+- **`CLAUDE_CODE_SUBAGENT_MODEL` の子プロセス継承修正**: multi-agent セッションで子プロセスに転送されていなかった
+- **Windows PowerShell ツール修正**: `pwsh` を winget / Microsoft Store 経由で導入した場合に "command line is invalid" で失敗していた問題（v2.1.124 のリグレッション）
+- **Windows: バックグラウンドジョブ worktree 削除で NTFS junction を本リポに follow しない**
+- **`/theme` の Esc 対応**: カラーエディタと「New custom theme」ダイアログが Esc に反応しない問題
+- **Agent SDK 経由のストリーミング終端で uncaught exception 修正**
+- **GNOME Terminal の右クリック / ミドルクリック貼り付け修正**
+- **Windows Terminal でバックグラウンドセッション attach 中のフルスクリーン strobing 修正**
+- **auto-updater 改善**: ネイティブバージョン確認・ダウンロードが即時失敗ではなく一過性ネットワーク障害をリトライ。更新失敗時もステータスラインに現バージョンを表示
+- **大規模ファイル編集の diff 描画性能向上**
 
 ---
 

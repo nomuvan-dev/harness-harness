@@ -142,18 +142,21 @@ model_reasoning_effort = "high"
 
 ## 6. Hooks
 
-> **2026-03-24 更新**: Codex CLI が Hooks を実験的にサポート開始。ただし対応イベントは 3 種、ハンドラは command のみと、Claude Code（17+ イベント、4 ハンドラ種別）に比べ限定的。
+> **2026-03-24 更新**: Codex CLI が Hooks を実験的にサポート開始。
+> **2026-05-21 更新（Codex 0.133.0）**: `SubagentStart` / `SubagentStop` / compact `SessionStart` / `MITM` を追加し対応イベントは 6 種に拡張。ハンドラは command のみは継続。
 
 | Claude Code | Codex CLI | 備考 |
 |:--|:--|:--|
-| Hooks システム全体 | **部分対応**（実験的） | `codex_hooks` フラグで有効化。`config.toml` の `[[hooks]]` で設定 |
-| `SessionStart` | `SessionStart` | **直接対応**。command ハンドラのみ |
+| Hooks システム全体 | **部分対応** | `codex_hooks` フラグで有効化（0.124.0+ デフォルト有効）。`config.toml` の `[[hooks]]` で設定 |
+| `SessionStart` | `SessionStart` | **直接対応**。0.133.0+ で compact 後の発火もサポート。command ハンドラのみ |
 | `Stop` フック | `Stop` | **直接対応**。command ハンドラのみ |
 | `UserPromptSubmit` | `UserPromptSubmit` | **直接対応**。終了コード 2 でブロック可能。command ハンドラのみ |
-| `PreToolUse` | **対応なし** | 代替: `approval_policy` と AGENTS.md の指示で制御 |
+| `SubagentStop` | `SubagentStop`（0.133.0+） | **直接対応**。command ハンドラのみ |
+| （Claude にはない） | `SubagentStart`（0.133.0+） | Codex 独自。サブエージェント起動契機での前処理に利用 |
+| `PreToolUse` | **MITM hook で部分代替**（0.133.0+） | MITM hook + named permissions config で一部の介入が可能。完全な置換ではない |
 | `PostToolUse` | **対応なし** | 代替: AGENTS.md に「編集後は lint を実行」と記述 |
 | `SessionEnd` | **対応なし** | `Stop` で部分的に代替可能 |
-| `Notification` 他 14+ イベント | **対応なし** | Codex は 3 イベントのみ |
+| `Notification` 他 11+ イベント | **対応なし** | Codex は 6 イベントまで対応 |
 | HTTP ハンドラ | **対応なし** | 代替: MCP サーバーとして Webhook 連携を実装 |
 | Prompt ハンドラ | **対応なし** | 代替: AGENTS.md に判断基準を記述 |
 | Agent ハンドラ | **対応なし** | 代替: サブエージェント機能（実験的）で部分的に代替 |
