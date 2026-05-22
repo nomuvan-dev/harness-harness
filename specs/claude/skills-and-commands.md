@@ -144,7 +144,7 @@ Claude Code に同梱されるスキル:
 | `/claude-api` | Claude API リファレンス素材の読み込み（Python/TS/Java等） |
 | `/debug [description]` | セッションデバッグログの解析 |
 | `/loop [interval] <prompt>` (`/proactive`) | プロンプトを定期的に繰り返し実行（v2.1.105 で `/proactive` エイリアス追加） |
-| `/code-review [effort]` | 変更ファイルのコード品質レビューと修正（3エージェント並列）。`/code-review high` のように effort level を指定可能。v2.1.146 で `/simplify` からリネーム |
+| `/code-review [effort]` | 変更ファイルのコード品質レビューと修正（3エージェント並列）。`/code-review high` のように effort level を指定可能。v2.1.147 で `/simplify` からリネーム |
 | `/less-permission-prompts` | 読み取り専用 bash/MCP 呼び出しを検出し許可リスト追加を提案（v2.1.111） |
 | `/team-onboarding` | 新メンバー向けのプロジェクトオンボーディング資料生成（v2.1.101） |
 | `/ultrareview` | クラウドベースの包括的コードレビュー。並列チェック・diffstat 表示（v2.1.111、v2.1.113 で改善）。CLI でも `claude ultrareview [target]` 非インタラクティブサブコマンドで CI/スクリプトから実行可能（`--json` 対応、終了コード 0/1、v2.1.120） |
