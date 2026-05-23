@@ -1,5 +1,35 @@
 # harness-harness 更新履歴
 
+## 2026-05-24 — 公式ドキュメント巡回（差分のみ）
+
+### 巡回対象URL
+- Claude Code: changelog（**v2.1.149 リリース 2026-05-22** + **v2.1.150 リリース 2026-05-23**。v2.1.149 は `/usage` カテゴリ別内訳・`/diff` キーボードスクロール・GFM タスクリスト・Enterprise `allowAllClaudeAiMcps` managed setting・`/feedback` の圧縮前文脈包含・複数の PowerShell 権限バイパス＆sandbox セキュリティ修正。v2.1.150 は内部インフラ改善のみ）
+- Claude Code: llms.txt / w21 digest（依然未公開 — 巡回時点）
+- Codex CLI: GitHub Releases（**0.133.0 stable のまま**。0.134.0 系は alpha.1〜3 が 2026-05-22〜23 にタグ付けされたが alpha 段階のため spec 未反映）
+- スキルエコシステム: 前回 2026-05-16 から 8 日 → 7 日超のため Phase 3.5 実施
+
+### 検出された変更と更新内容
+
+#### Claude Code v2.1.149 / v2.1.150 追記
+- **specs/claude/changelog.md** — v2.1.149（2026-05-22）と v2.1.150（2026-05-23）エントリ追加。最終更新日を 2026-05-24 に
+- **specs/claude/configuration.md** — `allowAllClaudeAiMcps` Managed setting（Enterprise）を v2.1.149 として追加
+- **specs/claude/skills-and-commands.md** — `/usage` の説明に v2.1.149 のカテゴリ別内訳（skills / subagents / plugins / MCPサーバー単位コスト）追記
+
+#### スキルエコシステム巡回（Phase 3.5）
+- **anthropics/skills** — 140K stars（前回 135K から増加）。`skills/` 配下のカテゴリ構造に変化なし。Tier 昇格対象なし
+- **skills.sh** — find-skills 1.5M installs 横ばい。Top-10 構成不変（vercel-labs / anthropics / microsoft Azure 寡占）。新規昇格対象なし
+- **kb/skills/_index.md** — `last_patrol: "2026-05-24"`、anthropics/skills の stars 表記を 140K+ に更新
+
+#### キャッシュ
+- **.patrol-cache/url-metadata.json** — v2.1.149/150、Codex 0.134.0-alpha 観測、skills.sh / anthropics/skills 巡回結果を反映
+
+### 注記
+- v2.1.149 にはセキュリティ修正が複数（PowerShell 権限バイパス、sandbox 書き込み許可リスト、PWD/OLDPWD/DIRSTACK 追跡）含まれる。本変更一覧でも明記
+- Codex 0.134.0 系は alpha 段階のため spec/changelog 未反映。stable 昇格時に追記する
+- mapping/ への波及なし（新機能はいずれも Claude Code 専有または既存対応の延長）
+
+---
+
 ## 2026-05-23 — 公式ドキュメント巡回（差分のみ）
 
 ### 巡回対象URL

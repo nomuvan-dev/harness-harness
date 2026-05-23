@@ -1,6 +1,6 @@
 ---
 title: Agent Skills エコシステム
-last_patrol: "2026-05-16"
+last_patrol: "2026-05-24"
 standard: agentskills.io (38+ platforms confirmed)
 tracked_skills: 10
 patrol_schedule: weekly (月曜)
@@ -17,7 +17,7 @@ Claude Code / Codex CLI で活用できる公式・コミュニティスキル�
 | サイト | 種別 | 役割 |
 |--------|------|------|
 | [claude.com/plugins](https://claude.com/plugins) | Anthropic公式 | プラグイン/スキルディレクトリ（72+件） |
-| [anthropics/skills](https://github.com/anthropics/skills) | Anthropic公式 | 公式スキル実装例（135K+ stars） |
+| [anthropics/skills](https://github.com/anthropics/skills) | Anthropic公式 | 公式スキル実装例（140K+ stars） |
 | [developers.openai.com/codex/skills](https://developers.openai.com/codex/skills) | OpenAI公式 | Codex Skills仕様 |
 | [openai/skills](https://github.com/openai/skills) | OpenAI公式 | Codex Skills Catalog（15K+ stars） |
 | [skills.sh](https://skills.sh/) | コミュニティ | スキルディレクトリ兼リーダーボード（find-skills が 1.5M installs でトップ） |

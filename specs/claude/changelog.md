@@ -3,7 +3,32 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-05-23
+最終更新: 2026-05-24
+
+---
+
+## v2.1.150 (2026-05-23)
+
+- 内部インフラ改善のみ（ユーザー向け変更なし）
+
+---
+
+## v2.1.149 (2026-05-22)
+
+- **`/usage` カテゴリ別内訳**: 制限使用量を駆動している要因（skills / subagents / plugins / MCPサーバー単位のコスト）を内訳表示
+- **`/diff` 詳細ビューのキーボードスクロール**: 矢印キー / `j` / `k` / `PgUp` / `PgDn` / `Space` / `Home` / `End` で詳細ビューをスクロール可能
+- **Markdown 出力で GFM タスクリストのチェックボックスをレンダリング**: `- [ ] todo` / `- [x] done` をプレーン箇条書きではなくチェックボックスとして描画
+- **Enterprise: `allowAllClaudeAiMcps` managed setting 追加**: `managed-mcp.json` に並んで claude.ai クラウド MCP コネクタを一括ロード
+- **`/feedback` レポート改善**: コンテキスト圧縮以前の会話も含めるようになり、長時間セッション序盤に発生した問題のトリアージが容易に
+- **セキュリティ修正（PowerShell 権限バイパス）**: ビルトイン `cd` 関数（`cd..`, `cd\`, `cd~`, `X:`）が作業ディレクトリを検出されずに変更し、後続コマンドがワークスペース外を読めていた問題を修正
+- **セキュリティ修正（sandbox 書き込み許可リスト）**: git worktree でメインリポルート全体が書き込み許可になっていた問題を修正（共有 `.git` ディレクトリのみ許可、`hooks/` と `config` は拒否）
+- **PowerShell の prefix/wildcard ルール修正**: `PowerShell(dotnet.exe build *)` 等のルールがネイティブ実行可能ファイルやスクリプトを事前承認しなかった問題
+- **PowerShell 権限解析の `cd`/`pushd`/`popd` 追跡修正**: パーサが `PWD`/`OLDPWD`/`DIRSTACK` の古い変数追跡値を信用していた問題
+- **`find` の macOS vnode テーブル枯渇修正**: Bash ツールで大規模ディレクトリツリーに `find` を実行するとシステムの file/vnode テーブルを使い切ってホストごとクラッシュする問題
+- **managed-settings 承認ダイアログ修正**: 起動時に承認した直後にターミナルがフリーズする問題
+- **`/ultraplan` とリモートセッション作成修正**: 作業ツリーに実質的な変更がない場合の `Could not capture uncommitted changes` 失敗
+- **`otelHeadersHelper` 修正**: スクリプトパスに空白が含まれる場合にサイレント失敗していた問題。ヘルパー失敗は `/doctor` とデバッグログに報告されるようになった
+- 各種 UI/UX 修正（thinking スピナーの色遷移、Ctrl+O トランスクリプトのテイリング、`/config` 退出サマリーの誤検知、`/insights` のキャッシュ欠損クラッシュ、リコールしたプロンプト編集の喪失、`/effort` 適用レベル表示、引数ヒントの末尾クリッピング、貼り付けテキストのプレースホルダ化、Remote Control セッション名同期、Jump to bottom ピル等）
 
 ---
 
