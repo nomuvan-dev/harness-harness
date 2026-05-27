@@ -1,5 +1,38 @@
 # harness-harness 更新履歴
 
+## 2026-05-28 — 公式ドキュメント巡回（差分のみ）
+
+### 巡回対象URL
+- Claude Code: changelog（**v2.1.152 リリース 2026-05-27** — v2.1.151 は欠番、changelog 上 v2.1.150 → v2.1.152 に直接ジャンプ）
+- Claude Code: llms.txt / w21-w22 digest（依然未公開 — Thu 2026-05-28、w21 は 9 日超遅延）
+- Codex CLI: GitHub Releases（**0.134.0 stable リリース 2026-05-26** — alpha.1〜3 を経て stable 昇格）
+- スキルエコシステム: 前回 2026-05-24 から 4 日 → 7 日以内のため Phase 3.5 スキップ
+
+### 検出された変更と更新内容
+
+#### Claude Code v2.1.152 追記（major feature release）
+- **specs/claude/changelog.md** — v2.1.152（2026-05-27）エントリ追加。v2.1.151 欠番の注記も付与。最終更新日を 2026-05-28 に
+- **specs/claude/skills-and-commands.md** — `disallowed-tools` フロントマター追加、`/code-review --fix` 説明追加、`/simplify` 復活（`/code-review --fix` エイリアス）、`/reload-skills` 新規コマンド追加
+- **specs/claude/hooks.md** — `MessageDisplay` フックイベント追加、`SessionStart` フックの `reloadSkills` / `sessionTitle` 機能追加
+- **specs/claude/configuration.md** — Managed setting `pluginSuggestionMarketplaces` 追加、環境変数 `OTEL_METRICS_INCLUDE_ENTRYPOINT` 追加
+
+#### Codex 0.134.0 追記（stable）
+- **specs/codex/changelog.md** — 0.134.0（2026-05-26）エントリ追加。会話履歴検索、`--profile` 統一、MCP per-server env / OAuth、`readOnlyHint` 並列、Windows TUI VT 修正など
+- **specs/codex/configuration.md** — `--profile-v2` → `--profile` への統合と legacy `[profiles]` 拒否を反映
+- **specs/codex/mcp.md** — OAuth options、per-server env targeting、`readOnlyHint` 並列実行、connector schema 圧縮を追記
+- **specs/codex/commands.md** — セッションピッカーでのローカル会話履歴検索（rollout-backed）を resume 節に追記
+
+#### キャッシュ
+- **.patrol-cache/url-metadata.json** — v2.1.152、Codex 0.134.0 stable 観測、w21/w22 digest 未公開状態を反映
+
+### 注記
+- v2.1.151 は欠番（公式 changelog で v2.1.150 → v2.1.152 に直接続く）
+- v2.1.152 は major feature release。特に `MessageDisplay` フックと `SessionStart.reloadSkills` はハーネスのスキル動的注入パターンを大きく変える可能性あり
+- Codex 0.134.0 で `--profile` がプライマリ昇格、legacy v1 `[profiles]` 拒否は **破壊的変更**。既存設定の移行が必要
+- mapping/ への波及: `SessionStart.reloadSkills` は Codex 側の SessionStart hook で類似挙動が可能か要追加調査（次回タスク化候補）
+
+---
+
 ## 2026-05-24 — 公式ドキュメント巡回（差分のみ）
 
 ### 巡回対象URL

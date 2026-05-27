@@ -1,6 +1,6 @@
 # OpenAI Codex CLI 設定仕様
 
-最終更新: 2026-05-19（巡回更新）
+最終更新: 2026-05-28（巡回更新）
 
 ---
 
@@ -202,9 +202,11 @@ approval_policy = "never"
 sandbox_mode = "workspace-write"
 ```
 
-### 3.3 profile-v2（レイヤー化プロファイル, 0.131.0+）
+### 3.3 profile-v2（レイヤー化プロファイル, 0.131.0+ / 0.134.0 で `--profile` に統一）
 
-複数の TOML ファイルを重ね合わせて適用するレイヤー化プロファイル。CLI フラグ `--profile-v2 <name>` で有効化。
+複数の TOML ファイルを重ね合わせて適用するレイヤー化プロファイル。
+
+**0.134.0 以降**: `--profile <name>` がプライマリプロファイルセレクタとして CLI / TUI permissions / sandbox / mcp / app-server 全体で正式採用。`codex sandbox --profile`、`codex mcp --profile` も指定可能。legacy `[profiles]` テーブル（v1）は migration guidance 付きで拒否される。
 
 ```
 ~/.codex/profiles.d/
@@ -214,7 +216,8 @@ sandbox_mode = "workspace-write"
 ```
 
 - 数値プレフィックスで重ね順を制御（小さい順に適用、大きい順が優先）
-- 旧来の `[profiles]` テーブルと **併用すると拒否される**（明示的に v1 / v2 を切り替える）
+- 0.131.0〜0.133.0 では `--profile-v2 <name>` フラグだったが、0.134.0 で `--profile` に統合
+- 旧来の `[profiles]` テーブル（v1）は 0.134.0 で plumbing が撤去され、設定すると拒否される
 - 主用途: チーム共有プロファイル（ベース）+ 個人オーバーレイ（チューニング）の階層管理
 
 ### 3.2 使用方法

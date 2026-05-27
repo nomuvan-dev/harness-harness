@@ -1,6 +1,6 @@
 # Claude Code Skills & コマンド仕様書
 
-最終更新: 2026-05-16（巡回更新）
+最終更新: 2026-05-28（巡回更新）
 
 公式ドキュメント: https://code.claude.com/docs/en/skills / https://code.claude.com/docs/en/commands / https://code.claude.com/docs/en/sub-agents / https://code.claude.com/docs/en/scheduled-tasks / https://code.claude.com/docs/en/web-scheduled-tasks / https://code.claude.com/docs/en/discover-plugins
 
@@ -58,6 +58,7 @@ my-skill/
 | `disable-model-invocation` | No | `true` で Claude の自動呼び出しを禁止。手動 `/name` のみ |
 | `user-invocable` | No | `false` で `/` メニューから非表示。バックグラウンド知識用 |
 | `allowed-tools` | No | スキル有効時に許可なしで使えるツール |
+| `disallowed-tools` | No | スキル有効時にモデルから取り除くツール（v2.1.152）。スラッシュコマンドのフロントマターでも有効 |
 | `model` | No | スキル有効時のモデル指定 |
 | `effort` | No | エフォートレベル (`low` / `medium` / `high` / `max`（Opus 4.6のみ）) |
 | `context` | No | `fork` でフォークサブエージェントコンテキストで実行 |
@@ -144,7 +145,8 @@ Claude Code に同梱されるスキル:
 | `/claude-api` | Claude API リファレンス素材の読み込み（Python/TS/Java等） |
 | `/debug [description]` | セッションデバッグログの解析 |
 | `/loop [interval] <prompt>` (`/proactive`) | プロンプトを定期的に繰り返し実行（v2.1.105 で `/proactive` エイリアス追加） |
-| `/code-review [effort]` | 変更ファイルのコード品質レビューと修正（3エージェント並列）。`/code-review high` のように effort level を指定可能。v2.1.147 で `/simplify` からリネーム |
+| `/code-review [effort] [--fix]` | 変更ファイルのコード品質レビューと修正（3エージェント並列）。`/code-review high` のように effort level を指定可能。v2.1.147 で `/simplify` からリネーム。v2.1.152 で `--fix` フラグ追加（レビュー結果をワーキングツリーに直接適用） |
+| `/simplify` | v2.1.152 で `/code-review --fix` のエイリアスとして復活 |
 | `/less-permission-prompts` | 読み取り専用 bash/MCP 呼び出しを検出し許可リスト追加を提案（v2.1.111） |
 | `/team-onboarding` | 新メンバー向けのプロジェクトオンボーディング資料生成（v2.1.101） |
 | `/ultrareview` | クラウドベースの包括的コードレビュー。並列チェック・diffstat 表示（v2.1.111、v2.1.113 で改善）。CLI でも `claude ultrareview [target]` 非インタラクティブサブコマンドで CI/スクリプトから実行可能（`--json` 対応、終了コード 0/1、v2.1.120） |
@@ -215,6 +217,7 @@ Claude Code に同梱されるスキル:
 | `/plugin` | プラグイン管理（マーケットプレース、インストール、有効化/無効化）。`claude plugin prune` で孤立した自動インストール依存を削除、`plugin uninstall --prune` でカスケード削除（v2.1.121）。マーケットプレース browse ペインに projected context cost（ターン当たり・呼び出し当たりのトークン推定）を表示（v2.1.143）。Discover/Browse 画面でインストール前にプラグインが提供する commands / agents / skills / hooks / MCP/LSP サーバーをプレビュー（v2.1.145） |
 | `claude plugin enable/disable` | 依存関係を強制。`disable` は他の有効プラグインの依存先を拒否し disable-chain ヒントを表示。`enable` は推移的依存を強制有効化（v2.1.143） |
 | `/reload-plugins` | プラグイン変更の即時反映 |
+| `/reload-skills` | スキルディレクトリを再スキャン。セッション再起動不要（v2.1.152） |
 | `/desktop` (`/app`) | デスクトップアプリでセッション継続 |
 | `/remote-control` (`/rc`) | リモートコントロール有効化 |
 | `/ide` | IDE連携管理 |

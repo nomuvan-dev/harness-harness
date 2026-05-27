@@ -3,7 +3,32 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-05-24
+最終更新: 2026-05-28
+
+---
+
+## v2.1.152 (2026-05-27)
+
+- **`/code-review --fix`**: レビュー結果（再利用・簡素化・効率改善）をワーキングツリーに直接適用する `--fix` フラグ追加。旧 `/simplify` は `/code-review --fix` を呼び出すエイリアスに復活
+- **`disallowed-tools` フロントマター**: スキル・スラッシュコマンドのフロントマターで指定したツールをスキル有効中の間モデルから取り除ける
+- **`/reload-skills` コマンド追加**: セッションを再起動せずにスキルディレクトリを再スキャン
+- **`SessionStart` フックが `reloadSkills: true` を返却可能**: フックでインストールしたスキルを同一セッション内で利用可能に
+- **`SessionStart` フックがセッションタイトルを設定可能**: `hookSpecificOutput.sessionTitle` で起動・再開時にタイトルを指定
+- **`MessageDisplay` フックイベント追加**: アシスタントメッセージ表示時にテキストを変換または非表示にできる
+- **`pluginSuggestionMarketplaces` managed setting 追加**: 管理者がコンテキストアウェア tips 経由で suggest 対象とする組織マーケットプレースを allowlist 化
+- **`claude plugin marketplace remove` に `--scope user|project|local`**: `marketplace add` / `install` / `uninstall` と対称化
+- **`--fallback-model` の自動切替**: プライマリモデルが見つからない場合、リクエスト毎に失敗させるのではなく、設定済み `--fallback-model` でセッション残りを継続
+- **Auto mode の opt-in 不要化**: 同意ダイアログなしで Auto mode が利用可能に
+- **Vim mode の `/` NORMAL モード**: bash/zsh vi-mode と同様に逆方向履歴検索（Ctrl+R 相当）を開く
+- **`/usage` 内訳の large session files 対応**: ストリーム読み込みでメモリ使用量はフラットを維持しつつ大規模セッションファイルも内訳に含める
+- **OpenTelemetry: `app.entrypoint` 属性**: セッションエントリポイントをメトリクス属性として記録（`OTEL_METRICS_INCLUDE_ENTRYPOINT=true` で opt-in）
+- **Thinking summaries 改善**: 折り畳みグループで最低3秒表示、markdown レンダリング、10行で打ち切り（`Ctrl+O` で完全表示）
+- **Fullscreen の "Thinking for Ns" インジケータ**: thinking 中ライブで秒数カウントアップ、途中中断時も値を保持
+- **Workflow tool のインライン進捗表示簡素化**: ライブエージェント数はプロンプト下の永続 workflow status 行のみに表示
+- **post-response timer**: バックグラウンドエージェント/ワークフロー実行中は "Waiting for N background agents/workflows to finish" を表示、結果処理後に累積時間をレポート
+- 各種修正: 長時間セッションでのターミナルスタイル劣化（renderer style プール再利用）、condensed startup mode で sandbox-enabled warning 不表示、loading spinner の "still thinking"/"almost done thinking" 誤表示、focus mode の "N messages hidden" 誤カウント、展開ツール結果内のリンクをクリックすると展開がクローズ、markdown table セル枠線のインラインコード色継承、プラグイン MCP サーバーの環境変数違いでの誤 dedup、stale `enabledPlugins` での `/doctor` 誤レポート、Claude Code Remote セッション + egress proxy 環境での remote MCP 接続失敗、effort 変更確認ダイアログの誤発火、`--bare`/attachments disabled での Agent ツール description、`claude agents` の background worker クラッシュ、`cache_creation_input_tokens` の 0 報告問題、PushNotification の "Mobile push not sent (Remote Control inactive)" 誤レポート、モデル/login 切替後の stale thinking-block signature でセッションが固まる問題、等
+
+> v2.1.151 は欠番（公式 changelog で v2.1.152 が直接続く）
 
 ---
 

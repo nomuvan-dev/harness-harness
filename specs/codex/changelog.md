@@ -3,9 +3,48 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://developers.openai.com/codex/changelog
 
-最終更新: 2026-05-22
+最終更新: 2026-05-28
 
 ---
+
+## CLI 0.134.0 (2026-05-26)
+
+- **ローカル会話履歴の全文検索**: 大文字小文字非依存のコンテンツマッチ＋結果プレビュー付きで rollout-backed なスレッド検索を提供
+- **`--profile` がプライマリプロファイルセレクタに昇格**: CLI / TUI permissions / sandbox フロー全体で正式採用。legacy プロファイル設定は migration guidance 付きで拒否（v1 plumbing 撤去、`--profile` で `codex sandbox` も指定可能、`mcp` 配下でも guidance を表示）
+- **MCP セットアップ強化**:
+  - per-server environment targeting（`mcp servers` を明示的な環境にルーティング）
+  - streamable HTTP MCP サーバーの OAuth options を `codex mcp add` で指定可能
+- **Connector tool schemas の信頼性向上**: ローカル `$ref` / `$defs` 構造を保持しつつ、過大スキーマは公開前に best-effort で圧縮
+- **`readOnlyHint` 付き MCP ツールの並列実行**: read-only と annotate された MCP ツール呼び出しを並行実行
+- **Extension / Hook コンテキスト拡張**:
+  - 拡張ツールに会話履歴を公開
+  - subagent identity を hook input に追加
+- **Goal の予算制限ターン steering**: budget-limited goal extension turns を steering
+- **Plugin Hooks 機能フラグ撤去**: opt-in plumbing が完全撤去され default に
+- **Workspace usage limit メッセージ**: credit / spend-cap 失敗時にワークスペース固有の usage-limit メッセージをレスポンスヘッダから表示
+- **Bedrock Mantle GovCloud リージョン追加**
+- **enterprise requirement gate 追加**
+- **Windows / リモート信頼性**:
+  - Windows TUI レンダリング崩れ修正（描画前に virtual terminal モードを復元）
+  - Windows サンドボックスログを rolling files 化
+  - 切断した exec-server websocket クライアントを新セッションで再接続
+  - auth 復旧直後の remote control 即時リトライ
+  - remote compaction v2 stream のリトライ
+- **`auto-review` の permission profile override 修正**: runtime 設定同期時にアクティブな permission profile メタデータを保持
+- **Node ベースツールの managed network proxy 環境変数尊重**
+- **App-server API 拡張**:
+  - `TurnStartedEvent` に `trace_id` を追加
+  - `codex-api` に typed Images クライアント追加
+  - app-server のオプショナル bool アノテーション修正
+- **TUI `codex-tui.log` を opt-in 化**
+- **CLI が host sandbox backend を自動推論**
+- **プラグインスキルが plugin-level の共有アイコン資産を再利用可能に**
+- **リリースパッケージング**:
+  - macOS x64 zsh アーティファクト追加
+  - V8 アーティファクトを使ったリリースビルド
+  - DotSlash 実行可能ファイル取得の共通化
+  - npm package 旧 artifact synthesis 廃止
+- **ドキュメント**: README に curl/PowerShell インストーラ追記、開発者ドキュメントは `cargo test` より `just test` を優先、profile error メッセージに migration ドキュメントへのリンク
 
 ## CLI 0.133.0 (2026-05-21)
 

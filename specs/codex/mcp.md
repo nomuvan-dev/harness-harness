@@ -1,6 +1,6 @@
 # OpenAI Codex CLI MCP（Model Context Protocol）仕様
 
-最終更新: 2026-03-23
+最終更新: 2026-05-28
 
 ---
 
@@ -80,7 +80,18 @@ codex mcp add my-server -- npx -y @example/mcp-server
 
 # HTTP サーバーの追加
 codex mcp add my-remote-server --url https://example.com/mcp
+
+# Streamable HTTP サーバーの OAuth options 指定（0.134.0）
+codex mcp add my-oauth-server --url https://example.com/mcp \
+  --oauth-scopes "read,write" --oauth-callback-port 8765
 ```
+
+**0.134.0 追加**:
+
+- **per-server environment targeting**: `mcp servers` を明示的な環境にルーティング
+- **streamable HTTP MCP の OAuth options**: `codex mcp add` 経由で OAuth scope / callback 設定を指定可能
+- **`readOnlyHint` 付きツールの並列実行**: ツールが `readOnlyHint` annotation を持つ場合、Codex は MCP 呼び出しを並列実行する
+- **connector tool schemas**: ローカル `$ref` / `$defs` を保持。過大スキーマは best-effort で圧縮してから公開
 
 ### 3.3 オプションパラメータ
 
