@@ -1,6 +1,6 @@
 # OpenAI Codex CLI コマンド仕様
 
-最終更新: 2026-05-19（巡回更新）
+最終更新: 2026-05-28（巡回更新）
 
 ---
 
@@ -158,6 +158,8 @@ codex resume <SESSION_ID>
 # 全ディレクトリのセッションを表示（デフォルトは CWD スコープ）
 codex resume --all
 ```
+
+**0.134.0**: セッションピッカーで rollout-backed なローカル会話履歴の全文検索（case-insensitive content match + 結果プレビュー）が利用可能。
 
 #### exec からの resume
 

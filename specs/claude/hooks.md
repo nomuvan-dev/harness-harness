@@ -1,6 +1,6 @@
 # Claude Code Hooks 仕様書
 
-最終更新: 2026-05-21（巡回更新）
+最終更新: 2026-05-28（巡回更新）
 
 公式ドキュメント: https://code.claude.com/docs/en/hooks
 
@@ -45,6 +45,7 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 | イベント | 発火タイミング | ブロック可能 | matcher対象 |
 |:--|:--|:--|:--|
 | `Notification` | 通知送信時 | No | `permission_prompt`, `idle_prompt`, `auth_success`, `elicitation_dialog` |
+| `MessageDisplay` | アシスタントメッセージ表示時 | No（transform/hide可） | - | アシスタントメッセージのテキストを変換または非表示にできる（v2.1.152） |
 | `ConfigChange` | 設定ファイル変更時 | Yes | `user_settings`, `project_settings`, `local_settings`, `policy_settings`, `skills` |
 | `InstructionsLoaded` | CLAUDE.md/rules読み込み時 | No | `session_start`, `nested_traversal`, `path_glob_match`, `include`, `compact` |
 | `CwdChanged` | ワーキングディレクトリ変更時 | No | matcher非サポート（全変更で発火） |
@@ -394,6 +395,21 @@ if [ -n "$CLAUDE_ENV_FILE" ]; then
   echo 'export NODE_ENV=production' >> "$CLAUDE_ENV_FILE"
 fi
 exit 0
+```
+
+**v2.1.152 追加機能**:
+
+- `hookSpecificOutput.reloadSkills: true` を返すと、フックでインストールしたスキルディレクトリを同一セッション内で再スキャンしてサーフェスできる
+- `hookSpecificOutput.sessionTitle` で起動・再開時のセッションタイトルを設定できる
+
+```json
+{
+  "hookSpecificOutput": {
+    "hookEventName": "SessionStart",
+    "reloadSkills": true,
+    "sessionTitle": "Patrol Docs - 2026-05-28"
+  }
+}
 ```
 
 #### WorktreeCreate

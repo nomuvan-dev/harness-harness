@@ -1,6 +1,6 @@
 # Claude Code 設定仕様書
 
-最終更新: 2026-05-16（巡回更新）
+最終更新: 2026-05-28（巡回更新）
 
 公式ドキュメント: https://code.claude.com/docs/en/settings / https://code.claude.com/docs/en/memory
 
@@ -192,6 +192,7 @@ CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ../shared-config
 | `sandbox.socatPath` | （Managed のみ、Linux/WSL）socat バイナリのカスタムパス指定（v2.1.133） |
 | `parentSettingsBehavior` | （Managed のみ、admin tier）SDK `managedSettings`（parent tier）をポリシーマージに含めるか（`first-wins` / `merge`）。v2.1.133 |
 | `allowAllClaudeAiMcps` | （Managed のみ、Enterprise）`managed-mcp.json` と並んで claude.ai クラウド MCP コネクタを一括ロード（v2.1.149） |
+| `pluginSuggestionMarketplaces` | （Managed のみ）コンテキストアウェア tips 経由で suggest 対象とする組織マーケットプレースを allowlist 化（v2.1.152） |
 
 ### 2.4 `~/.claude.json` のグローバル設定
 
@@ -384,6 +385,7 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 | `CLAUDE_CODE_POWERSHELL_RESPECT_EXECUTION_POLICY` | `1` で PowerShell ツールが `-ExecutionPolicy Bypass` を渡さなくなる（v2.1.143） |
 | `CLAUDE_CODE_USE_POWERSHELL_TOOL` | `0` で Windows の Bedrock/Vertex/Foundry ユーザーでも PowerShell ツールを無効化（v2.1.143 でデフォルト有効化） |
 | `CLAUDE_CODE_STOP_HOOK_BLOCK_CAP` | stop hook の連続ブロック上限を変更。デフォルト 8 回（v2.1.143） |
+| `OTEL_METRICS_INCLUDE_ENTRYPOINT` | `true` でセッションエントリポイントを OpenTelemetry メトリクスに `app.entrypoint` 属性として追加（v2.1.152） |
 
 完全な環境変数リファレンス: https://code.claude.com/docs/en/env-vars
 
