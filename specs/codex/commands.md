@@ -1,6 +1,6 @@
 # OpenAI Codex CLI コマンド仕様
 
-最終更新: 2026-05-28（巡回更新）
+最終更新: 2026-05-29（巡回更新）
 
 ---
 
@@ -32,7 +32,7 @@
 
 | コマンド | 構文 | 説明 |
 |----------|------|------|
-| `/permissions` | `/permissions` | Codex が承認なしで実行可能な操作を設定 |
+| `/permissions` | `/permissions` | Codex が承認なしで実行可能な操作を設定。named permission profile（カスタムプロファイルを含む）を選択可能（0.135.0+） |
 | `/sandbox-add-read-dir` | `/sandbox-add-read-dir <path>` | Windows サンドボックスに読み取りディレクトリを追加 |
 
 ### 1.4 セッション管理
@@ -52,7 +52,7 @@
 
 | コマンド | 構文 | 説明 |
 |----------|------|------|
-| `/status` | `/status` | セッション設定とトークン使用量を表示 |
+| `/status` | `/status` | セッション設定とトークン使用量を表示。TUI がリモートトランスポート経由で接続されている場合は接続詳細とサーバーバージョンも表示（0.135.0+） |
 | `/debug-config` | `/debug-config` | 設定レイヤーと requirements 診断を出力 |
 | `/ps` | `/ps` | 実験的バックグラウンドターミナルと出力を表示 |
 | `/mcp` | `/mcp` | 設定済み MCP ツールの一覧を表示 |
@@ -224,7 +224,7 @@ max_bytes = 1048576        # 最大サイズ（超過時は自動コンパクシ
 | `codex apply <TASK_ID>` | Codex Cloud タスクの差分を適用 |
 | `codex execpolicy check` | ポリシー評価（プレビュー機能） |
 | `codex update` | CLI 自身を最新版にアップグレード（0.128.0+） |
-| `codex doctor` | runtime / auth / terminal / network / config / ローカル状態を横断する診断（0.131.0+） |
+| `codex doctor` | runtime / auth / terminal / network / config / ローカル状態を横断する診断（0.131.0+）。0.135.0 で環境・Git・ターミナル・app-server・thread inventory のリッチ診断を追加 |
 | `codex remote-control` | リモート制御可能な app-server を起動（0.130.0+）。0.131.0 で daemon ライフサイクル管理・ランタイム enable/disable API・registry-backed 環境を追加 |
 | `codex plugin marketplace ...` | プラグインマーケットプレース操作 CLI（0.131.0+）。share / share checkout / version 対応 |
 

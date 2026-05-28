@@ -3,7 +3,21 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-05-28
+最終更新: 2026-05-29
+
+---
+
+## v2.1.153 (2026-05-28)
+
+- **`skipLfs` プラグインマーケットプレースオプション**: `github`/`git` ソースに `skipLfs: true` を指定すると Git LFS ダウンロードをスキップ可能
+- **npm global install 自動更新の警告**: 自動更新できない環境で1回限りの通知を表示
+- **ステータスラインに `COLUMNS` / `LINES` 環境変数**: status line スクリプトがターミナルの幅・行数を環境変数経由で参照可能
+- **`claude agents` 補完にネイティブスラッシュコマンドとバンドルスキルを含める**: 補完候補が拡張
+- **`claude agents` の PR カラム表示形式**: `PR #N` または `N PRs` で表示
+- **`claude doctor` が最終アップデート試行結果を表示**: 自動更新の成否がdoctor出力に含まれる
+- **MCP サーバー/コネクタの認証通知を統合**: 「認証が必要」通知を1本化
+- **macOS バックグラウンドエージェントが "Claude Code" として Privacy & Security に表示**
+- 各種修正: MCP サーバー関連、API gateway 認証情報処理、プラグイン MCP サーバー、UI/UX 細部
 
 ---
 
