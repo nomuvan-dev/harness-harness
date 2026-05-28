@@ -3,7 +3,31 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://developers.openai.com/codex/changelog
 
-最終更新: 2026-05-28
+最終更新: 2026-05-29
+
+---
+
+## CLI 0.135.0 (2026-05-28)
+
+- **`codex doctor` 拡張診断**: 環境・Git・ターミナル・app-server・thread inventory のリッチな診断情報を出力（サポートケース用）
+- **`/status` がリモート接続情報を表示**: TUI がリモートトランスポートで接続されている場合、接続詳細とサーバーバージョンを表示
+- **Vim mode 強化**:
+  - text-object 編集対応（vim text object bindings）
+  - 単語末尾 / 行末挙動を改善
+  - ターン中断 keybind を設定可能化
+- **`/permissions` で named permission profile に対応**: プロファイル名指定・カスタムプロファイル表示
+- **macOS / Linux で bundled patched zsh helper を発見・利用可能**: パッケージ済み Codex ビルドが対応ターゲットで採用
+- **Python SDK に `Sandbox` プリセット API**: thread / turn API でフレンドリーな sandbox preset を公開
+- **TUI 表示改善**:
+  - Markdown テーブルのカラム配分とアプリスタイル描画
+  - 複数行 markdown リストの可読性
+  - macOS / Zellij で composer / 生出力の崩れを防止
+- **修正**:
+  - スラッシュコマンド補完が引数を取るコマンドのドラフトテキストを保持
+  - 古い tmux / iTerm control-mode で Ctrl-C が機能しない問題
+  - アプリメンションがアクセス不可・無効アプリを除外
+  - resume フローが非対話 exec セッションを含め、idle cached thread の cwd override を尊重
+- **内部**: メモリランタイム状態を専用 SQLite DB に移動、レスポンス再試行ロジック中央集約、レガシー config-profile consumer 廃止、Rust toolchain ピン更新（1.95.0）
 
 ---
 

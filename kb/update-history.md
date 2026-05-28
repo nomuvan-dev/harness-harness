@@ -1,5 +1,33 @@
 # harness-harness 更新履歴
 
+## 2026-05-29 — 公式ドキュメント巡回（差分のみ）
+
+### 巡回対象URL
+- Claude Code: changelog（**v2.1.153 リリース 2026-05-28** — 小規模リリース）
+- Claude Code: llms.txt / w21-w23 digest（依然未公開 — Fri 2026-05-29、w21 は 11 日超遅延）
+- Codex CLI: GitHub Releases（**0.135.0 stable リリース 2026-05-28** — alpha.1〜2 を経て同日 stable 昇格）
+- スキルエコシステム: 前回 2026-05-24 から 5 日 → 7 日以内のため Phase 3.5 スキップ
+
+### 検出された変更と更新内容
+
+#### Claude Code v2.1.153 追記（minor feature + fix release）
+- **specs/claude/changelog.md** — v2.1.153（2026-05-28）エントリ追加。最終更新日を 2026-05-29 に
+- **specs/claude/configuration.md** — `statusLine` に `COLUMNS` / `LINES` 環境変数注記、プラグインマーケットプレース `skipLfs` オプション追加
+
+#### Codex 0.135.0 追記（stable）
+- **specs/codex/changelog.md** — 0.135.0（2026-05-28）エントリ追加。`codex doctor` 拡張診断、`/status` リモート接続情報、Vim text-object、`/permissions` named profile、bundled zsh helper、Python SDK Sandbox プリセットなど
+- **specs/codex/commands.md** — `/permissions` named profile、`/status` リモート情報、`codex doctor` 拡張診断を該当行に追記
+
+#### キャッシュ
+- **.patrol-cache/url-metadata.json** — v2.1.153、Codex 0.135.0 stable 観測、w21/w22/w23 digest 未公開状態を反映
+
+### 注記
+- v2.1.153 は minor release（major feature なし）。`statusLine` に端末サイズ環境変数が渡るようになったのは status line スクリプト設計に影響あり
+- Codex 0.135.0 で `/permissions` が named permission profile に対応 → ハーネス側で profile プリセット集約パターンを検討余地あり
+- w21 digest 未公開が 11 日継続 → llms.txt 公開ペースの恒常的変化の可能性、要観察
+
+---
+
 ## 2026-05-28 — 公式ドキュメント巡回（差分のみ）
 
 ### 巡回対象URL

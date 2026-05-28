@@ -1,6 +1,6 @@
 # Claude Code 設定仕様書
 
-最終更新: 2026-05-28（巡回更新）
+最終更新: 2026-05-29（巡回更新）
 
 公式ドキュメント: https://code.claude.com/docs/en/settings / https://code.claude.com/docs/en/memory
 
@@ -145,7 +145,7 @@ CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ../shared-config
 | `allowManagedMcpServersOnly` | Managed MCPサーバーのみ許可 |
 | `allowedMcpServers` | MCPサーバー許可リスト |
 | `deniedMcpServers` | MCPサーバー拒否リスト |
-| `statusLine` | カスタムステータスライン設定 |
+| `statusLine` | カスタムステータスライン設定。v2.1.153 でステータスラインコマンドに `COLUMNS` / `LINES` 環境変数（端末サイズ）が渡されるようになった |
 | `fileSuggestion` | `@` ファイル補完カスタムコマンド |
 | `outputStyle` | 出力スタイル設定 |
 | `agent` | メインスレッドをサブエージェントとして実行 |
@@ -193,6 +193,7 @@ CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ../shared-config
 | `parentSettingsBehavior` | （Managed のみ、admin tier）SDK `managedSettings`（parent tier）をポリシーマージに含めるか（`first-wins` / `merge`）。v2.1.133 |
 | `allowAllClaudeAiMcps` | （Managed のみ、Enterprise）`managed-mcp.json` と並んで claude.ai クラウド MCP コネクタを一括ロード（v2.1.149） |
 | `pluginSuggestionMarketplaces` | （Managed のみ）コンテキストアウェア tips 経由で suggest 対象とする組織マーケットプレースを allowlist 化（v2.1.152） |
+| `<marketplace>.skipLfs` | プラグインマーケットプレース定義（`github` / `git` ソース）に `skipLfs: true` を指定すると Git LFS ダウンロードをスキップ（v2.1.153） |
 
 ### 2.4 `~/.claude.json` のグローバル設定
 
