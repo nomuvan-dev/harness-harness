@@ -100,6 +100,8 @@ claude mcp reset-project-choices
 /mcp
 ```
 
+v2.1.154: `claude mcp list` / `get` の出力がパイプされた場合、未承認の `.mcp.json` サーバーは自動承認・接続せず `⏸ Pending approval` 表示となる。Stdio MCP サーバーサブプロセスには `CLAUDE_CODE_SESSION_ID` と `CLAUDECODE=1` 環境変数が渡される。
+
 ### 3.3 JSON ファイルによる設定
 
 #### `.mcp.json`（プロジェクトスコープ）

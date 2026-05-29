@@ -1,5 +1,33 @@
 # harness-harness 更新履歴
 
+## 2026-05-30 — 公式ドキュメント巡回（差分のみ）
+
+### 巡回対象URL
+- Claude Code: changelog（**v2.1.154 リリース 2026-05-28** — Opus 4.8 メジャーリリース）
+- Claude Code: llms.txt / w21-w23 digest（依然未公開 — w21 は 12 日超遅延）
+- Codex CLI: GitHub Releases（0.135.0 stable のまま、新版なし）
+- スキルエコシステム: 前回 2026-05-24 から 6 日 → 7 日以内のため Phase 3.5 スキップ
+
+### 検出された変更と更新内容
+
+#### Claude Code v2.1.154 追記（Opus 4.8 メジャーリリース）
+- **specs/claude/changelog.md** — v2.1.154（2026-05-28）エントリ追加。Opus 4.8、Dynamic workflows、Lean system prompt デフォルト化、`/simplify` クリーンアップ専用化、`/effort` ラベル変更、`/chrome` ブラウザ選択、プラグイン `defaultEnabled` など
+- **specs/claude/configuration.md** — `<plugin>.defaultEnabled` 設定追加、`CLAUDE_CODE_OPUS_4_6_FAST_MODE_OVERRIDE` 非推奨注記（2026-06-01 削除予定）
+- **specs/claude/skills-and-commands.md** — `/simplify` v2.1.154 でクリーンアップ専用に変更、`/workflows` 追加、`/effort` ラベル変更注記、`/chrome` ブラウザ選択注記
+- **specs/claude/mcp.md** — `claude mcp list/get` のパイプ出力時 `⏸ Pending approval` 表示、Stdio MCP サーバーへの `CLAUDE_CODE_SESSION_ID` / `CLAUDECODE=1` 注記
+
+#### キャッシュ
+- **.patrol-cache/url-metadata.json** — v2.1.154 観測、関連ページのハッシュ更新
+
+### 注記
+- v2.1.154 は Opus 4.8 を伴うメジャーリリース。Lean system prompt のデフォルト化と多肢選択プロンプト抑制は CLAUDE.md / philosophy.md の前提に直接影響しないが、AI挙動への影響として認識
+- Dynamic workflows（`/workflows`）は数十〜数百エージェント並列のメカニズム。ハーネス側の長時間ワークフロー設計に新たな選択肢
+- `/simplify` の挙動変更で `simplify` スキル（ローカル）と公式 `/simplify` の意味が再び乖離。kb/skills/recommended.md 側のスキル説明見直しは別タスクで検討
+- Opus 4.6 fast mode override 環境変数の削除予定（2026-06-01）→ 関連ハーネスで使用がないか確認推奨
+- 公式 settings ドキュメントは v2.1.154 反映が遅延。changelog 元データから補完
+
+---
+
 ## 2026-05-29 — 公式ドキュメント巡回（差分のみ）
 
 ### 巡回対象URL
