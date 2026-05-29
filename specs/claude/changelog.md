@@ -3,7 +3,34 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-05-29
+最終更新: 2026-05-30
+
+---
+
+## v2.1.154 (2026-05-28)
+
+- **Opus 4.8 リリース**: モデルID `claude-opus-4-8`。デフォルトで high effort。最難タスク向けは `/effort xhigh`
+- **Dynamic workflows**: 「ワークフローを作って」と依頼すると、バックグラウンドで数十〜数百のエージェントを跨いだ作業をオーケストレーション。`/workflows` で実行状況を表示
+- **Opus 4.8 の Fast mode が大幅値下げ**: 標準レートの2倍で2.5倍の速度
+- **Lean system prompt がデフォルト化**: Haiku、Sonnet、Opus 4.7以前を除く全モデルでデフォルト
+- **多肢選択プロンプトの濫用抑制**: 既にコンテキストで判断可能な場面では選択肢を出さず、本当に判断できないときだけ表示
+- **`/simplify` の挙動変更**: 旧来の `/code-review --fix`（バグハンティング含むレビュー）ではなく、クリーンアップ専用レビュー（reuse / simplification / efficiency / altitude）を実行して fix を適用
+- **`/effort` スライダのラベル変更**: 「Speed」/「Intelligence」→「Faster」/「Smarter」
+- **`claude agents` でバックグラウンドシェルセッション**: `! <command>` で起動・アタッチ・デタッチ可能。`claude --bg --exec '<command>'` でも同等
+- **`claude agents` の `/logout` 修正**: バックグラウンドセッション送信ではなく実際にサインアウト
+- **`←←` で agents view を開く動作の拡張**: Bedrock / Vertex / Foundry / テレメトリ無効化環境でも動作
+- **Claude in Chrome: ブラウザ選択**: `/chrome` → "Select browser…" または複数ブラウザ接続時のチャット内選択でブラウザを指定可能
+- **プラグインの `defaultEnabled: false`**: `plugin.json` またはマーケットプレースエントリで宣言可能。`/plugin` または `claude plugin enable` で有効化。有効化済みプラグインの依存関係は引き続き自動有効化
+- **`/plugin` Discover タブのディレクトリ別レコメンド**: 現在のディレクトリにマッチするレレバンスシグナルを持つプラグインを "suggested for this directory" 注釈付きでピン留め
+- **ストリーミングツール実行が常時有効化**: テレメトリ無効環境や Bedrock / Vertex / Foundry でも有効（旧フィーチャーフラグ廃止）
+- **Stdio MCP サーバーサブプロセスに `CLAUDE_CODE_SESSION_ID` と `CLAUDECODE=1` を渡す**
+- **`claude mcp list` / `get` で `⏸ Pending approval` 表示**: パイプ出力時に未承認 `.mcp.json` サーバーを自動承認・接続せず保留状態として表示
+- **`/remote-control` の disconnect 補完**: Remote Control 有効時に "Disconnect Remote Control" を補完表示
+- **`/claude-api` スキルが Opus 4.8 対応 + 4.7 → 4.8 移行ガイド追加**
+- **非推奨**: `CLAUDE_CODE_OPUS_4_6_FAST_MODE_OVERRIDE` 環境変数（2026-06-01 削除予定）。Opus 4.6 で fast mode を使うには `/model claude-opus-4-6[1m]` の後に `/fast on`
+- **Auto mode 分類器の改善**: データ流出（特にリポジトリ全体のバルク転送）検知強化
+- セキュリティ修正: `HOME` に末尾スラッシュがある場合の `rm -rf $HOME` 危険パスブロック漏れ、サンドボックス内外で `$TMPDIR` が別ディレクトリに解決される問題
+- 各種修正: `claude agents` ハイライト行可読性、background-agent 完了通知での1Mコンテキストモデルにおける "out of context" 早期発動、background-session 分類器の `/command` 起動時ゴール喪失、Claude Code 更新後のピン留め background session 毎分再生成、background session の "blocked"/"running"/"working" stuck、background subagent の worktree-isolation 迂回、macOS daemon 終了後の `claude --bg-pty-host` プロセス 100% CPU、option dialog のディバイダ下選択肢への数字キーショートカット不動作、`worktree.baseRef: "head"` がワークツリー内 HEAD ではなくメインチェックアウト HEAD に解決される問題、ターミナル幅と一致する行末以降の折り返し先頭スペース、VS Code でのターミナルレンダリング破損、plan ファイル名に `[Image #N]` / `[Pasted text #N]` プレースホルダ混入、短いANSIカラー行への幻の "ctrl+o to expand" ヒント、`allowedMcpServers` / `deniedMcpServers` の1件無効化で managed-settings ポリシー全廃棄、`CLAUDE_CODE_ALWAYS_ENABLE_EFFORT` 設定モデル非対応時の API 400、Windows `claude.exe` 使用中の更新失敗エラーメッセージ、shortcuts help panel の stale "& for background" ヒント、VSCode Auto mode と bypass-permissions、task panel の余分な "main" 行、`/mcp` tools 一覧のレンダリング、`/model` ピッカーの API（pay-as-you-go）ユーザー fast mode pricing 表示、Auto mode の safety classifier 出力トークン枯渇時の誤ブロック
 
 ---
 

@@ -194,6 +194,7 @@ CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ../shared-config
 | `allowAllClaudeAiMcps` | （Managed のみ、Enterprise）`managed-mcp.json` と並んで claude.ai クラウド MCP コネクタを一括ロード（v2.1.149） |
 | `pluginSuggestionMarketplaces` | （Managed のみ）コンテキストアウェア tips 経由で suggest 対象とする組織マーケットプレースを allowlist 化（v2.1.152） |
 | `<marketplace>.skipLfs` | プラグインマーケットプレース定義（`github` / `git` ソース）に `skipLfs: true` を指定すると Git LFS ダウンロードをスキップ（v2.1.153） |
+| `<plugin>.defaultEnabled` | プラグインの `plugin.json` またはマーケットプレースエントリで `defaultEnabled: false` を指定するとインストール後デフォルト無効。`/plugin` または `claude plugin enable` で有効化。依存関係は引き続き自動有効化（v2.1.154） |
 
 ### 2.4 `~/.claude.json` のグローバル設定
 
@@ -382,7 +383,7 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 | `CLAUDE_CODE_ENABLE_FEEDBACK_SURVEY_FOR_OTEL` | OpenTelemetry 経由でセッション品質サーベイ応答を収集する企業向けに、無効化されているセッションフィードバックサーベイを再有効化（v2.1.136） |
 | `CLAUDE_CODE_PLUGIN_PREFER_HTTPS` | `1` で GitHub プラグインソースを SSH ではなく HTTPS でクローン。SSH 鍵未設定環境向け（v2.1.141） |
 | `ANTHROPIC_WORKSPACE_ID` | workload identity federation で発行トークンを特定ワークスペースにスコープ。federation ルールが複数ワークスペースをカバーする場合に必須（v2.1.141） |
-| `CLAUDE_CODE_OPUS_4_6_FAST_MODE_OVERRIDE` | `1` で Fast mode を Opus 4.6 に固定。v2.1.142 以降、Fast mode デフォルトは Opus 4.7（v2.1.142） |
+| `CLAUDE_CODE_OPUS_4_6_FAST_MODE_OVERRIDE` | `1` で Fast mode を Opus 4.6 に固定。v2.1.142 以降、Fast mode デフォルトは Opus 4.7。v2.1.154 で非推奨化（2026-06-01 削除予定）。Opus 4.6 で fast mode を使うには `/model claude-opus-4-6[1m]` の後に `/fast on` |
 | `CLAUDE_CODE_POWERSHELL_RESPECT_EXECUTION_POLICY` | `1` で PowerShell ツールが `-ExecutionPolicy Bypass` を渡さなくなる（v2.1.143） |
 | `CLAUDE_CODE_USE_POWERSHELL_TOOL` | `0` で Windows の Bedrock/Vertex/Foundry ユーザーでも PowerShell ツールを無効化（v2.1.143 でデフォルト有効化） |
 | `CLAUDE_CODE_STOP_HOOK_BLOCK_CAP` | stop hook の連続ブロック上限を変更。デフォルト 8 回（v2.1.143） |
