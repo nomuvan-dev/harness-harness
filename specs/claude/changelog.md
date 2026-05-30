@@ -3,7 +3,41 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-05-30
+最終更新: 2026-05-31
+
+---
+
+## v2.1.158 (2026-05-30)
+
+- **Auto mode が Bedrock / Vertex / Foundry 対応**: Opus 4.7 / 4.8 で `CLAUDE_CODE_ENABLE_AUTO_MODE=1` を設定して opt-in
+
+---
+
+## v2.1.157 (2026-05-29)
+
+- **`.claude/skills/` 配下のプラグイン自動ロード**: マーケットプレース不要で `.claude/skills` 内プラグインを自動認識
+- **`claude plugin init <name>`**: `.claude/skills` 配下に新規プラグインの雛形を生成
+- **`/plugin` 引数の autocomplete 強化**: サブコマンド、インストール済みプラグイン名、既知マーケットプレース上のプラグインを補完
+- **`claude agents` の `agent` 設定参照**: `settings.json` の `agent` フィールドが dispatched セッションで尊重される。`--agent <name>` で上書き可能
+- **`EnterWorktree` で Claude 管理 worktree 間を切替**: セッション途中で別の管理 worktree に切り替え可能
+- **`tool_decision` テレメトリ拡張**: `OTEL_LOG_TOOL_DETAILS=1` で `tool_parameters`（bash コマンド、MCP/skill 名等）を含める
+- **Claude 管理 worktree のロック解除**: エージェント終了時に worktree をアンロックし、`git worktree remove`/`prune` でクリーンアップ可能に
+- **Workflow キーワードトリガー設定**: `/config` から「Workflow keyword trigger」を OFF にすると、プロンプト中の "workflow" がワークフロー要求を発動しなくなる
+- **Backspace でワークフロー要求を解除**: トリガーキーワード直後の Backspace で文字削除ではなくワークフロー要求を解除（`alt+w` と同等）
+- **`/terminal-setup` で VS Code/Cursor/Windsurf の GPU acceleration 無効化**: ターミナル garbled text を防止
+- **`claude agents` の slash command autocomplete が substring 一致**: 部分一致でマッチ
+- **長尺・再開会話のレンダリング性能改善**: 冗長な再計算を排除
+- **Feature of the Week 通知**: クレジット請求ステータスをプロンプト上の行ではなく status area の通知として表示
+- **起動バナーの整理**: sandbox banner と `/ide for …` ヒントを除去（sandbox 状態は `/status` とブロック時に確認可能）
+- 多数のバグ修正: 画像処理クラッシュ、`claude agents` のセッションリタイヤ/ESC/Tmuxクリップボード、`--resume` でのバックグラウンドサブエージェント表示、`--worktree` での canonical root 復帰、`/model` ピッカーの "Newer version" 誤表示、fullscreen での markdown 文字残留、managed-settings ダイアログ承認後フリーズ、WSL 画像貼り付け、VS Code/Cursor/Windsurf 統合ターミナルでの右クリック paste 重複、background session の日時通知、サブエージェントのバックグラウンドシェルリーク、起動時の sandbox network 権限プロンプト等
+
+---
+
+## v2.1.156 (2026-05-29)
+
+- **Opus 4.8 の thinking blocks 修正**: thinking block 改変による API エラーを修正
+
+> v2.1.155 は欠番（公式 changelog で v2.1.154 から v2.1.156 へ）
 
 ---
 

@@ -1,6 +1,6 @@
 # Claude Code Skills & コマンド仕様書
 
-最終更新: 2026-05-28（巡回更新）
+最終更新: 2026-05-31（巡回更新）
 
 公式ドキュメント: https://code.claude.com/docs/en/skills / https://code.claude.com/docs/en/commands / https://code.claude.com/docs/en/sub-agents / https://code.claude.com/docs/en/scheduled-tasks / https://code.claude.com/docs/en/web-scheduled-tasks / https://code.claude.com/docs/en/discover-plugins
 
@@ -295,6 +295,8 @@ MCPサーバーが公開するプロンプトは `/mcp__<server>__<prompt>` 形�
 /plugin install github@claude-plugins-official
 ```
 
+`/plugin` の引数は autocomplete に対応（v2.1.157）。サブコマンド、インストール済みプラグイン名、既知マーケットプレース上のプラグインが補完される。
+
 ### 4.2 マーケットプレースの追加
 
 ```bash
@@ -302,6 +304,14 @@ MCPサーバーが公開するプロンプトは `/mcp__<server>__<prompt>` 形�
 /plugin marketplace add https://gitlab.com/company/plugins.git  # Git URL
 /plugin marketplace add ./my-marketplace             # ローカル
 /plugin marketplace add https://example.com/marketplace.json    # URL
+```
+
+### 4.2.1 `.claude/skills/` 配下のプラグイン自動ロード（v2.1.157）
+
+`.claude/skills/` 配下に置かれたプラグインはマーケットプレース不要で自動ロードされる。雛形は `claude plugin init <name>` で生成可能。
+
+```bash
+claude plugin init my-plugin    # .claude/skills/my-plugin/ を生成
 ```
 
 ### 4.3 プラグインカテゴリ
@@ -397,7 +407,7 @@ model: sonnet
 
 - **自然言語**: エージェント名をプロンプトに含める
 - **@メンション**: `@"code-reviewer (agent)"` でエージェント指定を保証
-- **セッション全体**: `claude --agent code-reviewer` または設定 `"agent": "code-reviewer"`
+- **セッション全体**: `claude --agent code-reviewer` または設定 `"agent": "code-reviewer"`。v2.1.157 から `claude agents` の dispatched セッションでも `settings.json` の `agent` フィールドが尊重される（`--agent <name>` で上書き可能）
 
 ### 5.7 フォアグラウンド/バックグラウンド
 

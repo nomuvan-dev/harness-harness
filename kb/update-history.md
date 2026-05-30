@@ -1,6 +1,33 @@
 # harness-harness 更新履歴
 
-## 2026-05-30 — 公式ドキュメント巡回（差分のみ）
+## 2026-05-31 — 公式ドキュメント巡回（差分のみ）
+
+### 巡回対象URL
+- Claude Code: changelog（**v2.1.156 / 2.1.157 / 2.1.158** リリース。前回比 3 版増。v2.1.155 は欠番）
+- Codex CLI: GitHub Releases（**0.136.0-alpha.1** がプレリリース公開、安定版は 0.135.0 のまま）
+- スキルエコシステム: 前回 2026-05-24 から 7 日 → 7日以内のため Phase 3.5 スキップ
+
+### 検出された変更と更新内容
+
+#### Claude Code v2.1.156 / v2.1.157 / v2.1.158 追記
+- **specs/claude/changelog.md** — v2.1.158（Auto mode の Bedrock/Vertex/Foundry 対応）、v2.1.157（`.claude/skills/` 配下プラグイン自動ロード、`claude plugin init`、`/plugin` autocomplete、`agent` 設定参照、`EnterWorktree` 切替、`OTEL_LOG_TOOL_DETAILS` 拡張、Workflow キーワードトリガー設定、起動バナー整理ほか）、v2.1.156（Opus 4.8 thinking blocks API エラー修正）、v2.1.155 欠番注記
+- **specs/claude/configuration.md** — `CLAUDE_CODE_ENABLE_AUTO_MODE` 環境変数追加（v2.1.158）、`OTEL_LOG_TOOL_DETAILS` の `tool_decision.tool_parameters` 拡張注記、Workflow キーワードトリガー設定注記
+- **specs/claude/skills-and-commands.md** — `.claude/skills/` 配下のプラグイン自動ロードと `claude plugin init` を「4.2.1」として追記、`/plugin` 引数 autocomplete 注記、`claude agents` の `agent` 設定参照を v2.1.157 注記
+
+#### Codex CLI 0.136.0-alpha.1 追記
+- **specs/codex/changelog.md** — プレリリース版エントリ追加（変更点は安定版公開時に追記）
+
+#### キャッシュ
+- **.patrol-cache/url-metadata.json** — v2.1.158 観測、0.136.0-alpha.1 観測、関連 URL ハッシュ更新
+
+### 注記
+- `.claude/skills/` 配下のプラグイン自動ロード（v2.1.157）はマーケットプレースなしでローカルプラグインを実験できる重要パス。harness-harness 内のスキル開発フローと相性が良い
+- `EnterWorktree` の管理 worktree 間切替（v2.1.157）は worktree 運用を簡素化する。docs/conventions.md の worktree 規約に追記の余地あり（別タスク）
+- Workflow キーワードトリガー設定（v2.1.157）は v2.1.154 の Dynamic workflows 暴発抑止策。skill/コマンド名に "workflow" を含む場合の影響を要確認
+- 0.136.0-alpha.1 はプレリリース。安定版公開まで harness 推奨は 0.135.0 のまま
+
+---
+
 
 ### 巡回対象URL
 - Claude Code: changelog（**v2.1.154 リリース 2026-05-28** — Opus 4.8 メジャーリリース）
