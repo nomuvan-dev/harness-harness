@@ -3,7 +3,14 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://developers.openai.com/codex/changelog
 
-最終更新: 2026-05-29
+最終更新: 2026-05-31
+
+---
+
+## CLI 0.136.0-alpha.1 (2026-05-29, プレリリース)
+
+- プレリリース版（GitHub Releases に prerelease タグで公開）。安定版変更点は公開され次第追記する。
+- 安定版の最新は依然 0.135.0。
 
 ---
 
