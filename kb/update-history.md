@@ -1,5 +1,36 @@
 # harness-harness 更新履歴
 
+## 2026-06-01 — 公式ドキュメント巡回（差分のみ）
+
+### 巡回対象URL
+- Claude Code: changelog（**新版なし**。v2.1.158 が依然最新）/ `whats-new/2026-w21` / `whats-new/2026-w22` 公開（前回は 404）
+- Codex CLI: GitHub Releases（**新版なし**。0.136.0-alpha.1 / 安定版 0.135.0 のまま）
+- スキルエコシステム: 前回 2026-05-24 から 8 日 → Phase 3.5 実行
+
+### 検出された変更と更新内容
+
+#### Claude Code: security-guidance プラグインの追記（w22 featured）
+- **specs/claude/skills-and-commands.md** — §4.7「security-guidance プラグイン（公式 / 2026-w22 featured）」を追加。3 段階レビュー（per-edit パターン / end-of-turn diff / commit·push agentic）、`.claude/claude-security-guidance.md` と `.claude/security-patterns.yaml` のカスタムルール、`ENABLE_*` 環境変数によるレイヤー別無効化、登録される hook 構成を記録。要 v2.1.144 以降、Python 3.8 以降。`SessionStart/UserPromptSubmit/PostToolUse(Edit·Write·NotebookEdit, Bash filtered to git commit/push)/Stop` のみで実装されており、harness-harness 側のフック実装の参考になる
+
+#### Claude Code 週次ダイジェスト確認（情報のみ。仕様反映済）
+- `2026-w21`（v2.1.143–149）: Auto mode の Pro / Sonnet 4.6 拡大、`/usage` のカテゴリ別内訳、`/code-review` 導入 — いずれも既に specs/claude/changelog.md 該当バージョン項に反映済み
+- `2026-w22`（v2.1.150–157）: Opus 4.8、dynamic workflows、security-guidance、fast mode on Opus 4.8 — security-guidance のみ未反映だったため §4.7 として今回追記
+
+#### スキルエコシステム（Phase 3.5）
+- **kb/skills/_index.md** — `last_patrol: 2026-06-01` に更新。skills.sh のトップ install 数を 1.5M → 1.8M に更新
+- **kb/skills/recommended.md** — `last_checked: 2026-06-01` に更新。`find-skills` の installs 表記を 1.4M → 1.8M に更新
+- 観測: skills.sh トップ 10 の半数近くを Microsoft Azure 系（microsoft-foundry, azure-ai, azure-hosted-copilot-sdk, azure-compute）が占める。Tier B 入りは harness-harness の Azure 関連需要が出てから検討（今回は据え置き）
+- 観測: `anthropics/skills` リポは 8 日で 140K → 145K stars（+5K）。トップレベル構成変更なし
+
+#### キャッシュ
+- **.patrol-cache/url-metadata.json** — w21 / w22 を `published` へ遷移、security-guidance ドキュメント URL を新規登録、スキルエコシステム URL を 2026-06-01 で更新
+
+### 注記
+- 今巡回は新バージョンなし。直近の週次ダイジェスト 2 本（w21 / w22）が遅れて公開されたことで、changelog 項目に対応する「公式が featured とした機能」を再確認できた。security-guidance だけが specs/未反映だったため §4.7 で補完
+- security-guidance プラグインは hook-only 構成のため、harness-harness の create-harness / diagnose-harness フローでフックレビュー機構の reference 実装として参照可能
+
+---
+
 ## 2026-05-31 — 公式ドキュメント巡回（差分のみ）
 
 ### 巡回対象URL
