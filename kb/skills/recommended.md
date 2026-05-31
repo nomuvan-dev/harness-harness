@@ -1,6 +1,6 @@
 ---
 title: 推薦スキル一覧
-last_checked: "2026-04-25"
+last_checked: "2026-06-01"
 tier_a_count: 10
 tier_b_count: 6
 policy: 特定分野に偏らず、多様な分野からバランスよく推薦する
@@ -23,7 +23,7 @@ harness-harness各機能で活用可能なスキル。分野の偏りを避け�
 | **dispatching-parallel-agents** | エージェント協調 | obra/superpowers | research-kb, create-harness | 並列調査・クロスレビューの設計パターン |
 | **using-git-worktrees** | Git運用 | obra/superpowers | 全般 | worktree日常運用のベストプラクティス |
 | **postgres-best-practices** | データベース | コミュニティ | create-harness | インデックス、クエリ最適化、接続プール |
-| **find-skills** | ディスカバリー | vercel-labs (1.4M installs、トップ) | create-harness, patrol-docs | スキル検索・発見ユーティリティ |
+| **find-skills** | ディスカバリー | vercel-labs (1.8M installs、トップ) | create-harness, patrol-docs | スキル検索・発見ユーティリティ |
 
 ## Tier B: ウォッチリスト（条件付き推薦）
 

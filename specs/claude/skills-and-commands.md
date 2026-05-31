@@ -340,6 +340,50 @@ claude plugin init my-plugin    # .claude/skills/my-plugin/ を生成
 
 公式マーケットプレースはデフォルトで自動更新有効。`DISABLE_AUTOUPDATER=1` で全無効化。`FORCE_AUTOUPDATE_PLUGINS=1` でプラグインのみ自動更新維持。
 
+### 4.7 security-guidance プラグイン（公式 / 2026-w22 featured）
+
+公式ドキュメント: https://code.claude.com/docs/en/security-guidance
+
+`claude-plugins-official` 配下の公式プラグイン。Claude のコード変更を 3 段階で自動レビューし、同一セッション内で修正させる。要 v2.1.144 以降 + Python 3.8 以降 + git リポジトリ（end-of-turn / commit レビューのみ git 必須、per-edit パターン照合は git 不要）。
+
+**3 段階レビュー**:
+
+| 段階 | 内容 | モデル呼出 |
+|:--|:--|:--|
+| **per-edit** | `Edit`/`Write`/`NotebookEdit` 後のパターン照合（`eval(`, `new Function`, `pickle`, `dangerouslySetInnerHTML`, `.github/workflows/` 等）| なし（決定的文字列照合）|
+| **end-of-turn** | `Stop` フックで working-tree diff を別 Claude セッションでセキュリティレビュー（バックグラウンド実行）| あり（既定 Opus 4.7、`SECURITY_REVIEW_MODEL` で上書き）|
+| **commit/push** | Claude が `git commit` / `git push` した際に周辺コードを読む agentic レビュー（rolling hour あたり 20 回まで）| あり（既定 Opus 4.7、`SG_AGENTIC_MODEL` で上書き）|
+
+**インストール**:
+
+```text
+/plugin install security-guidance@claude-plugins-official
+/reload-plugins
+```
+
+cloud / 共有レポでは `.claude/settings.json` の `enabledPlugins` で宣言可能。組織横断有効化は managed-settings 経由。
+
+**カスタムルール**:
+
+| ファイル | 用途 |
+|:--|:--|
+| `.claude/claude-security-guidance.md` | model-backed レビュー向けの追加ガイダンス（脅威モデル・チェックリストを自然言語で記述）。user/project/project local 配置可、合計 8 KB まで |
+| `.claude/security-patterns.yaml` | per-edit パターン照合の追加ルール（`rule_name` / `reminder` / `regex` or `substrings` / `paths` / `exclude_paths`）。最大 50 ルール、`.json` 形式も可 |
+
+**レイヤー別無効化（環境変数）**:
+
+| 変数 | 効果 |
+|:--|:--|
+| `ENABLE_PATTERN_RULES=0` | per-edit 無効化 |
+| `ENABLE_STOP_REVIEW=0` | end-of-turn レビュー無効化 |
+| `ENABLE_COMMIT_REVIEW=0` | commit/push レビュー無効化 |
+| `ENABLE_CODE_SECURITY_REVIEW=0` | model-backed レビュー全停止 |
+| `SECURITY_GUIDANCE_DISABLE=1` | プラグイン全停止 |
+
+**実装**: SessionStart / UserPromptSubmit / PostToolUse（Edit/Write/NotebookEdit, Bash filtered to git commit/push）/ Stop の hook 構成のみ。診断ログは `~/.claude/security/log.txt`。harness-harness 側でフック実装の参考になる。
+
+**位置づけ**: 防御の多層化の最も早い層。PR 時の `/code-review`（Team/Enterprise）、CI の静的解析と組み合わせる。プラグインだけでセキュリティを保証するものではない。
+
 ---
 
 ## 5. Agents / Subagents
