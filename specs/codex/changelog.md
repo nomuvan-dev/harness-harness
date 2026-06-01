@@ -3,14 +3,60 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://developers.openai.com/codex/changelog
 
-最終更新: 2026-05-31
+最終更新: 2026-06-02
+
+---
+
+## CLI 0.136.0 (2026-06-01)
+
+- **セッションアーカイブ**: TUI で `/archive`、CLI で `codex archive` / `codex unarchive`。アーカイブ済みセッションは復元するまで resume / fork から保護
+- **TUI Markdown 強化**:
+  - **OSC 8 web リンク**: rich content で外部リンクをクリック可能に保持
+  - **詰まった markdown テーブルを key/value レコード化**: リンクターゲットを保持しつつ可読性を確保
+- **App-server 機能拡張**:
+  - **thread resume に初回ターンページを含める**: 復帰直後にターン履歴が見える
+  - **MCP server status のリッチ化**: `MCP server info` を server status の一部として公開
+  - **`codex app-server --stdio` モード**: stdio 起動エイリアス追加
+- **リモート実行強化**:
+  - **`CODEX_API_KEY` による API キー登録**: 承認済み OpenAI ホスト向けに remote exec-server 登録を許可
+  - **Remote-control websocket を短命サーバートークンへ移行**: 旧 ChatGPT access token を廃止し短命 server tokens を使用
+- **Windows 改善**:
+  - **`codex sandbox setup --elevated`（alpha）**: Windows 管理者向けに sandbox provisioning パスを追加
+  - **Windows sandbox requirements の制約強化**: 許可される Windows サンドボックス実装の requirements サポート
+- **Bedrock 改善**:
+  - **API キー リージョンフォールバック**: 認証時に `AWS_REGION` / `AWS_DEFAULT_REGION` をフォールバック
+  - **GPT モデル を default service tier に制限**: サポート外の Bedrock GPT service tier を広告・送信しない
+  - **カタログ更新**: GPT-5.5 追加、サポート外 OSS モデルを除去
+- **画像生成エクステンション（feature-gated, standalone）**: ネイティブ Codex image artifact completion パイプライン経由で動作
+- **`experimental_request_user_input` 設定トグル追加**
+- **セキュリティ修正**:
+  - **`/diff` でリポジトリ提供 Git ヘルパー / フック実行を防止**
+  - **PowerShell パーサ実行を非 Windows ホストで回避**
+  - **exec-server websocket: Origin ヘッダ付きリクエストを拒否**（ブラウザ起点を排除）
+  - **Sandbox: deny-read 強制を safe-command / approval-bypass 経路でも維持**
+- **認証**:
+  - **ChatGPT access token を 5 分の expiry 前に refresh**
+  - **`refresh_token_reused` 400 を relogin-required として扱う**（汎用エラーに潰さず再ログインを促す）
+- **修正**:
+  - **Vim normal mode 編集の修正**: 既知の編集挙動不正を解消
+  - **複数行 hook 出力を TUI で別行レンダリング**
+  - **Resume 時のプロンプト履歴をセッショントランスクリプトから seed**
+  - **fs/watch debounce のバッチング修正**（後続バッチが正しく debounce）
+  - **standalone web search のアクティビティ表示・復元**
+  - **Linux sandbox: 中断時のシェルクリーンアップを保持**
+  - **Windows sandbox: ネットワーク拒否時にキャンセル**
+- **内部 / 開発**:
+  - **MCP 依存を `rmcp` 1.7.0 に更新**
+  - **Python SDK ベータの配布パスを `pip install openai-codex` に統一**（クイックスタート / API ref / FAQ / 例を刷新、独立リリース可能化）
+  - **Built-in tool schema の説明改善**（shell / Code Mode / MCP / image / goal / plan / multi-agent でデフォルト・オプショナル・境界・enum を明示）
+  - **debug-client（stale app-server デバッグクライアント）削除**
 
 ---
 
 ## CLI 0.136.0-alpha.1 (2026-05-29, プレリリース)
 
-- プレリリース版（GitHub Releases に prerelease タグで公開）。安定版変更点は公開され次第追記する。
-- 安定版の最新は依然 0.135.0。
+- プレリリース版（GitHub Releases に prerelease タグで公開）。安定版 0.136.0 が 2026-06-01 公開されたため、本項は履歴目的で残置。
+- 安定版の主な変更点は 0.136.0 (2026-06-01) 参照。
 
 ---
 

@@ -1,5 +1,37 @@
 # harness-harness 更新履歴
 
+## 2026-06-02 — 公式ドキュメント巡回（差分のみ）
+
+### 巡回対象URL
+- Claude Code: changelog（**新版あり**。v2.1.159 が 2026-05-31 公開）/ `whats-new/2026-w23` 未公開（404 継続）
+- Codex CLI: GitHub Releases（**新版あり**。0.136.0 stable が 2026-06-01 公開、0.135.0 → 0.136.0）
+- スキルエコシステム: 前回 2026-06-01 から 1 日 → Phase 3.5 スキップ（7 日未満）
+
+### 検出された変更と更新内容
+
+#### Claude Code v2.1.159（2026-05-31）
+- **specs/claude/changelog.md** — v2.1.159 を 1 行で追記（内部インフラ改善のみ、ユーザー向け変更なし）。最終更新日を 2026-06-02 に更新
+
+#### Codex CLI 0.136.0 stable（2026-06-01、0.136.0-alpha.1 → stable）
+- **specs/codex/changelog.md** — 0.136.0 stable セクションを新設。0.136.0-alpha.1 は履歴目的で残置し stable への参照リンクを追加。最終更新日を 2026-06-02 に更新
+  - 主要新機能: セッションアーカイブ（`/archive` / `codex archive` / `codex unarchive`）、TUI Markdown 強化（OSC 8 リンク・key/value テーブル）、`codex app-server --stdio`、`CODEX_API_KEY` リモート登録、Windows `codex sandbox setup --elevated`（alpha）、feature-gated standalone 画像生成 ext、Bedrock GPT-5.5 + API キー region フォールバック、`experimental_request_user_input` トグル
+  - 主要セキュリティ修正: `/diff` でリポジトリ提供 Git ヘルパー実行を防止、PowerShell パーサ実行を非 Windows で回避、exec-server websocket Origin ヘッダ拒否、sandbox deny-read を safe-command / approval-bypass 経路でも維持
+  - 認証: ChatGPT access token を 5 分 expiry 前に refresh、`refresh_token_reused` を relogin-required として扱う
+- **specs/codex/commands.md** — `/archive` を 1.4 セッション管理表に追加（CLI 等価 `codex archive` / `codex unarchive` を併記）。最終更新日を 2026-06-02 に更新
+
+#### スキルエコシステム（Phase 3.5）
+- スキップ（`kb/skills/_index.md` の `last_patrol: 2026-06-01` から 1 日経過のみ、7 日未満）
+
+#### キャッシュ
+- **.patrol-cache/url-metadata.json** — `last_patrol` を 2026-06-02 に更新。Claude Code changelog と Codex Releases の `status` を `changed` へ遷移し、検出した新版の要点を `notes` に記録
+
+### 注記
+- Codex 0.136.0 は alpha.1 から stable への昇格で、安定版変更点が公開された。`/archive` という新規ユーザー機能が増えたため commands.md へも反映
+- Claude Code v2.1.159 は内部のみで仕様反映なし（changelog 1 行のみ）。w23 ダイジェスト未公開のためレビュー対象なし
+- mapping/ への影響なし（Codex 側の `/archive` は Claude Code に直接対応する機能がなく、変換ルール変更不要）
+
+---
+
 ## 2026-06-01 — 公式ドキュメント巡回（差分のみ）
 
 ### 巡回対象URL
