@@ -3,7 +3,21 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-06-02
+最終更新: 2026-06-03
+
+---
+
+## v2.1.160 (2026-06-02)
+
+- **シェル起動ファイル書き込み時のセキュリティプロンプト追加**: `.zshenv` / `.zlogin` / `.bash_login` および `~/.config/git/` への書き込み前に確認を求める
+- **`acceptEdits` モードのビルドツール設定ファイル保護拡張**: コード実行を許可しうる設定ファイル (`.npmrc`, `.yarnrc*`, `bunfig.toml`, `.bazelrc`, `.pre-commit-config.yaml`, `.devcontainer/` 等) への書き込み前にプロンプト
+- **Dynamic workflow トリガーキーワード変更**: `workflow` → `ultracode` にリネーム。`/config` の Workflow keyword trigger 設定も `ultracode` ベースに
+- **`CLAUDE_CODE_OPUS_4_6_FAST_MODE_OVERRIDE` 環境変数を削除**: no-op 化（v2.1.154 で非推奨化済み）。Opus 4.6 で fast mode を使うには `/model claude-opus-4-6[1m]` → `/fast on`
+- **Edit の read-before-edit 制約を緩和**: 単一ファイルに対する `grep` / `egrep` / `fgrep` コマンドが read 済みとみなされ、別途 `Read` が不要に
+- **WSL クリップボード修正**: copy-on-select が Windows クリップボードへ書き込まれない問題を修正（OSC 52 ではなく PowerShell interop を使用）
+- **`claude agents` セッション復元修正**: 完了済みセッションの復元時にチャット履歴が失われ元プロンプトが再実行される問題を修正
+- **バックグラウンドセッション再アタッチ修正**: 夜間 retire 後の再アタッチで会話が失われる問題を修正
+- バックグラウンドデーモン、agents 一覧、ターミナル応答性の各種安定化修正
 
 ---
 
