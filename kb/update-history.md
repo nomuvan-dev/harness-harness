@@ -1,5 +1,36 @@
 # harness-harness 更新履歴
 
+## 2026-06-03 — 公式ドキュメント巡回（差分のみ）
+
+### 巡回対象URL
+- Claude Code: changelog（**新版あり**。v2.1.160 が 2026-06-02 公開）/ `whats-new/2026-w23` 未公開（404 継続）
+- Codex CLI: GitHub Releases（**新版なし**。0.136.0 stable 2026-06-01 が最新のまま）
+- スキルエコシステム: 前回 2026-06-01 から 2 日 → Phase 3.5 スキップ（7 日未満）
+
+### 検出された変更と更新内容
+
+#### Claude Code v2.1.160（2026-06-02）
+- **specs/claude/changelog.md** — v2.1.160 セクション新設。最終更新日を 2026-06-03 に更新
+  - 主要新機能・変更: シェル起動ファイル (`.zshenv` / `.zlogin` / `.bash_login`) と `~/.config/git/` への書き込みプロンプト追加、`acceptEdits` モードでビルドツール設定ファイル (`.npmrc`, `.yarnrc*`, `bunfig.toml`, `.bazelrc`, `.pre-commit-config.yaml`, `.devcontainer/` 等) プロンプト追加、Dynamic workflow トリガーキーワード `workflow` → `ultracode` リネーム、`CLAUDE_CODE_OPUS_4_6_FAST_MODE_OVERRIDE` 環境変数削除、Edit の read-before-edit を単一ファイル `grep`/`egrep`/`fgrep` でも満たすよう緩和
+  - 主要バグ修正: WSL の copy-on-select クリップボード（PowerShell interop 化）、`claude agents` セッション復元時の履歴喪失、バックグラウンドセッション夜間 retire 再アタッチ
+- **specs/claude/configuration.md** — `CLAUDE_CODE_OPUS_4_6_FAST_MODE_OVERRIDE` を v2.1.160 削除（no-op）として注記。Workflow キーワードトリガー注記に `workflow` → `ultracode` リネーム追記
+- **specs/claude/skills-and-commands.md** — `/workflows` 行にトリガーキーワード `ultracode` リネーム追記
+
+#### Codex CLI
+- 変更なし（0.136.0 stable 2026-06-01 が最新のまま、0.137.x の alpha 等はまだ未公開）
+
+#### スキルエコシステム（Phase 3.5）
+- スキップ（`kb/skills/_index.md` の `last_patrol: 2026-06-01` から 2 日経過のみ、7 日未満）
+
+#### キャッシュ
+- **.patrol-cache/url-metadata.json** — `last_patrol` を 2026-06-03 に更新。Claude Code changelog の `status` を `changed` へ遷移し、v2.1.160 検出要点を `notes` に記録。Codex Releases は `no_change` で notes 更新のみ
+
+### 注記
+- v2.1.160 はセキュリティ・体験改善が中心の比較的大きなリリース。`workflow` キーワードのリネームは既存ユーザーの筋肉記憶に影響するため、specs 3 箇所（changelog / configuration / skills-and-commands）で明記
+- mapping/ への影響なし（Codex 側に対応概念がないため）
+
+---
+
 ## 2026-06-02 — 公式ドキュメント巡回（差分のみ）
 
 ### 巡回対象URL
