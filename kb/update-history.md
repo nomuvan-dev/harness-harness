@@ -1,5 +1,42 @@
 # harness-harness 更新履歴
 
+## 2026-06-04 — 公式ドキュメント巡回（差分のみ）
+
+### 巡回対象URL
+- Claude Code: changelog（**新版あり**。v2.1.161 が 2026-06-02 公開）/ `whats-new/2026-w23` 未公開（404 継続）
+- Codex CLI: GitHub Releases（**新版あり**。0.137.0-alpha.4 と alpha.5 が 2026-06-03 公開、0.136.0 stable 以降のプレリリース系列）
+- スキルエコシステム: 前回 2026-06-01 から 3 日 → Phase 3.5 スキップ（7 日未満）
+
+### 検出された変更と更新内容
+
+#### Claude Code v2.1.161（2026-06-02）
+- **specs/claude/changelog.md** — v2.1.161 セクション新設。最終更新日を 2026-06-04 に更新
+  - 主要新機能・変更: `OTEL_RESOURCE_ATTRIBUTES` をメトリクスのラベル化（Team/Repo スライス）、`claude agents` 行で `done/total` 表示・peek で最長実行中表示、`/mcp` 未使用 claude.ai connector 折りたたみ、並列ツール実行の独立化（Bash 失敗が他をキャンセルしない）、Linux fullscreen クリップボード `wl-copy`/`xclip`/`xsel` + PRIMARY、`/effort` ダイアログ・ワークフローアニメーション・プロンプトキーワード shimmer の Reduce motion 遵守
+  - 主要セキュリティ修正: `claude mcp list`/`get`/`add` がシークレットを出力する問題を修正（`${VAR}` 非展開・認証ヘッダー/URL 内シークレット redact）
+  - 主要バグ修正: `forceLoginOrgUUID`/`forceLoginMethod` のサードパーティプロバイダブロック（v2.1.146 リグレッション）、`/usage-credits` の Team/Enterprise admin 再ログイン誤動作、`/autofix-pr` の git worktree 内誤検知、`--resume` ピッカーの非 worktree 環境表示、Workflow `isolation: "worktree"` のバックグラウンドセッション編集ブロック、Windows hooks の `/usr/bin/bash` 明示失敗、OTEL ログイベント初期化前の silent drop、バックグラウンドセッションの stale モデル、`.claude/worktrees/` オーファンスイープ
+- **specs/claude/configuration.md** — `OTEL_RESOURCE_ATTRIBUTES` をメトリクスラベル用途として行追加。`forceLoginOrgUUID` / `forceLoginMethod` 行に v2.1.146〜v2.1.160 リグレッション修正注記
+- **specs/claude/mcp.md** — §3.2 に v2.1.161 シークレット redaction（`claude mcp list`/`get`/`add`）と `/mcp` connector 折りたたみを記録。最終更新日を 2026-06-04 に更新
+- **specs/claude/skills-and-commands.md** — `/effort` 行に Reduce motion 遵守、`/mcp` 行に connector 折りたたみ、`/usage-credits` 行に Team/Enterprise admin 修正を追記。最終更新日を 2026-06-04 に更新
+
+#### Codex CLI 0.137.0-alpha.4 / alpha.5（2026-06-03、プレリリース）
+- **specs/codex/changelog.md** — 0.137.0-alpha.4 / alpha.5 セクションを新設（リリースノートが空のため `main` ブランチコミットから整理）。最終更新日を 2026-06-04 に更新
+  - 主要新機能（3 大テーマ）: **v1 Skills 拡張**（per-turn カタログ解決、プロンプト注入、scaffold、manifest 検証）、**Multi-Agent v2（MAv2）dogfood デフォルト化**（`assign_task`→`followup_task` 改名、`close_agent` 自己ターゲット拒否、`hide_spawn_agent_metadata` デフォルト `true`、per-thread runtime metadata）、**Cloud config bundle 大規模リファクタ**（EDU 取得、MITM CA trust 子環境伝達、runtime 切替）
+  - その他: Goal 拡張（idle continuation、GoalApi、`/goal edit` 複数行ペースト修正、ステアリングテンプレ化）、remote-control RPCs + pairing start + `environmentId`、TUI F1〜F24 キーマップ、検索可能セレクションメニューでペースト許可、standalone 画像生成を Code Mode で公開、並列 standalone web search、コールド rollout 圧縮 + counters/histograms + スニペット再利用、Windows BuildBuddy Bazel wrapper・UAC マニフェスト・PDB staging・thread resume パス修正
+  - 補足: 公式リリースノートは空、安定版 0.137.0 リリース時に内容を再確認・統合する旨を specs に明記
+
+#### スキルエコシステム（Phase 3.5）
+- スキップ（`kb/skills/_index.md` の `last_patrol: 2026-06-01` から 3 日経過のみ、7 日未満）
+
+#### キャッシュ
+- **.patrol-cache/url-metadata.json** — `last_patrol` を 2026-06-04 に更新。Claude Code changelog / Codex Releases / settings.md / env-vars / commands / mcp.md の `status` を `changed` へ遷移し、v2.1.161 と 0.137.0-alpha 検出要点を `notes` に記録
+
+### 注記
+- v2.1.161 はテレメトリ強化（OTEL_RESOURCE_ATTRIBUTES）、アクセシビリティ向上（Reduce motion 遵守）、セキュリティ修正（mcp コマンドのシークレット redact）、リグレッション修正（v2.1.146 Bedrock/Vertex/Foundry/Mantle ブロック）が主軸の堅実なリリース
+- 0.137.0-alpha 系は Codex CLI の構造的進化（Skills 拡張による per-turn カタログ注入、MAv2 dogfood デフォルト化、cloud config bundle への基盤移行）が同時進行する大型シリーズ。安定版 0.137.0 リリース時に specs/codex/changelog.md を再整理する余地あり
+- mapping/ への影響は限定的: Codex の Skills 拡張は Claude Code の `.claude/skills/` plugin autoload（v2.1.157）と概念的に近接。MAv2 は Claude Code の Dynamic workflows（v2.1.154）と用途が重なる。両者の対応関係は安定版 0.137.0 確定後に整理予定
+
+---
+
 ## 2026-06-03 — 公式ドキュメント巡回（差分のみ）
 
 ### 巡回対象URL

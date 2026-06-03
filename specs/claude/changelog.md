@@ -3,7 +3,29 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-06-03
+最終更新: 2026-06-04
+
+---
+
+## v2.1.161 (2026-06-02)
+
+- **`OTEL_RESOURCE_ATTRIBUTES` をメトリクスのラベル化**: `OTEL_RESOURCE_ATTRIBUTES` で渡した属性（team, repo 等）をメトリクスデータポイントのラベルとして添付。Team / Repo 別カスタムディメンションでのスライス分析が可能
+- **`claude agents` ビュー改善**: 行表示で `done/total`（fan-out された作業の進捗）を詳細より前に表示。peek は最長実行中の項目を表示
+- **`/mcp` で未使用 connector 折りたたみ**: 未使用 claude.ai connectors を「Show unused connectors」の下に折りたたみ、表示を整理
+- **並列ツール実行の独立化**: 同一バッチ内の Bash コマンドが失敗しても他の並列ツール呼び出しがキャンセルされず、それぞれ独立して結果を返すように
+- **Linux fullscreen クリップボード強化**: `wl-copy` / `xclip` / `xsel` が利用可能なら使用。クリップボードと PRIMARY selection の両方にコピーし、ミドルクリック貼り付けに対応。「hold `{key}` for native selection」ヒントをターミナル別に正しく表示
+- **アクセシビリティ「Reduce motion」遵守**: `/effort` ダイアログ、ワークフロー アニメーション、プロンプトキーワード shimmer がいずれも「Reduce motion」設定を尊重するよう修正
+- **セキュリティ**: `claude mcp list` / `get` / `add` がシークレットを出力する問題を修正 — `${VAR}` 参照は展開せず、認証ヘッダーや URL 中のシークレットを redact
+- **Managed settings 修正**: `forceLoginOrgUUID` / `forceLoginMethod` が組織 pin と並んで Bedrock / Vertex / Foundry / Mantle のサードパーティプロバイダセッションをブロックしていた問題（v2.1.146 のリグレッション）を修正
+- **`/usage-credits` 修正**: Team / Enterprise admin に対して再ログインを開始する代わりに、組織 usage settings ページへ案内するように
+- **`/autofix-pr` worktree 対応**: git worktree 内で「cannot run on default branch」が誤報告される問題を修正
+- **`--resume` ピッカー修正**: カレントディレクトリが git worktree でない場合にセッションが表示されなかった問題を修正
+- **Workflow worktree 隔離修正**: `isolation: "worktree"` 指定の Workflow エージェントが、バックグラウンドセッションで worktree ファイルの編集をブロックされていた問題を修正
+- **バックグラウンドセッション**: デーモン環境のモデルではなく `settings.json` のモデルを使うように修正。`.claude/worktrees/` 配下の 30 日保持スイープで残るオーファン worktree を修正。`--output-format text` / `json` 利用時に `claude -p` の stdout がサブエージェント出力で汚染される問題を修正
+- **Windows hooks 修正**: `/usr/bin/bash script.sh` のように bash を明示する Windows hooks が「command not found」で失敗する問題を修正
+- **OpenTelemetry 修正**: テレメトリ初期化前の `user_prompt` / `api_request` / `tool_result` / `tool_decision` ログイベントが silently drop される問題を修正
+- **パフォーマンス**: ターミナルレンダリングのレイアウトエンジン JIT プロファイル安定化、大きなファイル書き込み時の描画性能改善
+- **VS Code 統合**: garbled glyph 対策としてターミナル GPU acceleration 無効化のヒントを追加
 
 ---
 

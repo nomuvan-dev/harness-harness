@@ -1,6 +1,6 @@
 # Claude Code 設定仕様書
 
-最終更新: 2026-05-31（巡回更新）
+最終更新: 2026-06-04（巡回更新）
 
 公式ドキュメント: https://code.claude.com/docs/en/settings / https://code.claude.com/docs/en/memory
 
@@ -137,8 +137,8 @@ CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ../shared-config
 | `cleanupPeriodDays` | セッション保持日数（デフォルト: 30）。`0` は全トランスクリプト削除+永続化無効。検証エラーで拒否されなくなった（v2.1.89で `0` の動作変更）。v2.1.117 で `~/.claude/tasks/`、`~/.claude/shell-snapshots/`、`~/.claude/backups/` もスイープ対象に拡張 |
 | `showThinkingSummaries` | thinking summariesの表示（v2.1.89でデフォルト `false` に変更。`true` で復元） |
 | `companyAnnouncements` | 起動時通知メッセージ |
-| `forceLoginMethod` | ログイン方式強制（`claudeai` / `console`） |
-| `forceLoginOrgUUID` | 組織UUID強制選択 |
+| `forceLoginMethod` | ログイン方式強制（`claudeai` / `console`）。v2.1.146〜v2.1.160 で Bedrock / Vertex / Foundry / Mantle のサードパーティプロバイダセッションが組織 pin と並んでブロックされるリグレッションあり。**v2.1.161 で修正済** |
+| `forceLoginOrgUUID` | 組織UUID強制選択。同上のリグレッションが v2.1.146〜v2.1.160 にあり、**v2.1.161 で修正済** |
 | `enableAllProjectMcpServers` | プロジェクトMCPサーバー全自動承認 |
 | `enabledMcpjsonServers` | 承認するMCPサーバーリスト |
 | `disabledMcpjsonServers` | 拒否するMCPサーバーリスト |
@@ -389,6 +389,7 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 | `CLAUDE_CODE_STOP_HOOK_BLOCK_CAP` | stop hook の連続ブロック上限を変更。デフォルト 8 回（v2.1.143） |
 | `OTEL_METRICS_INCLUDE_ENTRYPOINT` | `true` でセッションエントリポイントを OpenTelemetry メトリクスに `app.entrypoint` 属性として追加（v2.1.152） |
 | `CLAUDE_CODE_ENABLE_AUTO_MODE` | `1` で Bedrock / Vertex / Foundry の Opus 4.7 / 4.8 ユーザーが Auto mode に opt-in（v2.1.158） |
+| `OTEL_RESOURCE_ATTRIBUTES` | （標準 OTEL 変数）v2.1.161 から、ここで指定した属性（`team=foo,repo=bar` 等）が OpenTelemetry メトリクスデータポイントのラベルとして添付され、Team / Repo 別カスタムディメンションでのスライス分析が可能 |
 
 > 補足: `OTEL_LOG_TOOL_DETAILS=1` は v2.1.157 で `tool_decision` イベントに `tool_parameters`（bash コマンド、MCP/skill 名等）を追加する効果も併せ持つようになった。
 
