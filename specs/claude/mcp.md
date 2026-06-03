@@ -1,6 +1,6 @@
 # Claude Code MCP 仕様書
 
-最終更新: 2026-05-13（巡回更新）
+最終更新: 2026-06-04（巡回更新）
 
 公式ドキュメント: https://code.claude.com/docs/en/mcp
 
@@ -101,6 +101,10 @@ claude mcp reset-project-choices
 ```
 
 v2.1.154: `claude mcp list` / `get` の出力がパイプされた場合、未承認の `.mcp.json` サーバーは自動承認・接続せず `⏸ Pending approval` 表示となる。Stdio MCP サーバーサブプロセスには `CLAUDE_CODE_SESSION_ID` と `CLAUDECODE=1` 環境変数が渡される。
+
+**v2.1.161 のシークレット保護強化**: `claude mcp list` / `get` / `add` がサーバー定義を出力する際、`${VAR}` 環境変数参照は展開されずそのまま表示される。さらに認証ヘッダー（`Authorization` 等）や URL に埋め込まれたシークレットは redact 表示される。CI ログや支援用 paste でのシークレット漏洩を防止。
+
+セッション内 `/mcp` コマンド: v2.1.161 から、未使用の claude.ai connector は「Show unused connectors」行の下に折りたたまれ、有効な接続のみが既定で展開表示される。
 
 ### 3.3 JSON ファイルによる設定
 

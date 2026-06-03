@@ -1,6 +1,6 @@
 # Claude Code Skills & コマンド仕様書
 
-最終更新: 2026-05-31（巡回更新）
+最終更新: 2026-06-04（巡回更新）
 
 公式ドキュメント: https://code.claude.com/docs/en/skills / https://code.claude.com/docs/en/commands / https://code.claude.com/docs/en/sub-agents / https://code.claude.com/docs/en/scheduled-tasks / https://code.claude.com/docs/en/web-scheduled-tasks / https://code.claude.com/docs/en/discover-plugins
 
@@ -180,17 +180,17 @@ Claude Code に同梱されるスキル:
 | `/permissions` (`/allowed-tools`) | 権限設定 |
 | `/fast [on\|off]` | Fastモードトグル |
 | `/model [model]` | モデル変更（v2.1.144 から現在セッションにのみ適用。新規セッションのデフォルト変更はピッカーで `d` キー） |
-| `/effort [level]` | エフォートレベル設定。v2.1.154 でスライダのラベルが「Speed」/「Intelligence」→「Faster」/「Smarter」に変更 |
+| `/effort [level]` | エフォートレベル設定。v2.1.154 でスライダのラベルが「Speed」/「Intelligence」→「Faster」/「Smarter」に変更。v2.1.161 でダイアログが「Reduce motion」アクセシビリティ設定を尊重 |
 | `/memory` | CLAUDE.md/オートメモリ管理 |
 | `/hooks` | フック設定表示 |
-| `/mcp` | MCPサーバー管理 |
+| `/mcp` | MCPサーバー管理。v2.1.161 で未使用 claude.ai connector を「Show unused connectors」の下に折りたたみ表示に変更 |
 | `/status` | ステータス表示 |
 | `/context` | コンテキスト使用量の可視化 |
 | `/usage` | 使用量・統計を統合表示（v2.1.118 で `/cost` と `/stats` を `/usage` に統合。両コマンドはタイピングショートカットとして残存、対応タブを開く。v2.1.149 で制限使用量を駆動する要因（skills / subagents / plugins / MCPサーバー単位のコスト）のカテゴリ別内訳を表示） |
 | `/cost` | `/usage` のトークン使用量タブを開くショートカット |
 | `/stats` | `/usage` の日次使用量・セッション履歴タブを開くショートカット |
 | `/insights` | セッション分析レポート（プロジェクト領域、操作パターン、摩擦点） |
-| `/usage-credits` | 追加使用量情報（v2.1.113 で Remote Control クライアントからも利用可能に。v2.1.144 で `/extra-usage` から改名、旧名もエイリアスとして残存） |
+| `/usage-credits` | 追加使用量情報（v2.1.113 で Remote Control クライアントからも利用可能に。v2.1.144 で `/extra-usage` から改名、旧名もエイリアスとして残存。v2.1.161 で Team / Enterprise admin に再ログインを開始する代わりに組織 usage settings ページへ案内するよう修正） |
 | `/tui` | フリッカーフリー・フルスクリーン描画の切り替え（v2.1.110） |
 | `/focus` | フォーカスモード切替（v2.1.110。brief・focus モードは v2.1.101 で改善） |
 

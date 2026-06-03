@@ -3,7 +3,97 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://developers.openai.com/codex/changelog
 
-最終更新: 2026-06-02
+最終更新: 2026-06-04
+
+---
+
+## CLI 0.137.0-alpha.4 / .5 (2026-06-03, プレリリース)
+
+GitHub Releases に `rust-v0.137.0-alpha.4`（2026-06-03 01:26 UTC）と `rust-v0.137.0-alpha.5`（2026-06-03 17:23 UTC）が公開。リリースノートは空のため、`rust-v0.136.0 stable` (2026-06-01) 以降の `main` ブランチコミットから主要なユーザー向け変更点を整理。安定版 0.137.0 リリース時に内容を再確認・統合する。
+
+### Skills 拡張機能（新規）
+
+- **v1 Skills 拡張プロンプト注入**: ターン入力コンテキストからスキルカタログを per-turn 解決し、関連スキルの SKILL.md をプロンプトに注入する仕組み（拡張機能ベース）
+- **拡張機能 turn-input contributors**: 拡張機能がターン入力に文脈を寄与できる汎用フレームワーク
+- **Skills 拡張スキャフォールド** および **拡張機能の context-fragments クレート分離**
+
+### Multi-Agent v2（MAv2、dogfood デフォルト）
+
+- **MAv2 を dogfood デフォルトに設定**
+- **`assign_task` を `followup_task` に改名**
+- **`close_agent` の自己ターゲット指定を拒否**
+- **`hide_spawn_agent_metadata` デフォルトを `true` に変更**: spawn_agent のメタデータ表示を既定で隠す
+- **MAv2 runtime metadata**: 種類、永続化、per-thread 解決、selector override 対応
+- **Codex turn events に workspace kind を伝搬**
+
+### Goal 拡張
+
+- **idle continuation**: ゴール継続時に idle ターンを注入（Plan-mode ゲート撤廃）
+- **GoalApi 追加**
+- **goal progress accounting のシリアライズ修正**
+- **/goal edit の複数行ペースト修正**
+- **goal steering プロンプトをテンプレート化**
+
+### Remote control / app-server / Cloud config bundle
+
+- **remote-control に client management RPCs 追加**（app-server）
+- **remote-control ペアリング開始（pairing start）追加**
+- **request_permissions に environmentId 追加**、environment 単位での grant key 化
+- **app-server: 環境パス参照（environment path refs）追加**
+- **app-server: 実験的 `persist_extended_history` bool flag を削除**（汎用化に統合）
+- **Cloud config bundle**: 設定をクラウド管理 layer に移行する大規模リファクタ。requirements layer の合成、bundle transport types、サービスモジュール分割、EDU アカウントでも bundle 取得可能
+- **runtime を cloud config bundle に切替**
+- **app-server: websocket 無効時の startup prewarm をスキップ**
+
+### TUI / コマンド改善
+
+- **検索可能セレクションメニューでペースト許可**
+- **TUI: 関数キー F1〜F24 をキーマップで使用可能に**
+- **スラッシュポップアップ: フィルタ変更時に選択をリセット**
+- **TUI: 中断したプロンプトの出力なし表示を復元**
+- **reasoning-only ステータスサーフェスアイテムを追加**
+- **TUI: フッターショートカットオーバーレイヒントの文言を明確化**
+- **standalone web search 並列実行を有効化**
+- **standalone 画像生成を Code Mode で公開**（host finalization md 経由）
+
+### Sandbox / セキュリティ / 認証
+
+- **暗黙の sandbox デフォルトを permission profile から導出**: ビルトイン権限プロファイルを raw policies から派生
+- **MITM CA trust を子環境に伝達**（管理 CA 対応）
+- **dead profile sandbox fallback を削除**
+- **exec-server: バインドされたファイルシステムパスを canonicalize**
+- **MAv2 connector レベル Guardian reviewer オーバーライド**
+- **EDU アカウントが cloud config bundle を取得可能に**
+- **Codex async main を sized stack で実行**: セッション起動・config rebuild のスタック圧迫を軽減
+
+### Plugins / 補助
+
+- **プラグイン skill の base name を検証**
+- **インストール済みローカル/リモートのキュレートプラグインを重複排除**
+- **リモートプラグインカタログをサジェストのためにキャッシュ**
+- **プラグインリストの JSON 出力対応**
+- **無効なプラグイン skills manifest フィールドのハンドリング**
+- **macOS で codex アプリのパスにディープリンクを使用**
+
+### コールド rollout 圧縮（パフォーマンス）
+
+- **コールドローカル rollout を圧縮**: append 前に materialize し読み取り、並列圧縮、繰り返し走行のスロットル化
+- **rollout 圧縮 counters / histograms 追加**
+- **圧縮済み rollout の検索スニペット再利用**
+
+### 修正
+
+- **Vim の複数行ペースト** が `/goal edit` で機能しない問題
+- **named thread タイトル**が reconciliation で上書きされる問題
+- **Windows**: thread resume パス正規化、PDB staging、BuildBuddy Bazel wrapper 実行、setup helper の UAC マニフェスト復元
+- **Linux exec-server / app-server**: SQLite intrinsics を Windows x64 で無効化、git CLI 経由の Cargo fetch
+- **/diff の git enrichment ガード**
+- **codex exec で auto-review approval policy を保持**
+
+### 補足
+
+- 0.137.0-alpha.4 と alpha.5 は同日リリース。alpha.4 〜 alpha.5 間の差分は MAv2 final touches（`close_agent` self-target 拒否、v1 skills 拡張プロンプト注入、ゴール進捗シリアライズ、複数行ペースト、git enrichment ガード等）と内部リファクタが中心
+- スキル拡張機能・MAv2 のデフォルト化・cloud config bundle が 0.137.0 系の 3 大テーマ
 
 ---
 
