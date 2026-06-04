@@ -3,7 +3,30 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-06-04
+最終更新: 2026-06-05
+
+---
+
+## v2.1.162 (2026-06-03)
+
+- **`claude agents --json` に `waitingFor` フィールド追加**: 待機中セッションが何を待っているかを構造化出力に含める
+- **ネイティブビルドでの Grep/Glob 提供**: `--tools` で明示的に列挙された場合、ネイティブ build (embedded search) でも Grep / Glob を提供
+- **`/effort` 永続化確認**: 選択したレベルが新規セッションのデフォルトとして保存される旨を確認表示
+- **スラッシュコマンドのオートコンプリート挙動変更**: 補完候補は即実行せずプロンプトに挿入。Enter で実行
+- **Remote Control 表示形式変更**: 起動時メッセージではなく永続フッターピルとして表示
+- **`Windsurf` → `Devin Desktop` リネーム**: CLI 全体で名称統一
+- **起動時の出力削減**: 通知をグループ化、セッション情報を圧縮表示。「Claude in Chrome enabled」「marketplace installed」起動メッセージを削除
+- **Launch-prompt 警告の挙動変更**: 入力欄下部に対応されるまでピン留め
+- **失敗ターン表示**: 複数行エラーブロックではなくコンパクトな警告表示
+- **`claude update` の起動検証強化**: バックグラウンドサービス開始フローを改善
+- **セキュリティ**: `WebFetch` パーミッションルールが事前承認ドメイン (preapproved domains) に対して適用されない問題を修正。明示的ルールが事前承認に優先するように
+- **セキュリティ**: Windows でバックスラッシュ / 大文字小文字違いを含むパーミッションルールがマッチしない問題を修正。`Read` deny ルールが Glob/Grep からも該当ファイルを隠すように
+- **割り込み修正**: ターン開始時の Esc 割り込みが `stream-json` / SDK セッションで silently drop される問題を修正
+- **API エラー修正**: 切り詰め境界付近の絵文字を含む classifier クエリで `no low surrogate` API 400 エラーを修正
+- **MCP timeout 修正**: 1000ms 未満の MCP `timeout` が 1 秒の watchdog に floor される問題を修正（無視して env/default にフォールバック）
+- **LSP `workspaceSymbol` 修正**: 結果が空になる問題を修正。`query` パラメータを受け付けるように
+- **`claude agents` 表示修正**: 60〜120 columns でステータステキストが切られる問題を修正（フル幅利用）。40 columns でセッション名が切られる問題を修正。Ctrl+V 画像ペーストが反応しない問題を修正
+- **バックグラウンドセッション修正**: サービス起動失敗時に会話を無音で失う問題を修正。エージェントビューで失敗した返信を queue するように修正。深い `CLAUDE_CODE_TMPDIR` でクロスセッション `SendMessage` が壊れる問題を修正。実行中のバックグラウンドセッションを開く際の 5 秒 stall を修正
 
 ---
 

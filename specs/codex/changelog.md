@@ -3,13 +3,55 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://developers.openai.com/codex/changelog
 
-最終更新: 2026-06-04
+最終更新: 2026-06-05
+
+---
+
+## CLI 0.138.0-alpha.1 / .2 (2026-06-04, プレリリース)
+
+GitHub Releases に `rust-v0.138.0-alpha.1`（2026-06-04 05:02 UTC）と `rust-v0.138.0-alpha.2`（2026-06-04 17:26 UTC）が公開。リリースノートは空のため、0.137.0 stable 以降の `main` ブランチコミットから主要なユーザー向け変更点を整理。安定版 0.138.0 リリース時に内容を再確認・統合する。
+
+### Code mode
+
+- **ローカル画像パスをモデルに公開**: `code-mode` でモデルがローカル画像パスを参照できるよう公開（Windows 含むカバレッジ復元）
+- **Bazel 設定の Codex worktree 内コピー**: ユーザーの Bazel 設定を Codex worktree にコピー（再現性向上）
+
+### Multi-Agent v2
+
+- **MAv2 設定のカタログ化** (`feat: catalog multi-agent v2 config`): MAv2 関連設定をカタログとして管理する仕組みを追加
+- **MAv2 プロンプトの微調整** (`nit: small prompt update for MAv2`)
+
+### Plugins / Goal 拡張
+
+- **リモートプラグインのデフォルトプロンプトを保持**: リモート読み込み時に default prompts が消えないよう修正
+- **`/goal edit` の複数行ペースト修正**（再修正）
+
+### App-server / Account session
+
+- **app-server account session プロトコル追加 (1/2)**: profile-switcher の前段として account session 切り替え RPC をアプリサーバに導入
+
+### コア / リモート圧縮
+
+- **`SandboxPolicy` を `exec` に通さない**: コア API のシグネチャ整理。`exec` 経路から `SandboxPolicy` を排除
+- **リモート圧縮時にオーバーサイズ tool output を書き換え**: cold rollout / リモート圧縮フローで巨大ツール出力を縮約
+
+### その他修正
+
+- **Git enrichment ガード**: `/diff` 等の git enrichment 経路をガードして例外時にハングしないよう保護
+- **`codex-pr-body`: 機密参照を回避**: PR 本文生成時に confidential references を含めないよう除外
+- **fork スレッド名の継承を修正**
+
+---
+
+## CLI 0.137.0 stable (2026-06-04)
+
+`rust-v0.137.0` stable がリリース (2026-06-04 01:17 UTC)。リリースノート本文は空。直前の `rust-v0.137.0-alpha.5` と内容差は無く、`alpha.4` / `alpha.5` の節で記載した全変更点（v1 Skills 拡張、MAv2 dogfood デフォルト、Goal 拡張、Remote Control、app-server、Cloud config bundle、TUI 改善、Windows BuildBuddy/UAC manifest 等）がそのまま 0.137.0 として安定版化された。詳細は次節（`alpha.4 / .5`）を参照。
 
 ---
 
 ## CLI 0.137.0-alpha.4 / .5 (2026-06-03, プレリリース)
 
-GitHub Releases に `rust-v0.137.0-alpha.4`（2026-06-03 01:26 UTC）と `rust-v0.137.0-alpha.5`（2026-06-03 17:23 UTC）が公開。リリースノートは空のため、`rust-v0.136.0 stable` (2026-06-01) 以降の `main` ブランチコミットから主要なユーザー向け変更点を整理。安定版 0.137.0 リリース時に内容を再確認・統合する。
+GitHub Releases に `rust-v0.137.0-alpha.4`（2026-06-03 01:26 UTC）と `rust-v0.137.0-alpha.5`（2026-06-03 17:23 UTC）が公開。リリースノートは空のため、`rust-v0.136.0 stable` (2026-06-01) 以降の `main` ブランチコミットから主要なユーザー向け変更点を整理。安定版 `0.137.0` (2026-06-04) で同内容が確定。
 
 ### Skills 拡張機能（新規）
 

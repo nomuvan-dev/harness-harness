@@ -1,5 +1,38 @@
 # harness-harness 更新履歴
 
+## 2026-06-05 — 公式ドキュメント巡回（差分のみ）
+
+### 巡回対象URL
+- Claude Code: changelog（**新版あり**。v2.1.162 が 2026-06-03 公開）/ `whats-new/2026-w23` 未公開（404 継続。w23 は 2026-06-01〜05 範囲）
+- Codex CLI: GitHub Releases（**新版あり**。0.137.0 stable が 2026-06-04 公開、0.138.0-alpha.1 と alpha.2 が同 2026-06-04 公開）
+- スキルエコシステム: 前回 2026-06-01 から 4 日 → Phase 3.5 スキップ（7 日未満）
+
+### 検出された変更と更新内容
+
+#### Claude Code v2.1.162（2026-06-03）
+- **specs/claude/changelog.md** — v2.1.162 セクション新設。最終更新日を 2026-06-05 に更新
+  - 主要新機能・改善: `claude agents --json` に `waitingFor` フィールド追加、ネイティブビルドで `--tools` 指定時に Grep / Glob 提供、`/effort` 永続化確認、スラッシュコマンド補完が即実行ではなくプロンプト挿入になる挙動変更、Remote Control が起動メッセージから永続フッターピルへ、`Windsurf` → `Devin Desktop` リネーム、起動出力削減、launch-prompt 警告のピン留め、失敗ターンのコンパクト警告化、`claude update` 起動検証強化
+  - 主要セキュリティ修正: `WebFetch` パーミッションルールが事前承認ドメインに適用されない問題（明示ルールが事前承認に優先するように）、Windows でバックスラッシュ / 大文字小文字違いのパーミッションルールがマッチしない問題（`Read` deny ルールが Glob/Grep からもファイルを隠すように）
+  - その他主要修正: ターン開始時の Esc 割り込みが stream-json / SDK セッションで silently drop される問題、絵文字含む classifier クエリでの API 400、MCP `timeout` <1000ms の watchdog floor 問題、LSP `workspaceSymbol` の空結果問題、`claude agents` の表示幅・画像ペースト・session 名切り詰め問題、バックグラウンドセッションのサービス起動失敗時会話喪失、深い `CLAUDE_CODE_TMPDIR` でクロスセッション `SendMessage` が壊れる問題、実行中バックグラウンドセッション 5 秒 stall
+
+#### Codex 0.137.0 stable（2026-06-04）
+- **specs/codex/changelog.md** — 0.137.0 stable セクション新設。リリースノートは空で内容は 0.137.0-alpha.5 と同等のため、既存 alpha.4/.5 節への参照誘導を追記
+
+#### Codex 0.138.0-alpha.1 / .2（2026-06-04）
+- **specs/codex/changelog.md** — 0.138.0-alpha.1 / .2 セクション新設。GitHub Releases 本文は空のため、`rust-v0.137.0` 以降の `main` コミットから主要変更点を整理
+  - 主要変更: Code mode でローカル画像パスをモデルに公開（Windows カバレッジ復元）、Codex worktree への Bazel 設定コピー、MAv2 設定のカタログ化（`feat: catalog multi-agent v2 config`）と MAv2 プロンプト微調整、リモートプラグインのデフォルトプロンプト保持、`/goal edit` 複数行ペースト再修正、app-server account session protocol（profile-switcher の 1/2）、コア `exec` 経路から `SandboxPolicy` を排除、リモート圧縮時のオーバーサイズ tool output 書き換え、`/diff` 等の git enrichment ガード、`codex-pr-body` で confidential references 回避、forked スレッド名継承修正
+
+### Phase 3.5（スキルエコシステム）スキップ
+- `kb/skills/_index.md` の `last_patrol: 2026-06-01` から 4 日経過 → 7 日未満のためスキップ
+- 次回スキル巡回は 2026-06-08 以降
+
+### 結論
+- Claude Code v2.1.162（2026-06-03）、Codex 0.137.0 stable + 0.138.0-alpha.1/.2（2026-06-04）が前回巡回（2026-06-04）以降に公開されており、いずれも specs/claude/changelog.md と specs/codex/changelog.md に反映済み
+- v2.1.162 のセキュリティ修正（WebFetch ルール / Windows パーミッション）は configuration.md にバックスラッシュや事前承認ドメインに関する既存セクションが無いため、changelog の記述のみで完結
+- mapping/ への影響なし
+
+---
+
 ## 2026-06-04 — 公式ドキュメント巡回（差分のみ）
 
 ### 巡回対象URL
