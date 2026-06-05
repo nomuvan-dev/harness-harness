@@ -3,7 +3,40 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-06-05
+最終更新: 2026-06-06
+
+---
+
+## v2.1.165 (2026-06-05)
+
+- バグ修正・信頼性改善のみ（公式 changelog 記載）。ユーザー向け新機能なし
+
+---
+
+## v2.1.163 (2026-06-04)
+
+- **`requiredMinimumVersion` / `requiredMaximumVersion` managed setting 追加**: Claude Code のバージョンが許容範囲外なら起動を拒否し、承認済みバージョンへ案内する。Managed Policy でのバージョン pin が可能に
+- **`/plugin list` コマンド追加**: インストール済みプラグイン一覧を表示。`--enabled` / `--disabled` フィルタ対応
+- **`/btw` に「c でコピー」ショートカット追加**: 生 Markdown 回答をクリップボードへコピーし、書式を保ったまま貼り付け可能
+- **Hooks: `Stop` / `SubagentStop` で `hookSpecificOutput.additionalContext` をサポート**: Claude にフィードバックを返してターンを継続させられる。hook エラー扱いではない通常応答として返るように
+- **Skills: `\$` エスケープ構文**: コマンド本文中で数字の前にリテラル `$` を書く場合の新エスケープ
+- **`--resume` 時の stdio MCP サーバーへの `CLAUDE_CODE_SESSION_ID` 共有**: hooks / Bash と同じ session ID を `--resume` でも stdio MCP サーバーに渡すように（v2.1.154 で導入されたサブプロセス環境変数が `--resume` パスでも一貫して渡る）
+- **Background agent の version 更新挙動改善**: バックグラウンドエージェントセッションが新バージョンへバックグラウンド更新するようになり、Claude Code 更新後にセッションを開いてもコールド再起動を待たされない
+- **`/` メニューの説明文整理**: 組み込みコマンド・スキルの説明をより明確化
+- **`claude agents` のディレクトリ継承**: state-grouped view から dispatch するとエージェントビューを開いたディレクトリでセッションを開始する
+- **サブスクリプション切替の案内位置変更**: トースト通知から起動アナウンス枠に移動
+- **`claude -p` ハング修正**: バックグラウンドで起動したコマンドが終了しない場合に `claude -p` が最終結果後にハングする問題を修正（stdin クローズ後 5 秒でバックグラウンドシェルを停止）
+- **`claude -p` の Bedrock/Vertex/Foundry 認証修正**: `CI=true` で Anthropic API キー未設定の場合に「ANTHROPIC_API_KEY required」で失敗する問題を修正
+- **`$TMPDIR` 上書き範囲修正**: v2.1.154 のリグレッションで全コマンドが `/tmp/claude-{uid}` に上書きされていた問題を修正（サンドボックスコマンドのみに限定）。Bazel / EDR 保護 Go 環境での Bash 失敗が解消
+- **Windows OneDrive / 読み取り専用属性での session-env 修正**: Windows でセッション環境ディレクトリが read-only 属性 or OneDrive 配下にあると「EEXIST: file already exists」で Bash が失敗する問題を修正
+- **組織 managed 権限ルールの初期セッション修正**: fresh config ディレクトリで起動中に managed settings 取得が完了すると、組織 managed 権限ルールが全セッションに適用されない問題を修正
+- **`claude agents` バックグラウンドタスク継続性**: 再アタッチ時にバックグラウンドタスクが失われる問題を修正
+- **`claude agents` 終了時のターミナル整列修正**: Esc でエージェントビューを抜けた際の表示崩れと数秒のハングを修正
+- **デスクトップアプリ Stop ボタン修正**: バックグラウンドタスクチップで Stop を押した際、プロセスが既に消えていてもチップが残る問題を修正
+- **ペースト直後のキー応答不能修正**: ペースト終端マーカーがターミナルでドロップされるとキー入力が永久に止まる問題を修正
+- **Hook `if: "Bash(...)"` 条件の改善**: `$()` や `$VAR` を含む全 Bash コマンドで誤発火していた問題を修正。サブシェル/バッククォート内のコマンドにもマッチするように
+- **`Read(~/...)` deny ルールの Bash 連携修正**: ホームディレクトリパスの deny ルール（例 `Read(~/Desktop/**)`）が `$HOME` 経由で参照する Bash コマンドをブロックしない問題を修正
+- **トランスクリプトの「(no content)」削除**: `/mcp` / `/plugins` 等のパネル閉じた後に残る空行を除去
 
 ---
 

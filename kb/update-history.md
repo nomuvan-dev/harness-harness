@@ -1,5 +1,42 @@
 # harness-harness 更新履歴
 
+## 2026-06-06 — 公式ドキュメント巡回（差分のみ）
+
+### 巡回対象URL
+- Claude Code: changelog（**新版あり**。v2.1.163 が 2026-06-04 公開、v2.1.165 が 2026-06-05 公開。v2.1.164 は公式 changelog で欠番）/ `whats-new/2026-w23` 未公開（404 継続。w23 は 2026-06-01〜05 範囲）
+- Codex CLI: GitHub Releases（**新版あり**。0.138.0-alpha.3 と alpha.4 が 2026-06-04 公開）
+- スキルエコシステム: 前回 2026-06-01 から 5 日 → Phase 3.5 スキップ（7 日未満）
+
+### 検出された変更と更新内容
+
+#### Claude Code v2.1.163（2026-06-04）
+- **specs/claude/changelog.md** — v2.1.163 セクション新設。最終更新日を 2026-06-06 に更新
+  - 主要新機能: `requiredMinimumVersion` / `requiredMaximumVersion` managed settings（許容バージョン外なら起動拒否）、`/plugin list` コマンド（`--enabled`/`--disabled` フィルタ）、`/btw` の「c でコピー」ショートカット、Hooks の `Stop` / `SubagentStop` で `hookSpecificOutput.additionalContext` をサポート（hook エラー扱いではない通常応答）、Skills の `\$` エスケープ構文、`--resume` 時の stdio MCP サーバーへの `CLAUDE_CODE_SESSION_ID` 共有、バックグラウンドエージェントセッションのバックグラウンド更新（コールド再起動を待たない）
+  - 主要修正: `claude -p` ハング修正（バックグラウンドコマンド未終了時 5 秒で SIGTERM）、Bedrock/Vertex/Foundry + `CI=true` の `claude -p` 認証エラー、v2.1.154 リグレッションの `$TMPDIR` 上書き範囲修正（サンドボックスコマンドのみに限定、Bazel/EDR Go 問題解消）、Windows 読み取り専用/OneDrive での session-env EEXIST、fresh config 起動中の組織 managed 権限ルール未適用、`claude agents` 再アタッチ時のバックグラウンドタスク喪失、`claude agents` Esc 不整列・数秒ハング、Hook `if: "Bash(...)"` 条件のサブシェル/`$()`誤発火、`Read(~/...)` deny の `$HOME` 経由 Bash 未ブロック
+- **specs/claude/configuration.md** — settings table に `requiredMinimumVersion` / `requiredMaximumVersion` を追加。最終更新日を 2026-06-06 に更新
+- **specs/claude/hooks.md** — section 6.4 Stop に `hookSpecificOutput.additionalContext` サポート（v2.1.163+）の説明と JSON 例を追加。最終更新日を 2026-06-06 に更新
+- **specs/claude/skills-and-commands.md** — `/btw` 行に `c` キーでクリップボードコピー追記、`/plugin list` 行を新規追加。最終更新日を 2026-06-06 に更新
+- **specs/claude/mcp.md** — v2.1.154 段落に `--resume` パスでも `CLAUDE_CODE_SESSION_ID` が stdio MCP サーバーに渡る旨を追記
+
+#### Claude Code v2.1.165（2026-06-05）
+- **specs/claude/changelog.md** — v2.1.165 セクション新設（バグ修正・信頼性改善のみ。ユーザー向け新機能なし）
+
+#### Codex 0.138.0-alpha.3 / .4（2026-06-04）
+- **specs/codex/changelog.md** — 0.138.0-alpha.3 / .4 セクション新設。GitHub Releases 本文は空のため、`rust-v0.138.0-alpha.2` 以降の `main` コミットから主要変更点を整理
+  - 主要変更: Code mode からのツール名前空間除外、standalone 画像生成の保存パスヒント、モデル定義 reasoning effort のサポートと順序、`plugin list` JSON 出力へのマーケットプレースソース追加、`app-server -c` config 上書き、External agent セッション検知の境界整理、External agent migration の異種 MCP transport 混在ガード、AGENTS.md ロードを environment filesystem 経由に集約、`experimentalFeature/enablement/set` 整理、`response.processed` websocket リクエスト削除、`codex-analytics` 初期化時 forked thread id 発行、ThinLTO リリースバイナリ、Azure artifact 署名環境シークレット
+
+### Phase 3.5（スキルエコシステム）スキップ
+- `kb/skills/_index.md` の `last_patrol: 2026-06-01` から 5 日経過 → 7 日未満のためスキップ
+- 次回スキル巡回は 2026-06-08 以降
+
+### 結論
+- Claude Code v2.1.163（2026-06-04）と v2.1.165（2026-06-05）、Codex 0.138.0-alpha.3/.4（2026-06-04）が前回巡回（2026-06-05）以降に公開されており、いずれも specs/ に反映済み
+- v2.1.163 は managed settings の新キー 2 つ、`/plugin list` 新規コマンド、Hooks の `Stop`/`SubagentStop` の `additionalContext` 取り扱い拡張、Skills の `\$` エスケープ、stdio MCP への `--resume` 時 session ID 共有など、機能性変更が多くコマンド・hooks・settings の各 spec を横断更新
+- v2.1.164 は公式 changelog で欠番（おそらく内部リリースのみ）。changelog.md にはそれが分かるよう v2.1.165 → v2.1.163 の順で記載
+- mapping/ への影響なし
+
+---
+
 ## 2026-06-05 — 公式ドキュメント巡回（差分のみ）
 
 ### 巡回対象URL

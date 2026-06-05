@@ -1,6 +1,6 @@
 # Claude Code 設定仕様書
 
-最終更新: 2026-06-04（巡回更新）
+最終更新: 2026-06-06（巡回更新）
 
 公式ドキュメント: https://code.claude.com/docs/en/settings / https://code.claude.com/docs/en/memory
 
@@ -195,6 +195,8 @@ CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ../shared-config
 | `pluginSuggestionMarketplaces` | （Managed のみ）コンテキストアウェア tips 経由で suggest 対象とする組織マーケットプレースを allowlist 化（v2.1.152） |
 | `<marketplace>.skipLfs` | プラグインマーケットプレース定義（`github` / `git` ソース）に `skipLfs: true` を指定すると Git LFS ダウンロードをスキップ（v2.1.153） |
 | `<plugin>.defaultEnabled` | プラグインの `plugin.json` またはマーケットプレースエントリで `defaultEnabled: false` を指定するとインストール後デフォルト無効。`/plugin` または `claude plugin enable` で有効化。依存関係は引き続き自動有効化（v2.1.154） |
+| `requiredMinimumVersion` | （Managed のみ）Claude Code の最小許容バージョン。範囲外なら起動を拒否し承認済みバージョンへ案内（v2.1.163） |
+| `requiredMaximumVersion` | （Managed のみ）Claude Code の最大許容バージョン。範囲外なら起動を拒否し承認済みバージョンへ案内（v2.1.163） |
 
 ### 2.4 `~/.claude.json` のグローバル設定
 

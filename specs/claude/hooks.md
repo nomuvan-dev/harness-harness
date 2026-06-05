@@ -1,6 +1,6 @@
 # Claude Code Hooks 仕様書
 
-最終更新: 2026-05-28（巡回更新）
+最終更新: 2026-06-06（巡回更新）
 
 公式ドキュメント: https://code.claude.com/docs/en/hooks
 
@@ -384,6 +384,17 @@ v2.1.133 以降、すべてのイベントの入力 JSON に effort level も含
 ```
 
 **v2.1.143+ のブロック上限**: ブロックを繰り返す stop hook が無限ループする問題への安全装置として、**8 連続ブロックでターンが警告とともに自動終了** するように。上限は環境変数 `CLAUDE_CODE_STOP_HOOK_BLOCK_CAP` で変更可能。
+
+**v2.1.163+ の `additionalContext` サポート**: `Stop` および `SubagentStop` フックは `hookSpecificOutput.additionalContext` を返すことで、Claude にフィードバックを与えてターンを継続させられる。従来は同等の動作が「hook エラー」扱いだったが、通常応答として扱われるようになった。
+
+```json
+{
+  "hookSpecificOutput": {
+    "hookEventName": "Stop",
+    "additionalContext": "テストが未通過なので修正を続けてください"
+  }
+}
+```
 
 #### SessionStart
 
