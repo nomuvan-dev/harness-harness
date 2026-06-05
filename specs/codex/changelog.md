@@ -3,7 +3,46 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://developers.openai.com/codex/changelog
 
-最終更新: 2026-06-05
+最終更新: 2026-06-06
+
+---
+
+## CLI 0.138.0-alpha.3 / .4 (2026-06-04, プレリリース)
+
+`rust-v0.138.0-alpha.3`（2026-06-04 20:18 UTC）と `rust-v0.138.0-alpha.4`（2026-06-04 22:01 UTC）が公開。リリースノートは空のため、`rust-v0.138.0-alpha.2` 以降の `main` ブランチコミットから主要なユーザー向け変更点を整理。安定版 0.138.0 リリース時に再統合する。
+
+### Code mode
+
+- **コードモードからツール名前空間を除外可能化** (`core: allow excluding tool namespaces from code mode`): code mode 利用時に特定のツール名前空間をモデルに公開しないよう設定でき、context 圧迫やセキュリティ要件に対応
+- **画像生成の保存パスヒント追加**: standalone 画像生成ツールが保存先パスを返すヒントを付与し、ユーザーが生成画像のローカル位置を把握しやすく
+
+### Model / Reasoning
+
+- **モデル定義の reasoning effort をサポート**: モデル側がメタデータで宣言した reasoning effort 値を Codex が読み取り、UI と挙動に反映
+- **モデル側 reasoning effort の順序を採用**: effort セレクタの順序もモデル側宣言を優先
+
+### Plugins / App-server
+
+- **`plugin list` JSON 出力にマーケットプレースソースを含める**: プログラム連携時にプラグインの来歴を判別可能
+- **`app-server -c` で config 上書きをサポート**: 起動時に CLI と同様の `-c` config override が利用可能
+- **External agent セッション検知の境界整理** (`Bound external agent session detection work`): 外部エージェント連携時のセッション識別ロジックを限定
+- **External agent migration: 異種 MCP transport の混在を回避**: 外部エージェント移行時に異なる transport の MCP 設定が混ざらないようガード
+
+### AGENTS.md / コア
+
+- **AGENTS.md ロードを environment filesystem 経由に**: AGENTS.md 読み込みを environment 経由ファイルシステム抽象に集約（remote / sandboxed セットアップでの一貫性向上）
+- **`experimentalFeature/enablement/set` の整理**: 実験的機能セット用 API/設定を整理し、無効/削除済みエンドポイントを除去
+- **`response.processed` websocket リクエストを削除**: 旧プロトコル要素の撤去
+
+### Analytics
+
+- **`codex-analytics`: 初期化時に forked thread id を発行**: 分岐スレッド ID を analytics 初期化時点で発行し、フォーク後のイベント紐付けが安定化
+
+### ビルド / セキュリティ
+
+- **リリースバイナリで ThinLTO を採用**: バイナリサイズ・性能の最適化（リンク時間とのトレードオフ）
+- **Azure artifact 署名環境シークレットを使用**: リリース署名フローを Azure 側 secrets に移行
+- **Windows サンドボックスビルドスクリプトの lint 修正**
 
 ---
 

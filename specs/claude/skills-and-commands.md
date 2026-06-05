@@ -1,6 +1,6 @@
 # Claude Code Skills & コマンド仕様書
 
-最終更新: 2026-06-04（巡回更新）
+最終更新: 2026-06-06（巡回更新）
 
 公式ドキュメント: https://code.claude.com/docs/en/skills / https://code.claude.com/docs/en/commands / https://code.claude.com/docs/en/sub-agents / https://code.claude.com/docs/en/scheduled-tasks / https://code.claude.com/docs/en/web-scheduled-tasks / https://code.claude.com/docs/en/discover-plugins
 
@@ -170,7 +170,7 @@ Claude Code に同梱されるスキル:
 | `/branch [name]` (`/fork`) | 会話のブランチ作成 |
 | `/export [filename]` | 会話をテキストエクスポート |
 | `/exit` (`/quit`) | CLI終了 |
-| `/btw <question>` | コンテキストに残らないサイドクエスチョン |
+| `/btw <question>` | コンテキストに残らないサイドクエスチョン。回答画面で `c` キーを押すと生 Markdown をクリップボードへコピー（v2.1.163） |
 
 ### 2.2 設定・情報
 
@@ -216,6 +216,7 @@ Claude Code に同梱されるスキル:
 | `/agents` | サブエージェント管理 |
 | `/skills` | スキル一覧。長いリストでも type-to-filter 検索ボックスで即座に絞り込み（v2.1.121） |
 | `/plugin` | プラグイン管理（マーケットプレース、インストール、有効化/無効化）。`claude plugin prune` で孤立した自動インストール依存を削除、`plugin uninstall --prune` でカスケード削除（v2.1.121）。マーケットプレース browse ペインに projected context cost（ターン当たり・呼び出し当たりのトークン推定）を表示（v2.1.143）。Discover/Browse 画面でインストール前にプラグインが提供する commands / agents / skills / hooks / MCP/LSP サーバーをプレビュー（v2.1.145） |
+| `/plugin list` | インストール済みプラグイン一覧表示。`--enabled` / `--disabled` フィルタ対応（v2.1.163） |
 | `claude plugin enable/disable` | 依存関係を強制。`disable` は他の有効プラグインの依存先を拒否し disable-chain ヒントを表示。`enable` は推移的依存を強制有効化（v2.1.143） |
 | `/reload-plugins` | プラグイン変更の即時反映 |
 | `/reload-skills` | スキルディレクトリを再スキャン。セッション再起動不要（v2.1.152） |

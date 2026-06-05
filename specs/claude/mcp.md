@@ -100,7 +100,7 @@ claude mcp reset-project-choices
 /mcp
 ```
 
-v2.1.154: `claude mcp list` / `get` の出力がパイプされた場合、未承認の `.mcp.json` サーバーは自動承認・接続せず `⏸ Pending approval` 表示となる。Stdio MCP サーバーサブプロセスには `CLAUDE_CODE_SESSION_ID` と `CLAUDECODE=1` 環境変数が渡される。
+v2.1.154: `claude mcp list` / `get` の出力がパイプされた場合、未承認の `.mcp.json` サーバーは自動承認・接続せず `⏸ Pending approval` 表示となる。Stdio MCP サーバーサブプロセスには `CLAUDE_CODE_SESSION_ID` と `CLAUDECODE=1` 環境変数が渡される。v2.1.163 で `--resume` パスでも hooks / Bash と同じ `CLAUDE_CODE_SESSION_ID` が stdio MCP サーバーに一貫して渡るよう修正。
 
 **v2.1.161 のシークレット保護強化**: `claude mcp list` / `get` / `add` がサーバー定義を出力する際、`${VAR}` 環境変数参照は展開されずそのまま表示される。さらに認証ヘッダー（`Authorization` 等）や URL に埋め込まれたシークレットは redact 表示される。CI ログや支援用 paste でのシークレット漏洩を防止。
 
