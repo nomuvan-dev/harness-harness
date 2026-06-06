@@ -3,7 +3,89 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://developers.openai.com/codex/changelog
 
-最終更新: 2026-06-06
+最終更新: 2026-06-07
+
+---
+
+## CLI 0.138.0-alpha.5 / .6 (2026-06-05〜06, プレリリース)
+
+GitHub Releases に `rust-v0.138.0-alpha.5`（2026-06-05 23:27 UTC）と `rust-v0.138.0-alpha.6`（2026-06-06 03:23 UTC）が公開。リリースノートは空のため、`rust-v0.138.0-alpha.4` 以降の `main` ブランチコミットから主要なユーザー向け変更点を整理。安定版 0.138.0 リリース時に再統合する。
+
+### Code mode / Responses Lite
+
+- **`use_responses_lite` の "override" 制御**: Responses Lite の有効化を override ロジックで切り替え可能に
+- **Responses Lite で standalone ツールを使用**: Responses Lite トランスポートに専用のスタンドアロンツールセットを採用
+- **Responses Lite トランスポートヘッダーを送信**: API 側でリクエスト経路を識別できるよう専用ヘッダーを付与
+
+### Plugins / App-server
+
+- **`plugin` サブコマンドに JSON 出力を追加**: スクリプト連携が容易に
+- **`plugin read` でリモート MCP サーバーを公開**: app-server 経路でリモート MCP サーバー情報を取得可能
+- **利用不可なアプリテンプレートを `plugin detail` で公開**: 表示はするがインストール不可なテンプレートを区別
+- **プラグインサービスのポーリング頻度を低下**: 起動時負荷を軽減
+- **TUI 起動の高速化**: プラグイン discovery を再利用してコールド起動を短縮
+- **legacy リモートプラグイン起動同期を削除**
+
+### Multi-Agent v2 / Goal 拡張
+
+- **MAv2 メッセージペイロードの暗号化**: マルチエージェント v2 のメッセージ payload を暗号化
+- **v2 agents の delivery 時リロード**: 新着 delivery 時に v2 agents 設定を再読込
+- **v2 personal access token のサポート（codex-rs）**
+- **`/goal` 制御コマンドの usage テキスト修正**
+- **Goal 拡張のコア挙動アラインメント (1/2, 2/2 完了)**: Goal runtime を拡張機能側へ完全移行
+- **terminal turn error 後の active goals をブロック**
+
+### Sandbox / Permissions
+
+- **マネージドパーミッションプロファイルの allowlist を強制**: マネージド設定下で profile allowlist が enforce されるように
+- **exec policy のファイルシステムポリシーを profile から導出**: profile 設定をベースに exec policy を構築
+- **Linux サンドボックスで proxy 経由の `socketpair` を許可**: proxy ルーティング下で `socketpair` システムコールを許可
+- **Windows サンドボックスバックエンドを exec policy で尊重**
+- **Windows サンドボックスセットアップの診断改善**
+- **`/usr/bin/bash` シェルフォールバックを追加**: 環境シェル情報を渡せるように
+
+### TUI
+
+- **コードコメントディレクティブを TUI リプレイで描画**
+- **ストリーミング中の二重空行を抑制**
+- **キャンセル時に prompt カーソルを末尾に復元**
+- **Windows composer 背景の修正**
+- **TUI 設定書込エラーの原因を表示**: write エラー時に詳細を露出
+- **TUI 内の terminal visualization 指示を gate 化**: 環境に応じて制御
+
+### App-server / Remote Control / Account
+
+- **無効状態でも remote-control のペアリングを許可**
+- **remote-control ペアリング状態の transport / RPC を追加**
+- **app-server で account token 使用量を公開 (1/2)**
+- **`app-server` API で runtime workspace ルートを絶対パス化**
+- **`resume --last` を state DB 優先で解決**: 復帰の信頼性向上
+- **thread settings で `cwd` を絶対パス必須化**
+- **Windows のアプリワークスペースをディープリンクで開く**
+- **長い proxy ソケットパスの修正**
+
+### コア / Skills / その他
+
+- **AGENTS.md discovery で論理パスを維持**: シンボリックリンク等でもパスが logical に保たれる
+- **Skills load 警告の重複排除**
+- **CI 設定変更を push するスキルを追加**
+- **`Op` プロトコルから submission 側 serde を削除**: 内部プロトコル整理
+- **OAuth トークンを起動前にリフレッシュ（`rmcp`）**: 期限切れ token によるエラーを抑制
+- **Bazel 起動オプションをコマンド間で安定化**
+- **環境シェル情報を渡す（`/usr/bin/bash` フォールバックと連動）**
+- **ターン diff トラッカーをマルチ env 対応化**
+- **WSL ローカル curated discovery のバウンド化**
+- **turn profiling analytics 追加**
+- **sandbox outcome テレメトリイベントを発行**
+- **turn moderation メタデータを app-server へ転送**
+- **v1 spawn メタデータの可視性を保持**
+- **エージェント制御モジュールの分割（リファクタ）**
+
+### ビルド / リリース
+
+- **Winget リリース環境シークレットを使用**
+- **Windows クロスビルドの CI 追加**
+- **Rust リリースワークフロー整理**
 
 ---
 

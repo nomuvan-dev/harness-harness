@@ -3,7 +3,39 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-06-06
+最終更新: 2026-06-07
+
+---
+
+## v2.1.167 (2026-06-06)
+
+- バグ修正・信頼性改善のみ（公式 changelog 記載）。ユーザー向け新機能なし
+
+---
+
+## v2.1.166 (2026-06-06)
+
+- **`fallbackModel` 設定の追加**: プライマリモデルが overloaded / unavailable のときに順番に試行する fallback モデルを最大 3 つまで設定可能。`--fallback-model` フラグもインタラクティブセッションに適用されるようになった
+- **deny ルールのツール名位置で glob パターンをサポート**: `permissions.deny` のツール名位置で `"*"` 等の glob 指定が可能（`"*"` は全ツールを deny）。allow ルール側は MCP 以外の glob を拒否、deny ルール内の未知ツール名は起動時に警告
+- **クロスセッション `SendMessage` のセキュリティ強化**: 他の Claude セッションから `SendMessage` で中継されたメッセージはユーザー権限を持たないものとして扱われる。受信側は中継経由の権限リクエストを拒否し、auto mode は該当をブロック
+- **`MAX_THINKING_TOKENS=0` / `--thinking disabled` / per-model thinking トグルが thinking 既定モデルを無効化**: Claude API 経由でデフォルト thinking のモデルでも上記指定で thinking を無効化可能に（3P プロバイダの挙動は変更なし）
+- **fallback モデルでのターン自動再試行**: API が予期せぬ非リトライエラーを返した場合、ターンを fallback モデルで一度だけ自動再試行。auth / rate-limit / request-size / transport エラーは即時返却
+- **`claude update` のターゲットバージョン事前告知**: ダウンロード開始前に更新先バージョンを表示。サイレント実行が解消
+- **`claude agents`: URL によるセッションフィルタ**: 一覧で URL を入力すると、最初のプロンプトにその URL を含むセッションに絞り込み
+- **画像処理エラー修正**: 処理不能な画像を含むセッションでの「image could not be processed」連続エラーと余分なトークン消費を修正
+- **起動時 worker registration 中断時のリモートセッション復旧**: バックエンド一時切断中に worker registration が失敗するとリモートセッションが永久に詰まる問題を修正
+- **JetBrains IDE ターミナル (2026.1+) のチラつき解消**: synchronized output を有効化（IntelliJ / PyCharm / WebStorm 等）
+- **Kitty keyboard protocol 上での Shift+非 ASCII キー修正**: WezTerm / Ghostty / kitty で `Shift+ä → Ä` 等が drop される問題を修正
+- **Windows PowerShell コマンド検証のハング修正**: 子プロセスが出力パイプを保持したまま親プロセスが kill されると検証が時間予算を超えてハングする問題を修正
+- **macOS の orphan `claude --bg-pty-host` プロセス修正**: デーモン死亡時に 100% CPU で回り続ける問題を修正
+- **音声モード `/login` 修正**: `/voice` トグル後に stale な auth check を `/login` 無しでクリア
+- **Managed settings の堅牢化**: invalid なエントリ一つで残りの valid policy 全てが silently 無効化される問題を修正
+- **`allowedMcpServers` / `deniedMcpServers` の `${VAR}` 参照修正**: 述語に変数参照を使うとマッチしない問題を修正
+- **`claude agents` worktree 再オープン修正**: git worktree に入ったバックグラウンドエージェントセッションが "No conversation found" でクラッシュループする問題を修正
+- **Ctrl+O トランスクリプトでの thinking 二重描画修正**
+- **`/doctor` のリモートセッション内表示修正**: リモートセッション内で「Not inside a remote session」のような矛盾チェックが表示される問題を修正
+- **`claude agents` dispatch/reply 入力のマルチライン修正**: 複数行プロンプト入力時にカーソルが一行目末尾に貼り付く問題を修正
+- **Unicode 非対応端末でのタスク一覧表示修正**
 
 ---
 
