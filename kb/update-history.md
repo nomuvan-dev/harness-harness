@@ -1,5 +1,33 @@
 # harness-harness 更新履歴
 
+## 2026-06-07 — 公式ドキュメント巡回（差分のみ）
+
+### 巡回対象URL
+- Claude Code: changelog（**新版あり**。v2.1.166 が 2026-06-06 公開、v2.1.167 が同日公開）/ `whats-new/2026-w23` 未公開（404 継続）
+- Codex CLI: GitHub Releases（**新版あり**。0.138.0-alpha.5 が 2026-06-05、0.138.0-alpha.6 が 2026-06-06 公開）
+- スキルエコシステム: 前回 2026-06-01 から 6 日 → Phase 3.5 スキップ（7 日未満）
+
+### 検出された変更と更新内容
+
+#### Claude Code v2.1.166（2026-06-06）
+- **specs/claude/changelog.md** — v2.1.166 セクション新設。最終更新日を 2026-06-07 に更新
+  - 主要新機能: `fallbackModel` 設定（最大 3 つの fallback モデル）、`--fallback-model` のインタラクティブセッション適用、`permissions.deny` ツール名位置の glob サポート（`"*"` で全 deny、`permissions.allow` は MCP 以外の glob 拒否）、クロスセッション `SendMessage` のセキュリティ強化（中継メッセージはユーザー権限を持たない）、`MAX_THINKING_TOKENS=0` / `--thinking disabled` / per-model toggle が Claude API 経由の thinking 既定モデルを無効化、fallback モデルでのターン自動再試行、`claude update` のターゲットバージョン事前告知、`claude agents` の URL によるセッションフィルタ
+  - 主要修正: 画像処理連続エラーと余分トークン消費、worker registration 中断時のリモートセッション復旧、JetBrains 2026.1+ ターミナルチラつき、Kitty keyboard protocol 上の `Shift+非ASCII`、Windows PowerShell コマンド検証ハング、macOS orphan `claude --bg-pty-host`、音声モード `/login` 修正、Managed settings の invalid エントリで全 policy silently 無効化、`allowedMcpServers` / `deniedMcpServers` の `${VAR}` 参照、`claude agents` 内 worktree 再オープン時のクラッシュループ、Ctrl+O トランスクリプトの thinking 二重描画
+- **specs/claude/configuration.md** — `fallbackModel` を model 群に追加。`permissions.allow` / `permissions.deny` 行に v2.1.166 の glob ルール挙動を追記。env vars 表に `MAX_THINKING_TOKENS` の挙動変更を追加。settings 表末尾に Managed settings invalid エントリ堅牢化と `${VAR}` 参照修正の補足を追加。最終更新日を 2026-06-07 に更新
+- **specs/claude/agent-teams.md** — `SendMessage` セクションにクロスセッション中継のセキュリティ強化（v2.1.166）を追記
+
+#### Claude Code v2.1.167（2026-06-06）
+- **specs/claude/changelog.md** — v2.1.167 セクション新設（バグ修正・信頼性改善のみ。ユーザー向け新機能なし）
+
+#### Codex 0.138.0-alpha.5 / .6（2026-06-05〜06）
+- **specs/codex/changelog.md** — 0.138.0-alpha.5 / .6 セクション新設。GitHub Releases 本文は空のため、`rust-v0.138.0-alpha.4` 以降の `main` コミット 57 件から主要変更点を整理。最終更新日を 2026-06-07 に更新
+  - 主要変更: Responses Lite の override / standalone ツール / 専用トランスポートヘッダ、プラグイン `plugin` JSON 出力 / `plugin read` のリモート MCP 公開 / `plugin detail` で利用不可テンプレ公開 / TUI 起動高速化、MAv2 ペイロード暗号化 / v2 PAT サポート / Goal 拡張のコア挙動アラインメント完遂 (1/2, 2/2)、マネージドパーミッションプロファイル allowlist 強制 / exec policy ファイルシステム由来化 / Linux サンドボックスでの `socketpair` 許可（proxy 経路）、AGENTS.md discovery の論理パス維持、`resume --last` の state DB 優先、TUI 細部修正（コメントディレクティブ描画、ストリーミング空行抑制、キャンセル時カーソル復元、Windows composer 背景）、remote-control ペアリング状態 RPC / transport、app-server account token 使用量公開 (1/2)、`/usr/bin/bash` シェルフォールバック、Bazel 起動オプション安定化
+
+### PR
+（このセクション末尾に PR URL を追記予定）
+
+---
+
 ## 2026-06-06 — 公式ドキュメント巡回（差分のみ）
 
 ### 巡回対象URL
