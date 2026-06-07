@@ -13,7 +13,7 @@
 - **specs/claude/changelog.md** — v2.1.168 セクション新設（バグ修正・信頼性改善のみ。ユーザー向け新機能なし）。最終更新日を 2026-06-08 に更新
 
 ### PR
-- 作成予定
+- https://github.com/nomuvan-dev/harness-harness/pull/91 — merged 2026-06-08
 
 ---
 
