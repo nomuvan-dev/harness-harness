@@ -19,7 +19,7 @@
 - **Tier 変動なし**: Vercel surge（vercel-react-best-practices #3、agent-browser #4 が skills.sh top 10 に新規ランクイン）は確認したが、harness-harness 内の Vercel 需要が明確化するまで Tier B 追加は保留。Microsoft Azure 系も同様
 
 ### PR
-- (PR URL は作成後に追記)
+- https://github.com/nomuvan-dev/harness-harness/pull/92 — merged 2026-06-09
 
 ---
 
