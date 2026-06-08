@@ -3,7 +3,39 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://developers.openai.com/codex/changelog
 
-最終更新: 2026-06-07
+最終更新: 2026-06-09
+
+---
+
+## CLI 0.138.0-alpha.7 (2026-06-08, プレリリース)
+
+`rust-v0.138.0-alpha.7`（2026-06-08 14:47 UTC）が公開。リリースノートは空のため、`rust-v0.138.0-alpha.6` 以降の `main` ブランチコミット 14 件から主要なユーザー向け変更点を整理。安定版 0.138.0 リリース時に再統合する。
+
+### Multi-Agent v2
+
+- **MAv2 サブエージェント residency LRU**: アイドル状態の v2 サブエージェントを `ThreadManager` から退去可能に。論理識別 (`AgentRegistry`) と読み込み状態 (residency) を分離し、resident capacity が一杯のときに idle な LRU エントリを退去。退去対象は完了/エラー済み・アクティブターンなし・mailbox 空のスレッドに限定。退去前に rollout は materialize され flush される
+- **MAv2 並列実行のカウント方式変更**: 並列実行上限を「論理エージェント数」ではなく「アクティブな非 root v2 ターン数」で計測。RAII ガードを `RunningTask` に持たせ、`turn/start` の直接呼び出しにも capacity チェックを適用。`/goal` のアイドル継続は capacity 一杯時にもブロックされないよう除外。root と v1 のターンは本上限の対象外
+- **MAv2 ツール名 `close_agent` → `interrupt_agent` リネーム（v2 のみ）**: v2 エージェントは task 名で再利用可能であり residency が capacity 管理を担うため、モデルに公開するツール名を実際の動作（現在ターンの中断）に合わせて変更。`Op::Interrupt` を送出し、対象は registered のまま維持。root/self ターゲットは interrupt 固有エラーで拒否。v1 の `close_agent` サーフェスは変更なし
+
+### Code mode
+
+- **Code mode で standalone web search を有効化**: `/v1/alpha/search` がプレーンテキスト `output` を返すようになり、code mode から `web.run` 経由でスタンドアロン検索を呼び出して結果を nested JavaScript 呼び出しに返却可能に。`encrypted_output` のオプション解析は維持
+
+### Sandbox / Approval
+
+- **unified exec で approval / sandbox 決定を保持**: zsh-fork ランタイム経由で sandbox 決定が失われるバグを修正。requested permissions と filesystem policy から `launch_sandbox_permissions` を導出し、launch path と intercepted exec の双方で承認決定を保持。`RequireEscalated` / `WithAdditionalPermissions` / `UseDefault` の escalation 判定を明示化し、`WithAdditionalPermissions` は bounded additional-permissions 経路を経由（フル sandbox バイパス扱いをやめる）。unsandboxed intercepted exec は managed-network proxy env を削除
+
+### TUI / Remote Control
+
+- **TUI: MCP startup 状態をスレッドスコープに**: `mcpServer/startupStatus/updated` に nullable な `threadId` を追加し、サブエージェント由来の MCP 起動失敗を当該スレッドのみで表示。親トランスクリプトに警告がリークしない。スナップショット replay 前に expected MCP servers を seed し、startup スピナーが残らないようにする。同一サーバの同一失敗は 1 回の startup ラウンド内で重複抑制
+- **TUI: `resume --last` / `fork --last` でプロンプト位置引数を受理**: `codex resume --last "follow-up"` / `codex fork --last "next"` が、第一引数を session ID ではなく初期プロンプトとして解釈するように修正。`resume SESSION_ID PROMPT` / `fork SESSION_ID PROMPT` の挙動は維持
+- **remote-control: WebSocket 汎用 404 でも enrollment を維持**: enrollment 状態が剥がれて再 pairing が必要になる挙動を修正
+
+### Core plugins / Build
+
+- **core-plugins: プラグインサービスに Codex 製品 SKU を送信**
+- **`rusty_v8` を 149.2.0 に更新**: V8 ランタイムの保守更新
+- **bazel 環境変数で BuildBuddy シークレットを利用（CI）**
 
 ---
 
