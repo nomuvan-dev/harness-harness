@@ -1,5 +1,28 @@
 # harness-harness 更新履歴
 
+## 2026-06-09 — 公式ドキュメント巡回（差分のみ）
+
+### 巡回対象URL
+- Claude Code: changelog（**変更なし**。最新は v2.1.168（2026-06-06）で前回巡回時点から進展なし）/ `whats-new/2026-w23` 未公開（404 継続）
+- Codex CLI: GitHub Releases（**新版あり**。`rust-v0.138.0-alpha.7` が 2026-06-08 14:47 UTC 公開）
+- スキルエコシステム: 前回 2026-06-01 から 8 日経過 → Phase 3.5 実行
+
+### 検出された変更と更新内容
+
+#### Codex 0.138.0-alpha.7（2026-06-08）
+- **specs/codex/changelog.md** — 0.138.0-alpha.7 セクション新設。GitHub Releases 本文は空のため、`rust-v0.138.0-alpha.6` 以降の `main` コミット 14 件から主要変更点を整理。最終更新日を 2026-06-09 に更新
+  - 主要変更: **MAv2 residency LRU**（アイドル v2 サブエージェントを `ThreadManager` から退去、論理識別と residency を分離）、**MAv2 並列実行カウント方式変更**（論理エージェント数 → アクティブ非 root v2 ターン数、`/goal` のアイドル継続は除外）、**MAv2 ツール `close_agent` → `interrupt_agent` リネーム（v2 のみ）**（`Op::Interrupt` を送出、対象は registered のまま維持、root/self ターゲット拒否、v1 サーフェスは変更なし）、**code mode で standalone web search 有効化**（`/v1/alpha/search` プレーンテキスト出力対応）、**unified exec で approval/sandbox 決定保持**（zsh-fork ランタイム経由のバグ修正、`WithAdditionalPermissions` は bounded 経路）、**TUI MCP startup をスレッドスコープ化**（`mcpServer/startupStatus/updated` に nullable `threadId` 追加、サブエージェント由来失敗を親トランスクリプトから隔離）、**TUI `resume --last` / `fork --last` でプロンプト位置引数を受理**、**remote-control 汎用 404 で enrollment 維持**、core-plugins SKU 送信、`rusty_v8` 149.2.0、Bazel BuildBuddy シークレット
+
+#### スキルエコシステム巡回（Phase 3.5）
+- **kb/skills/_index.md** — `last_patrol` を 2026-06-09 に更新。claude.com/plugins 件数 72+ → 147+、anthropics/skills stars 140K+ → 148K+、openai/skills stars 15K+ → 21.7K+、find-skills installs 1.8M → 1.9M に更新
+- **kb/skills/recommended.md** — `last_checked` を 2026-06-09 に更新。frontend-design installs 334K → 516K、find-skills installs 1.8M → 1.9M
+- **Tier 変動なし**: Vercel surge（vercel-react-best-practices #3、agent-browser #4 が skills.sh top 10 に新規ランクイン）は確認したが、harness-harness 内の Vercel 需要が明確化するまで Tier B 追加は保留。Microsoft Azure 系も同様
+
+### PR
+- (PR URL は作成後に追記)
+
+---
+
 ## 2026-06-08 — 公式ドキュメント巡回（差分のみ）
 
 ### 巡回対象URL
