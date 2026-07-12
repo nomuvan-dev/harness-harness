@@ -3,7 +3,291 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-06-08
+最終更新: 2026-07-13
+
+---
+
+## v2.1.207 (2026-07-11)
+
+- **Bedrock / Vertex AI / Foundry で auto mode が GA**: `CLAUDE_CODE_ENABLE_AUTO_MODE` のオプトイン不要に。無効化は settings の `disableAutoMode`
+- **Bedrock / Vertex / Claude Platform on AWS のデフォルトモデルが Claude Opus 4.8 に変更**
+- **auto mode 設定の読み取り元変更**: リポジトリ内の `.claude/settings.local.json` の `autoMode` を読まなくなった。`~/.claude/settings.json` を使用すること
+- **セキュリティ: plugin の shell-injection 修正**: hooks / monitors / MCP headersHelper のシェル形式コマンド中の `${user_config.*}` を拒否。hooks は exec 形式（`args` 配列）または `$CLAUDE_PLUGIN_OPTION_<KEY>` を使用
+- **セキュリティ: plugin オプション値（`pluginConfigs`）をプロジェクトレベル `.claude/settings.json` から読まなくなった**: user / `--settings` / managed settings のみ有効
+- **セキュリティ: 非対話実行（`claude -p` / SDK）でリモート managed settings がセキュリティ同意ダイアログなしに consented 記録される問題を修正**
+- **`/usage-credits` の金額入力検証強化**: 不正値は digits へのサイレント切り詰めではなくエラーに。$1,000 超は typed confirmation 必須
+- 長いリスト/テーブル/コードブロックのストリーミング中に端末がフリーズ・キー入力が遅延する問題を修正
+
+---
+
+## v2.1.206 (2026-07-09)
+
+- **`EnterWorktree` の外部 worktree 確認**: プロジェクトの `.claude/worktrees/` 外の git worktree に入る前に確認を求めるように
+- **`/doctor` に CLAUDE.md トリミング提案チェック追加**: コードベースから導出可能な内容の削減を提案
+- **`/commit-push-pr` が push remote への `git push` を自動許可**: origin に加え `remote.pushDefault`（remote が 1 つだけならその remote）も対象
+- **`/cd` にディレクトリパス補完追加**（`/add-dir` と同じ挙動）
+- **Gateway: `/login` が Anthropic 運営のパブリックゲートウェイエンドポイントに対応**
+- **バックグラウンドエージェントの即時バージョン更新**: Claude Code 更新直後にバックグラウンドで新バージョンへアップグレード。アタッチ時の遅い stale-session アップグレード待ちを解消
+
+---
+
+## v2.1.205 (2026-07-08)
+
+- **`/doctor` が統合セットアップチェックアップに**: 問題の診断だけでなく修正まで実行。`/checkup` はそのエイリアス
+- **auto mode 強化**: セッショントランスクリプトファイルの改ざんをブロックするルールを追加。コンテキストから解決できない変数への `rm -rf` は実行前に確認
+- **バックグラウンドタスク通知の偽装承認対策**: 通知に「人間の入力は発生していない」ことを明記し、トランスクリプト内に捏造された承認が実行されるのを防止
+- **agent view 改善**: 行に色付き状態ワード+分類器生成の見出しを表示。既存 PR への編集/マージ/コメント/push もリンク表示。blocked セッションの peek は質問内容を先頭表示
+- **「Claude Browser」MCP サーバー名を予約**: 「Claude Preview」に加えて予約（Claude Desktop ペインのリネームに先行）。ユーザー設定 MCP は両名称で登録不可に
+- auto-update のダウンロードをディスクストリーミング化（ピークメモリ約 400MB 削減）
+
+---
+
+## v2.1.204 (2026-07-08)
+
+- バグ修正のみ（headless セッションの SessionStart hook 中に hook イベントがストリーミングされずリモートワーカーが idle-reap される問題の修正）
+
+---
+
+## v2.1.203 (2026-07-07)
+
+- **ログイン期限切れ間近の警告追加**: バックグラウンドセッションが中断される前に再認証可能に
+- **manual permission mode の常時表示**: フッターにグレーの ⏸ バッジを表示
+- **MCP `roots/list` にセッションの追加作業ディレクトリを反映**: セット変更時は `notifications/roots/list_changed` を送出
+- **サブエージェントの再委譲抑制**: タスク全体を別のサブエージェントに丸投げしにくくなった
+- **左矢印でバックグラウンドタスク / diff / workflow 詳細ビューを閉じなくなった**: Esc を使用
+- バックグラウンドエージェントの安定性修正多数（macOS の 15〜20 秒 stall、stale な `PATH` 継承、shell-exported `ANTHROPIC_BASE_URL` のドロップによる 401 等）
+- バイナリサイズ約 7MB・起動メモリ約 7MB 削減、ストリーミング中の応答性改善
+
+---
+
+## v2.1.202 (2026-07-06)
+
+- **「Dynamic workflow size」設定を `/config` に追加**: 動的ワークフローのエージェント数規模（small / medium / large）の目安を指定。強制上限ではなく助言的ガイドライン
+- **workflow の OTel 属性追加**: `workflow.run_id` / `workflow.name` をワークフロー生成エージェントのテレメトリに付与。OTel データからワークフロー実行を再構成可能に
+- **`/review <pr>` が高速シングルパスレビューに回帰**: 多エージェントレビューは `/code-review <level> <pr#>` を使用
+- ロード済みスキルの再呼び出しで指示が重複追加される問題、多数の git worktree があるリポジトリでの resume が数分かかる問題を修正
+
+---
+
+## v2.1.201 (2026-07-03)
+
+- **Claude Sonnet 5 セッションがハーネスリマインダーに mid-conversation system role を使用しなくなった**
+
+---
+
+## v2.1.200 (2026-07-03)
+
+- **`AskUserQuestion` の自動継続を廃止**: ダイアログがデフォルトで auto-continue しなくなった。idle タイムアウトは `/config` でオプトイン
+- **「default」パーミッションモードを「Manual」に改名**: CLI / `--help` / VS Code / JetBrains 全体で変更。`--permission-mode manual` / `"defaultMode": "manual"` を `default` と併せて受理
+- バックグラウンドエージェントデーモンの安定性修正多数（stale `daemon.lock`、古いビルドによるデーモン乗っ取り防止、roster 破損等）
+- スクリーンリーダー出力の改善（装飾グリフ非表示、ネストテーブルの読み上げ改善）
+
+---
+
+## v2.1.199 (2026-07-02)
+
+- **スタック型スキル呼び出し対応**: `/skill-a /skill-b do XYZ` で先頭のスキルを最大 5 個まで全てロード（従来は最初の 1 個のみ）
+- **一時的レート制限（429）の自動リトライ**: 使用量上限と無関係なサーバー側 429 をサブスクライバー向けにバックオフ付きで自動リトライ
+- **`CLAUDE_CODE_RETRY_WATCHDOG` 強化**: 非容量系一時エラーのデフォルトリトライ回数を 300 に引き上げ、`CLAUDE_CODE_MAX_RETRIES` の上限 15 を撤廃
+- **サブエージェントの部分結果保全**: レート制限/サーバーエラーで切られたサブエージェントが部分成果を親に返すように。API エラーを成功結果として誤報告する問題も修正
+- SSL 証明書エラーはリトライを浪費せず即座に対処ヒント付きで失敗、mid-stream エラー時は部分レスポンスを保持
+
+---
+
+## v2.1.198 (2026-07-01)
+
+- **サブエージェントがデフォルトでバックグラウンド実行に**: 実行中も Claude が作業を継続し、完了時に通知される（段階的ロールアウトが全面化）
+- **Claude in Chrome が GA（一般提供）に**
+- **`/dataviz` スキル追加**: チャート・ダッシュボード設計ガイダンス+実行可能なカラーパレットバリデータ
+- **`claude agents` のバックグラウンドエージェント通知**: 入力待ち/完了時に `Notification` hook（`agent_needs_input` / `agent_completed`）が発火
+- **worktree 完了時の自動 commit → push → draft PR**: `claude agents` から起動したバックグラウンドエージェントがコード作業完了時に確認なしで実行
+- **Explore エージェントがメインセッションのモデルを継承**（opus 上限。従来は haiku 固定）
+- **サブエージェント・コンパクションが extended thinking 設定を継承**: 委譲タスクの品質向上
+- **`/agents` ウィザード削除**: Claude に依頼するか `.claude/agents/` を直接編集
+- **Gateway: Claude Platform on AWS（anthropicAws）をアップストリームプロバイダに追加**: model-not-found でフェイルオーバーチェーンを進行
+- サブエージェントは起動元エージェントのメッセージを通常のタスク指示として扱う（ただしユーザーの承認としては決して扱わない）
+
+---
+
+## v2.1.197 (2026-06-30)
+
+- **Claude Sonnet 5 登場**: Claude Code のデフォルトモデルに。ネイティブ 1M トークンコンテキストウィンドウ、2026-08-31 までのプロモ価格 $2/$10 per Mtok
+
+---
+
+## v2.1.196 (2026-06-29)
+
+- **組織デフォルトモデル対応**: 管理者が org console で設定。自分で未選択の場合 `/model` に「Org default」（または「Role default」）と表示
+- **セキュリティ: MCP 自己承認の穴を修正**: `claude mcp list`/`get` が、コミット済み `.claude/settings.json` でリポジトリが自己承認した `.mcp.json` サーバーを起動しなくなった。未信頼ワークスペースは `⏸ Pending approval` 表示
+- **ストリーミング idle watchdog が全プロバイダでデフォルト有効に**: 5 分間イベントのないストリームを中断してリトライ。`CLAUDE_ENABLE_STREAM_WATCHDOG=0` で無効化
+- **Remote Control を非 Anthropic ホストの `ANTHROPIC_BASE_URL` で無効化**（Bedrock/Vertex/Foundry と同じ扱い）
+- **セッション開始時に可読なデフォルト名を付与**: 識別・メッセージ送信が容易に
+- `/code-review` のクリーンアップファインダー 5 個を統合しトークン約 25% 削減、バックグラウンドセッションの耐久性改善（プロセスの停止/再起動/更新をまたいで長時間コマンドが生存。Windows 含む）
+
+---
+
+## v2.1.195 (2026-06-26)
+
+- **破壊的変更: hook マッチャーのハイフン付き識別子が完全一致に**: `code-reviewer` や `mcp__brave-search` 等が substring マッチしなくなった。ハイフン付き MCP サーバーの全ツールにマッチさせるには `mcp__brave-search__.*` を使用
+- **`CLAUDE_CODE_DISABLE_MOUSE_CLICKS` 追加**: fullscreen でクリック/ドラッグ/ホバーを無効化しつつホイールスクロールは維持
+- **音声入力の auto-submit がスペースなし言語（日本語・中国語・タイ語）で発火しない問題を修正**
+- プロジェクト `.claude/settings.json` のみで有効化された外部プラグインに、全ロードパスで明示的なインストール同意を必須化
+
+---
+
+## v2.1.193 (2026-06-25)
+
+- **`autoMode.classifyAllShell` 設定追加**: 全 Bash/PowerShell コマンドを auto-mode classifier に通す（従来は任意コード実行パターンのみ）
+- **auto mode の拒否理由表示**: トランスクリプト、拒否トースト、`/permissions` の recent denials に理由を表示
+- **OTEL `claude_code.assistant_response` ログイベント追加（プライバシー注意）**: モデルの応答テキストを含む。`OTEL_LOG_ASSISTANT_RESPONSES=1` で有効。未設定時は `OTEL_LOG_USER_PROMPTS` に従うため、プロンプト内容を既にログしているデプロイはアップグレード後に応答内容も受信し始める — prompts-only を維持するには `OTEL_LOG_ASSISTANT_RESPONSES=0` を設定
+- **bash モード（`!`）にライブファイルパス補完追加**
+- アイドルバックグラウンドシェルのメモリ圧力自動回収（`CLAUDE_CODE_DISABLE_BG_SHELL_PRESSURE_REAP=1` で無効化）
+- MCP `headersHelper` 認証が 401/403 時に自動再実行・再接続、plugin の marketplace `renames` マップ自動追従
+
+---
+
+## v2.1.191 (2026-06-24)
+
+- **`/rewind` が `/clear` 実行前からの会話再開に対応**
+- **サンドボックスのネットワーク許可をセッション内で記憶**: 一度「Yes」で許可したホストは接続のたびに再プロンプトされない
+- **カンマ区切り hook マッチャー（例 `"Bash,PowerShell"`）が silently 発火しない問題を修正**
+- MCP 信頼性改善: capability discovery と OAuth の一時エラーリトライ、headless 環境では browser popup をスキップして URL ペーストプロンプトへ
+- ストリーミング中の CPU 使用率約 37% 削減（テキスト更新を 100ms に coalesce）
+
+---
+
+## v2.1.190 (2026-06-24)
+
+- バグ修正・信頼性改善のみ（公式 changelog 記載）。ユーザー向け新機能なし
+
+---
+
+## v2.1.187 (2026-06-23)
+
+- **`sandbox.credentials` 設定追加**: サンドボックス内コマンドによる認証情報ファイル・シークレット環境変数の読み取りをブロック
+- **組織設定のモデル制限に対応**: model picker / `--model` / `/model` / `ANTHROPIC_MODEL` に適用され、制限モデル選択時は「restricted by your organization's settings」と表示
+- **fullscreen の選択メニュー（パーミッションプロンプト、`/model`、`/config` 等）でマウスクリック対応**
+- **リモート MCP ツール呼び出しの 5 分アイドルタイムアウト**: 無応答ハングを中断（`CLAUDE_CODE_MCP_TOOL_IDLE_TIMEOUT` で変更可）
+- サブエージェント深度トラッキング修正: 再開時に元の spawn 深度を復元、fork したサブエージェントも深度上限にカウント
+- `/install-github-app` で GitHub App のみのインストールが可能に（workflow/secret 手順のスキップ可）
+
+---
+
+## v2.1.186 (2026-06-22)
+
+- **`claude mcp login <name>` / `claude mcp logout <name>` 追加**: 対話的 `/mcp` メニューを開かず CLI から MCP サーバー認証。SSH 越しの完了用に `--no-browser` の stdin リダイレクト対応
+- **`!` bash コマンドの出力に Claude が自動応答するように**: 従来のコンテキスト追加のみの挙動に戻すには settings.json で `"respondToBashCommands": false`
+- **バックグラウンドサブエージェントのパーミッションプロンプトをメインセッションに表示**: 自動 deny から変更。どのエージェントの要求かを表示し、Esc でそのツールのみ拒否
+- **`/review <pr>` が `/code-review medium` と同じレビューエンジンを使用するように**
+- **`CLAUDE_CODE_MAX_RETRIES` に上限 15 を設定**: 無人セッションは `CLAUDE_CODE_RETRY_WATCHDOG` を使用
+- **`Agent(type)` deny ルール / `Agent(x,y)` 許可型制限が named サブエージェント spawn にも強制されるように修正**
+- `teammateMode: "iterm2"` 設定追加、`/plugin` Installed タブに Skills セクション追加、skill frontmatter キーが kebab-case / snake_case / camelCase を受理
+
+---
+
+## v2.1.185 (2026-06-20)
+
+- ストリーム停滞ヒントの文言・タイミング調整のみ（「Waiting for API response · will retry in …」表記に変更、発火を 10 秒→20 秒に）
+
+---
+
+## v2.1.183 (2026-06-19)
+
+- **auto mode の破壊的 git コマンドブロック**: ユーザーがローカル作業の破棄を求めていない場合の `git reset --hard` / `git checkout -- .` / `git clean -fd` / `git stash drop` をブロック。このセッションでエージェントが作成していないコミットへの `git commit --amend`、特定スタックの指示がない `terraform destroy` / `pulumi destroy` / `cdk destroy` もブロック
+- **非推奨/自動更新モデルの警告追加**: print モード（`-p`）では stderr に表示。agent frontmatter で設定されたモデルもカバー
+- **`attribution.sessionUrl` 設定追加**: web / Remote Control セッションのコミット・PR から claude.ai セッションリンクを除外可能
+- **`/config --help` 追加**: `/config key=value` で使える shorthand キーの一覧表示
+- WebSearch がサブエージェントで空結果を返す問題を修正、`/config` トグルは Esc で保存して閉じる挙動に変更
+
+---
+
+## v2.1.181 (2026-06-17)
+
+- **`/config key=value` 構文追加**: 任意の設定をプロンプトから直接変更可能（例 `/config thinking=false`）。インタラクティブ / `-p` / Remote Control で動作
+- **`sandbox.allowAppleEvents` 設定追加**: サンドボックス内コマンドの Apple Events 送信をオプトイン許可（macOS）
+- **`CLAUDE_CLIENT_PRESENCE_FILE` 環境変数追加**: マーカーファイルを指定すると在席中のモバイルプッシュ通知を抑制
+- **バンドル Bun ランタイムを 1.4 にアップグレード**
+- **foreground サブエージェントにも 5 階層の深度制限を適用**: 無制限のネストチェーン spawn を修正
+- fullscreen の URL オープンが Cmd+クリック（macOS）/ Ctrl+クリック必須に、長い段落のストリーミングを行単位表示に改善
+- 起動リグレッション修正（2.1.169 起因の約 120ms）、ネットワークドライブ/クラウド同期フォルダでの Write/Edit 0 バイト生成修正
+
+---
+
+## v2.1.179 (2026-06-16)
+
+- バグ修正・信頼性改善のみ（mid-stream 切断時の部分レスポンス保持、WSL2 のマウスホイールスクロール修正等）
+
+---
+
+## v2.1.178 (2026-06-15)
+
+- **agent teams 刷新: `TeamCreate` / `TeamDelete` ツールを削除**: `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` 設定下では全セッションが暗黙の 1 チームを持つように。Agent ツールの `name` パラメータで直接チームメイトを spawn（セットアップ手順不要）。`team_name` パラメータは受理されるが無視される
+- **`Tool(param:value)` パーミッションルール構文追加**: ツールの入力パラメータにマッチ（`*` ワイルドカード対応）。例: `Agent(model:opus)` で Opus サブエージェントをブロック
+- **ネストされた `.claude/skills` ディレクトリのロード対応**: 配下ファイルの作業時にロードされ、名前衝突時は `<dir>:<name>` として両方利用可能
+- **ネストされた `.claude/` の優先順位**: agent / workflow / output-style は名前衝突時に作業ディレクトリに最も近いものが優先
+- **auto mode がサブエージェント spawn を起動前に classifier で評価**: サブエージェントがレビューなしでブロック対象アクションを要求できるギャップを閉鎖
+- workflow プロンプトキーワードは「run a workflow」等の明示的フレーズのみでトリガーするよう変更
+
+---
+
+## v2.1.176 (2026-06-12)
+
+- **セッションタイトルが会話の言語で生成されるように**（`language` 設定で特定言語に固定可）
+- **`footerLinksRegexes` 設定追加**: フッター行に正規表現マッチのリンクバッジを表示（user / managed settings で設定）
+- **`availableModels` 強制の強化**: `ANTHROPIC_DEFAULT_*_MODEL` 環境変数経由でブロック済みモデルにリダイレクト不可に。`/fast` も allowlist 外モデルへの切替を拒否
+- Bedrock: `awsCredentialExport` の認証情報を固定 1 時間ではなく `Expiration` までキャッシュ
+- hook `if` 条件の Read/Edit/Write パスパターン（`Edit(src/**)`、`Read(.env)` 等）が正しくマッチするよう修正
+
+---
+
+## v2.1.175 (2026-06-12)
+
+- **`enforceAvailableModels` managed setting 追加**: 有効時、`availableModels` allowlist が Default モデルも制約（不許可モデルに解決される Default は最初の許可モデルへフォールバック）。user / project 設定で managed の `availableModels` リストを広げることも不可に
+
+---
+
+## v2.1.174 (2026-06-12)
+
+- **`wheelScrollAccelerationEnabled` 設定追加**: fullscreen のマウスホイールスクロール加速を無効化可能
+- `/model` ピッカーが Default の解決先モデルファミリを独立行で表示するよう修正
+- [VSCode] `/usage` に使用量アトリビューション追加: cache miss、long context、サブエージェント、skill/agent/plugin/MCP 別の直近 24h/7d 内訳
+
+---
+
+## v2.1.173 (2026-06-11)
+
+- バグ修正のみ（Fable 5 のモデル名 `[1m]` サフィックス正規化 — Fable 5 は 1M コンテキストが標準のため自動除去 — 等）
+
+---
+
+## v2.1.172 (2026-06-10)
+
+- **サブエージェントのネスト対応**: サブエージェントが自身のサブエージェントを spawn 可能に（最大 5 階層）
+- **Bedrock が `~/.aws` 設定ファイルから AWS リージョンを読むように**: `AWS_REGION` 未設定時。AWS SDK と同じ優先順位で、`/status` にリージョンの出所を表示
+- **`/plugin` のマーケットプレイス閲覧に検索バー追加**
+- 1M コンテキスト使用中にクレジット切れでセッションが恒久スタックする問題を修正（標準コンテキスト上限まで自動コンパクト）
+- `availableModels` 制限のサブエージェントモデルオーバーライド / dispatch ピッカー / advisor への適用漏れを修正
+- `WebFetch(domain:*.example.com)` ワイルドカードがサブドメインにマッチしない問題、途中ワイルドカードのファイル権限ルール拒否を修正
+- 長い会話・並列サブエージェント時のパフォーマンスとアイドル CPU 使用率を改善
+
+---
+
+## v2.1.170 (2026-06-09)
+
+- **Claude Fable 5 導入**: Mythos クラスのモデルを一般利用向けに安全化したもので、一般提供されたモデルとして過去最高の能力。v2.1.170 以降で利用可能
+- VS Code 統合ターミナル等（Claude Code 環境変数を継承したシェル）からの起動でトランスクリプトが保存されず `--resume` に出ない問題を修正
+
+---
+
+## v2.1.169 (2026-06-08)
+
+- **`--safe-mode` フラグ / `CLAUDE_CODE_SAFE_MODE` 追加**: 全カスタマイズ（CLAUDE.md、plugins、skills、hooks、MCP サーバー）を無効化して起動。トラブルシューティング用
+- **`/cd` コマンド追加**: プロンプトキャッシュを壊さずにセッションの作業ディレクトリを移動
+- **`disableBundledSkills` 設定 / `CLAUDE_CODE_DISABLE_BUNDLED_SKILLS` 追加**: バンドルスキル・ワークフロー・組み込みスラッシュコマンドをモデルから隠す
+- **Self-hosted runner: `post-session` ライフサイクル hook 追加**: セッション終了後・ワークスペース削除前に実行（未コミット作業のスナップショットやログエクスポート用）。子プロセスの SIGTERM→SIGKILL 猶予も設定可能に（デフォルト 5 秒）
+- **セキュリティ: 未信頼プロジェクト設定が信頼確認なしに OTEL クライアント証明書パスを設定できる問題を修正**
+- enterprise managed MCP ポリシー（`allowedMcpServers`/`deniedMcpServers`）の強制漏れ（reconnect / IDE 設定 / インストール直後の `--mcp-config` 等）を修正
+- `claude agents --json` に `--all` オプションと `id` / `state` フィールド追加、「CLAUDE.md is too long」警告閾値がモデルのコンテキストウィンドウに応じてスケール
 
 ---
 

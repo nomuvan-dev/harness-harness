@@ -3,45 +3,168 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://developers.openai.com/codex/changelog
 
-最終更新: 2026-06-09
+最終更新: 2026-07-13
 
 ---
 
-## CLI 0.138.0-alpha.7 (2026-06-08, プレリリース)
+## CLI 0.144.1 (2026-07-09)
 
-`rust-v0.138.0-alpha.7`（2026-06-08 14:47 UTC）が公開。リリースノートは空のため、`rust-v0.138.0-alpha.6` 以降の `main` ブランチコミット 14 件から主要なユーザー向け変更点を整理。安定版 0.138.0 リリース時に再統合する。
+0.144.0 の同日パッチリリース。インストーラと code mode の信頼性修正のみ。
 
-### Multi-Agent v2
+- **standalone インストール修正**: GitHub がコンパクト/並べ替え済みのリリースメタデータを返すとインストールが失敗する問題を修正
+- **macOS パッケージで code-mode host を同梱公開**: `codex` 実行ファイルと並んで code-mode host を配置
+- **code mode のフォールバック**: 併設 host バイナリが利用不可でも埋め込みランタイムにフォールバックして動作継続
 
-- **MAv2 サブエージェント residency LRU**: アイドル状態の v2 サブエージェントを `ThreadManager` から退去可能に。論理識別 (`AgentRegistry`) と読み込み状態 (residency) を分離し、resident capacity が一杯のときに idle な LRU エントリを退去。退去対象は完了/エラー済み・アクティブターンなし・mailbox 空のスレッドに限定。退去前に rollout は materialize され flush される
-- **MAv2 並列実行のカウント方式変更**: 並列実行上限を「論理エージェント数」ではなく「アクティブな非 root v2 ターン数」で計測。RAII ガードを `RunningTask` に持たせ、`turn/start` の直接呼び出しにも capacity チェックを適用。`/goal` のアイドル継続は capacity 一杯時にもブロックされないよう除外。root と v1 のターンは本上限の対象外
-- **MAv2 ツール名 `close_agent` → `interrupt_agent` リネーム（v2 のみ）**: v2 エージェントは task 名で再利用可能であり residency が capacity 管理を担うため、モデルに公開するツール名を実際の動作（現在ターンの中断）に合わせて変更。`Op::Interrupt` を送出し、対象は registered のまま維持。root/self ターゲットは interrupt 固有エラーで拒否。v1 の `close_agent` サーフェスは変更なし
+---
 
-### Code mode
+## CLI 0.144.0 (2026-07-09)
 
-- **Code mode で standalone web search を有効化**: `/v1/alpha/search` がプレーンテキスト `output` を返すようになり、code mode から `web.run` 経由でスタンドアロン検索を呼び出して結果を nested JavaScript 呼び出しに返却可能に。`encrypted_output` のオプション解析は維持
+- **`writes` app-approval モード追加**: 宣言済みの read-only アクションは許可しつつ、書き込み操作のみ承認を求める中間モード
+- **usage-limit reset credits の拡充**: クレジットの種別と有効期限を表示し、どのクレジットを redeem するか選択可能に
+- **MCP 対話型認証が標準機能に**: MCP ツールが experimental opt-in なしで対話的に認証を要求可能（auth elicitation デフォルト有効化）
+- **app-server ホストのランタイム認証**: ホストが実行時に Codex 認証を提供でき、ログイン成功時に hosted ページへリダイレクト可能
+- **Ultra reasoning の同時実行警告**: Ultra 選択時にマルチエージェント並列度が高いと使用量が急増しうる旨を警告
+- **pnpm グローバルインストール検出**: 診断と更新が正しいパッケージマネージャを使用
+- **修正**:
+  - 廃止モデルを参照する compaction を現在選択中のモデルでリトライし、ChatGPT スレッド再開を復旧
+  - Intel macOS リリースバイナリでの Code Mode クラッシュ修正
+  - Windows sandbox: writable root 内のファイル削除と managed primary runtime へのアクセスを許可
+  - ペーストされた端末制御シーケンスによる TUI 描画・履歴破損を防止（サニタイズ）
+  - 長時間セッションで `codex_apps` コネクタの期限切れ認証を自動リフレッシュ
+  - Responses WebSocket が system proxy / カスタム CA を尊重しつつ低レイテンシトランスポートを維持
+- **その他**: device-code ログインのフィッシング警告文を明確化、リモート実行環境でのプラグインスキル読み込み高速化、`/review` ブランチピッカー高速化、Bedrock モデル名を GPT-5.6 ファミリー/バリアントが分かる表記に変更
 
-### Sandbox / Approval
+---
 
-- **unified exec で approval / sandbox 決定を保持**: zsh-fork ランタイム経由で sandbox 決定が失われるバグを修正。requested permissions と filesystem policy から `launch_sandbox_permissions` を導出し、launch path と intercepted exec の双方で承認決定を保持。`RequireEscalated` / `WithAdditionalPermissions` / `UseDefault` の escalation 判定を明示化し、`WithAdditionalPermissions` は bounded additional-permissions 経路を経由（フル sandbox バイパス扱いをやめる）。unsandboxed intercepted exec は managed-network proxy env を削除
+## CLI 0.143.0 (2026-07-08)
 
-### TUI / Remote Control
+- **リモートプラグインをデフォルト有効化**: カタログ行のリッチ化、npm マーケットプレースソース対応、remote/local バージョンの可視化を含む
+- **システムプロキシ対応（macOS / Windows）**: 認証と Responses API トラフィックを OS のシステムプロキシ（PAC / WPAD 設定含む）経由でルーティング可能に
+- **`codex remote-control pair` 追加**: 稼働中デーモンから手動ペアリングコードを生成
+- **Amazon Bedrock GPT-5.6 モデル追加**: Sol / Terra / Luna の 3 モデル。reasoning effort `max` をファーストクラスでサポート
+- **MCP tool search をデフォルト化**: MCP ツールはデフォルトで tool search を使用。ChatGPT ホストの MCP サーバーは session 認証を明示利用可能
+- **app-server 拡張**: environment 情報の inspection RPC、子孫スレッド一覧、特定ターン経由の履歴 fork（`thread/fork` に `turn_id`）
+- **修正**:
+  - Windows ConPTY の改行・バックスペース入力処理、sandbox 資格情報リトライのエッジケース
+  - 古い TUI 安全確認プロンプトの残留、レビューキャンセル時に MCP startup が busy のままになる問題
+  - exec-server 一時オフライン時の復旧改善、remote-control トークンリフレッシュのリトライストーム防止
+  - シャットダウン時の realtime transcript 末尾・terminal rollout イベントの保全
+  - GitHub API レート制限によるインストーラ失敗を低減（リリースメタデータ再利用）
+- **セキュリティ**: OpenSSL / Hono / fast-uri / quick-xml / crossbeam-epoch を脆弱性対応版に更新
 
-- **TUI: MCP startup 状態をスレッドスコープに**: `mcpServer/startupStatus/updated` に nullable な `threadId` を追加し、サブエージェント由来の MCP 起動失敗を当該スレッドのみで表示。親トランスクリプトに警告がリークしない。スナップショット replay 前に expected MCP servers を seed し、startup スピナーが残らないようにする。同一サーバの同一失敗は 1 回の startup ラウンド内で重複抑制
-- **TUI: `resume --last` / `fork --last` でプロンプト位置引数を受理**: `codex resume --last "follow-up"` / `codex fork --last "next"` が、第一引数を session ID ではなく初期プロンプトとして解釈するように修正。`resume SESSION_ID PROMPT` / `fork SESSION_ID PROMPT` の挙動は維持
-- **remote-control: WebSocket 汎用 404 でも enrollment を維持**: enrollment 状態が剥がれて再 pairing が必要になる挙動を修正
+---
 
-### Core plugins / Build
+## CLI 0.142.1 / 0.142.2 (2026-06-25)
 
-- **core-plugins: プラグインサービスに Codex 製品 SKU を送信**
-- **`rusty_v8` を 149.2.0 に更新**: V8 ランタイムの保守更新
-- **bazel 環境変数で BuildBuddy シークレットを利用（CI）**
+0.142.0 への追随パッチ。0.143.0 の一部機能が先行バックポートされた。
+
+- **Windows システムプロキシ対応（0.142.1, opt-in）**: 認証トラフィックで PAC / WPAD / 静的プロキシ / バイパスルールをサポート
+- **macOS システムプロキシ対応（0.142.2）**: `respect_system_proxy` 有効時に認証クライアントがシステムプロキシ / PAC / WPAD 設定を尊重
+- **MCP tool search をデフォルト化（0.142.2）**: 対応環境で MCP ツールの発見性を改善しつつ、旧モデル・プロバイダとの互換を維持
+- **PowerShell AST 安全性強化**: 安全性分類器が検査できない実行可能 AST 領域を含む PowerShell コマンドは承認必須に
+- **その他**: プラグインのダークモードロゴ対応、safety-buffering UI メタデータ、Bedrock 期限切れ資格情報の実用的な復旧ガイダンス、リモート画像入力の明示的バリデーションエラー、OpenSSL / esbuild 更新
+- **0.142.3〜0.142.5 (2026-06-26〜07-01)**: 保守のみのパッチリリース。0.142.5 は Responses WebSocket リクエストペイロード全文がトレースログに書き込まれる問題の防止をバックポート
+
+---
+
+## CLI 0.142.0 (2026-06-22)
+
+- **`/usage` で usage-limit reset credits を表示・redeem 可能に**: 確認・リトライ・利用可否の更新状態付き
+- **`/plugins` のリモートプラグイン整理**: OpenAI Curated / Workspace / Shared with me のセクション分け。適格なターンで関連プラグインの推薦・インストールが可能
+- **rollout token budgets（設定可能）**: エージェントスレッド横断でトークン使用量を追跡し、残量リマインダーを提示、枯渇時はターンを中断
+- **multi-agent delegation 設定**: app-server クライアントがスレッド/ターンレベルで delegation を disabled / explicit-request-only / proactive に設定可能
+- **indexed web-search モード追加**: ライブ検索は許可しつつ、直接のページアクセスはサーバー承認済み URL に制限
+- **スケジュールされた UTC 時刻リマインダー**: Codex が定期的な現在時刻リマインダーを受信し、clock ツールで現在時刻を直接照会可能（app-server 提供クロックにも対応）
+- **修正**:
+  - Linux TUI: `Ctrl+Z` サスペンド→`fg` 復帰後の描画を復旧
+  - exec-server プロセスと stdio MCP セッションが一時切断に耐えるように（signed-URL リフレッシュ、リトライ安全な stdin 書き込み）
+  - リモート環境で executor ネイティブのパス・シェル・AGENTS.md 探索・sandbox 挙動を OS 横断で維持
+  - 親エージェントがサブエージェントの terminal エラーを受け取れるように（空の成功として見えなくなる問題を修正）
+  - goal-first スレッドが `thread/list` / `thread/search` に再び出現するよう修正
+- **パフォーマンス**: DNS 遅延処理・モデルキャッシュのウォーム化・プラグインスキルのパース再利用等で起動・セッションレイテンシを削減。WebSocket ペイロードの毎イベントログを廃止しログ肥大を抑制
+
+---
+
+## CLI 0.141.0 (2026-06-18)
+
+- **Noise relay による E2E 暗号化**: リモート executor が認証付き・エンドツーエンド暗号化された Noise relay チャネルを使用（デフォルト化）
+- **クロスプラットフォームリモート実行の強化**: executor ネイティブの作業ディレクトリ・シェルを維持し、app-server / exec-server 境界でファイルシステム権限パスを保持
+- **executor プラグインの stdio MCP をスレッド単位で有効化**: created-by-me マーケットプレースと認証別 curated カタログも追加
+- **app-server 拡張**: 直下の子スレッド一覧、外部エージェント import の詳細な結果照合、rate-limit reset credits の読み取り・redeem
+- **TUI 入力プロンプトの自動解決**: 一定時間操作がない場合に入力プロンプトを自動解決。カウントダウンは操作で一時停止
+- **realtime 制御**: 音声の明示的 append、Codex 応答の会話への入り方の制御、起動時コンテキストの省略
+- **修正**:
+  - hook trust バイパスが `codex exec` のスレッド開始・resume を通して持続。blocking `PostToolUse` hook が code-mode ツール呼び出しを正しく拒否
+  - Windows sandbox の失効資格情報を自動修復、PowerShell コマンドのバックグラウンド化までの猶予を延長
+  - 同梱 SQLite を WAL-reset 破損修正入りバージョンにピン
+  - エンタープライズプロキシで一般的な P-521 証明書署名の TLS 接続をサポート
+- **パフォーマンス**: tool search のキャッシュ、リクエスト/履歴の重複コピー排除により大規模ツールセッションのレイテンシ・メモリを削減
+
+---
+
+## CLI 0.140.0 (2026-06-15)
+
+- **`/import` 追加**: Claude Code からセットアップ・プロジェクト設定・最近のチャットを選択的にインポート
+- **セッションの完全削除**: `codex delete` / `/delete` / app-server `thread/delete`。確認セーフガードとサブエージェントのクリーンアップ付き
+- **`/usage` 拡充**: 日次・週次・累積のアカウントトークンアクティビティを表示
+- **認証の強化**:
+  - **Amazon Bedrock API キー認証（managed）** を追加
+  - **CLI / MCP OAuth 資格情報の暗号化ローカル保存** に対応
+- **`@` で unified mentions メニューをデフォルト化**: ファイル・プラグイン・スキルを統一メニューから参照
+- **`/goal` の入力保全**: 巨大テキスト・大きなペースト・画像添付を保持（リモート app-server セッション含む）
+- **修正**:
+  - 破損した SQLite state DB を自動でバックアップし rollout データから再構築
+  - `/review` で guidance キュー中に `Esc` を押すとクラッシュする問題を修正（キャンセル時も guidance を保持）
+  - MCP 信頼性向上: 一時的な起動失敗のリトライ、使用不能な OAuth 資格情報を logged out として報告、明示的に無効化したサーバーの維持
+  - 非 TTY バックグラウンドコマンドを Ctrl-C で中断可能に（最終出力と exit status は保持）
+- **その他**: 大規模リポジトリ・長期セッションの応答性改善（fsmonitor 保持、turn-diff キャッシュ等）。実験的な `/realtime` 音声制御を TUI から削除
+
+---
+
+## CLI 0.139.0 (2026-06-09)
+
+0.138.0-alpha.7 由来の変更（MAv2 residency LRU 等）は本リリースに収録された。
+
+- **Code mode の standalone web search**: code mode から（ネストした JavaScript ツール呼び出し含め）スタンドアロン検索を直接呼び出し、プレーンテキストの検索結果を受領可能に
+- **Multi-Agent v2 の容量管理刷新**:
+  - **residency LRU**: アイドル状態の v2 サブエージェントを `ThreadManager` から退去可能に（論理識別と読み込み状態を分離）
+  - **並列実行のカウント方式変更**: 上限を「アクティブな非 root v2 ターン数」で計測（root / v1 は対象外）
+  - **`close_agent` → `interrupt_agent` リネーム（v2 のみ）**: 実際の動作（現在ターンの中断）に合わせた命名。v1 サーフェスは変更なし
+- **ツールスキーマ互換性向上**: ツール / コネクタの入力スキーマで `oneOf` / `allOf` を保持。巨大スキーマの圧縮時も浅い構造をより多く維持
+- **`codex doctor` 拡張**: ローカルレポートにエディタ・ページャ環境の詳細を含める（JSON 出力では raw 値を redact）
+- **プラグインマーケットプレース改善**: `marketplace list --json` にソース情報を追加、plugin list はキャッシュ済みリモートカタログから即応答しバックグラウンドで更新
+- **修正**:
+  - `codex resume --last "..."` / `codex fork --last "..."` が末尾引数を session ID ではなく初期プロンプトとして解釈
+  - サブエージェント由来の MCP startup 警告を当該スレッドにスコープ（親スレッドの重複警告・スピナー残留を解消）
+  - 画像編集が会話履歴からの推測ではなく参照された正確なファイルパスを使用
+  - `/new` / `/clear` / `/fork` 時に cloud-managed requirements / feature flags が失われない
+  - sandbox 実行で承認済み escalation 決定を保持し、proxy-only ネットワーキングをより一貫して強制
+- **内部**: リリースビルドでシンボルアーカイブを再度分離出力、`rusty_v8` 149.2.0 更新
+
+---
+
+## CLI 0.138.0 (2026-06-08)
+
+安定版リリース。alpha.1〜.6 の内容が統合された（各 alpha 節は履歴として下方に残置）。
+
+- **`/app` による Codex Desktop へのハンドオフ**: macOS とネイティブ Windows で現在の CLI スレッドを Desktop に引き継ぎ。Windows ワークスペース起動もディープリンクで Desktop を直接開く
+- **画像パスのモデル公開**: ローカル画像添付と standalone 画像生成が保存先ファイルパスをモデルに公開し、後続の編集・参照が確実に
+- **Reasoning effort 選択の柔軟化**: `Alt` バインドが効かない端末向けの TUI フォールバックショートカット追加。モデル定義の effort レベルをモデルが広告する順序で反映
+- **認証 / app-server**: アカウントトークン使用量の読み取り API、v2 personal access token を CLI / app-server フローでサポート
+- **プラグイン自動化の構造化出力拡充**: add / remove / marketplace コマンドの `--json` 対応、plugin list JSON にマーケットプレースソース、plugin detail に default prompts・リモート MCP サーバー・利用不可アプリテンプレートを公開
+- **修正**:
+  - Goal 挙動の安定化: `/goal edit` の複数行ペーストが早期送信されない、idle 自動ターンが Plan mode に入らない、terminal ターン失敗後の自動継続を停止
+  - fork したスレッドがユーザーのリネーム済みタイトルを維持
+  - TUI: ストリーミング中の余分な空行を解消、キャンセルしたプロンプトをカーソル末尾で再表示、config 書き込み失敗時に原因を表示
+  - 起動耐性: `/usr/bin/bash` フォールバック、Linux の長い proxy ソケットパス対応、期限切れ OAuth-backed MCP 資格情報の事前リフレッシュ
+  - リモート / シンボリックリンク環境で正しい `AGENTS.md` を一貫して読み込み
+- **パフォーマンス**: TUI 起動時のプラグイン discovery 再利用、`resume --last` の state DB 優先解決、memchr による大規模ストリーム処理の高速化
 
 ---
 
 ## CLI 0.138.0-alpha.5 / .6 (2026-06-05〜06, プレリリース)
 
-GitHub Releases に `rust-v0.138.0-alpha.5`（2026-06-05 23:27 UTC）と `rust-v0.138.0-alpha.6`（2026-06-06 03:23 UTC）が公開。リリースノートは空のため、`rust-v0.138.0-alpha.4` 以降の `main` ブランチコミットから主要なユーザー向け変更点を整理。安定版 0.138.0 リリース時に再統合する。
+GitHub Releases に `rust-v0.138.0-alpha.5`（2026-06-05 23:27 UTC）と `rust-v0.138.0-alpha.6`（2026-06-06 03:23 UTC）が公開。リリースノートは空のため、`rust-v0.138.0-alpha.4` 以降の `main` ブランチコミットから主要なユーザー向け変更点を整理。安定版 0.138.0 (2026-06-08) に統合済み（本節は履歴目的で残置）。
 
 ### Code mode / Responses Lite
 
@@ -123,7 +246,7 @@ GitHub Releases に `rust-v0.138.0-alpha.5`（2026-06-05 23:27 UTC）と `rust-v
 
 ## CLI 0.138.0-alpha.3 / .4 (2026-06-04, プレリリース)
 
-`rust-v0.138.0-alpha.3`（2026-06-04 20:18 UTC）と `rust-v0.138.0-alpha.4`（2026-06-04 22:01 UTC）が公開。リリースノートは空のため、`rust-v0.138.0-alpha.2` 以降の `main` ブランチコミットから主要なユーザー向け変更点を整理。安定版 0.138.0 リリース時に再統合する。
+`rust-v0.138.0-alpha.3`（2026-06-04 20:18 UTC）と `rust-v0.138.0-alpha.4`（2026-06-04 22:01 UTC）が公開。リリースノートは空のため、`rust-v0.138.0-alpha.2` 以降の `main` ブランチコミットから主要なユーザー向け変更点を整理。安定版 0.138.0 (2026-06-08) に統合済み（本節は履歴目的で残置）。
 
 ### Code mode
 
@@ -162,7 +285,7 @@ GitHub Releases に `rust-v0.138.0-alpha.5`（2026-06-05 23:27 UTC）と `rust-v
 
 ## CLI 0.138.0-alpha.1 / .2 (2026-06-04, プレリリース)
 
-GitHub Releases に `rust-v0.138.0-alpha.1`（2026-06-04 05:02 UTC）と `rust-v0.138.0-alpha.2`（2026-06-04 17:26 UTC）が公開。リリースノートは空のため、0.137.0 stable 以降の `main` ブランチコミットから主要なユーザー向け変更点を整理。安定版 0.138.0 リリース時に内容を再確認・統合する。
+GitHub Releases に `rust-v0.138.0-alpha.1`（2026-06-04 05:02 UTC）と `rust-v0.138.0-alpha.2`（2026-06-04 17:26 UTC）が公開。リリースノートは空のため、0.137.0 stable 以降の `main` ブランチコミットから主要なユーザー向け変更点を整理。安定版 0.138.0 (2026-06-08) に統合済み（本節は履歴目的で残置）。
 
 ### Code mode
 

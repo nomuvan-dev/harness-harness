@@ -1,6 +1,6 @@
 # Claude Code 設定仕様書
 
-最終更新: 2026-06-07（巡回更新）
+最終更新: 2026-07-13（巡回更新）
 
 公式ドキュメント: https://code.claude.com/docs/en/settings / https://code.claude.com/docs/en/memory
 
@@ -110,10 +110,10 @@ CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ../shared-config
 
 | キー | 説明 |
 |:--|:--|
-| `permissions.allow` | 許可するツール使用ルール配列。**v2.1.166** で MCP 以外の glob 使用は拒否されるようになった |
+| `permissions.allow` | 許可するツール使用ルール配列。**v2.1.166** で MCP 以外の glob 使用は拒否されるようになった。**v2.1.178** で `Tool(param:value)` 構文（`*` ワイルドカード可）によるツール入力パラメータマッチをサポート（例: `Agent(model:opus)`） |
 | `permissions.deny` | 拒否するツール使用ルール配列。**v2.1.166** でツール名位置の glob パターン（`"*"` で全ツール deny 等）をサポート。未知ツール名は起動時に警告 |
 | `permissions.ask` | 確認を求めるツール使用ルール配列 |
-| `permissions.defaultMode` | デフォルト権限モード |
+| `permissions.defaultMode` | デフォルト権限モード。v2.1.200 で `default` モードの表示名が「Manual」に変更（`"manual"` も `default` と同義で受理） |
 | `permissions.additionalDirectories` | 追加ワーキングディレクトリ |
 | `permissions.disableBypassPermissionsMode` | `bypassPermissions` モード無効化 |
 | `hooks` | ライフサイクルフック設定 |
@@ -128,7 +128,7 @@ CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ../shared-config
 | `fallbackModel` | プライマリモデルが overloaded / unavailable 時に順番に試行する fallback モデルを最大 3 つまで設定。`--fallback-model` フラグは v2.1.166 からインタラクティブセッションにも適用（v2.1.166） |
 | `effortLevel` | エフォートレベル (`low` / `medium` / `high`) |
 | `autoMode` | Auto Modeの分類器設定。`environment`, `allow`, `soft_deny`, `hard_deny` 配列で構成。共有プロジェクト設定からは読み込まれない。v2.1.118 で `"$defaults"` を配列に含めることで組み込みルールを置換せず追加可能。v2.1.136 で `hard_deny` 追加: ユーザー意図や allow 例外に関わらず無条件にマッチアクションをブロック |
-| `disableAutoMode` | `"disable"` で Auto Mode の有効化を阻止。`Shift+Tab` サイクルから除外し `--permission-mode auto` を拒否 |
+| `disableAutoMode` | `"disable"` で Auto Mode の有効化を阻止。`Shift+Tab` サイクルから除外し `--permission-mode auto` を拒否。v2.1.207 で Bedrock / Vertex / Foundry の Auto mode がオプトイン不要になったため、無効化はこの設定で行う。同版から `autoMode` はリポジトリ内 `.claude/settings.local.json` から読み込まれなくなった（`~/.claude/settings.json` を使用） |
 | `useAutoModeDuringPlan` | プランモードで Auto Mode セマンティクスを使用（デフォルト: `true`）。共有プロジェクト設定からは読み込まれない |
 | `defaultShell` | `!` コマンドのデフォルトシェル。`"bash"`（デフォルト）または `"powershell"`（Windows、`CLAUDE_CODE_USE_POWERSHELL_TOOL=1` 必要） |
 | `otelHeadersHelper` | 動的OpenTelemetryヘッダー生成スクリプト。起動時と定期的に実行 |
@@ -173,7 +173,7 @@ CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ../shared-config
 | `spinnerTipsOverride` | カスタムスピナーヒント（`excludeDefault`, `tips` キー） |
 | `prefersReducedMotion` | UIアニメーション削減 |
 | `fastModePerSessionOptIn` | セッションごとのFastモードオプトイン要求 |
-| `teammateMode` | Agent Teams表示モード（`auto` / `in-process` / `tmux`） |
+| `teammateMode` | Agent Teams表示モード（`auto` / `in-process` / `tmux` / `iterm2`〈v2.1.186〉） |
 | `feedbackSurveyRate` | セッション品質アンケート確率（0-1） |
 | `showClearContextOnPlanAccept` | プラン承認画面で「コンテキストクリア」オプション表示 |
 | `worktree.symlinkDirectories` | ワークツリーシンボリックリンク対象 |
@@ -198,6 +198,15 @@ CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ../shared-config
 | `<plugin>.defaultEnabled` | プラグインの `plugin.json` またはマーケットプレースエントリで `defaultEnabled: false` を指定するとインストール後デフォルト無効。`/plugin` または `claude plugin enable` で有効化。依存関係は引き続き自動有効化（v2.1.154） |
 | `requiredMinimumVersion` | （Managed のみ）Claude Code の最小許容バージョン。範囲外なら起動を拒否し承認済みバージョンへ案内（v2.1.163） |
 | `requiredMaximumVersion` | （Managed のみ）Claude Code の最大許容バージョン。範囲外なら起動を拒否し承認済みバージョンへ案内（v2.1.163） |
+| `disableBundledSkills` | バンドルスキル・ワークフロー・組み込みスラッシュコマンドをモデルから隠す（v2.1.169）。環境変数 `CLAUDE_CODE_DISABLE_BUNDLED_SKILLS` でも可 |
+| `wheelScrollAccelerationEnabled` | フルスクリーンモードのマウスホイールスクロール加速を無効化（v2.1.174） |
+| `enforceAvailableModels` | （Managed のみ）`availableModels` 許可リストを Default モデルにも適用。user/project 設定による managed リストの拡張も禁止（v2.1.175） |
+| `footerLinksRegexes` | フッター行に正規表現マッチのリンクバッジを表示（user / managed 設定）（v2.1.176） |
+| `sandbox.allowAppleEvents` | サンドボックスコマンドに macOS Apple Events 送信を許可（オプトイン）（v2.1.181） |
+| `attribution.sessionUrl` | Web / Remote Control セッションで commit・PR への claude.ai セッションリンク付与を制御（v2.1.183） |
+| `respondToBashCommands` | `false` で `!` bashコマンド出力への Claude 自動応答を無効化（v2.1.186 から自動応答がデフォルト） |
+| `sandbox.credentials` | サンドボックスコマンドによる認証情報ファイル・シークレット環境変数の読み取りをブロック（v2.1.187） |
+| `autoMode.classifyAllShell` | 全 Bash/PowerShell コマンドを auto-mode 分類器に通す（デフォルトは任意コード実行パターンのみ）（v2.1.193） |
 
 > 補足: `allowedMcpServers` / `deniedMcpServers` 述語の `${VAR}` 参照は v2.1.166 で正しくマッチするようになった。Managed settings は invalid なエントリが含まれても、v2.1.166 から残りの valid policy は enforce される（従来は silently 全無効化）。
 
@@ -396,6 +405,16 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 | `CLAUDE_CODE_ENABLE_AUTO_MODE` | `1` で Bedrock / Vertex / Foundry の Opus 4.7 / 4.8 ユーザーが Auto mode に opt-in（v2.1.158） |
 | `OTEL_RESOURCE_ATTRIBUTES` | （標準 OTEL 変数）v2.1.161 から、ここで指定した属性（`team=foo,repo=bar` 等）が OpenTelemetry メトリクスデータポイントのラベルとして添付され、Team / Repo 別カスタムディメンションでのスライス分析が可能 |
 | `MAX_THINKING_TOKENS` | 拡張思考のトークン上限。**v2.1.166** で `0` を指定すると Claude API 経由の thinking 既定モデルでも thinking を無効化できるようになった（3P プロバイダは挙動変更なし） |
+| `CLAUDE_CODE_SAFE_MODE` | `--safe-mode` フラグ相当。CLAUDE.md・プラグイン・スキル・hooks・MCP など全カスタマイズを無効化して起動（トラブルシュート用）（v2.1.169） |
+| `CLAUDE_CODE_DISABLE_BUNDLED_SKILLS` | バンドルスキル・組み込みコマンドをモデルから隠す（`disableBundledSkills` 設定と同等）（v2.1.169） |
+| `API_FORCE_IDLE_TIMEOUT` | `0` で Vertex / Foundry のストリームアイドルタイムアウト（デフォルト5分）をオプトアウト（v2.1.169） |
+| `CLAUDE_CLIENT_PRESENCE_FILE` | マーカーファイルを指定し、マシン在席中のモバイルプッシュ通知を抑制（v2.1.181） |
+| `CLAUDE_CODE_MAX_RETRIES` | リトライ回数上限。v2.1.186 で上限 15 にキャップ（無人セッションは `CLAUDE_CODE_RETRY_WATCHDOG` を使用）。v2.1.199 の `CLAUDE_CODE_RETRY_WATCHDOG` 有効時はキャップ解除・非キャパシティ系一時エラーのデフォルトリトライ 300 回 |
+| `CLAUDE_CODE_MCP_TOOL_IDLE_TIMEOUT` | リモート MCP ツール呼び出しの無応答タイムアウト（デフォルト5分で中断）のオーバーライド（v2.1.187） |
+| `OTEL_LOG_ASSISTANT_RESPONSES` | `1` で `claude_code.assistant_response` OTELログイベント（モデル応答テキスト）を出力。未設定時は `OTEL_LOG_USER_PROMPTS` に追従するため、プロンプト収集済みデプロイは `0` 明示でプロンプトのみ維持（v2.1.193） |
+| `CLAUDE_CODE_DISABLE_BG_SHELL_PRESSURE_REAP` | `1` でアイドルなバックグラウンドシェルのメモリ圧迫時自動回収を無効化（v2.1.193） |
+| `CLAUDE_CODE_DISABLE_MOUSE_CLICKS` | フルスクリーンモードのクリック/ドラッグ/ホバーを無効化（ホイールスクロールは維持）（v2.1.195） |
+| `CLAUDE_ENABLE_STREAM_WATCHDOG` | `0` でストリーミングアイドルウォッチドッグ（5分無イベントで中断・リトライ、v2.1.196 から全プロバイダでデフォルト有効）を無効化 |
 
 > 補足: `OTEL_LOG_TOOL_DETAILS=1` は v2.1.157 で `tool_decision` イベントに `tool_parameters`（bash コマンド、MCP/skill 名等）を追加する効果も併せ持つようになった。
 

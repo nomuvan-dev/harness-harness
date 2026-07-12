@@ -1,6 +1,6 @@
 # Claude Code MCP 仕様書
 
-最終更新: 2026-06-04（巡回更新）
+最終更新: 2026-07-13（巡回更新）
 
 公式ドキュメント: https://code.claude.com/docs/en/mcp
 
@@ -96,6 +96,10 @@ claude mcp remove github
 # プロジェクトMCPの承認リセット
 claude mcp reset-project-choices
 
+# CLIからのMCP認証（v2.1.186。--no-browser でSSH越しのstdinリダイレクト完結も可能）
+claude mcp login <name>
+claude mcp logout <name>
+
 # セッション内でステータス確認・OAuth認証
 /mcp
 ```
@@ -103,6 +107,8 @@ claude mcp reset-project-choices
 v2.1.154: `claude mcp list` / `get` の出力がパイプされた場合、未承認の `.mcp.json` サーバーは自動承認・接続せず `⏸ Pending approval` 表示となる。Stdio MCP サーバーサブプロセスには `CLAUDE_CODE_SESSION_ID` と `CLAUDECODE=1` 環境変数が渡される。v2.1.163 で `--resume` パスでも hooks / Bash と同じ `CLAUDE_CODE_SESSION_ID` が stdio MCP サーバーに一貫して渡るよう修正。
 
 **v2.1.161 のシークレット保護強化**: `claude mcp list` / `get` / `add` がサーバー定義を出力する際、`${VAR}` 環境変数参照は展開されずそのまま表示される。さらに認証ヘッダー（`Authorization` 等）や URL に埋め込まれたシークレットは redact 表示される。CI ログや支援用 paste でのシークレット漏洩を防止。
+
+**v2.1.196 のセキュリティ修正**: `claude mcp list` / `get` は、リポジトリがコミット済み `.claude/settings.json` で自己承認した `.mcp.json` サーバーをスポーンしなくなった。未信頼ワークスペースでは `⏸ Pending approval` 表示。
 
 セッション内 `/mcp` コマンド: v2.1.161 から、未使用の claude.ai connector は「Show unused connectors」行の下に折りたたまれ、有効な接続のみが既定で展開表示される。
 
@@ -165,6 +171,11 @@ v2.1.154: `claude mcp list` / `get` の出力がパイプされた場合、未�
 
 - v2.1.121 以降、MCP サーバー起動時に transient error が発生しても最大 3 回まで自動リトライする（従来は接続不能のまま停止）。
 - v2.1.121 で SDK の `mcp_authenticate` が `redirectUri` をサポート（カスタムスキーム / claude.ai connector 用）。
+- v2.1.187: リモート MCP ツール呼び出しが5分間無応答の場合、無期限ブロックせずエラーで中断（`CLAUDE_CODE_MCP_TOOL_IDLE_TIMEOUT` でオーバーライド可）。
+- v2.1.191: capability discovery（`tools/list` 等）と OAuth の discovery / token リクエストが transient エラーで短いバックオフ付きリトライ。ヘッドレス環境の OAuth はブラウザポップアップをスキップし URL 貼り付けプロンプトへ直行。
+- v2.1.193: `headersHelper` 認証はツール呼び出しが 401/403 を返すと自動で再実行・再接続。
+- v2.1.203: セッションの追加ワーキングディレクトリが MCP `roots/list` に含まれ、変更時は `notifications/roots/list_changed` を送信。
+- v2.1.206: `--mcp-config` / `.mcp.json` サーバーの per-server `request_timeout_ms` が新規セッションでも尊重されるよう修正。OAuth トークンリフレッシュ1回失敗での手動再認証要求も解消。
 
 ---
 

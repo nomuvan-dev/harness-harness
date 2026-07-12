@@ -1,6 +1,6 @@
 ---
 title: スキルエコシステム参照先
-last_checked: "2026-04-18"
+last_checked: "2026-07-13"
 ---
 
 # スキルエコシステム参照先
@@ -20,9 +20,10 @@ last_checked: "2026-04-18"
 
 | サイト | URL | 役割 | 巡回優先度 |
 |--------|-----|------|----------|
-| Codex Skills Docs | https://developers.openai.com/codex/skills | Skills = authoring format の仕様 | 高 |
+| Codex Skills Docs | https://developers.openai.com/codex/skills | Skills = authoring format の仕様。**learn.chatgpt.com/docs/build-skills へ308恒久リダイレクト（2026-07確認）** | 高 |
 | Codex Plugins Docs | https://developers.openai.com/codex/plugins | Plugins = installable distribution unit | 高 |
-| openai/skills (GitHub) | https://github.com/openai/skills | Codex Skills Catalog。.system/.curated/.experimental | 中 |
+| openai/plugins (GitHub) | https://github.com/openai/plugins | **openai/skills の後継**（180プラグイン）。プラグイン形式でのスキル配布に一本化 | 中 |
+| openai/skills (GitHub) | https://github.com/openai/skills | **2026-06-22 に deprecated（#496）**。カタログは 5 system + 38 curated で凍結。後継は openai/plugins と codex/plugins/build ガイド | 低（凍結） |
 
 ## オープン標準
 
