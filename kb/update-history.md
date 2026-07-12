@@ -28,7 +28,7 @@
 - **kb/skills/recommended.md** — インストール数更新のみ、**Tier 変動なし**（mattpocock 系 grill-me / grill-with-docs と Microsoft Azure 系の top10 定着を確認したが需要不明のため候補記録に留める）
 
 ### PR
-- （本エントリのPR URLはマージ後に追記）
+- https://github.com/nomuvan-dev/harness-harness/pull/93 — merged 2026-07-13
 
 ---
 
