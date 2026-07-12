@@ -1,6 +1,6 @@
 # Claude Code Skills & コマンド仕様書
 
-最終更新: 2026-06-06（巡回更新）
+最終更新: 2026-07-13（巡回更新）
 
 公式ドキュメント: https://code.claude.com/docs/en/skills / https://code.claude.com/docs/en/commands / https://code.claude.com/docs/en/sub-agents / https://code.claude.com/docs/en/scheduled-tasks / https://code.claude.com/docs/en/web-scheduled-tasks / https://code.claude.com/docs/en/discover-plugins
 
@@ -29,6 +29,8 @@ Skills は Claude の能力を拡張する仕組み。`SKILL.md` ファイルに
 #### サブディレクトリの自動検出
 
 サブディレクトリのファイルを操作中、そのディレクトリの `.claude/skills/` も自動検出される（モノレポ対応）。
+
+v2.1.178 から、ネストされた `.claude/skills/` のスキルは配下のファイル操作時にロードされ、名前衝突時はネスト側が `<dir>:<name>` として表示され両方が利用可能。agent / workflow / output-style もワーキングディレクトリに最も近い `.claude/` が勝つ。
 
 #### `--add-dir` からのスキル
 
@@ -74,6 +76,9 @@ my-skill/
 | (デフォルト) | Yes | Yes | 説明は常にコンテキスト内、全文は呼び出し時 |
 | `disable-model-invocation: true` | Yes | No | 説明はコンテキスト外、全文はユーザー呼び出し時 |
 | `user-invocable: false` | No | Yes | 説明は常にコンテキスト内、全文は呼び出し時 |
+
+- **スタック呼び出し（v2.1.199）**: `/skill-a /skill-b do XYZ` のように先頭に並べたスキルは最大5つまで全てロードされる
+- **フロントマターキーの表記ゆれ許容（v2.1.186）**: `display-name` / `default-enabled` / `fallback` / `metadata.*` は kebab-case / snake_case / camelCase を受理。YAML フロントマターが壊れている場合も silent fail せず空メタデータで本文をロード
 
 ### 1.5 変数展開
 
@@ -166,7 +171,8 @@ Claude Code に同梱されるスキル:
 | `/compact [instructions]` | 会話コンパクション |
 | `/resume [session]` (`/continue`) | セッション再開 |
 | `/rename [name]` | セッション名変更 |
-| `/rewind` (`/checkpoint`, `/undo`) | 会話/コードを前の状態に巻き戻し（v2.1.108 で `/undo` エイリアス追加） |
+| `/rewind` (`/checkpoint`, `/undo`) | 会話/コードを前の状態に巻き戻し（v2.1.108 で `/undo` エイリアス追加。v2.1.191 で `/clear` 実行前からの会話再開に対応） |
+| `/cd <path>` | プロンプトキャッシュを壊さずセッションのワーキングディレクトリを移動（v2.1.169）。v2.1.206 でパス補完対応 |
 | `/branch [name]` (`/fork`) | 会話のブランチ作成 |
 | `/export [filename]` | 会話をテキストエクスポート |
 | `/exit` (`/quit`) | CLI終了 |
@@ -176,7 +182,8 @@ Claude Code に同梱されるスキル:
 
 | コマンド | 説明 |
 |:--|:--|
-| `/config` (`/settings`) | 設定インターフェース表示 |
+| `/config` (`/settings`) | 設定インターフェース表示。v2.1.181 で `/config key=value` 構文により任意設定をプロンプトから直接変更可能（インタラクティブ / `-p` / Remote Control 対応、例: `/config thinking=false`）。`/config --help` でショートハンドキー一覧（v2.1.183）。v2.1.202 で「Dynamic workflow size」設定（動的ワークフローのエージェント数目安 small/medium/large）追加 |
+| `/doctor` (`/checkup`) | セットアップの総合チェックアップ。問題の診断と修正まで実行（v2.1.205 で強化・`/checkup` エイリアス追加）。CLAUDE.md の冗長部分の削減提案も（v2.1.206） |
 | `/permissions` (`/allowed-tools`) | 権限設定 |
 | `/fast [on\|off]` | Fastモードトグル |
 | `/model [model]` | モデル変更（v2.1.144 から現在セッションにのみ適用。新規セッションのデフォルト変更はピッカーで `d` キー） |
@@ -204,6 +211,9 @@ Claude Code に同梱されるスキル:
 | `/powerup` | Claude Code機能のインタラクティブレッスン＋アニメーションデモ |
 | `/ultraplan <prompt>` | クラウドプランニングセッション起動。ブラウザでレビュー・修正後に実行先（クラウド/ローカル）を選択（リサーチプレビュー） |
 | `/security-review` | セキュリティ脆弱性分析 |
+| `/review <pr>` | PRレビュー。v2.1.186 で `/code-review medium` と同じエンジンに変更されたが、v2.1.202 で高速な単一パスレビューに回帰（多段レビューは `/code-review <level> <pr#>` を使用） |
+| `/dataviz` | チャート・ダッシュボード設計ガイダンススキル（カラーパレットバリデータ付き）（v2.1.198） |
+| `/commit-push-pr` | commit→push→PR作成。v2.1.206 でリポジトリの push remote（`remote.pushDefault` または唯一のremote）への `git push` を自動許可 |
 | `/release-notes` | インタラクティブバージョンピッカー付き変更ログ表示 |
 | `/sandbox` | サンドボックスモード切替 |
 | `/schedule [description]` | クラウドスケジュールタスクの作成・管理 |
@@ -213,7 +223,7 @@ Claude Code に同梱されるスキル:
 | コマンド | 説明 |
 |:--|:--|
 | `/add-dir <path>` | ワーキングディレクトリ追加 |
-| `/agents` | サブエージェント管理 |
+| `/agents` | ~~サブエージェント管理~~ **v2.1.198 でウィザード削除**。サブエージェントの作成・管理は Claude に依頼するか `.claude/agents/` を直接編集 |
 | `/skills` | スキル一覧。長いリストでも type-to-filter 検索ボックスで即座に絞り込み（v2.1.121） |
 | `/plugin` | プラグイン管理（マーケットプレース、インストール、有効化/無効化）。`claude plugin prune` で孤立した自動インストール依存を削除、`plugin uninstall --prune` でカスケード削除（v2.1.121）。マーケットプレース browse ペインに projected context cost（ターン当たり・呼び出し当たりのトークン推定）を表示（v2.1.143）。Discover/Browse 画面でインストール前にプラグインが提供する commands / agents / skills / hooks / MCP/LSP サーバーをプレビュー（v2.1.145） |
 | `/plugin list` | インストール済みプラグイン一覧表示。`--enabled` / `--disabled` フィルタ対応（v2.1.163） |
@@ -397,7 +407,7 @@ cloud / 共有レポでは `.claude/settings.json` の `enabledPlugins` で宣�
 
 | エージェント | モデル | 用途 |
 |:--|:--|:--|
-| **Explore** | Haiku | 読み取り専用のコードベース探索。quick/medium/very thorough の3段階 |
+| **Explore** | メインセッションのモデルを継承（上限 Opus。v2.1.198 で Haiku 固定から変更） | 読み取り専用のコードベース探索。quick/medium/very thorough の3段階 |
 | **Plan** | 継承 | プランモード時のリサーチ。読み取り専用 |
 | **general-purpose** | 継承 | 探索と変更の両方が必要な複雑タスク |
 | **Bash** | 継承 | 別コンテキストでのターミナルコマンド実行 |
@@ -456,8 +466,13 @@ model: sonnet
 
 ### 5.7 フォアグラウンド/バックグラウンド
 
+- **v2.1.198 からサブエージェントはデフォルトでバックグラウンド実行**。Claude は実行中も作業を継続し、完了時に通知を受け取る
 - **フォアグラウンド**: メイン会話をブロック。権限プロンプトと質問がパススルー
-- **バックグラウンド**: 並行実行。起動前に必要な権限を事前承認。`Ctrl+B` でバックグラウンド化
+- **バックグラウンド**: 並行実行。`Ctrl+B` でバックグラウンド化。v2.1.186 から権限プロンプトは自動拒否ではなくメインセッションにサーフェスされる（どのエージェントの要求かを表示、Esc でそのツールのみ拒否）
+
+### 5.7.1 ネスト実行（v2.1.172+）
+
+サブエージェントは自身のサブエージェントをスポーン可能（最大5階層。v2.1.181 でフォアグラウンドにも同じ深度制限を適用）。サブエージェントとコンパクションはセッションの拡張思考設定を継承する（v2.1.198）。
 
 ### 5.8 サブエージェントの再開
 

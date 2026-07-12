@@ -1,6 +1,6 @@
 # OpenAI Codex CLI 設定仕様
 
-最終更新: 2026-05-28（巡回更新）
+最終更新: 2026-07-13（巡回更新）
 
 ---
 
@@ -122,6 +122,18 @@ granular.skill_approval = true          # スキルスクリプト承認
 [windows]
 sandbox = "elevated"       # "elevated"（推奨、管理者権限必要） / "unelevated"
 ```
+
+#### 0.140〜0.144 の注目デフォルト変更・設定関連機能（2026-06〜07）
+
+- **MCP tool search がデフォルト化（0.142.2 / 0.143.0）**: 対応モデルでは MCP ツールが tool search 経由でオンデマンド発見される（旧モデル・プロバイダとの互換性は維持）
+- **リモートプラグインがデフォルト有効化（0.143.0）**: npm マーケットプレースソース、リモート/ローカルバージョン表示付きカタログ
+- **システムプロキシ対応（0.142.1 / 0.142.2 / 0.143.0）**: 認証・Responses API トラフィックが macOS / Windows のシステムプロキシ（PAC / WPAD 含む）を経由可能（`respect_system_proxy`）
+- **rollout token budgets（0.142.0）**: エージェントスレッド横断のトークン予算を設定可能。残量リマインダーと枯渇時のターン中断
+- **multi-agent delegation の3段階制御（0.142.0）**: app-server クライアントがスレッド/ターン単位で disabled / explicit-request-only / proactive を設定
+- **writes app-approval mode（0.144.0）**: 宣言済み read-only アクションは許可し書き込みのみ承認を求めるアプリ承認モード
+- **MCP 対話型認証の標準化（0.144.0）**: MCP ツールが実験的オプトインなしに対話的な認証を要求可能
+- **認証情報の暗号化ローカル保存（0.140.0）**: CLI / MCP OAuth 認証情報の暗号化保存、managed Amazon Bedrock APIキー認証
+- **Ultra reasoning 選択時の警告（0.144.0）**: multi-agent 並列度が高い場合に使用量急増を警告
 
 > 公式ドキュメント: [Config Basics](https://developers.openai.com/codex/config-basic) / [Config Reference](https://developers.openai.com/codex/config-reference) / [Sample Config](https://developers.openai.com/codex/config-sample)
 

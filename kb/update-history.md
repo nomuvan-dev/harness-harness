@@ -1,5 +1,37 @@
 # harness-harness 更新履歴
 
+## 2026-07-13 — 公式ドキュメント巡回（前回から34日、大型差分）
+
+### 巡回対象URL
+- Claude Code: changelog（**v2.1.169 → v2.1.207、30バージョン分の新版**）
+- Codex CLI: GitHub Releases（**安定版 0.138.0 → 0.144.1、8リリース**）
+- スキルエコシステム: 前回 2026-06-09 から34日経過 → Phase 3.5 実行（全6ソース取得成功）
+
+### 検出された変更と更新内容
+
+#### Claude Code v2.1.169〜v2.1.207（2026-06-08〜07-11）
+- **specs/claude/changelog.md** — 30バージョン分のエントリを追加。最重要: **Claude Fable 5 導入**（v2.1.170、Mythosクラス）、**Claude Sonnet 5 デフォルトモデル化**（v2.1.197、ネイティブ1Mコンテキスト・8/31までプロモ価格）、**サブエージェントのバックグラウンドデフォルト化・Claude in Chrome GA**（v2.1.198）、**agent teams 刷新**（v2.1.178、TeamCreate/TeamDelete 削除→暗黙チーム化）、**サブエージェントの5階層ネスト**（v2.1.172）、**hookマッチャーのハイフン識別子完全一致化（破壊的変更）**（v2.1.195）、auto mode の破壊的gitコマンドブロック（v2.1.183）と Bedrock/Vertex/Foundry GA（v2.1.207）、セキュリティ修正多数（MCP自己承認の穴 v2.1.196、plugin shell-injection v2.1.207）
+- **specs/claude/configuration.md** — 新設定キー11件（`disableBundledSkills`, `enforceAvailableModels`, `sandbox.credentials`, `autoMode.classifyAllShell`, `respondToBashCommands`, `footerLinksRegexes` 等）、新環境変数11件（`CLAUDE_CODE_SAFE_MODE`, `OTEL_LOG_ASSISTANT_RESPONSES`, `CLAUDE_ENABLE_STREAM_WATCHDOG` 等）、`Tool(param:value)` 権限構文、Manual モード改名
+- **specs/claude/hooks.md** — matcher のカンマ区切り修正・ハイフン完全一致化、`Notification` の `agent_needs_input`/`agent_completed`、plugin `${user_config.*}` シェルインジェクション対策
+- **specs/claude/skills-and-commands.md** — 新コマンド（`/cd`, `/doctor`(`/checkup`), `/config key=value`, `/dataviz`, `/commit-push-pr`）、`/agents` ウィザード削除、ネストされた `.claude/skills`、スキルのスタック呼び出し、Explore のモデル継承、サブエージェントのバックグラウンドデフォルト・ネスト仕様
+- **specs/claude/mcp.md** — `claude mcp login/logout`、ツールアイドルタイムアウト、`roots/list`、v2.1.196 セキュリティ修正
+- **specs/claude/agent-teams.md** — v2.1.178 の暗黙チーム化を反映、`teammateMode: "iterm2"` 追加
+
+#### Codex CLI 0.138.0〜0.144.1（2026-06-08〜07-09）
+- **specs/codex/changelog.md** — 安定版8リリース分を追加。alpha.7 由来の暫定エントリは公式リリースノート準拠の 0.138.0 / 0.139.0 エントリに再統合。最重要: **/import（Claude Code からの設定・チャットインポート）**・`codex delete`・Bedrock APIキー認証＋認証情報暗号化保存（0.140）、Noise relay E2E 暗号化（0.141）、**rollout token budgets**・multi-agent delegation 3段階制御・indexed web-search（0.142）、**リモートプラグインデフォルト有効化**・システムプロキシ PAC/WPAD・Bedrock GPT-5.6（0.143）、**writes app-approval mode**・MCP対話型認証標準化（0.144）
+- **specs/codex/commands.md** — `/delete`, `/import`, `/usage` を追加
+- **specs/codex/configuration.md** — 0.140〜0.144 の注目デフォルト変更（MCP tool search / リモートプラグイン / システムプロキシ / token budgets 等）を追記
+
+#### スキルエコシステム巡回（Phase 3.5）
+- **kb/skills/_index.md** — `last_patrol` 2026-07-13。anthropics/skills 148K → 160.5K stars、claude.com/plugins 4ページ化（Frontend Design 1.05M installs 首位）、find-skills 2.5M installs、agentskills.io 44プラットフォーム
+- **kb/skills/sources.md** — **openai/skills が 2026-06-22 に deprecated（#496）**。後継 openai/plugins（180件）を巡回対象に追加、旧リポジトリは優先度「低（凍結）」に降格。developers.openai.com/codex/skills の learn.chatgpt.com への308リダイレクトを注記
+- **kb/skills/recommended.md** — インストール数更新のみ、**Tier 変動なし**（mattpocock 系 grill-me / grill-with-docs と Microsoft Azure 系の top10 定着を確認したが需要不明のため候補記録に留める）
+
+### PR
+- （本エントリのPR URLはマージ後に追記）
+
+---
+
 ## 2026-06-09 — 公式ドキュメント巡回（差分のみ）
 
 ### 巡回対象URL

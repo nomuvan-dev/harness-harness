@@ -1,6 +1,6 @@
 # Claude Code Hooks 仕様書
 
-最終更新: 2026-06-06（巡回更新）
+最終更新: 2026-07-13（巡回更新）
 
 公式ドキュメント: https://code.claude.com/docs/en/hooks
 
@@ -44,7 +44,7 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 
 | イベント | 発火タイミング | ブロック可能 | matcher対象 |
 |:--|:--|:--|:--|
-| `Notification` | 通知送信時 | No | `permission_prompt`, `idle_prompt`, `auth_success`, `elicitation_dialog` |
+| `Notification` | 通知送信時 | No | `permission_prompt`, `idle_prompt`, `auth_success`, `elicitation_dialog`, `agent_needs_input`, `agent_completed`（バックグラウンドエージェント通知、v2.1.198） |
 | `MessageDisplay` | アシスタントメッセージ表示時 | No（transform/hide可） | - | アシスタントメッセージのテキストを変換または非表示にできる（v2.1.152） |
 | `ConfigChange` | 設定ファイル変更時 | Yes | `user_settings`, `project_settings`, `local_settings`, `policy_settings`, `skills` |
 | `InstructionsLoaded` | CLAUDE.md/rules読み込み時 | No | `session_start`, `nested_traversal`, `path_glob_match`, `include`, `compact` |
@@ -101,6 +101,8 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 - `0`: 成功（stdout の JSON をパース）
 - `2`: ブロッキングエラー（stderr がエラーメッセージ）
 - その他: 非ブロッキングエラー
+
+> セキュリティ（v2.1.207）: プラグインの hooks / monitors / MCP headersHelper で、シェル形式コマンド内の `${user_config.*}` 展開はシェルインジェクション対策として拒否されるようになった。hooks は exec 形式（`args` 配列）または `$CLAUDE_PLUGIN_OPTION_<KEY>` 環境変数を使用する。また v2.1.199 から `SessionStart` / `Setup` / `SubagentStart` フックが exit code 2 で終了した際の stderr がトランスクリプトに表示される。
 
 ### 3.2 HTTP ハンドラ
 
@@ -232,6 +234,11 @@ MCPツールは `mcp__<server>__<tool>` パターンに従う:
   "matcher": "Edit|Write"
 }
 ```
+
+### 5.3 マッチング挙動の変更（v2.1.191 / v2.1.195）
+
+- **カンマ区切りmatcher修正（v2.1.191）**: `"Bash,PowerShell"` のようなカンマ区切りmatcherが silent に発火しないバグが修正された
+- **ハイフン識別子の完全一致化（v2.1.195、破壊的変更）**: `code-reviewer` や `mcp__brave-search` のようなハイフンを含む識別子が部分文字列マッチしてしまう挙動を修正し、**完全一致**になった。ハイフン入りMCPサーバーの全ツールにマッチさせるには `mcp__brave-search__.*` のように明示的な正規表現を使う
 
 ---
 
