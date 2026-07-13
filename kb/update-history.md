@@ -12,7 +12,7 @@
 - **specs/codex/changelog.md** — 0.144.2（Guardian auto-review のプロンプト回帰リバート）/ 0.144.3（バージョンのみ）の合同エントリを追加
 
 ### PR
-- （マージ後に追記）
+- https://github.com/nomuvan-dev/harness-harness/pull/94（マージ済み）
 
 ## 2026-07-13 — 公式ドキュメント巡回（前回から34日、大型差分）
 
