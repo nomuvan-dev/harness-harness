@@ -18,7 +18,7 @@
 - **specs/codex/changelog.md** — 0.144.4 のエントリを追加（ユーザー向け変更なしのパッチリリース）
 
 ### PR
-- （マージ後に追記）
+- https://github.com/nomuvan-dev/harness-harness/pull/95
 
 ## 2026-07-14 — 公式ドキュメント巡回（前回から1日、小規模差分）
 
