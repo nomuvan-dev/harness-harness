@@ -1,5 +1,25 @@
 # harness-harness 更新履歴
 
+## 2026-07-15 — 公式ドキュメント巡回（前回から1日、中規模差分）
+
+### 巡回対象URL
+- Claude Code: changelog — **v2.1.208 / v2.1.209**（2026-07-14）を検出。v2.1.208 は大型メンテナンスリリース
+- Claude Code: llms.txt — 新規ドキュメントページなし（whats-new は w28 まで、前回確認済み範囲と同一）
+- Codex CLI: GitHub Releases — **安定版 0.144.4**（2026-07-14、ユーザー向け変更なしのパッチ）。最新プレリリースは 0.145.0-alpha.11
+- スキルエコシステム: last_patrol 2026-07-13（2日前）→ Phase 3.5 スキップ
+
+### 検出された変更と更新内容
+
+#### Claude Code v2.1.208 / v2.1.209（2026-07-14）
+- **specs/claude/changelog.md** — 2バージョン分のエントリを追加。主要: スクリーンリーダーモード（`--ax-screen-reader`）、`vimInsertModeRemaps`、`CLAUDE_CODE_PROCESS_WRAPPER`（企業ラッパー経由スポーン）、`$(…)`/バッククォート内の破壊的削除も skip-permissions / auto mode で確認プロンプト化、長時間セッションのメモリリーク修正多数（トランスクリプト最大79分の1削減等）、permission ルール多数時の遅延解消
+- **specs/claude/configuration.md** — 新設定キー2件（`axScreenReader`, `vimInsertModeRemaps`）、新環境変数2件（`CLAUDE_AX_SCREEN_READER`, `CLAUDE_CODE_PROCESS_WRAPPER`）を追加
+
+#### Codex CLI 0.144.4（2026-07-14）
+- **specs/codex/changelog.md** — 0.144.4 のエントリを追加（ユーザー向け変更なしのパッチリリース）
+
+### PR
+- https://github.com/nomuvan-dev/harness-harness/pull/95
+
 ## 2026-07-14 — 公式ドキュメント巡回（前回から1日、小規模差分）
 
 ### 巡回対象URL
