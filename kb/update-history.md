@@ -1,5 +1,25 @@
 # harness-harness 更新履歴
 
+## 2026-07-16 — 公式ドキュメント巡回（前回から1日、小規模差分）
+
+### 巡回対象URL
+- Claude Code: changelog — **v2.1.210**（2026-07-14）を検出。バグ修正中心のリリース
+- Claude Code: llms.txt — 新規ドキュメントページなし（whats-new は w28 まで、前回確認済み範囲と同一）
+- Codex CLI: GitHub Releases — 安定版は 0.144.4 のまま変更なし。プレリリースは 0.145.0-alpha.13（2026-07-15）まで進行（リリースノート本文なし）
+- スキルエコシステム: last_patrol 2026-07-13（3日前）→ Phase 3.5 スキップ
+
+### 検出された変更と更新内容
+
+#### Claude Code v2.1.210（2026-07-14）
+- **specs/claude/changelog.md** — v2.1.210 のエントリを追加。主要: permission ルール `Write(path)`/`NotebookEdit(path)`/`Glob(path)` への起動時警告（`Edit(path)`/`Read(path)` を推奨）、auto mode 分類器の外部セッション Sonnet 5 デフォルト化、Agent ツールの間接プロンプトインジェクション対策強化、`isolation: 'worktree'` サブエージェントの隔離不備修正、hook タイムアウトのユーザー拒否誤報告修正、skills/commands の `$1`/`$2` プレースホルダ verbatim 保持化
+- specs/claude/configuration.md — 更新なし（v2.1.210 に新設定キー・環境変数の追加なし）
+
+#### Codex CLI
+- 安定版リリースなし → specs/codex/changelog.md 更新なし
+
+### PR
+- https://github.com/nomuvan-dev/harness-harness/pull/96
+
 ## 2026-07-15 — 公式ドキュメント巡回（前回から1日、中規模差分）
 
 ### 巡回対象URL
