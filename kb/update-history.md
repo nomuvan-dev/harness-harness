@@ -18,7 +18,7 @@
 - 安定版リリースなし → specs/codex/changelog.md 更新なし
 
 ### PR
-- （マージ後に追記）
+- https://github.com/nomuvan-dev/harness-harness/pull/96
 
 ## 2026-07-15 — 公式ドキュメント巡回（前回から1日、中規模差分）
 
