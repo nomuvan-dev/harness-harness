@@ -18,7 +18,7 @@
 - **specs/codex/changelog.md** — 0.144.5 のエントリを追加（dangerous-command 検出改善: 強制 `rm` 変種の検出拡大、拒否理由の明確化）
 
 ### PR
-- （後述）
+- https://github.com/nomuvan-dev/harness-harness/pull/97
 
 ## 2026-07-16 — 公式ドキュメント巡回（前回から1日、小規模差分）
 
