@@ -1,5 +1,25 @@
 # harness-harness 更新履歴
 
+## 2026-07-17 — 公式ドキュメント巡回（前回から1日、小規模差分）
+
+### 巡回対象URL
+- Claude Code: changelog — **v2.1.211**（2026-07-15）を検出。新フラグ1件＋セキュリティ・バグ修正中心
+- Claude Code: llms.txt — 新規ドキュメントページなし（whats-new は w28 まで、前回確認済み範囲と同一）
+- Codex CLI: GitHub Releases — **安定版 0.144.5**（2026-07-16）を検出。dangerous-command 検出改善のパッチ。プレリリースは 0.145.0-alpha.16 まで進行
+- スキルエコシステム: last_patrol 2026-07-13（4日前）→ Phase 3.5 スキップ
+
+### 検出された変更と更新内容
+
+#### Claude Code v2.1.211（2026-07-15）
+- **specs/claude/changelog.md** — v2.1.211 のエントリを追加。主要: `--forward-subagent-text` フラグ / `CLAUDE_CODE_FORWARD_SUBAGENT_TEXT` 環境変数（stream-json にサブエージェント出力を含める）、permission プレビューの bidi/ゼロ幅文字無害化、auto mode が hook の `ask` を上書きしない修正、"always allow" ルールのリポジトリルート保存化（worktree 間で承認持続）、Bedrock/Vertex 等の prompt-caching 課金回帰修正
+- **specs/claude/configuration.md** — 新環境変数1件（`CLAUDE_CODE_FORWARD_SUBAGENT_TEXT`）を追加
+
+#### Codex CLI 0.144.5（2026-07-16）
+- **specs/codex/changelog.md** — 0.144.5 のエントリを追加（dangerous-command 検出改善: 強制 `rm` 変種の検出拡大、拒否理由の明確化）
+
+### PR
+- https://github.com/nomuvan-dev/harness-harness/pull/97
+
 ## 2026-07-16 — 公式ドキュメント巡回（前回から1日、小規模差分）
 
 ### 巡回対象URL
