@@ -419,6 +419,7 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 | `CLAUDE_ENABLE_STREAM_WATCHDOG` | `0` でストリーミングアイドルウォッチドッグ（5分無イベントで中断・リトライ、v2.1.196 から全プロバイダでデフォルト有効）を無効化 |
 | `CLAUDE_AX_SCREEN_READER` | `1` でスクリーンリーダーモード（プレーンテキスト描画）を有効化。settings `axScreenReader` / `--ax-screen-reader` と同等（v2.1.208） |
 | `CLAUDE_CODE_PROCESS_WRAPPER` | agent view とバックグラウンドサービスの全 Claude Code 自己スポーンを、指定した企業ランチャー（ラッパー実行ファイル）経由で起動（v2.1.208） |
+| `CLAUDE_CODE_FORWARD_SUBAGENT_TEXT` | stream-json 出力にサブエージェントのテキスト・思考を含める。`--forward-subagent-text` フラグと同等（v2.1.211） |
 
 > 補足: `OTEL_LOG_TOOL_DETAILS=1` は v2.1.157 で `tool_decision` イベントに `tool_parameters`（bash コマンド、MCP/skill 名等）を追加する効果も併せ持つようになった。
 
