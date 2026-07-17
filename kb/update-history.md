@@ -1,5 +1,27 @@
 # harness-harness 更新履歴
 
+## 2026-07-18 — 公式ドキュメント巡回（前回から1日、Claude Code新版あり）
+
+### 巡回対象URL
+- Claude Code: changelog — **v2.1.212**（2026-07-17）を検出。`/fork` 挙動変更・セッション上限系の新環境変数3件・MCP自動バックグラウンド化
+- Claude Code: llms.txt — MD5一致で変更なし（174行、新規ドキュメントページなし）
+- Codex CLI: GitHub Releases — 安定版は 0.144.5 のまま変更なし。プレリリースは 0.145.0-alpha.22（2026-07-17）まで進行（リリースノート本文なし）
+- スキルエコシステム: last_patrol 2026-07-13（5日前）→ Phase 3.5 スキップ
+
+### 検出された変更と更新内容
+
+#### Claude Code v2.1.212（2026-07-17）
+- **specs/claude/changelog.md** — v2.1.212 のエントリを追加。主要: `/fork` がバックグラウンドセッションへのコピーに変更（旧挙動は `/subtask` に改名）、`claude auto-mode reset` 追加、WebSearch・サブエージェントスポーンのセッション上限（各デフォルト200）、MCPツール呼び出しの2分超自動バックグラウンド化、plan mode のファイル変更系Bash自動実行修正・worktree symlink 経由のリポジトリ外書き込み修正（セキュリティ）
+- **specs/claude/configuration.md** — 新環境変数3件（`CLAUDE_CODE_MAX_WEB_SEARCHES_PER_SESSION` / `CLAUDE_CODE_MAX_SUBAGENTS_PER_SESSION` / `CLAUDE_CODE_MCP_AUTO_BACKGROUND_MS`）を追加
+- **specs/claude/skills-and-commands.md** — `/fork` の挙動変更を追記、`/subtask` を新規追加
+- **specs/claude/mcp.md** — MCP環境変数テーブルに `CLAUDE_CODE_MCP_AUTO_BACKGROUND_MS` を追加
+
+#### Codex CLI
+- 安定版リリースなし → specs/codex/changelog.md 更新なし
+
+### PR
+- （後述）
+
 ## 2026-07-17 — 公式ドキュメント巡回（前回から1日、小規模差分）
 
 ### 巡回対象URL

@@ -384,6 +384,7 @@ MCP サーバーがセッション中にユーザー入力を要求する仕組�
 | `ENABLE_TOOL_SEARCH` | MCP Tool Search 機能の有効化 |
 | `MCP_CONNECTION_NONBLOCKING` | `true` で `-p` モードのMCP接続待機スキップ。`--mcp-config` サーバー接続は5秒上限（v2.1.89） |
 | `CLAUDE_PROJECT_DIR` | stdio MCP サーバーに渡される環境変数（v2.1.139+）。プロジェクトルートの絶対パス。プラグイン設定の `command` 内で `${CLAUDE_PROJECT_DIR}` として参照可能 |
+| `CLAUDE_CODE_MCP_AUTO_BACKGROUND_MS` | 2 分超の MCP ツール呼び出しは自動でバックグラウンドに移行しセッションを維持（v2.1.212）。この変数で閾値変更・無効化 |
 
 ---
 
