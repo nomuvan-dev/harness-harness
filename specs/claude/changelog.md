@@ -3,7 +3,21 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-07-17
+最終更新: 2026-07-18
+
+---
+
+## v2.1.212 (2026-07-17)
+
+- **`/fork` の挙動変更**: 会話を新しいバックグラウンドセッション（`claude agents` に独立した行として表示）にコピーするようになった。従来のセッション内サブエージェント起動は `/subtask` に改名
+- **`claude auto-mode reset` 追加**: auto-mode 設定をデフォルトに復元（確認プロンプトあり、`--yes` でスキップ）
+- **WebSearch のセッション上限追加**: デフォルト 200 回。`CLAUDE_CODE_MAX_WEB_SEARCHES_PER_SESSION` で調整可（暴走検索ループ対策）
+- **サブエージェントスポーンのセッション上限追加**: デフォルト 200。`CLAUDE_CODE_MAX_SUBAGENTS_PER_SESSION` で上書き可、`/clear` でリセット（暴走委譲ループ対策）
+- **MCP ツール呼び出しの自動バックグラウンド化**: 2 分超で自動的にバックグラウンドへ移行しセッションを維持。閾値変更・無効化は `CLAUDE_CODE_MCP_AUTO_BACKGROUND_MS`
+- **agent view での `/resume`**: 過去セッション（一覧から削除済み含む）のピッカーを開き、選択したセッションをバックグラウンドセッションとして再開
+- **セキュリティ修正**: plan mode がファイル変更系 Bash コマンド（`touch`, `rm` 等）を許可プロンプトなしで自動実行する問題、worktree 作成が `.claude/worktrees` のコミット済み symlink を辿ってリポジトリ外にファイルを作成し得る問題を修正
+- print/SDK モードで Bash 実行中の SIGTERM がプロセスツリーを孤児化する問題を修正（ターン中断・ツリー kill・exit 143）
+- hook の `continue:false` による停止がツール失敗・ストリーム途中完了時に落ちる問題、hook インフラエラーがユーザー拒否と誤報告される問題を修正
 
 ---
 
