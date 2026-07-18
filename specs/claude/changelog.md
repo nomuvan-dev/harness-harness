@@ -3,7 +3,29 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-07-18
+最終更新: 2026-07-19
+
+---
+
+## v2.1.214 (2026-07-18)
+
+permission チェックの堅牢化を中心としたリリース（v2.1.213 は欠番）。
+
+- **EndConversation ツール追加**: 高度に虐待的なユーザーや jailbreak 試行に対して Claude がセッションを終了できる（claude.ai では 2025 年から提供済みの機能）
+- **permission チェック堅牢化（多数）**: 単一セグメント `dir/**` 許可ルール（`Edit(src/**)` 等）がツリー内任意の同名ディレクトリに誤マッチする問題、Windows PowerShell 5.1 でのバイパス、ファイルディスクリプタリダイレクト形式、10,000 文字超コマンド、zsh 変数添字、`help`/`man` 経由の危険オプション実行などを修正（fail closed 化）
+- **破壊的変更: hook `if:` 条件の単一セグメント `dir/**` は `<cwd>/dir` のみにマッチ**: 任意深度でマッチさせたい場合は `**/dir/**` と書く。`deny`/`ask` permission ルールは従来通り任意深度マッチを維持
+- **`docker` コマンドのデーモンリダイレクトフラグに許可プロンプト追加**: `--url` / `--connection` / `--identity` / Podman リモートモードが対象（従来はプロンプトなしで実行）
+- **長時間ツール呼び出しに定期進捗ハートビート追加**: 従来は無音になっていた
+- **`CLAUDE_CODE_OTEL_CONTENT_MAX_LENGTH` 追加**: OpenTelemetry コンテンツ属性の 60KB 切り詰め上限を設定可能。OTel ログイベントに `message.uuid` / `client_request_id` / `tool_source` 属性も追加
+- **`subagentStatusLine` ペイロードに reasoning effort 追加**: カスタムエージェント行でモデルと effort を表示可能
+- **メモリファイルのフロントマターに ISO `modified` タイムスタンプ追加**
+- **SessionStart hook の source に `"fork"` 追加**: フォークとして開始したセッションは `"resume"` ではなく `"fork"` を報告
+- **`file` コマンドの `-m`/`--magic-file`・`-f`/`--files-from` が要許可に変更**（従来は読み取り専用として自動許可）
+- バックグラウンドセッション関連の修正多数: 放置セッションによるデーモン常駐、`claude rm` で削除不能、非 git フォルダ発のセッション削除不能、停止セッション再開失敗など
+- Windows PowerShell ツールの修正多数: stdin 待ちハング、非 UTF-8 データの UnicodeDecodeError、`>` リダイレクトの UTF-16LE 問題など
+- スケジュールタスクが自身の設定プロンプトを untrusted input として拒否する問題を修正
+- `--settings` 経由で有効化したプラグインが読み込まれない問題を修正（v2.1.181 からのリグレッション）
+- hook の exit code 2 が stdout JSON のスキーマ検証失敗時にブロックしない問題を修正
 
 ---
 

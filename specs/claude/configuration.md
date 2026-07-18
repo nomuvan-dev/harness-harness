@@ -110,7 +110,7 @@ CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ../shared-config
 
 | キー | 説明 |
 |:--|:--|
-| `permissions.allow` | 許可するツール使用ルール配列。**v2.1.166** で MCP 以外の glob 使用は拒否されるようになった。**v2.1.178** で `Tool(param:value)` 構文（`*` ワイルドカード可）によるツール入力パラメータマッチをサポート（例: `Agent(model:opus)`） |
+| `permissions.allow` | 許可するツール使用ルール配列。**v2.1.166** で MCP 以外の glob 使用は拒否されるようになった。**v2.1.178** で `Tool(param:value)` 構文（`*` ワイルドカード可）によるツール入力パラメータマッチをサポート（例: `Agent(model:opus)`）。**v2.1.214** で単一セグメント `dir/**`（`Edit(src/**)` 等）の allow ルールは `<cwd>/dir` のみにマッチするよう修正（従来はツリー内任意の同名ディレクトリに誤マッチ）。`deny`/`ask` は従来通り任意深度マッチ |
 | `permissions.deny` | 拒否するツール使用ルール配列。**v2.1.166** でツール名位置の glob パターン（`"*"` で全ツール deny 等）をサポート。未知ツール名は起動時に警告 |
 | `permissions.ask` | 確認を求めるツール使用ルール配列 |
 | `permissions.defaultMode` | デフォルト権限モード。v2.1.200 で `default` モードの表示名が「Manual」に変更（`"manual"` も `default` と同義で受理） |
@@ -126,6 +126,7 @@ CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ../shared-config
 | `availableModels` | 選択可能モデル制限 |
 | `modelOverrides` | モデルIDマッピング |
 | `fallbackModel` | プライマリモデルが overloaded / unavailable 時に順番に試行する fallback モデルを最大 3 つまで設定。`--fallback-model` フラグは v2.1.166 からインタラクティブセッションにも適用（v2.1.166） |
+| `advisorModel` | Advisor ツール（実験的）のモデル設定。メインモデルより強力なモデルをアドバイザーとして併用し、方針決定・エラー行き詰まり・完了宣言前などの要所で Claude が相談する。`/advisor` コマンド / `--advisor` フラグでも設定可。Anthropic API 専用（Bedrock / Vertex / Foundry 不可）。アドバイザーはメインモデル以上の能力が必要（詳細: https://code.claude.com/docs/en/advisor ） |
 | `effortLevel` | エフォートレベル (`low` / `medium` / `high`) |
 | `autoMode` | Auto Modeの分類器設定。`environment`, `allow`, `soft_deny`, `hard_deny` 配列で構成。共有プロジェクト設定からは読み込まれない。v2.1.118 で `"$defaults"` を配列に含めることで組み込みルールを置換せず追加可能。v2.1.136 で `hard_deny` 追加: ユーザー意図や allow 例外に関わらず無条件にマッチアクションをブロック |
 | `disableAutoMode` | `"disable"` で Auto Mode の有効化を阻止。`Shift+Tab` サイクルから除外し `--permission-mode auto` を拒否。v2.1.207 で Bedrock / Vertex / Foundry の Auto mode がオプトイン不要になったため、無効化はこの設定で行う。同版から `autoMode` はリポジトリ内 `.claude/settings.local.json` から読み込まれなくなった（`~/.claude/settings.json` を使用） |
@@ -423,6 +424,7 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 | `CLAUDE_CODE_MAX_WEB_SEARCHES_PER_SESSION` | WebSearch ツール呼び出しのセッション上限（デフォルト 200）。暴走検索ループ対策（v2.1.212） |
 | `CLAUDE_CODE_MAX_SUBAGENTS_PER_SESSION` | サブエージェントスポーンのセッション上限（デフォルト 200）。`/clear` でリセット（v2.1.212） |
 | `CLAUDE_CODE_MCP_AUTO_BACKGROUND_MS` | MCP ツール呼び出しの自動バックグラウンド化閾値（デフォルト 2 分）の変更・無効化（v2.1.212） |
+| `CLAUDE_CODE_OTEL_CONTENT_MAX_LENGTH` | OpenTelemetry コンテンツ属性の切り詰め上限（デフォルト 60KB）を設定（v2.1.214） |
 
 > 補足: `OTEL_LOG_TOOL_DETAILS=1` は v2.1.157 で `tool_decision` イベントに `tool_parameters`（bash コマンド、MCP/skill 名等）を追加する効果も併せ持つようになった。
 

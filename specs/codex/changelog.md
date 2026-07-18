@@ -3,7 +3,13 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://developers.openai.com/codex/changelog
 
-最終更新: 2026-07-17
+最終更新: 2026-07-19
+
+---
+
+## CLI 0.144.6 (2026-07-18)
+
+- **バンドルモデルメタデータ更新**: GPT-5.6 Sol / Terra / Luna の同梱 instructions をリフレッシュし、コンテキストウィンドウを 272,000 トークンに修正
 
 ---
 
