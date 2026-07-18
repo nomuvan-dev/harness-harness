@@ -1,5 +1,28 @@
 # harness-harness 更新履歴
 
+## 2026-07-19 — 公式ドキュメント巡回（前回から1日、Claude Code・Codex両方に新版あり）
+
+### 巡回対象URL
+- Claude Code: changelog — **v2.1.214**（2026-07-18）を検出（v2.1.213 は欠番）。permission チェック堅牢化中心＋EndConversation ツール追加
+- Claude Code: llms.txt — MD5変化（174行→176行）。新規ページ: `advisor.md`（Advisor ツール、実験的）と `whats-new/2026-w29.md`（内容は v2.1.207-212 の既報分）
+- Codex CLI: GitHub Releases — 安定版 **0.144.6**（2026-07-18）を検出。プレリリースは 0.145.0-alpha.23 まで進行（リリースノート本文なし）
+- スキルエコシステム: last_patrol 2026-07-13（6日前）→ Phase 3.5 スキップ
+
+### 検出された変更と更新内容
+
+#### Claude Code v2.1.214（2026-07-18）
+- **specs/claude/changelog.md** — v2.1.214 のエントリを追加。主要: EndConversation ツール、permission チェック堅牢化多数（単一セグメント `dir/**` 誤マッチ・PowerShell 5.1 バイパス・fd リダイレクト・10,000文字超コマンド等の fail closed 化）、hook `if:` 条件の単一セグメント `dir/**` が `<cwd>/dir` のみマッチに変更（破壊的変更）、docker デーモンリダイレクトフラグの許可プロンプト、長時間ツール呼び出しの進捗ハートビート、`CLAUDE_CODE_OTEL_CONTENT_MAX_LENGTH`、SessionStart source `"fork"`
+- **specs/claude/configuration.md** — `advisorModel` 設定キーを追加（新ドキュメントページ advisor.md 対応）、`CLAUDE_CODE_OTEL_CONTENT_MAX_LENGTH` を環境変数テーブルに追加、`permissions.allow` に v2.1.214 の単一セグメント `dir/**` マッチ修正を追記
+- **specs/claude/hooks.md** — SessionStart の matcher 値に `fork` を追加
+
+#### 新規ドキュメントページ: Advisor ツール（実験的）
+- メインモデルより強力なモデルを「アドバイザー」として併用し、方針決定・エラー行き詰まり・完了宣言前などの要所で Claude が相談するサーバーサイドツール
+- `/advisor` コマンド / `advisorModel` 設定 / `--advisor` フラグで有効化。Anthropic API 専用（Bedrock / Vertex / Foundry 不可）
+- アドバイザーはメインモデル以上の能力が必要（ペアリング検証あり）。specs/claude/configuration.md に設定キーとして反映
+
+#### Codex CLI 0.144.6（2026-07-18）
+- **specs/codex/changelog.md** — 0.144.6 のエントリを追加。GPT-5.6 Sol / Terra / Luna のバンドル instructions リフレッシュとコンテキストウィンドウ 272,000 トークンへの修正
+
 ## 2026-07-18 — 公式ドキュメント巡回（前回から1日、Claude Code新版あり）
 
 ### 巡回対象URL

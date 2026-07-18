@@ -20,7 +20,7 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 
 | イベント | 発火タイミング | ブロック可能 | matcher対象 |
 |:--|:--|:--|:--|
-| `SessionStart` | セッション開始/再開 | No | `startup`, `resume`, `clear`, `compact` |
+| `SessionStart` | セッション開始/再開 | No | `startup`, `resume`, `clear`, `compact`, `fork`（v2.1.214: フォーク開始時は `resume` ではなく `fork` を報告） |
 | `UserPromptSubmit` | ユーザープロンプト送信後、処理前 | Yes | - |
 | `PreToolUse` | ツール実行前 | Yes | ツール名 (`Bash`, `Edit`, `Write` 等) |
 | `PermissionRequest` | 権限ダイアログ表示時 | Yes | ツール名 |
