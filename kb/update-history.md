@@ -23,6 +23,9 @@
 #### Codex CLI 0.144.6（2026-07-18）
 - **specs/codex/changelog.md** — 0.144.6 のエントリを追加。GPT-5.6 Sol / Terra / Luna のバンドル instructions リフレッシュとコンテキストウィンドウ 272,000 トークンへの修正
 
+### PR
+- https://github.com/nomuvan-dev/harness-harness/pull/99
+
 ## 2026-07-18 — 公式ドキュメント巡回（前回から1日、Claude Code新版あり）
 
 ### 巡回対象URL
