@@ -1,6 +1,6 @@
 ---
 title: 推薦スキル一覧
-last_checked: "2026-07-13"
+last_checked: "2026-07-20"
 tier_a_count: 10
 tier_b_count: 6
 policy: 特定分野に偏らず、多様な分野からバランスよく推薦する
@@ -17,13 +17,13 @@ harness-harness各機能で活用可能なスキル。分野の偏りを避け�
 | **skill-creator** | メタ/全般 | anthropics/skills | create-harness, 全般 | スキル作成・改善・評価の起点 |
 | **systematic-debugging** | デバッグ | obra/superpowers | diagnose-harness | 仮説→証拠→根本原因の体系的デバッグ |
 | **test-driven-development** | テスト | コミュニティ上位 | create-harness, diagnose-harness | Red-Green-Refactorサイクルの強制 |
-| **frontend-design** | UI/UX | anthropics/skills (claude.com/plugins 1.05M installs) | create-harness | 50+視覚スタイル、本番品質UI生成 |
+| **frontend-design** | UI/UX | anthropics/skills (claude.com/plugins 1.08M installs) | create-harness | 50+視覚スタイル、本番品質UI生成 |
 | **security-scan** | セキュリティ | コミュニティ | diagnose-harness | OWASP Top10ベースの脆弱性スキャン |
 | **pdf/pptx/xlsx/docx** | ドキュメント | anthropics/skills (公式) | 全般 | Office系ドキュメント生成・解析 |
 | **dispatching-parallel-agents** | エージェント協調 | obra/superpowers | research-kb, create-harness | 並列調査・クロスレビューの設計パターン |
 | **using-git-worktrees** | Git運用 | obra/superpowers | 全般 | worktree日常運用のベストプラクティス |
 | **postgres-best-practices** | データベース | コミュニティ | create-harness | インデックス、クエリ最適化、接続プール |
-| **find-skills** | ディスカバリー | vercel-labs (2.5M installs、トップ) | create-harness, patrol-docs | スキル検索・発見ユーティリティ |
+| **find-skills** | ディスカバリー | vercel-labs (2.6M installs、トップ) | create-harness, patrol-docs | スキル検索・発見ユーティリティ |
 
 ## Tier B: ウォッチリスト（条件付き推薦）
 
