@@ -1,5 +1,34 @@
 # harness-harness 更新履歴
 
+## 2026-07-20 — 公式ドキュメント巡回 + スキルエコシステム週次巡回
+
+### 巡回対象URL
+- Claude Code: changelog — **v2.1.215**（2026-07-19）を検出。変更は1件のみ
+- Claude Code: llms.txt — MD5一致（176行、変更なし）
+- Codex CLI: GitHub Releases — 安定版は **0.144.6** のまま変更なし。プレリリースは 0.145.0-alpha.24 まで進行
+- スキルエコシステム: last_patrol 2026-07-13（7日経過、月曜） → Phase 3.5 実施
+
+### 検出された変更と更新内容
+
+#### Claude Code v2.1.215（2026-07-19）
+- **specs/claude/changelog.md** — v2.1.215 のエントリを追加。`/verify` と `/code-review` の自動実行が廃止され、ユーザーの明示的な呼び出しのみに
+- **specs/claude/skills-and-commands.md** — `/code-review` 行に v2.1.215 の自動起動廃止を追記。未記載だった `/verify` スキルの行を新規追加
+
+#### スキルエコシステム巡回（Phase 3.5）
+- **anthropics/skills**: 162,664 stars（前回 160,537）。2026-07-17 に docx/pptx/xlsx スキル更新（#1447）。スキル数 17 で増減なし
+- **openai/plugins**: 4,614 stars（前回 4,496）。Figma plugin skills v2.2.76、codex-security 0.1.11 等の更新
+- **claude.com/plugins**: Frontend Design 1,081,079 installs が首位（前回 1,050,956）。Top10 の顔ぶれ変化なし。4ページ構成継続
+- **skills.sh**: find-skills 2.6M で首位（前回 2.5M）。**mattpocock 系が top10 に 4 本**（grill-me #3 596.9K・grill-with-docs 505.2K・improve-codebase-architecture 492.8K・tdd 473.0K）と台頭。Tier 昇格は今回も見送り（プロンプト批評系はharness-harnessとの関連性が中程度、引き続き候補ウォッチ）
+- **agentskills.io**: 44 プラットフォームで前回と同数。仕様変更なし（name/description 必須）。クライアントに Gemini CLI・GitHub Copilot・VS Code・Junie 等の大手を確認
+- 更新ファイル: kb/skills/_index.md（last_patrol、参照先テーブルの数値）、kb/skills/recommended.md（last_checked、installs数値）
+
+### 更新ファイル一覧
+- specs/claude/changelog.md
+- specs/claude/skills-and-commands.md
+- kb/skills/_index.md
+- kb/skills/recommended.md
+- kb/update-history.md（本エントリ）
+
 ## 2026-07-19 — 公式ドキュメント巡回（前回から1日、Claude Code・Codex両方に新版あり）
 
 ### 巡回対象URL
