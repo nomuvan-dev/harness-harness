@@ -210,6 +210,7 @@ CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ../shared-config
 | `autoMode.classifyAllShell` | 全 Bash/PowerShell コマンドを auto-mode 分類器に通す（デフォルトは任意コード実行パターンのみ）（v2.1.193） |
 | `axScreenReader` | スクリーンリーダー向けプレーンテキスト描画にオプトイン。`claude --ax-screen-reader` / `CLAUDE_AX_SCREEN_READER=1` でも可（v2.1.208） |
 | `vimInsertModeRemaps` | vim モードのインサートモードで `jj` → Escape のような 2 キーシーケンスをマップ（v2.1.208） |
+| `sandbox.filesystem.disabled` | ファイルシステム分離のみスキップし、ネットワーク egress 制御は維持（v2.1.216） |
 
 > 補足: `allowedMcpServers` / `deniedMcpServers` 述語の `${VAR}` 参照は v2.1.166 で正しくマッチするようになった。Managed settings は invalid なエントリが含まれても、v2.1.166 から残りの valid policy は enforce される（従来は silently 全無効化）。
 

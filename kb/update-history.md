@@ -1,5 +1,22 @@
 # harness-harness 更新履歴
 
+## 2026-07-22 — 公式ドキュメント巡回
+
+### 巡回対象URL
+- Claude Code: changelog — **v2.1.216**（2026-07-20）を検出
+- Claude Code: llms.txt — MD5一致（176行、変更なし。ページ構成の変化なし）
+- Codex CLI: GitHub Releases — 安定版は **0.144.6** のまま変更なし。プレリリースは 0.145.0-alpha.29（2026-07-21）まで進行
+- スキルエコシステム: last_patrol 2026-07-20（7日以内） → Phase 3.5 スキップ
+
+### 検出された変更と更新内容
+
+#### Claude Code v2.1.216（2026-07-20）
+- **specs/claude/changelog.md** — v2.1.216 のエントリを追加。バグ修正中心のリリース。新設定 `sandbox.filesystem.disabled`、worktree/symlink 関連のセキュリティ修正、長時間セッションの二次関数的スローダウン修正、auto mode の OAuth 失効対応など
+- **specs/claude/configuration.md** — 設定テーブルに `sandbox.filesystem.disabled` を追加
+
+#### Codex CLI
+- 安定版に変更なし。specs/codex/ 更新なし
+
 ## 2026-07-20 — 公式ドキュメント巡回 + スキルエコシステム週次巡回
 
 PR: https://github.com/nomuvan-dev/harness-harness/pull/100
