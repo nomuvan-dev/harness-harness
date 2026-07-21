@@ -2,6 +2,8 @@
 
 ## 2026-07-22 — 公式ドキュメント巡回
 
+PR: https://github.com/nomuvan-dev/harness-harness/pull/101
+
 ### 巡回対象URL
 - Claude Code: changelog — **v2.1.216**（2026-07-20）を検出
 - Claude Code: llms.txt — MD5一致（176行、変更なし。ページ構成の変化なし）
