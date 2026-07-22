@@ -1,5 +1,38 @@
 # harness-harness 更新履歴
 
+## 2026-07-23 — 公式ドキュメント巡回
+
+### 巡回対象URL
+- Claude Code: changelog — **v2.1.217**（2026-07-21）を検出
+- Claude Code: llms.txt — MD5変化（176行→178行）。新規ページ2件: `claude-security.md`、`desktop-ios-simulator.md`
+- Codex CLI: GitHub Releases — 安定版 **0.145.0**（2026-07-21）を検出（前回 0.144.6）
+- スキルエコシステム: last_patrol 2026-07-20（7日以内） → Phase 3.5 スキップ
+
+### 検出された変更と更新内容
+
+#### Claude Code v2.1.217（2026-07-21）
+- サブエージェント並列上限（デフォルト 20、`CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS`）、ネストサブエージェントのデフォルト無効化（`CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH`）、`--max-budget-usd` のバックグラウンドサブエージェント適用
+- 絵文字ショートコード補完（`emojiCompletionEnabled`）、トランスクリプト書き込み失敗警告、`FORCE_HYPERLINK` 等
+- → `specs/claude/changelog.md` に v2.1.217 エントリ追加、`specs/claude/configuration.md` に設定キー・環境変数を追記
+
+#### 新規ドキュメントページ（Claude Code）
+- **claude-security プラグイン**: セッション内マルチエージェント脆弱性スキャン（`/claude-security`）。オンデマンド・ディープスキャン層として security-guidance / `/security-review` / Code Review と多層防御を構成
+  - → `specs/claude/skills-and-commands.md` に §4.8 として追加
+- **iOS Simulator ペイン**: Claude Code Desktop (macOS) のパブリックベータ。セッションごとの simulator でアプリをビルド・実行・検証。managed 設定 `disableMobileSimulatorTools` でブロック可
+  - → `specs/claude/configuration.md` に managed 設定キーを追記（Desktop 機能のため詳細は公式ページ参照に留めた）
+
+#### Codex CLI 0.145.0（2026-07-21）
+- `/import` の大幅拡張（Cursor 対応＋設定・MCP・プラグイン・セッション・コマンド・メモリ）、スレッド履歴ページネーション（実験的）、マルチエージェント V2 安定化、Bedrock ログイン（実験的）、音声入出力、インライン可視化リンク
+- → `specs/codex/changelog.md` に 0.145.0 エントリ追加、`specs/codex/commands.md` の `/import` 行を更新
+
+### 更新ファイル
+- `specs/claude/changelog.md`
+- `specs/claude/configuration.md`
+- `specs/claude/skills-and-commands.md`
+- `specs/codex/changelog.md`
+- `specs/codex/commands.md`
+- `kb/update-history.md`
+
 ## 2026-07-22 — 公式ドキュメント巡回
 
 PR: https://github.com/nomuvan-dev/harness-harness/pull/101

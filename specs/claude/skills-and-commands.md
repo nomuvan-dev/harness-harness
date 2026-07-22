@@ -397,6 +397,37 @@ cloud / 共有レポでは `.claude/settings.json` の `enabledPlugins` で宣�
 
 **位置づけ**: 防御の多層化の最も早い層。PR 時の `/code-review`（Team/Enterprise）、CI の静的解析と組み合わせる。プラグインだけでセキュリティを保証するものではない。
 
+### 4.8 claude-security プラグイン（公式 / 2026-07 新設ドキュメント）
+
+公式ドキュメント: https://code.claude.com/docs/en/claude-security
+
+`claude-plugins-official` 配下の公式プラグイン。セッション内でマルチエージェント脆弱性スキャンを実行するオンデマンド・ディープスキャン層。エージェントチームがアーキテクチャ把握→脅威モデル構築→脆弱性ハント→独立検証エージェントによる全 finding レビュー→レポート作成を行う。
+
+**前提条件**: Claude Code v2.1.154 以降＋有料プラン（動的ワークフロー必須。Pro は `/config` の Dynamic workflows で有効化）、`python3` 3.9.6 以降（標準ライブラリのみ使用）、変更スキャン・パッチ生成には git。
+
+**インストール**:
+
+```text
+/plugin install claude-security@claude-plugins-official
+/reload-plugins
+```
+
+**提供コマンド**: `/claude-security` の1つ。メニューから3ジョブを選択（引数・自然言語での直接指定も可）:
+
+| ジョブ | 内容 |
+|:--|:--|
+| **Scan codebase** | リポジトリ全体 or 選択領域のフルスキャン。バージョン管理外ディレクトリも可 |
+| **変更のみスキャン** | ブランチ diff / PR / 単一コミットを対象。コミット済みの変更のみ（要 git） |
+| **Suggest patches** | finding を選んでパッチ生成。独立レビューエージェントが検証してから `patches/F<n>.patch` に出力 |
+
+**結果出力**: `CLAUDE-SECURITY-<timestamp>/` ディレクトリに `RESULTS.md`（finding ID・severity・confidence 付き）、`RESULTS.jsonl`、`REVISION-<commit>.json`（スキャン対象コミットの記録）。ディレクトリ自身が `.gitignore` を持ち誤コミットを防止。
+
+**パッチは自動適用されない**: `git apply` でユーザー自身が適用。パッチごとに独立 PR 推奨。
+
+**注意点**: スキャンはセッション権限で動き独自の隔離なし。信頼できないリポジトリのスキャンは sandbox-runtime 等でセッションごとサンドボックス化する。スキャンは非決定的（同一コードでも finding が変わりうる）。
+
+**位置づけ（多層防御での役割分担）**: security-guidance（書きながらレビュー）→ `/security-review`（ブランチの単発パス）→ **claude-security（オンデマンド・ディープスキャン）** → Code Review（PR 時）→ Claude Security 管理サービス（Enterprise）→ CI の静的解析。GitLab / Bitbucket などマネージド製品が届かないリポジトリにも使える。
+
 ---
 
 ## 5. Agents / Subagents
