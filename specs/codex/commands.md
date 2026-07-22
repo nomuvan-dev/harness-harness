@@ -49,7 +49,7 @@
 | `/title` | `/title <text>` | アクティブターン中でもセッションタイトルを編集可能（0.128.0+） |
 | `/archive` | `/archive` | 現在のセッションをアーカイブ（復元するまで resume / fork から保護。CLI 等価: `codex archive` / `codex unarchive`、0.136.0+） |
 | `/delete` | `/delete` | セッションの完全削除（確認セーフガード・サブエージェントのクリーンアップ付き。CLI 等価: `codex delete`、app-server: `thread/delete`。0.140.0+） |
-| `/import` | `/import` | **Claude Code からセットアップ・プロジェクト設定・最近のチャットを選択的にインポート**（0.140.0+） |
+| `/import` | `/import` | **Claude Code / Cursor からセットアップを選択的にインポート**（0.140.0+）。0.145.0 で Cursor 対応と対象拡大: 設定・MCP サーバー・プラグイン・セッション・コマンド・プロジェクトスコープのメモリ |
 
 ### 1.5 情報・デバッグ
 
