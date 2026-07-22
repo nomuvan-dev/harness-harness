@@ -2,6 +2,8 @@
 
 ## 2026-07-23 — 公式ドキュメント巡回
 
+PR: https://github.com/nomuvan-dev/harness-harness/pull/102
+
 ### 巡回対象URL
 - Claude Code: changelog — **v2.1.217**（2026-07-21）を検出
 - Claude Code: llms.txt — MD5変化（176行→178行）。新規ページ2件: `claude-security.md`、`desktop-ios-simulator.md`
