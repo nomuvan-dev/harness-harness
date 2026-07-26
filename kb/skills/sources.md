@@ -1,6 +1,6 @@
 ---
 title: スキルエコシステム参照先
-last_checked: "2026-07-13"
+last_checked: "2026-07-27"
 ---
 
 # スキルエコシステム参照先
@@ -29,7 +29,7 @@ last_checked: "2026-07-13"
 
 | サイト | URL | 役割 | 巡回優先度 |
 |--------|-----|------|----------|
-| agentskills.io | https://agentskills.io/ | Agent Skills仕様。37+プラットフォーム採用（TRAE, Spring AI, Snowflake Cortex Code等が追加）。SKILL.mdフォーマット | 中 |
+| agentskills.io | https://agentskills.io/ | Agent Skills仕様。44プラットフォーム採用（2026-07-27 確認、増減なし）。SKILL.mdフォーマット | 中 |
 
 ## コミュニティ
 

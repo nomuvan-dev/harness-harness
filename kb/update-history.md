@@ -1,5 +1,47 @@
 # harness-harness 更新履歴
 
+## 2026-07-27 — 公式ドキュメント巡回 + スキルエコシステム巡回
+
+### 巡回対象URL
+- Claude Code: changelog — **v2.1.218**（2026-07-22）/ **v2.1.219**（2026-07-24）/ **v2.1.220**（2026-07-25）を検出
+- Claude Code: llms.txt — MD5変化なし（178行）。新規ドキュメントページなし
+- Codex CLI: GitHub Releases — 安定版は **0.145.0** のまま変化なし。プレリリースは 0.146.0-alpha.10.1（2026-07-25）まで進行
+- スキルエコシステム: last_patrol 2026-07-20 から7日経過 → Phase 3.5 実行
+
+### 検出された変更と更新内容
+
+#### Claude Code v2.1.219（2026-07-24）— 大型リリース
+- **Claude Opus 5**（`claude-opus-5`）追加。デフォルト Opus に。1M コンテキスト、fast mode $10/$50 per Mtok。Opus 4.7 は fast mode から除外
+- `sandbox.network.strictAllowlist` 設定、`DirectoryAdded` フック、`workflowSizeGuideline` 設定キー追加
+- ネストサブエージェントが既定深度3で復活（v2.1.217 の既定無効化から反転）。`CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1` で無効化
+- → `specs/claude/changelog.md` にエントリ追加、`specs/claude/configuration.md`（設定キー2件・環境変数説明更新）、`specs/claude/hooks.md`（DirectoryAdded を §2.3 に追加）
+
+#### Claude Code v2.1.218（2026-07-22）
+- `/code-review` のバックグラウンドサブエージェント化、`context: fork` スキルの既定バックグラウンド実行（`background: false` でオプトアウト）、フロントマター真偽値の許容値拡大（yes/no/on/off/1/0）、エージェント名の `:` 禁止
+- → `specs/claude/changelog.md` にエントリ追加、`specs/claude/skills-and-commands.md`（フロントマター表・§1.7 に反映）
+
+#### Claude Code v2.1.220（2026-07-25）
+- バグ修正・信頼性改善のみ → changelog エントリのみ
+
+#### スキルエコシステム（Phase 3.5）
+- anthropics/skills: 新スキルなし。claude-api スキルが Opus 5 / Managed Agents 対応に更新（07-22, 07-24）。Stars 164K+
+- openai/skills: 2026-07-14 以降 push なし（deprecated 継続）
+- skills.sh: find-skills 2.7M installs で首位継続。mattpocock 系 4 本 top10 継続。microsoft-foundry (microsoft/azure-skills, 482K) が新規 top10 入り
+- claude.com/plugins: Frontend Design 1.11M installs 首位。言語別 LSP プラグイン群の台頭、Anthropic 検証バッジ導入を確認
+- agentskills.io: 仕様変更なし。44 プラットフォーム採用継続
+- Tier A/B の昇降格なし
+- → `kb/skills/_index.md`（トレンド・last_patrol 更新、Tier 概要を recommended.md と整合するよう修正）、`kb/skills/sources.md`（44プラットフォームに更新）、`kb/skills/recommended.md`（last_checked 更新）
+
+### 更新ファイル一覧
+- specs/claude/changelog.md
+- specs/claude/configuration.md
+- specs/claude/hooks.md
+- specs/claude/skills-and-commands.md
+- kb/skills/_index.md
+- kb/skills/recommended.md
+- kb/skills/sources.md
+- kb/update-history.md
+
 ## 2026-07-23 — 公式ドキュメント巡回
 
 PR: https://github.com/nomuvan-dev/harness-harness/pull/102

@@ -1,6 +1,6 @@
 ---
 title: 推薦スキル一覧
-last_checked: "2026-07-20"
+last_checked: "2026-07-27"
 tier_a_count: 10
 tier_b_count: 6
 policy: 特定分野に偏らず、多様な分野からバランスよく推薦する
