@@ -63,8 +63,9 @@ my-skill/
 | `disallowed-tools` | No | スキル有効時にモデルから取り除くツール（v2.1.152）。スラッシュコマンドのフロントマターでも有効 |
 | `model` | No | スキル有効時のモデル指定 |
 | `effort` | No | エフォートレベル (`low` / `medium` / `high` / `max`（Opus 4.6のみ）) |
-| `context` | No | `fork` でフォークサブエージェントコンテキストで実行 |
+| `context` | No | `fork` でフォークサブエージェントコンテキストで実行。v2.1.218 から fork スキルは既定でバックグラウンド実行 |
 | `agent` | No | `context: fork` 時のサブエージェントタイプ指定 |
+| `background` | No | `context: fork` スキルのバックグラウンド実行を `false` でオプトアウト（v2.1.218） |
 | `hooks` | No | スキルライフサイクルにスコープされたフック |
 | `paths` | No | スキル自動適用を限定するglobパターン。カンマ区切り文字列またはYAMLリスト。パスマッチ時のみ自動読み込み |
 | `shell` | No | インライン `` !`command` `` のシェル。`bash`（デフォルト）または `powershell`（Windows、`CLAUDE_CODE_USE_POWERSHELL_TOOL=1` 必要） |
@@ -124,6 +125,10 @@ $ARGUMENTS を徹底的に調査してください。
 ```
 
 `agent` フィールドで実行環境を指定: `Explore` / `Plan` / `general-purpose` / カスタムサブエージェント名。
+
+v2.1.218 から `context: fork` のスキルは既定でバックグラウンド実行される。フォアグラウンドで実行したい場合はフロントマターに `background: false` を指定する。
+
+> フロントマターの真偽値は v2.1.218 から `true`/`false` に加え `yes`/`no`/`on`/`off`/`1`/`0`（大文字小文字不問）も受理される（スキル・プラグイン共通）。
 
 ### 1.8 ツールアクセス制限
 

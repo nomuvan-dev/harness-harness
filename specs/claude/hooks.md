@@ -49,6 +49,7 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 | `ConfigChange` | 設定ファイル変更時 | Yes | `user_settings`, `project_settings`, `local_settings`, `policy_settings`, `skills` |
 | `InstructionsLoaded` | CLAUDE.md/rules読み込み時 | No | `session_start`, `nested_traversal`, `path_glob_match`, `include`, `compact` |
 | `CwdChanged` | ワーキングディレクトリ変更時 | No | matcher非サポート（全変更で発火） |
+| `DirectoryAdded` | `/add-dir` または SDK `register_repo_root` でセッション途中に作業ディレクトリが登録された後 | No | -（v2.1.219） |
 | `FileChanged` | 監視対象ファイルのディスク変更時 | No | ファイル名（basename）例: `.envrc`, `.env` |
 | `TaskCreated` | `TaskCreate` ツールでタスク作成時 | Yes | matcherなし |
 

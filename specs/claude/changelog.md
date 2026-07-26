@@ -3,9 +3,37 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-07-23
+最終更新: 2026-07-27
 
 ---
+
+## v2.1.220 (2026-07-25)
+
+- バグ修正・信頼性改善のみ
+
+## v2.1.219 (2026-07-24)
+
+- **Claude Opus 5 追加**: `claude-opus-5` がデフォルトの Opus モデルに。1M コンテキスト、fast mode は $10/$50 per Mtok
+- **`sandbox.network.strictAllowlist` 設定**: サンドボックスコマンドで許可リスト外ホストをプロンプトなしで拒否
+- **`DirectoryAdded` フック追加**: `/add-dir` または SDK の `register_repo_root` でセッション途中に作業ディレクトリが登録された後に発火
+- **ネストサブエージェントのデフォルト復活**: サブエージェントは既定で深度3までネスト起動可能に（v2.1.217 の既定無効化から変更）。`CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1` で無効化
+- **`workflowSizeGuideline` 設定キー**: Dynamic workflow のサイズガイドラインを任意の settings ファイルから設定可能に。Dynamic workflows のデフォルトが medium ガイドライン（15エージェント未満目安）に変更
+- **stream-json のネストサブエージェント転送**: `--forward-subagent-text` 時に深度2以上のサブエージェントも、スポーン元 Agent `tool_use` id をキーに出力される
+- **headless の `mcp_server_errors`**: stream-json init イベントに、設定バリデーションでスキップされた `--mcp-config` エントリの一覧を追加。ターミナル実行では起動時警告
+- **fast mode の対象変更**: Opus 4.7 が fast mode から除外され、`/fast` は Opus 5 と Opus 4.8 に適用
+- **MCP 接続エラーの詳細化**: `claude mcp list` / `/mcp` に HTTP ステータスとエラーテキストを表示。設定値の前後空白警告も追加
+- そのほか: `claude -p` がミッドストリーム API エラー時に生成済み回答を落とす問題の修正、managed MCP 許可/拒否リストの `${VAR}` が起動時環境変数から解決されるよう変更、`--teleport` のリポジトリ不一致表示改善
+
+## v2.1.218 (2026-07-22)
+
+- **`/code-review` がバックグラウンドサブエージェント化**: レビュー作業が会話コンテキストを消費しなくなった。スタックされたスラッシュコマンドをレビュー対象として保持
+- **`context: fork` スキルのデフォルトバックグラウンド化**: fork コンテキストのスキルは既定でバックグラウンド実行。スキルごとに `background: false` でオプトアウト
+- **フロントマター真偽値の許容値拡大**: スキル・プラグインのフロントマターで `yes`/`no`/`on`/`off`/`1`/`0`（大文字小文字不問）を `true`/`false` と同様に受理
+- **エージェント名の `:` 禁止**: プラグイン名前空間予約のため、`:` を含むエージェント名を拒否
+- **`/deep-research` の手動起動限定化**: Claude が自律的に起動しなくなった
+- **auto モード・プランモードの権限判定改善**: dangerous-rm / バックグラウンド `&` / 疑わしい Windows パスのチェックが権限ダイアログではなく auto モード分類器で裁定されるように。プランモード + auto でも静的解析で読み取り専用と証明できない Bash コマンドを分類器が判定
+- **エージェントフロントマターフックの信頼要件**: エージェントファイルのあるフォルダ自体のワークスペース信頼承認が必要に（未信頼フォルダからのフック実行を修正）
+- そのほか: `/ultrareview` が「review my auth changes」のような記述的引数を受理、非対話セッションの `/code-review ultra` がクラウドレビューを正しく起動、server-managed settings の無害なトグルが承認プロンプトを出さないよう変更
 
 ## v2.1.217 (2026-07-21)
 
