@@ -2,6 +2,8 @@
 
 ## 2026-07-27 — 公式ドキュメント巡回 + スキルエコシステム巡回
 
+PR: https://github.com/nomuvan-dev/harness-harness/pull/103
+
 ### 巡回対象URL
 - Claude Code: changelog — **v2.1.218**（2026-07-22）/ **v2.1.219**（2026-07-24）/ **v2.1.220**（2026-07-25）を検出
 - Claude Code: llms.txt — MD5変化なし（178行）。新規ドキュメントページなし
