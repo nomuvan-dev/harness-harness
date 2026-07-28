@@ -1,5 +1,30 @@
 # harness-harness 更新履歴
 
+## 2026-07-29 — 公式ドキュメント巡回
+
+### 巡回対象URL
+- Claude Code: changelog — 最新は **v2.1.220**（2026-07-25）のまま。新バージョンなし
+- Claude Code: llms.txt — **MD5変化あり**（178行→179行）。新規ページ `cloud-environments.md` を検出
+- Codex CLI: GitHub Releases — 安定版は **0.145.0** のまま変化なし。プレリリースは 0.146.0-alpha.14（2026-07-28）まで進行
+- スキルエコシステム: last_patrol 2026-07-27 から7日以内 → Phase 3.5 スキップ
+
+### 検出された変更と更新内容
+
+#### Claude Code ドキュメント再編 — cloud-environments.md 新設
+- `claude-code-on-the-web.md` からクラウド環境設定（ネットワークアクセスレベル、環境変数、セットアップスクリプト、環境キャッシュ）が独立ページ `cloud-environments.md` に分離
+- web 側ページの説明が「セッション管理・共有、PR の Auto-fix」中心に改訂
+- ドキュメント再編自体は新機能ではないが、突合の結果 specs 未収載の CLI 接点を検出:
+  - `/autofix-pr [prompt]`・`/teleport` (`/tp`)・`/tasks` (`/bashes`)・`/web-setup`・`/remote-env` → `specs/claude/skills-and-commands.md` §2.3/§2.4 に追加
+  - 設定キー `remote.defaultEnvironmentId` → `specs/claude/configuration.md` §2.3 に追加
+
+#### Codex CLI
+- 安定版変化なし → specs/codex 更新不要
+
+### 更新ファイル一覧
+- specs/claude/skills-and-commands.md
+- specs/claude/configuration.md
+- kb/update-history.md
+
 ## 2026-07-27 — 公式ドキュメント巡回 + スキルエコシステム巡回
 
 PR: https://github.com/nomuvan-dev/harness-harness/pull/103

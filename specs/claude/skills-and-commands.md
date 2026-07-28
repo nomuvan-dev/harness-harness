@@ -224,6 +224,7 @@ Claude Code に同梱されるスキル:
 | `/release-notes` | インタラクティブバージョンピッカー付き変更ログ表示 |
 | `/sandbox` | サンドボックスモード切替 |
 | `/schedule [description]` | クラウドスケジュールタスクの作成・管理 |
+| `/autofix-pr [prompt]` | 現在のブランチのPRを監視するクラウドセッション（Claude Code on the web）を起動し、CI失敗・レビューコメントに自動で修正pushする Auto-fix を有効化。`gh pr view` でPRを検出。プロンプトで対応方針を指定可（例: `/autofix-pr only fix lint and type errors`）。`gh` CLI とweb版アクセスが必要 |
 
 ### 2.4 環境・インテグレーション
 
@@ -239,6 +240,10 @@ Claude Code に同梱されるスキル:
 | `/reload-skills` | スキルディレクトリを再スキャン。セッション再起動不要（v2.1.152） |
 | `/desktop` (`/app`) | デスクトップアプリでセッション継続 |
 | `/remote-control` (`/rc`) | リモートコントロール有効化 |
+| `/teleport` (`/tp`) | Claude Code on the web のクラウドセッションをこの端末に引き込む（ピッカー→ブランチfetch＋会話履歴ロード）。claude.ai サブスクリプション認証が必要 |
+| `/tasks` (`/bashes`) | 現在セッションのバックグラウンド作業（完了済みサブエージェント含む）の表示・管理 |
+| `/web-setup` | ローカルの `gh` CLI 認証情報で GitHub アカウントを Claude Code on the web に接続。GitHub未接続時は `/schedule` が自動でプロンプト |
+| `/remote-env` | クラウドセッションのデフォルト環境をピッカーで選択（ユーザー設定 `remote.defaultEnvironmentId` に保存） |
 | `/ide` | IDE連携管理 |
 | `/chrome` | Chrome設定。v2.1.154 で "Select browser…" を選択することで複数接続済みブラウザから使用ブラウザを指定可能（チャット内でも実行時に選択可） |
 | `/voice` | 音声入力トグル |
