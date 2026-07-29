@@ -1,5 +1,29 @@
 # harness-harness 更新履歴
 
+## 2026-07-30 — 公式ドキュメント巡回
+
+### 巡回対象URL
+- Claude Code: changelog — 最新は **v2.1.220**（2026-07-25）のまま。新バージョンなし
+- Claude Code: llms.txt — **MD5変化あり**（179行→180行）。新規ページ `claude-apps-gateway-on-aws.md` を検出
+- Codex CLI: GitHub Releases — **安定版 0.146.0**（2026-07-29）を検出。プレリリースは 0.147.0-alpha.1 まで進行
+- スキルエコシステム: last_patrol 2026-07-27 から7日以内 → Phase 3.5 スキップ
+
+### 検出された変更と更新内容
+
+#### Codex CLI 0.146.0 安定版リリース
+- `specs/codex/changelog.md` に 0.146.0 エントリを追加（セッション命名・ピン留め、Agent Plugins マニフェスト、スレッドフォーク強化、リモート Code Mode、スタンドアロン Web 検索、executor 提供スキル、プロキシ/MCP 信頼性改善）
+- `specs/codex/commands.md` — `/new` `/clear` のセッション命名対応、`/fork` のページネーション付き履歴・一時フォーク対応（いずれも 0.146.0+）を追記
+- 新規設定キーはなし（挙動拡張のみ）→ `specs/codex/configuration.md` 更新不要
+
+#### Claude Code ドキュメント新ページ — claude-apps-gateway-on-aws.md
+- Claude apps gateway の AWS 配備の worked example（ECS Fargate / EKS、RDS for PostgreSQL、Secrets Manager、IAM ロール認証で Bedrock 接続）
+- 既存の GCP 版（`claude-apps-gateway-on-gcp.md`）と同種のエンタープライズ配備ガイドで、specs はゲートウェイ配備例を収載対象としていないため specs 更新不要
+
+### 更新ファイル
+- `specs/codex/changelog.md`
+- `specs/codex/commands.md`
+- `kb/update-history.md`
+
 ## 2026-07-29 — 公式ドキュメント巡回
 
 PR: https://github.com/nomuvan-dev/harness-harness/pull/104
