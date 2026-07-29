@@ -2,6 +2,8 @@
 
 ## 2026-07-30 — 公式ドキュメント巡回
 
+PR: https://github.com/nomuvan-dev/harness-harness/pull/105
+
 ### 巡回対象URL
 - Claude Code: changelog — 最新は **v2.1.220**（2026-07-25）のまま。新バージョンなし
 - Claude Code: llms.txt — **MD5変化あり**（179行→180行）。新規ページ `claude-apps-gateway-on-aws.md` を検出
