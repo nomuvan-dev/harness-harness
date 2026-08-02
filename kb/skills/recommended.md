@@ -1,8 +1,8 @@
 ---
 title: 推薦スキル一覧
-last_checked: "2026-07-27"
+last_checked: "2026-08-03"
 tier_a_count: 10
-tier_b_count: 6
+tier_b_count: 7
 policy: 特定分野に偏らず、多様な分野からバランスよく推薦する
 ---
 
@@ -23,7 +23,7 @@ harness-harness各機能で活用可能なスキル。分野の偏りを避け�
 | **dispatching-parallel-agents** | エージェント協調 | obra/superpowers | research-kb, create-harness | 並列調査・クロスレビューの設計パターン |
 | **using-git-worktrees** | Git運用 | obra/superpowers | 全般 | worktree日常運用のベストプラクティス |
 | **postgres-best-practices** | データベース | コミュニティ | create-harness | インデックス、クエリ最適化、接続プール |
-| **find-skills** | ディスカバリー | vercel-labs (2.6M installs、トップ) | create-harness, patrol-docs | スキル検索・発見ユーティリティ |
+| **find-skills** | ディスカバリー | vercel-labs (2.8M installs、トップ) | create-harness, patrol-docs | スキル検索・発見ユーティリティ |
 
 ## Tier B: ウォッチリスト（条件付き推薦）
 
@@ -35,6 +35,7 @@ harness-harness各機能で活用可能なスキル。分野の偏りを避け�
 | **landing-page-guide** | マーケティング | コミュニティ | 高CVランディングページ、CRO原則 | Webマーケティング系 |
 | **deploy-checklist** | DevOps | コミュニティ | デプロイ前検証（環境変数、ロールバック計画） | 本番デプロイがあるプロジェクト |
 | **brainstorming** | 企画/設計 | コミュニティ上位 | 構造化アイデーション、制約・エッジケース洗い出し | 設計フェーズ重視 |
+| **agent-browser** | ブラウザ自動化 | vercel-labs/agent-browser (612.9K installs、skills.sh top10) | エージェントからのブラウザ操作 CLI（開く・クリック・入力・スクリーンショット） | E2E検証・Web操作を伴うプロジェクト |
 
 ## 分野カバレッジ
 
@@ -52,6 +53,7 @@ harness-harness各機能で活用可能なスキル。分野の偏りを避け�
 | データベース | 1 | 1 | 2 |
 | DevOps/インフラ | 0 | 2 | 2 |
 | マーケティング | 0 | 1 | 1 |
+| ブラウザ自動化 | 0 | 1 | 1 |
 
 ## 昇格/降格ルール
 
