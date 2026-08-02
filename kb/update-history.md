@@ -1,5 +1,31 @@
 # harness-harness 更新履歴
 
+## 2026-08-03 — 公式ドキュメント巡回 + スキルエコシステム巡回
+
+### 巡回対象URL
+- Claude Code: changelog — 最新は **v2.1.220**（2026-07-25）のまま。新バージョンなし
+- Claude Code: llms.txt — MD5一致（180行）。ページ構成の変化なし
+- Codex CLI: GitHub Releases — **安定版 0.146.0**（2026-07-29）のまま。プレリリースは 0.147.0-alpha.4（2026-07-31）まで進行
+- スキルエコシステム: last_patrol 2026-07-27 から7日経過 → Phase 3.5 実施
+
+### 検出された変更と更新内容
+
+#### specs — 変更なし
+Claude Code / Codex CLI とも新バージョンなし。specs/ 更新不要。
+
+#### スキルエコシステム
+- **agent-browser**（vercel-labs、612.9K installs）が skills.sh top10 に新規入り。未カバー分野「ブラウザ自動化」に該当するため `kb/skills/recommended.md` の Tier B に追加（分野カバレッジテーブルにも行追加）
+- skills.sh top10 変動: vercel-react-best-practices（599.4K）、ai-video-generation（101-skills、539.6K）も新規入り。microsoft-foundry は圏外へ。find-skills は 2.8M でトップ継続
+- claude.com/plugins: Frontend Design 1.13M で首位継続。上位構成に変化なし
+- anthropics/skills: 165,789 stars（+1,495）。2026-07-24 以降 push なし、17 スキルで増減なし
+- openai/skills: deprecated 継続。openai/plugins も 07-14 以降 push なし
+- agentskills.io: 44 プラットフォームで変化なし。仕様変更なし
+
+### 更新ファイル
+- `kb/skills/_index.md`
+- `kb/skills/recommended.md`
+- `kb/update-history.md`
+
 ## 2026-07-30 — 公式ドキュメント巡回
 
 PR: https://github.com/nomuvan-dev/harness-harness/pull/105
