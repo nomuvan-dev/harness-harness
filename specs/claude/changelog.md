@@ -3,9 +3,24 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-07-27
+最終更新: 2026-08-05
 
 ---
+
+## v2.1.221 (2026-08-04)
+
+- **[VSCode] Focus view 追加**: ツール実行の詳細を折りたたみ、ターン毎サマリと実行中ツールインジケータのみ表示するチャットメニュートグル。`Ctrl+Alt+F` または「Claude Code: Toggle Focus view」コマンドで切替
+- **サンドボックス認証情報の `mode: "mask"` 追加**（Linux/WSL）: サンドボックスコマンドにはセンチネル値のコピーを読ませ、egress 時にサンドボックスプロキシが実値へ置換。ファイル全体または `extract` 正規表現でキャプチャした範囲のみマスク可。macOS では `deny` にフォールバック
+- **`claude plugin validate` の警告追加**: marketplace / plugin 名が Claude Desktop の managed marketplace 同期で拒否される場合に警告
+- **`claude-api` スキルに `prompt-audit` サブコマンド追加**: 旧モデル向けに書かれたプロンプト・ツール記述のパターンを監査
+- **セキュリティ修正**: zsh の `[[ ]]` 正規表現条件内に隠しコマンドを仕込める Bash ツール権限チェックのバイパスを修正（該当コマンドは権限プロンプトを表示）。Windows で引用符を含むパスの PowerShell 権限チェック不備も修正
+- **`/fork` の挙動変更**: fork したセッションは元セッションのチェックアウトを共有せず、自前の新しい worktree を作成
+- **`/status` にセッション種別表示**: `interactive`、またはバックグラウンドジョブの `attached` / `unattended` を表示
+- **プラグイン改善**: `/plugin install` は stale な marketplace カタログを更新してリトライ。`/plugin` からのインストールは安全な場合 `/reload-plugins` 不要で即時有効化。`skills` パスに `"."`（プラグインルート）を指定可能に
+- **バックグラウンドセッションの挙動変更**: commit・push で作業を保全し、必要な場合のみ draft PR を作成。CLAUDE.md の git 指示に従い、最後に成果物の場所を必ず報告
+- **Stats パネル改善**: キャッシュトークンを合計に含め、input / output / cache read / cache write の内訳を表示
+- **auto mode 改善**: 並列ツールコールの権限チェックがキャッシュ効率化され、プロンプトキャッシュの会話プレフィックス再利用でコスト削減
+- その他: 絵文字補完が `:thumbsup:` 等の別名ショートコードに対応、Claude in Chrome が不要になったタブを自動クローズ、fast mode のクレジット枯渇をストリーム上で通知、Vertex AI で Claude 4.5 世代以降のツール検索を再有効化
 
 ## v2.1.220 (2026-07-25)
 
