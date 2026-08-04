@@ -179,7 +179,7 @@ Claude Code に同梱されるスキル:
 | `/rename [name]` | セッション名変更 |
 | `/rewind` (`/checkpoint`, `/undo`) | 会話/コードを前の状態に巻き戻し（v2.1.108 で `/undo` エイリアス追加。v2.1.191 で `/clear` 実行前からの会話再開に対応） |
 | `/cd <path>` | プロンプトキャッシュを壊さずセッションのワーキングディレクトリを移動（v2.1.169）。v2.1.206 でパス補完対応 |
-| `/branch [name]` (`/fork`) | 会話のブランチ作成。v2.1.212 で `/fork` は会話を新しいバックグラウンドセッション（`claude agents` に独立表示）へコピーする挙動に変更 |
+| `/branch [name]` (`/fork`) | 会話のブランチ作成。v2.1.212 で `/fork` は会話を新しいバックグラウンドセッション（`claude agents` に独立表示）へコピーする挙動に変更。v2.1.221 から fork セッションは元のチェックアウトを共有せず自前の worktree を作成 |
 | `/subtask` | 会話をコピーしたセッション内サブエージェントを起動（v2.1.212 で旧 `/fork` の挙動から改名） |
 | `/export [filename]` | 会話をテキストエクスポート |
 | `/exit` (`/quit`) | CLI終了 |
@@ -198,7 +198,7 @@ Claude Code に同梱されるスキル:
 | `/memory` | CLAUDE.md/オートメモリ管理 |
 | `/hooks` | フック設定表示 |
 | `/mcp` | MCPサーバー管理。v2.1.161 で未使用 claude.ai connector を「Show unused connectors」の下に折りたたみ表示に変更 |
-| `/status` | ステータス表示 |
+| `/status` | ステータス表示。v2.1.221 からセッション種別（`interactive` / バックグラウンドの `attached` / `unattended`）も表示 |
 | `/context` | コンテキスト使用量の可視化 |
 | `/usage` | 使用量・統計を統合表示（v2.1.118 で `/cost` と `/stats` を `/usage` に統合。両コマンドはタイピングショートカットとして残存、対応タブを開く。v2.1.149 で制限使用量を駆動する要因（skills / subagents / plugins / MCPサーバー単位のコスト）のカテゴリ別内訳を表示） |
 | `/cost` | `/usage` のトークン使用量タブを開くショートカット |
@@ -236,7 +236,7 @@ Claude Code に同梱されるスキル:
 | `/plugin` | プラグイン管理（マーケットプレース、インストール、有効化/無効化）。`claude plugin prune` で孤立した自動インストール依存を削除、`plugin uninstall --prune` でカスケード削除（v2.1.121）。マーケットプレース browse ペインに projected context cost（ターン当たり・呼び出し当たりのトークン推定）を表示（v2.1.143）。Discover/Browse 画面でインストール前にプラグインが提供する commands / agents / skills / hooks / MCP/LSP サーバーをプレビュー（v2.1.145） |
 | `/plugin list` | インストール済みプラグイン一覧表示。`--enabled` / `--disabled` フィルタ対応（v2.1.163） |
 | `claude plugin enable/disable` | 依存関係を強制。`disable` は他の有効プラグインの依存先を拒否し disable-chain ヒントを表示。`enable` は推移的依存を強制有効化（v2.1.143） |
-| `/reload-plugins` | プラグイン変更の即時反映 |
+| `/reload-plugins` | プラグイン変更の即時反映（v2.1.221 から `/plugin` 経由のインストールは安全な場合、実行不要で即時有効化） |
 | `/reload-skills` | スキルディレクトリを再スキャン。セッション再起動不要（v2.1.152） |
 | `/desktop` (`/app`) | デスクトップアプリでセッション継続 |
 | `/remote-control` (`/rc`) | リモートコントロール有効化 |

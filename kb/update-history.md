@@ -1,5 +1,29 @@
 # harness-harness 更新履歴
 
+## 2026-08-05 — 公式ドキュメント巡回
+
+### 巡回対象URL
+- Claude Code: changelog — **v2.1.221（2026-08-04）が新規リリース**
+- Claude Code: llms.txt — MD5一致（180行）。ページ構成の変化なし
+- Codex CLI: GitHub Releases — 安定版 0.146.0（2026-07-29）のまま。プレリリースは 0.147.0-alpha.7（2026-08-04）まで進行
+- スキルエコシステム: last_patrol 2026-08-03 から7日以内 → Phase 3.5 スキップ
+
+### 検出された変更と更新内容
+
+#### specs/claude/changelog.md
+- v2.1.221 エントリを追加: VSCode Focus view、サンドボックス認証情報 `mode: "mask"`（Linux/WSL）、`claude plugin validate` 警告、`prompt-audit` サブコマンド、zsh `[[ ]]` 権限バイパス修正、`/fork` の自前 worktree 化、`/status` セッション種別表示、プラグイン即時有効化、バックグラウンドセッションの commit/push 保全 等
+
+#### specs/claude/configuration.md
+- `sandbox.credentials` に v2.1.221 の `mode: "mask"` を追記
+
+#### specs/claude/skills-and-commands.md
+- `/fork`: v2.1.221 から自前 worktree を作成する旨を追記
+- `/status`: セッション種別表示を追記
+- `/reload-plugins`: `/plugin` 経由インストールの即時有効化を追記
+
+#### specs/codex — 変更なし
+- 安定版リリースなしのため更新なし
+
 ## 2026-08-03 — 公式ドキュメント巡回 + スキルエコシステム巡回
 
 PR: https://github.com/nomuvan-dev/harness-harness/pull/106

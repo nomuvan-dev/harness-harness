@@ -211,7 +211,7 @@ CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ../shared-config
 | `sandbox.allowAppleEvents` | サンドボックスコマンドに macOS Apple Events 送信を許可（オプトイン）（v2.1.181） |
 | `attribution.sessionUrl` | Web / Remote Control セッションで commit・PR への claude.ai セッションリンク付与を制御（v2.1.183） |
 | `respondToBashCommands` | `false` で `!` bashコマンド出力への Claude 自動応答を無効化（v2.1.186 から自動応答がデフォルト） |
-| `sandbox.credentials` | サンドボックスコマンドによる認証情報ファイル・シークレット環境変数の読み取りをブロック（v2.1.187） |
+| `sandbox.credentials` | サンドボックスコマンドによる認証情報ファイル・シークレット環境変数の読み取りをブロック（v2.1.187）。v2.1.221 で `mode: "mask"` 追加（Linux/WSL）: センチネル値を読ませ egress 時にプロキシが実値へ置換。`extract` 正規表現で範囲指定可。macOS は `deny` にフォールバック |
 | `autoMode.classifyAllShell` | 全 Bash/PowerShell コマンドを auto-mode 分類器に通す（デフォルトは任意コード実行パターンのみ）（v2.1.193） |
 | `axScreenReader` | スクリーンリーダー向けプレーンテキスト描画にオプトイン。`claude --ax-screen-reader` / `CLAUDE_AX_SCREEN_READER=1` でも可（v2.1.208） |
 | `vimInsertModeRemaps` | vim モードのインサートモードで `jj` → Escape のような 2 キーシーケンスをマップ（v2.1.208） |
