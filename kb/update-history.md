@@ -2,6 +2,8 @@
 
 ## 2026-08-06 — 公式ドキュメント巡回
 
+PR: https://github.com/nomuvan-dev/harness-harness/pull/108
+
 ### 巡回対象URL
 - Claude Code: changelog — **v2.1.222（2026-08-04）が新規リリース**
 - Claude Code: llms.txt — MD5変化（180→181行）。新規ページ2件（Agent SDK Troubleshooting, Claude Tag）、ultraplan ページ削除
