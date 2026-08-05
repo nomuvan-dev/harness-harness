@@ -3,9 +3,13 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://developers.openai.com/codex/changelog
 
-最終更新: 2026-07-30
+最終更新: 2026-08-06
 
 ---
+
+## CLI 0.146.1 (2026-08-05)
+
+- **サイバー能力モデルの自動レビュー既定を安全側に変更**: cyber-capable モデル向けの safer automatic-review defaults を適用し、権限変更をターミナル UI で説明表示するように（0.146 系へのバックポート）
 
 ## CLI 0.146.0 (2026-07-29)
 

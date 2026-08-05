@@ -1,5 +1,28 @@
 # harness-harness 更新履歴
 
+## 2026-08-06 — 公式ドキュメント巡回
+
+### 巡回対象URL
+- Claude Code: changelog — **v2.1.222（2026-08-04）が新規リリース**
+- Claude Code: llms.txt — MD5変化（180→181行）。新規ページ2件（Agent SDK Troubleshooting, Claude Tag）、ultraplan ページ削除
+- Codex CLI: GitHub Releases — **安定版 0.146.1（2026-08-05）が新規リリース**。プレリリースは 0.147.0-alpha.11（2026-08-05）まで進行
+- スキルエコシステム: last_patrol 2026-08-03 から7日以内 → Phase 3.5 スキップ
+
+### 検出された変更と更新内容
+
+#### specs/claude/changelog.md
+- v2.1.222 エントリを追加: ultraplan 機能削除、worktree 隔離のセキュリティ修正（メインチェックアウトへの破壊的 git コマンド防止）、PreToolUse 自動許可のバックグラウンドタスクでのバイパス修正、auto モードでの `SendMessage` 権限クラシファイア評価、Remote Control 自動起動のリポジトリローカル設定からの有効化不可 等
+
+#### specs/claude/skills-and-commands.md
+- `/ultraplan` コマンド行を削除（v2.1.222 で機能廃止）
+
+#### specs/codex/changelog.md
+- CLI 0.146.1 エントリを追加: cyber-capable モデル向け safer automatic-review defaults のバックポート
+
+#### specs 更新不要と判断した新規ページ
+- `agent-sdk/troubleshooting.md`: Agent SDK のエラー別トラブルシューティング。SDK 領域のため specs 収載対象外
+- `claude-tag.md`: Claude Tag（Slack 統合、Team/Enterprise 向け）。claude.com 側ドキュメントへのポインタページで、CLI 仕様への影響なし
+
 ## 2026-08-05 — 公式ドキュメント巡回
 
 PR: https://github.com/nomuvan-dev/harness-harness/pull/107
