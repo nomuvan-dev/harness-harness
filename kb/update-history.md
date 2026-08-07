@@ -2,6 +2,8 @@
 
 ## 2026-08-08 — 公式ドキュメント巡回（2回目・llms.txt 差分追随）
 
+PR: https://github.com/nomuvan-dev/harness-harness/pull/110
+
 ### 検出
 - 安定版リリースは新規なし（Claude Code 2.1.224 / Codex 0.147.0 で据え置き。Codex は 0.148.0-alpha.1/2 のプレリリースが進行）
 - **llms.txt のハッシュ変化**（181→189行）: `self-hosted-environments-*.md` 7ページが新規追加（v2.1.224 の `claude self-hosted-runner` 機能のドキュメント群）
