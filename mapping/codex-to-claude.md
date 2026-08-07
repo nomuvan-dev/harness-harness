@@ -84,7 +84,8 @@ echo "プロファイル '$1' を有効化しました"
 | `approval_policy = "on-request"` | `permissions.defaultMode` + `permissions.ask` | デフォルトの確認付き実行 |
 | `approval_policy = "never"` | `bypassPermissions` モード | 両方とも非推奨 |
 | `approval_policy = "untrusted"` | `permissions.allow`（安全なもののみ） + `permissions.deny`（危険なもの） | Claude の方が細粒度で制御可能 |
-| `--full-auto` | **対応なし** | 代替: `permissions.allow` で必要なツールを個別許可 |
+| `--full-auto`（0.147.0 で削除） | **対応なし** | Codex 側は `--sandbox workspace-write` へ移行。Claude 代替: `permissions.allow` で必要なツールを個別許可 |
+| `--approve-for-me`（0.147.0+） | `permissions.allow` + auto mode | 自動レビュー済み承認。Claude では allowlist と auto モードで近似 |
 | `--yolo` | `bypassPermissions` | 両方とも全バイパス（非推奨） |
 | `/permissions` | `/permissions` | 同等 |
 

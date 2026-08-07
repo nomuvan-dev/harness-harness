@@ -1,5 +1,35 @@
 # harness-harness 更新履歴
 
+## 2026-08-08 — 公式ドキュメント巡回
+
+### 巡回対象URL
+- Claude Code: changelog — **v2.1.223（2026-08-06）・v2.1.224（2026-08-07）が新規リリース**
+- Codex CLI: GitHub Releases — **安定版 0.147.0（2026-08-07）が新規リリース**（前回はプレリリース段階だった 0.147.0 が GA 化）
+- スキルエコシステム: last_patrol 2026-08-03 から7日以内 → Phase 3.5 スキップ
+
+### 検出された変更と更新内容
+
+#### specs/claude/changelog.md
+- v2.1.224 追加: セルフホスト環境（`claude self-hosted-runner`）、`archive` プラグインソース（HTTPS zip + SHA-256 ピン止め）、セッション間 `SendMessage`（`crossSessionInbound` / `dialogExpiry`）、サンドボックス認証情報マスキング拡充（`extract` / `decode:"jwt"` / `awsPairs` / `sigv4`）
+- v2.1.223 追加: マーケットプレース managed settings のオーナーワイルドカード（`"owner/*"`）、ワークフローエージェントの制限モデル警告、`/teleport` ヒント、Bash 権限バイパス等のセキュリティ修正
+
+#### specs/claude/configuration.md
+- `crossSessionInbound` / `dialogExpiry` を追加（v2.1.224）
+- `sandbox.credentials` マスキングオプション拡充（v2.1.224）を追記
+- `archive` プラグインソース + `owner/*` ワイルドカードを追記（v2.1.223/224）
+
+#### specs/codex/changelog.md
+- CLI 0.147.0 追加: ポータブル Agent Plugins、会話セクション、`--approve-for-me`、Cursor スキルインポート、MCP 2026-07-28 対応、Bedrock キャッシュ Web 検索/リモートコンパクション、**`codex exec --full-auto` 削除**、依存更新（MCP SDK 3.0.0 / Ratatui 0.30.2 / V8 150.4.0）
+
+#### specs/codex/commands.md
+- `--full-auto` を削除表記に変更し `--approve-for-me` を追加
+- `codex plugin marketplace` にポータブル Agent Plugins のカタログ横断検索を追記
+
+#### mapping/codex-to-claude.md
+- `--full-auto` 削除を反映、`--approve-for-me` の Claude 代替を追加
+
+---
+
 ## 2026-08-06 — 公式ドキュメント巡回
 
 PR: https://github.com/nomuvan-dev/harness-harness/pull/108
