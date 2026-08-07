@@ -222,6 +222,14 @@ CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ../shared-config
 
 > 補足: `allowedMcpServers` / `deniedMcpServers` 述語の `${VAR}` 参照は v2.1.166 で正しくマッチするようになった。Managed settings は invalid なエントリが含まれても、v2.1.166 から残りの valid policy は enforce される（従来は silently 全無効化）。
 
+#### セルフホスト環境（self-hosted-runner）— v2.1.224 で公開ベータ
+
+Team / Enterprise 向けに、クラウドセッションを自社ホスト上で実行する `claude self-hosted-runner` コマンドが追加された（Linux / macOS）。Owner/admin が管理画面で「Allow self-hosted environments」を有効化して利用する。詳細な全フラグは `claude self-hosted-runner --help` および [reference](https://code.claude.com/docs/en/self-hosted-environments-reference) 参照。デプロイインフラ寄りのためここでは**ハーネス設計に直接関わるガードのみ**を段階的開示で記載する:
+
+- `--confine-repo-settings <warn|enforce|off>`（既定 `warn`）: リポジトリにコミットされた `settings.json` がセッション自身のワークスペース外への読み書き付与・環境変数設定・オペレータの sandbox/hooks ポスチャ上書き（例 `sandbox.enabled: false`、`disableAllHooks`）を試みた場合にフラグ立て。`enforce` で拒否
+- `--trust-workspace [bool]`（既定 on）: リポジトリコミット済みの `permissions.allow` / `additionalDirectories` を信頼するか。`false` でリポジトリ由来の権限付与を破棄しホスト側 `settings.json` の allow ルールを使用（`sandbox.*` は常に適用され `--confine-repo-settings` の走査対象）
+- 追加サブコマンド `self-hosted-runner orchestrator`（オンデマンド runner の自動起動）、環境変数は `SELF_HOSTED_RUNNER_*` / `CLAUDE_RUNNER_*` 系
+
 ### 2.4 `~/.claude.json` のグローバル設定
 
 `settings.json` ではなく `~/.claude.json` に格納される設定:
