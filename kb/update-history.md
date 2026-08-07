@@ -1,5 +1,16 @@
 # harness-harness 更新履歴
 
+## 2026-08-08 — 公式ドキュメント巡回（2回目・llms.txt 差分追随）
+
+### 検出
+- 安定版リリースは新規なし（Claude Code 2.1.224 / Codex 0.147.0 で据え置き。Codex は 0.148.0-alpha.1/2 のプレリリースが進行）
+- **llms.txt のハッシュ変化**（181→189行）: `self-hosted-environments-*.md` 7ページが新規追加（v2.1.224 の `claude self-hosted-runner` 機能のドキュメント群）
+
+### 更新内容
+- **specs/claude/configuration.md**: 「セルフホスト環境（self-hosted-runner）」サブセクションを追加。段階的開示でハーネス設計に直接関わるガードのみ記載（`--confine-repo-settings`、`--trust-workspace`、`orchestrator` サブコマンド、`SELF_HOSTED_RUNNER_*` 環境変数）
+
+---
+
 ## 2026-08-08 — 公式ドキュメント巡回
 
 PR: https://github.com/nomuvan-dev/harness-harness/pull/109
