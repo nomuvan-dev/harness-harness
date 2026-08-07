@@ -118,7 +118,8 @@ codex -q "タスクの説明"
 | `--cd, -C <path>` | 作業ディレクトリを設定 |
 | `--add-dir <path>` | 追加の書き込み可能ディレクトリを付与 |
 | `--image, -i <path>` | 画像ファイルを添付 |
-| `--full-auto` | 低摩擦モード（on-request 承認） |
+| `--full-auto` | ~~低摩擦モード（on-request 承認）~~ **0.147.0 で削除**。代わりに `--sandbox workspace-write` を使用 |
+| `--approve-for-me` | 自動レビュー済み承認を有効化（0.147.0+）。レビューを通過した操作を自動承認 |
 | `--yolo` | 承認・サンドボックスを完全バイパス（非推奨） |
 | `--dangerously-bypass-hook-trust` | hook trust フローを明示的にバイパス（CI 等向け、0.131.0+） |
 | `--profile-v2 <name>` | レイヤー化プロファイル v2 を使用（複数 TOML を重ね合わせ。旧 `[profiles]` 併用時は拒否、0.131.0+） |
@@ -230,6 +231,6 @@ max_bytes = 1048576        # 最大サイズ（超過時は自動コンパクシ
 | `codex update` | CLI 自身を最新版にアップグレード（0.128.0+） |
 | `codex doctor` | runtime / auth / terminal / network / config / ローカル状態を横断する診断（0.131.0+）。0.135.0 で環境・Git・ターミナル・app-server・thread inventory のリッチ診断を追加 |
 | `codex remote-control` | リモート制御可能な app-server を起動（0.130.0+）。0.131.0 で daemon ライフサイクル管理・ランタイム enable/disable API・registry-backed 環境を追加 |
-| `codex plugin marketplace ...` | プラグインマーケットプレース操作 CLI（0.131.0+）。share / share checkout / version 対応 |
+| `codex plugin marketplace ...` | プラグインマーケットプレース操作 CLI（0.131.0+）。share / share checkout / version 対応。0.147.0 でポータブル Agent Plugins のインストールと local / personal / workspace / remote カタログ横断検索に対応 |
 
 > 公式ドキュメント: [CLI Reference](https://developers.openai.com/codex/cli/reference) / [CLI Features](https://developers.openai.com/codex/cli/features)
