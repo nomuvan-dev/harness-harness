@@ -2,6 +2,8 @@
 
 ## 2026-08-08 — 公式ドキュメント巡回
 
+PR: https://github.com/nomuvan-dev/harness-harness/pull/109
+
 ### 巡回対象URL
 - Claude Code: changelog — **v2.1.223（2026-08-06）・v2.1.224（2026-08-07）が新規リリース**
 - Codex CLI: GitHub Releases — **安定版 0.147.0（2026-08-07）が新規リリース**（前回はプレリリース段階だった 0.147.0 が GA 化）
