@@ -2,6 +2,8 @@
 
 ## 2026-08-09 — 公式ドキュメント巡回
 
+PR: https://github.com/nomuvan-dev/harness-harness/pull/111
+
 ### 検出
 - **Claude Code**: v2.1.225 / v2.1.226（いずれも 2026-08-08）が新規
   - v2.1.225: ゲートウェイ支出上限の使用量警告への反映、`claude agents` の未信頼ディレクトリ信頼プロンプト、SendMessage による別マシン Remote Control セッションへの名前指定会話開始、OAuth/keychain 関連の修正
