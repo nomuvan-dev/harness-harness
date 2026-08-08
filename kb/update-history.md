@@ -1,5 +1,20 @@
 # harness-harness 更新履歴
 
+## 2026-08-09 — 公式ドキュメント巡回
+
+### 検出
+- **Claude Code**: v2.1.225 / v2.1.226（いずれも 2026-08-08）が新規
+  - v2.1.225: ゲートウェイ支出上限の使用量警告への反映、`claude agents` の未信頼ディレクトリ信頼プロンプト、SendMessage による別マシン Remote Control セッションへの名前指定会話開始、OAuth/keychain 関連の修正
+  - v2.1.226: バグ修正・信頼性改善のみ
+- **Codex**: 安定版 0.147.0（2026-08-07）据え置き。プレリリースは 0.148.0-alpha.5 まで進行。specs 更新不要
+- **llms.txt**: 新規ドキュメントページの追加なし（self-hosted 群は前回反映済み）
+- Phase 3.5（スキルエコシステム巡回）は前回巡回（2026-08-03）から7日以内のためスキップ
+
+### 更新内容
+- **specs/claude/changelog.md**: v2.1.225 / v2.1.226 エントリを追加。configuration.md は新規設定キーの追加がないため更新不要（支出上限はゲートウェイ側機能、`crossSessionInbound`/`dialogExpiry` は前回反映済み）
+
+---
+
 ## 2026-08-08 — 公式ドキュメント巡回（2回目・llms.txt 差分追随）
 
 PR: https://github.com/nomuvan-dev/harness-harness/pull/110
