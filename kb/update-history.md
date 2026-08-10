@@ -1,5 +1,24 @@
 # harness-harness 更新履歴
 
+## 2026-08-11 — 公式ドキュメント巡回 + スキルエコシステム巡回
+
+### 検出（specs 対象は変更なし）
+- **Claude Code**: v2.1.226（2026-08-08）が最新のまま。新規バージョンなし → changelog/specs 更新不要
+- **Codex**: 安定版 0.147.0（2026-08-07）据え置き。新規プレリリース rust-v0.148.0-alpha.6（2026-08-10）を検出したが、方針どおりプレリリースは specs 収載対象外 → 更新不要
+- **llms.txt**: 191 行のまま（MD5 は変化したが既存ページの説明文微修正のみ）。whats-new は Week 29 が最新のまま。specs 対象の新規ページ・新機能なし → 更新不要
+
+### スキルエコシステム巡回（前回 2026-08-03、7 日超のため実施）
+- **anthropics/skills**: 167K+ stars（165K→167K）。スキル数・新規 push に変化なし
+- **skills.sh**: find-skills 2.9M installs で首位継続。mattpocock 系が top10 に 6 本へ占有拡大、handoff が新規 top10 入り、ai-video-generation は圏外へ。多様性の観点から handoff は追跡リストには追加せずトレンド注記に留めた
+- **claude.com/plugins**: Superpowers が 100万 installs を突破し 2 位へ浮上。Frontend Design 1.13M は首位維持
+- **agentskills.io**: 仕様変更なし（44 プラットフォーム採用継続）
+
+### 更新ファイル
+- `kb/skills/_index.md` — last_patrol を 2026-08-11 に更新、各ソースのメトリクス・トレンド注記を最新化
+- `kb/skills/recommended.md` — last_checked を 2026-08-11 に更新、find-skills（2.9M）/agent-browser（651.1K）の installs 数を最新化
+
+---
+
 ## 2026-08-09 — 公式ドキュメント巡回
 
 PR: https://github.com/nomuvan-dev/harness-harness/pull/111
