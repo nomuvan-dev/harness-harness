@@ -219,7 +219,7 @@ Claude Code に同梱されるスキル:
 | `/security-review` | セキュリティ脆弱性分析 |
 | `/review <pr>` | PRレビュー。v2.1.186 で `/code-review medium` と同じエンジンに変更されたが、v2.1.202 で高速な単一パスレビューに回帰（多段レビューは `/code-review <level> <pr#>` を使用） |
 | `/dataviz` | チャート・ダッシュボード設計ガイダンススキル（カラーパレットバリデータ付き）（v2.1.198） |
-| `/commit-push-pr` | commit→push→PR作成。v2.1.206 でリポジトリの push remote（`remote.pushDefault` または唯一のremote）への `git push` を自動許可 |
+| `/commit-push-pr` | commit→push→PR作成。v2.1.206 でリポジトリの push remote（`remote.pushDefault` または唯一のremote）への `git push` を自動許可。v2.1.229 で `--force`/`--amend`/`--no-verify` 等の危険フラグを含む git/gh コマンドは自動承認しないよう変更 |
 | `/release-notes` | インタラクティブバージョンピッカー付き変更ログ表示 |
 | `/sandbox` | サンドボックスモード切替 |
 | `/schedule [description]` | クラウドスケジュールタスクの作成・管理 |

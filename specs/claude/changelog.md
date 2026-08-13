@@ -3,9 +3,26 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-08-13
+最終更新: 2026-08-14
 
 ---
+
+## v2.1.231 (2026-08-13)
+
+- **修正**: 事前登録 OAuth クライアントを使う MCP サーバー（Slack 等）で redirect URI 不一致によりサインインが失敗する問題を修正
+
+## v2.1.229 (2026-08-12)
+
+- **プラグインマーケットプレイスの `command` ソース**: ローカルコマンド（IDE 等）がプラグインディレクトリを出力し、毎セッション再解決してリスタート不要で適用。`mode: "link"` でその場参照
+- **`claude remote-control --continue`**: 直近の Remote Control セッションを再開するオプションを文書化
+- **セルフホストランナーのサーバー供給フック**: マネージド環境同様、サーバーから Claude Code フックを供給可能に
+- **ゲートウェイ SSE keepalive ping**: 長い thinking 中のアイドルタイムアウト切断を防止（Vertex/Bedrock upstream）
+- **`ListAgents` のステータス表示**: 切断済み Remote Control セッションを `offline`、クラウドセッションを `cloud` として表示
+- **`/commit-push-pr` の安全化**: `--force`/`--amend`/`--no-verify` 等の危険フラグを含む git/gh コマンドを自動承認しないよう変更
+- **ワークフロー fan-out の prefix stagger**: 同一 prefix の兄弟エージェントを時間差起動し、後続がキャッシュ済み prompt prefix を再利用（`CLAUDE_CODE_WORKFLOW_PREFIX_STAGGER_MS=0` で無効化）
+- **セルフホストランナー Windows**: 起動に明示的な `--base-dir` を必須化（Windows に既定チェックアウト先なし）
+- サンドボックス: ネットワークドメインリストの IPv6 リテラルをブラケット表記（`[::1]:443`）、曖昧な綴りは fail-closed で `/doctor` が警告
+- CPU 制限コンテナ内の動的ワークフローがホストのコア数を使う問題を修正
 
 ## v2.1.228 (2026-08-11)
 
