@@ -445,6 +445,7 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 | `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS` | 同時実行サブエージェント数の上限（デフォルト 20）。1メッセージからの無制限 fan-out 対策（v2.1.217） |
 | `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` | サブエージェントのネスト起動深度。v2.1.217 で既定無効化 → v2.1.219 で既定深度3に変更。`=1` でネスト無効化 |
 | `FORCE_HYPERLINK` | `0` でフッター PR バッジ等のハイパーリンク強制をオプトアウト（ssh/tmux 等の端末サポート未検出時もリンク化される挙動、v2.1.217） |
+| `CLAUDE_CODE_WORKFLOW_PREFIX_STAGGER_MS` | ワークフロー fan-out で同一 prompt prefix の兄弟エージェントを時間差起動し、後続がキャッシュ済み prefix を再利用してコストを削減。`0` で無効化（v2.1.229） |
 
 > 補足: `OTEL_LOG_TOOL_DETAILS=1` は v2.1.157 で `tool_decision` イベントに `tool_parameters`（bash コマンド、MCP/skill 名等）を追加する効果も併せ持つようになった。
 

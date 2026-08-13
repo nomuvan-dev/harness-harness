@@ -1,5 +1,17 @@
 # harness-harness 更新履歴
 
+## 2026-08-14 — 公式ドキュメント巡回
+
+### 検出・更新
+- **Claude Code**: v2.1.229（2026-08-12）・v2.1.231（2026-08-13）を検出 → `specs/claude/changelog.md` に追加。収載価値あり: (1) プラグインマーケットプレイスの `command` ソース（IDE 等がプラグインディレクトリを出力、毎セッション再解決）、(2) `/commit-push-pr` が危険 git/gh フラグ（`--force`/`--amend`/`--no-verify` 等）を自動承認しないよう変更、(3) ワークフロー fan-out の prefix stagger（`CLAUDE_CODE_WORKFLOW_PREFIX_STAGGER_MS`）、(4) `claude remote-control --continue` の文書化、(5) `ListAgents` の offline/cloud ステータス表示
+- **Codex**: 安定版 0.147.0（2026-08-07）据え置き。新規は rust-v0.148.0-alpha.6〜12（プレリリースにつき収載対象外）→ 更新不要
+- **スキルエコシステム巡回**: 前回 2026-08-11 実施済み（7 日以内）のため Phase 3.5 スキップ
+
+### 更新ファイル
+- `specs/claude/changelog.md`（v2.1.229・v2.1.231 追加）
+- `specs/claude/skills-and-commands.md`（`/commit-push-pr` の危険フラグ非自動承認を追記）
+- `specs/claude/configuration.md`（`CLAUDE_CODE_WORKFLOW_PREFIX_STAGGER_MS` を環境変数表に追加）
+
 ## 2026-08-13 — 公式ドキュメント巡回
 
 ### 検出・更新
