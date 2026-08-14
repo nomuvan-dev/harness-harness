@@ -1,9 +1,10 @@
 # Codex CLI 変更一覧
 
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
-公式: https://developers.openai.com/codex/changelog
+公式: https://learn.chatgpt.com/docs/changelog
+（2026-08-15 時点で `https://developers.openai.com/codex/changelog` は上記へ 308 恒久リダイレクト）
 
-最終更新: 2026-08-08
+最終更新: 2026-08-15（安定版は 0.147.0 据え置き）
 
 ---
 

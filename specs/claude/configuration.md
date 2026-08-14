@@ -167,9 +167,9 @@ CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ../shared-config
 | `includeCoAuthoredBy` | **非推奨**: `attribution` を使用 |
 | `channelsEnabled` | （Managed のみ）Team/Enterprise ユーザーのチャンネル機能 |
 | `allowManagedPermissionRulesOnly` | （Managed のみ）ユーザー/プロジェクトの権限ルール定義を禁止 |
-| `strictKnownMarketplaces` | プラグインマーケットプレース許可リスト |
+| `strictKnownMarketplaces` | プラグインマーケットプレース許可リスト。v2.1.232 で `allowedMarketplaces` が別名として受理される |
 | `wslInheritsWindowsSettings` | （Managed のみ）WSL on Windows が Windows 側の managed settings を継承（v2.1.118） |
-| `blockedMarketplaces` | （Managed のみ）マーケットプレースブロックリスト |
+| `blockedMarketplaces` | （Managed のみ）マーケットプレースブロックリスト。v2.1.232 で素のリポジトリ URL に対する url 型エントリが、CLI が git clone と分類した場合もブロックを継続 |
 | `pluginTrustMessage` | （Managed のみ）プラグイン信頼警告のカスタムメッセージ |
 | `awsAuthRefresh` | AWS認証リフレッシュカスタムスクリプト |
 | `awsCredentialExport` | AWS認証情報JSON出力カスタムスクリプト |
@@ -218,7 +218,9 @@ CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ../shared-config
 | `vimInsertModeRemaps` | vim モードのインサートモードで `jj` → Escape のような 2 キーシーケンスをマップ（v2.1.208） |
 | `sandbox.filesystem.disabled` | ファイルシステム分離のみスキップし、ネットワーク egress 制御は維持（v2.1.216） |
 | `crossSessionInbound` | セッション間メッセージ（`SendMessage`）の受信を制御（v2.1.224）。Claude Code セッション同士が相互にメッセージ送信可能に |
-| `dialogExpiry` | セッション間メッセージのダイアログ有効期限を設定（v2.1.224） |
+| `dialogExpiry` | セッション間メッセージのダイアログ有効期限を設定（v2.1.224）。v2.1.232 で `/config` に「Dialog expiry」「Messages from your other sessions」の行が追加され GUI から設定可能に |
+| `extraKnownMarketplaces` | 既知プラグインマーケットプレースの追加登録。v2.1.232 で `additionalMarketplaces` が別名として受理される |
+| `sandbox.ripgrep` | サンドボックスが使う ripgrep バイナリの指定。v2.1.232 で user / managed / `--settings` 由来のみ有効化（プロジェクト設定からの上書き不可）。サーバー管理設定からの上書きは承認必須 |
 
 > 補足: `allowedMcpServers` / `deniedMcpServers` 述語の `${VAR}` 参照は v2.1.166 で正しくマッチするようになった。Managed settings は invalid なエントリが含まれても、v2.1.166 から残りの valid policy は enforce される（従来は silently 全無効化）。
 
