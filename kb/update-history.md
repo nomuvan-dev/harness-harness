@@ -1,5 +1,19 @@
 # harness-harness 更新履歴
 
+## 2026-08-15 — 公式ドキュメント巡回
+
+### 検出・更新
+- **Claude Code**: v2.1.232（2026-08-13）を検出 → `specs/claude/changelog.md` に追加。ハーネス設計に直結する変更が多い大型リリース: (1) **サブエージェント fork がデフォルト有効化**（`subagent_type: "fork"` が会話全体とプロンプトキャッシュを継承、対話セッションでのチームメイト以外のスポーンは既定バックグラウンド）、(2) **`@` メンションによるセッション間メッセージ**（`SendMessage` で他セッションに直接到達）＋ 生の名前での配送・セッション名の自動一意化、(3) `/config` に「Dialog expiry」「Messages from your other sessions」行、(4) **プラグインマーケットプレースの GitLab 対応**＋ `additionalMarketplaces` / `allowedMarketplaces` エイリアス、(5) `sandbox.ripgrep` がプロジェクト設定から上書き不可に、(6) `/plugin install plugin@marketplace` が事前にマーケットプレースを更新、(7) `/code-review` の high/xhigh/max もバックグラウンドエージェント実行に、(8) 複数のセキュリティ修正（PowerShell 権限バイパス、Git Bash シンボリックリンク、ネスト git リポジトリの信頼継承）
+- **Codex**: 安定版 0.147.0（2026-08-07）据え置き → changelog 更新不要。ただし `developers.openai.com/codex/changelog` が `learn.chatgpt.com/docs/changelog` へ **308 恒久リダイレクト** していることを確認し、`specs/codex/changelog.md` の公式 URL を差し替え
+- **スキルエコシステム巡回**: 前回 2026-08-11 実施済み（7 日以内）のため Phase 3.5 スキップ
+
+### 更新ファイル
+- `specs/claude/changelog.md`（v2.1.232 追加）
+- `specs/claude/agent-teams.md`（`@` メンション・生の名前配送・セッション名一意化・受信制御、サブエージェント fork デフォルト有効のセクション追加）
+- `specs/claude/configuration.md`（`extraKnownMarketplaces` / `sandbox.ripgrep` 行を追加、`strictKnownMarketplaces` / `blockedMarketplaces` / `dialogExpiry` に v2.1.232 の変更を追記）
+- `specs/claude/skills-and-commands.md`（マーケットプレースの GitLab 対応、`/plugin install` の事前更新を追記）
+- `specs/codex/changelog.md`（公式 URL を learn.chatgpt.com へ差し替え）
+
 ## 2026-08-14 — 公式ドキュメント巡回
 
 ### 検出・更新

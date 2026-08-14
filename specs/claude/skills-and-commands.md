@@ -328,6 +328,10 @@ MCPサーバーが公開するプロンプトは `/mcp__<server>__<prompt>` 形�
 /plugin marketplace add https://example.com/marketplace.json    # URL
 ```
 
+**GitLab 対応（v2.1.232）**: 素の `gitlab.com` リポジトリ URL（ネストしたサブグループを含む）が `github.com` URL と同様に clone されるようになった。clone 認証に失敗した場合のヒントは実際の git ホスト名を表示する。
+
+**`/plugin install plugin@marketplace`（v2.1.232）**: インストール前にマーケットプレースを自動更新するため、新規公開されたプラグインを手動の marketplace update なしでインストールできる。
+
 ### 4.2.1 `.claude/skills/` 配下のプラグイン自動ロード（v2.1.157）
 
 `.claude/skills/` 配下に置かれたプラグインはマーケットプレース不要で自動ロードされる。雛形は `claude plugin init <name>` で生成可能。

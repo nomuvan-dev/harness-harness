@@ -3,9 +3,34 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-08-14
+最終更新: 2026-08-15
 
 ---
+
+## v2.1.232 (2026-08-13)
+
+- **サブエージェント fork がデフォルト有効化**: `subagent_type: "fork"` のサブエージェントが会話全体とプロンプトキャッシュを継承。対話セッションでのチームメイト以外のエージェントスポーンは既定でバックグラウンド実行に
+- **`@` メンションによるセッション間メッセージ**: プロンプトで `@` を入力して他の Claude セッションを名前で指名すると、Claude が `SendMessage` で直接そのセッションに到達
+- **`SendMessage` の名前解決簡素化**: 生の名前が1つの稼働中セッションと完全一致する場合、ref による確認を求めず直接配送
+- **セッション名の一意化**: 同一マシン上の対話セッションで既存の稼働中セッションと同名を指定すると `name-word-word` のバリアントが自動付与され通知される
+- **`/config` の新規行**: 「Dialog expiry」と「Messages from your other sessions」（セッション間受信の accept/hold/refuse）
+- **GitLab トークンのシークレット秘匿**: `glrt-` / `gloas-` / `glptt-` / `glagent-` / `glimt-` / `glsoat-` / `glcbt-` / `glft-` / `glffct-` 系を秘匿、routable な `glpat-` / `gldt-` は完全秘匿。`glab` CLI の config store も `gh` と同等のサンドボックス・認証情報パス保護対象に
+- **プラグインマーケットプレースの GitLab 対応**: 素の `gitlab.com` リポジトリ URL（ネストしたサブグループ含む）を `github.com` と同様に clone。clone 認証失敗時のヒントは実際の git ホスト名を表示
+- **設定エイリアス追加**: `additionalMarketplaces` / `allowedMarketplaces` が `extraKnownMarketplaces` / `strictKnownMarketplaces` の別名として受理される
+- **Enterprise ポリシー**: 素のリポジトリ URL に対する url 型 `blockedMarketplaces` エントリが、CLI が git clone と分類した場合にもブロックを継続
+- **ゲートウェイ**: `desktop:` オーバーレイがリリース済み Desktop 設定を全て受理（従来は手書き11キーのみ）。Desktop 自身のスキーマで起動時検証し、未知・不正キーは起動失敗に
+- **ゲートウェイ**: `managed.policies[].match.groups` / `admin.admin_groups` の空エントリ、不正な `email_domain`（空・`@`・空白・カンマを含む）を起動時に失敗させる（従来は誰にもマッチしない、または admin 権限を黙って付与）
+- **Fable 5 の `/advisor` 復帰**: Fable アクセスのある組織で advisor として再提供。利用クレジット同意は `/model fable` 経由
+- **セキュリティ修正**: PowerShell の権限バイパス（変数書き込みパラメータによる `$PSDefaultParameterValues` 上書き）、Windows の Git Bash が Cygwin 形式シンボリックリンクを辿る権限バイパス、ネストした git リポジトリが親ディレクトリの信頼を継承する問題（各リポジトリで個別に信頼確認が必要に）を修正
+- **`sandbox.ripgrep` のスコープ制限**: user / managed / `--settings` 由来のみ有効に。プロジェクト設定からサンドボックスの ripgrep バイナリを上書き不可
+- **managed settings 承認ダイアログ改善**: エンドポイント URL 表示、テレメトリのみの変更の文言明確化、定型 OpenTelemetry オプションのスキップ、サーバー管理のサンドボックスバイナリ上書き（`sandbox.bwrapPath` / `sandbox.socatPath` / `sandbox.ripgrep`）に承認を必須化
+- **`/code-review`**: high / xhigh / max エフォートも他レベル同様バックグラウンドエージェントで実行
+- **`/plugin install plugin@marketplace`**: 先にマーケットプレースを更新するため、新規公開プラグインを手動更新なしでインストール可能
+- **Remote Control 改善**: ネットワーク断後 約30分間再接続を継続、他の Claude Code から Remote Control を黙って奪わない（移すには当該側で `/remote-control`）、テイクオーバー/他アプリでの終了/削除の区別を端末に表示。クラウドセッション内ブリッジのトランスクリプト・認証情報継承、Desktop/IDE 由来セッションの重複表示、アイドル時の到達不能表示、ワーカー再起動時の履歴復元を修正
+- **その他修正**: MCP のプロトコルバージョン探索で無応答・不正応答時に30秒タイムアウトまでハングする問題、mTLS クライアント証明書ローテーションに再起動が必要だった問題、不正な AWS / Vertex リージョン値、Bedrock / Vertex / ゲートウェイでのストリームアイドルタイムアウト、`/update`・`/tui` が再起動を拒否する問題
+- **セキュリティ強化**: 共有 `/tmp` 上のセッション間メッセージング用ソケットディレクトリ（事前設置シンボリックリンク・他ユーザーのディレクトリを拒否）、Linux ファイルシステムサンドボックスの保護パスバイパス、Bash の入力リダイレクト（`< file`）を全プラットフォームで権限チェック対象に
+- **Cowork セッション**: user スコープのメモリファイルから外部 `@`-import をインライン展開しないように
+- **削除**: カスタムサブエージェント作成を勧める起動時 tip と `/powerup` ツアーの該当ナッジ
 
 ## v2.1.231 (2026-08-13)
 
