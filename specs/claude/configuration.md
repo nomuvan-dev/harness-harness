@@ -217,10 +217,11 @@ CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ../shared-config
 | `axScreenReader` | スクリーンリーダー向けプレーンテキスト描画にオプトイン。`claude --ax-screen-reader` / `CLAUDE_AX_SCREEN_READER=1` でも可（v2.1.208） |
 | `vimInsertModeRemaps` | vim モードのインサートモードで `jj` → Escape のような 2 キーシーケンスをマップ（v2.1.208） |
 | `sandbox.filesystem.disabled` | ファイルシステム分離のみスキップし、ネットワーク egress 制御は維持（v2.1.216） |
-| `crossSessionInbound` | セッション間メッセージ（`SendMessage`）の受信を制御（v2.1.224）。Claude Code セッション同士が相互にメッセージ送信可能に |
+| `crossSessionInbound` | セッション間メッセージ（`SendMessage`）の受信を制御（v2.1.224）。`accept`（配送） / `hold`（通知のみ・未配送、後で `accept` が適用されれば解放） / `refuse`（黙って破棄）。`/config` の「Messages from your other sessions」行からも設定可（v2.1.232、書き込み先は user 設定。`/config crossSessionInbound=value` ショートハンドは拒否される）。**未設定時は送受信両セッションの権限モードクラスから自動判定**（bypassPermissions 系 vs プロンプト系。詳細は agent-teams.md 参照） |
 | `dialogExpiry` | セッション間メッセージのダイアログ有効期限を設定（v2.1.224）。v2.1.232 で `/config` に「Dialog expiry」「Messages from your other sessions」の行が追加され GUI から設定可能に |
 | `extraKnownMarketplaces` | 既知プラグインマーケットプレースの追加登録。v2.1.232 で `additionalMarketplaces` が別名として受理される |
 | `sandbox.ripgrep` | サンドボックスが使う ripgrep バイナリの指定。v2.1.232 で user / managed / `--settings` 由来のみ有効化（プロジェクト設定からの上書き不可）。サーバー管理設定からの上書きは承認必須 |
+| `isolatePeerMachines` | `true` でマシン外のセッションへの `SendMessage` 送信前にユーザー承認を必須化。`bypassPermissions` モードでも承認を求める。**いずれかのスコープの `true` が優先**されるため、コミット済みプロジェクト設定で有効化はできても無効化はできない。同一マシン内のメッセージには適用されない |
 
 > 補足: `allowedMcpServers` / `deniedMcpServers` 述語の `${VAR}` 参照は v2.1.166 で正しくマッチするようになった。Managed settings は invalid なエントリが含まれても、v2.1.166 から残りの valid policy は enforce される（従来は silently 全無効化）。
 
@@ -448,6 +449,11 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 | `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` | サブエージェントのネスト起動深度。v2.1.217 で既定無効化 → v2.1.219 で既定深度3に変更。`=1` でネスト無効化 |
 | `FORCE_HYPERLINK` | `0` でフッター PR バッジ等のハイパーリンク強制をオプトアウト（ssh/tmux 等の端末サポート未検出時もリンク化される挙動、v2.1.217） |
 | `CLAUDE_CODE_WORKFLOW_PREFIX_STAGGER_MS` | ワークフロー fan-out で同一 prompt prefix の兄弟エージェントを時間差起動し、後続がキャッシュ済み prefix を再利用してコストを削減。`0` で無効化（v2.1.229） |
+| `CLAUDE_CODE_MESSAGING_SOCKET` | Claude Code が各セッションの受信箱 Unix ドメインソケットのパスを hooks / Bash コマンドに自動エクスポート。`SessionStart` を含む全 hook より前に設定される（機能フラグ取得前に起動したセッションでは取得完了後に設定されるため、それ以前に起動したプロセスでは未設定）。各セッションは自身のソケットのみをエクスポートし、親セッションから継承しない |
+| `CLAUDE_CODE_MESSAGING_TOKEN` | 上記ソケットへ投函するスクリプト用のセッション単位トークン。接続の最初の行に `{"type":"auth","token":"<token>"}` を送ることで「自セッションの子プロセスからの投函」として検証される（macOS でプロセス終了後、および Claude Code が PID 1 のコンテナでは、プロセス証跡が取れないためこのトークンが唯一の検証手段） |
+| `CLAUDE_CODE_TOOL_MEMORY_LIMIT` | （Linux、オプトイン）Bash ツールコマンドに memory cgroup を適用し、暴走ビルドによるセッション停止を防ぐ（v2.1.233） |
+| `CLAUDE_CODE_WEBFETCH_CACHE_TTL_MS` | WebFetch のセッション内 URL キャッシュ TTL を設定（デフォルトは従来通り 15 分）（v2.1.233） |
+| `CLAUDE_CODE_ENABLE_TODO_TOOLS` | `1` で Todo / タスク追跡ツール（`TaskCreate` / `TaskGet` / `TaskUpdate` / `TaskList` / `TodoWrite`）を復活させる。**v2.1.233 で Opus 4.8 / Sonnet 5 / Fable 5 / Mythos 5 以降のモデルでは既定で提供されなくなった**ため、これらに依存するハーネスは明示設定が必要 |
 
 > 補足: `OTEL_LOG_TOOL_DETAILS=1` は v2.1.157 で `tool_decision` イベントに `tool_parameters`（bash コマンド、MCP/skill 名等）を追加する効果も併せ持つようになった。
 

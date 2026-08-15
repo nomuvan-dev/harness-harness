@@ -3,9 +3,27 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-08-15
+最終更新: 2026-08-16
 
 ---
+
+## v2.1.233 (2026-08-14)
+
+- **Todo / タスク追跡ツールの既定提供終了**: `TaskCreate` / `TaskGet` / `TaskUpdate` / `TaskList` / `TodoWrite` が Opus 4.8・Sonnet 5・Fable 5・Mythos 5 以降のモデルで提供されなくなった。`CLAUDE_CODE_ENABLE_TODO_TOOLS=1` で復活可能
+- **`CLAUDE_CODE_TOOL_MEMORY_LIMIT`**: Linux で Bash ツールコマンドに memory cgroup を適用するオプトイン。暴走ビルドによるセッション停止を防ぐ
+- **`CLAUDE_CODE_WEBFETCH_CACHE_TTL_MS`**: WebFetch のセッション内 URL キャッシュ TTL を設定（デフォルトは従来通り15分）
+- **`--worktree` の GitLab 対応**: `--worktree` フラグと `claude agents` ビューが GitLab マージリクエスト URL をサポート（MR は `!N` 形式で表示）
+- **ゲートウェイ `forward_user_identity`**: Anthropic アップストリームでサインイン中ユーザーのアイデンティティを署名付きヘッダで送るオプトイン設定。ゲートウェイ背後のプロキシがユーザー単位で利用額を按分できる
+- **`claude self-hosted-runner` の起動高速化**: セッションブランチを作業ツリーを書き換えずに作成し、サーバーへの2往復がエージェント起動をブロックしなくなった
+- **`claude plugin validate` 改善**: 素の `.claude/skills` ディレクトリを検査し、フロントマターのパースに失敗する SKILL.md を報告
+- **print モード診断**: Claude Code が認識しないモデル ID へのリクエスト時に stderr へ `[claude-code:unrecognized_model]` 行を出力。`modelOverrides` でマッピングすれば抑止される
+- **スクリーンリーダーモード改善**: `/effort` セレクタが番号付きリスト＋番号入力プロンプトとして描画され、ヒント・ダイアログのテキストが見切れなくなった
+- **セキュリティ修正**: NT デバイスプレフィックス `\??\` 付きの Windows パスが UNC パス検証を回避する問題（NTLM 認証情報漏洩経路）を修正
+- **修正**: 権限プロンプト待機中に環境が停止したクラウドセッションが lost 扱いになる問題、長時間ストリームを固定タイムアウトで切るサーバー（サーバーレス等）に対し MCP v2 が `subscriptions/listen` を無限に張り直す問題、Claude Desktop / VS Code 配下で権限プロンプト時に Notification フックが発火しない問題、Linux でサンドボックス有効時にアイドルセッションが CPU 1コアを100%占有する問題、ユーザー/プロジェクトのスキルがバンドルスキルを shadow した際に `/checkup` `/review` 等のエイリアスが `-p` モードやプラグイン/MCP 読み込み時に "Unknown command" になる問題、スキル/コマンドの引数値がテンプレートマーカーとして再展開される問題
+- **ゲートウェイのエラー転送改善**: Vertex / Foundry / Claude Platform on AWS アップストリームからの 400 / 413 がアップストリーム自身のメッセージを保持するように（ゲートウェイでの auto-compact 不具合も解消）
+- **GitHub App セットアップのヒント抑制**: origin リモートが gitlab.com / bitbucket.org のリポジトリでは表示されなくなり、代わりに非 GitHub 内部 git ホスト向けにエンタープライズマーケットプレースのヒントが出る
+- **Windows 修正**: 通常の `cd <dir> && <command> > file` 形式の Bash コマンドで auto モードが繰り返し手動承認を求める v2.1.232 のリグレッションを修正
+- **v2.1.232 の一部を revert**: Windows の Cygwin 形式シンボリックリンクおよび入力リダイレクト（`< file`）に対する Bash 権限変更を差し戻し。より限定的な版が後のリリースで再導入予定
 
 ## v2.1.232 (2026-08-13)
 

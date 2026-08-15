@@ -1,5 +1,20 @@
 # harness-harness 更新履歴
 
+## 2026-08-16 — 公式ドキュメント巡回
+
+### 検出・更新
+- **Claude Code**: v2.1.233（2026-08-14）を検出 → `specs/claude/changelog.md` に追加。ハーネス設計に直結する最重要変更は **Todo / タスク追跡ツール（`TaskCreate` / `TaskGet` / `TaskUpdate` / `TaskList` / `TodoWrite`）が Opus 4.8・Sonnet 5・Fable 5・Mythos 5 以降のモデルで既定提供終了**（`CLAUDE_CODE_ENABLE_TODO_TOOLS=1` で復活）。これらのツールを前提にしたハーネス・スキルは要見直し。他に (1) `CLAUDE_CODE_TOOL_MEMORY_LIMIT`（Linux で Bash ツールに memory cgroup、暴走ビルド対策）、(2) `CLAUDE_CODE_WEBFETCH_CACHE_TTL_MS`（WebFetch キャッシュ TTL）、(3) `--worktree` / `claude agents` の GitLab MR URL 対応、(4) `claude plugin validate` が素の `.claude/skills` を検査、(5) print モードの `[claude-code:unrecognized_model]` 診断、(6) Windows NT デバイスプレフィックス `\??\` による UNC パス検証回避（NTLM 認証情報漏洩経路）の修正、(7) v2.1.232 の Windows Cygwin シンボリックリンク・入力リダイレクト権限変更を revert
+- **llms.txt の突合で未収載領域を発見**: 新規ページ `cross-session-messaging.md`（セッション間メッセージの専用ドキュメント）が specs に未反映だったため、`specs/claude/agent-teams.md` に専用セクションを新設。従来 specs は `crossSessionInbound` / `dialogExpiry` の1行説明のみで、**可用性の前提条件**（macOS / Linux のみ・ネイティブ Windows 不可、Bedrock / Claude Platform on AWS / Google Cloud's Agent Platform / Microsoft Foundry で利用不可、テレメトリ無効化系の環境変数で機能ごと無効化）や **`crossSessionInbound` 未設定時の権限モードクラスによる既定判定**、`isolatePeerMachines`、`CLAUDE_CODE_MESSAGING_SOCKET` / `CLAUDE_CODE_MESSAGING_TOKEN`、`/list-agents`（= `/peers`）、コンテナとホスト間で相互到達不可という制約、`SendMessage` の deny がサブエージェント・チームメイトへのメッセージも巻き添えにする点が欠落していた
+- **Codex**: 安定版 0.147.0（2026-08-07）据え置き。新規は rust-v0.148.0-alpha.12〜19（プレリリースにつき収載対象外）。公式 changelog の 8/10 以降の追記（Daybreak アクセスティア、Linux デスクトップアプリプレビュー、Computer History）はいずれも ChatGPT アプリ側の項目で CLI 仕様への影響なし → 収載見送り
+- **スキルエコシステム巡回**: 前回 2026-08-11 実施済み（7 日以内）のため Phase 3.5 スキップ
+
+### 更新ファイル
+- `specs/claude/changelog.md`（v2.1.233 追加）
+- `specs/claude/agent-teams.md`（「セッション間メッセージ（Cross-session messaging）」セクション新設）
+- `specs/claude/configuration.md`（`isolatePeerMachines` 追加、`crossSessionInbound` の値と既定判定を詳細化、環境変数に `CLAUDE_CODE_MESSAGING_SOCKET` / `CLAUDE_CODE_MESSAGING_TOKEN` / `CLAUDE_CODE_TOOL_MEMORY_LIMIT` / `CLAUDE_CODE_WEBFETCH_CACHE_TTL_MS` / `CLAUDE_CODE_ENABLE_TODO_TOOLS` を追加）
+- `specs/claude/skills-and-commands.md`（`/list-agents`（`/peers`）を追加、`/status` の `Peer address` 行を追記）
+- `specs/codex/changelog.md`（巡回日と据え置き根拠を更新）
+
 ## 2026-08-15 — 公式ドキュメント巡回
 
 ### 検出・更新
