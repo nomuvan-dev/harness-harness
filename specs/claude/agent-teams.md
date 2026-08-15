@@ -53,6 +53,49 @@ v2.1.178未満の旧バージョンでは従来どおり `TeamCreate`（リー�
 - **セッション名の一意性（v2.1.232）**: 同一マシン上で既存の稼働中セッションと同名を指定して起動・リネームすると `name-word-word` 形式のバリアントが自動付与され、その旨が通知される
 - **受信制御（v2.1.232）**: `/config` に「Messages from your other sessions」（accept / hold / refuse）と「Dialog expiry」の行が追加。設定キーは `crossSessionInbound` / `dialogExpiry`
 
+### セッション間メッセージ（Cross-session messaging）
+
+専用ドキュメント: https://code.claude.com/docs/en/cross-session-messaging
+
+Agent Teams（1セッション内の統率されたチーム）とは別に、**ユーザー自身が独立に起動した複数セッション間**でメッセージを受け渡す仕組み。Claude は `ListAgents` で到達可能な相手を探し、`SendMessage` で名前指定して送る（同じ `SendMessage` がサブエージェント・チームメイト・他セッションの3用途を兼ねる）。
+
+**要件・可用性**（ハーネス設計時の前提確認に重要）:
+- v2.1.224 以降。**macOS / Linux のみ**（WSL 2 内の Linux を含む）。ネイティブ Windows では提供されない
+- Amazon Bedrock / Claude Platform on AWS / Google Cloud's Agent Platform / Microsoft Foundry では**利用不可**
+- `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC` / `DISABLE_TELEMETRY` / `DO_NOT_TRACK` / `DISABLE_GROWTHBOOK` で機能フラグ評価を切ると**この機能も無効化される**
+- 確認手段は `/list-agents`（= `/peers`）。コマンド自体が未認識なら機能が無い
+
+**送れるもの・送れないもの**:
+- 送られるのは **Claude が書いたプレーンテキストのみ**。会話履歴・ファイル・チームの構造化プロトコルメッセージは渡らない。会話ごと移したい場合は `/resume` を使う
+- 受信側での扱いは制限される: 承認の代替にならない（保留中の権限プロンプトに答えられない）、権限設定・CLAUDE.md 等の**設定変更を依頼されても行わない**、メッセージ本文中の `/compact` 等のコマンドは**実行されず単なるテキストとして届く**、必要な権限プロンプトは通常通り発火する
+- 送信側の Claude は、自セッションで拒否・ブロックされた行為を他セッションに代行させないよう指示されている（権限境界はセッション単位）
+
+**配送経路**:
+
+| 相手の所在 | 経路 |
+|:--|:--|
+| 同一マシン | セッション単位の Unix ドメインソケット。Anthropic サーバーを経由しない |
+| 自分の別マシン | Anthropic サーバー経由 → 相手マシンの Remote Control 接続（v2.1.225 以降は会話の開始も可。それ以前は返信のみ） |
+| Claude Code on the web | Anthropic サーバー経由でクラウドセッションへ直送 |
+
+同一マシン配送はディスク上の登録ファイルとソケットに依存するため、**コンテナ内セッションとホスト側セッションは相互に到達できない**（同一コンテナ内同士は可、self-hosted runner 上を含む）。
+
+**受信制御 `crossSessionInbound`**（`accept` / `hold` / `refuse`）が未設定のときの既定判定は、送受信セッションの権限モードを2クラス（権限プロンプトを飛ばす `bypassPermissions` 系 / それ以外の `auto`・`acceptEdits`・`dontAsk` 等）に分けて決まる:
+- **受信側がプロンプトするクラス**: 原則配送。送信側が bypass クラスを名乗る場合のみ承認保留
+- **受信側が bypass クラス**: 原則承認保留。送信側も bypass クラスの場合のみ配送
+- 保留ダイアログが `dialogExpiry`（既定5分）を過ぎると破棄。`"never"` でセッション終了まで保持。バックグラウンドセッションは端末が未接続の間は期限を超えても開いたままになる
+- 保留中に権限モードクラスが変われば再判定され、`refuse` が適用されるようになると保留分は全破棄され各送信者に拒否が通知される
+- 保留は最大100件（超過分は古いものから破棄）、配送待ちキューは1セッション50件が上限
+
+**`-p`（headless）セッション**: 通常セッション同様に受信箱ソケットを bind するため長期稼働ワーカーが受信可能。ただし bare モードでは bind せず一覧にも出ない。承認ダイアログを出せないため既定保留分は `dialogExpiry` 経過で破棄される。無人ワーカーに受信させるには `--settings` で `crossSessionInbound: "accept"` を渡す。
+
+**無効化**（送受信は別制御）:
+- 受信停止: `crossSessionInbound: "refuse"`
+- 送信・一覧停止: `permissions.deny` に `SendMessage` / `ListAgents`（いずれも specifier なしの素のツール名）を追加。**`SendMessage` を deny するとサブエージェント・チームメイトへのメッセージも同時に失われる**点に注意
+- 組織全体で止める場合は managed settings で両者を併用する
+
+**ループ対策**: 送信者単位のレート制限、短時間内の同一メッセージ重複破棄、配送待ち上限50件により、2セッション間のメッセージループは自然停止する。
+
 ### サブエージェント fork（v2.1.232 でデフォルト有効）
 
 `Agent` ツールの `subagent_type: "fork"` は会話全体とプロンプトキャッシュを継承したサブエージェントを生成する。v2.1.232 でデフォルト有効化され、あわせて対話セッションにおけるチームメイト以外のエージェントスポーンは既定でバックグラウンド実行となった。fork はモデル指定を無視し、常に親のモデルを継承する。

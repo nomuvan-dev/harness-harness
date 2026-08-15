@@ -198,7 +198,8 @@ Claude Code に同梱されるスキル:
 | `/memory` | CLAUDE.md/オートメモリ管理 |
 | `/hooks` | フック設定表示 |
 | `/mcp` | MCPサーバー管理。v2.1.161 で未使用 claude.ai connector を「Show unused connectors」の下に折りたたみ表示に変更 |
-| `/status` | ステータス表示。v2.1.221 からセッション種別（`interactive` / バックグラウンドの `attached` / `unattended`）も表示 |
+| `/status` | ステータス表示。v2.1.221 からセッション種別（`interactive` / バックグラウンドの `attached` / `unattended`）も表示。セッション間メッセージが有効なセッションでは自身の受信箱アドレスを `Peer address` 行（`uds:` プレフィックス）に表示 |
+| `/list-agents` | Claude が到達可能なエージェント一覧（サブエージェント / 同一マシンの他セッション / クラウドセッション / 他マシンの Remote Control セッション）。エイリアス `/peers`。セッション間メッセージ機能の有無を確認する手段でもある（コマンド自体が未認識ならその機能を持たない）。ローカルセッションは作業ディレクトリも表示され、同名セッションの区別が可能 |
 | `/context` | コンテキスト使用量の可視化 |
 | `/usage` | 使用量・統計を統合表示（v2.1.118 で `/cost` と `/stats` を `/usage` に統合。両コマンドはタイピングショートカットとして残存、対応タブを開く。v2.1.149 で制限使用量を駆動する要因（skills / subagents / plugins / MCPサーバー単位のコスト）のカテゴリ別内訳を表示） |
 | `/cost` | `/usage` のトークン使用量タブを開くショートカット |

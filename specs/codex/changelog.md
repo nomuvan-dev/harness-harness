@@ -4,7 +4,7 @@
 公式: https://learn.chatgpt.com/docs/changelog
 （2026-08-15 時点で `https://developers.openai.com/codex/changelog` は上記へ 308 恒久リダイレクト）
 
-最終更新: 2026-08-15（安定版は 0.147.0 据え置き）
+最終更新: 2026-08-16（安定版は 0.147.0 据え置き。0.148.0 は alpha のみ。8/10 以降の公式 changelog 追記は ChatGPT アプリ側の項目で CLI 仕様への影響なし）
 
 ---
 
