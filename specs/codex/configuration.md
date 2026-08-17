@@ -440,6 +440,59 @@ enabled = false
 skill_mcp_dependency_install = true   # stable — スキルが依存するMCPサーバーの自動インストール
 ```
 
+### 6.9 スキルのみのプラグイン化（skill-only plugin）
+
+スキルを個人利用を超えて配布したくなった段階で、**プラグイン**にパッケージする。プラグインは skill / MCP サーバー / その両方を含む配布単位で、ChatGPT と Codex は**単一の共通プラグインディレクトリ**を共有する（公開すれば両製品から発見可能）。
+
+使い分けの目安（公式ガイダンス）:
+
+| 状況 | 選択 |
+|------|------|
+| 個人ワークフローを試行錯誤中 | 素のスキル（`.agents/skills/`）のまま |
+| チーム共有・関連スキルの束ね・外部サービス接続・安定した機能の配布 | プラグイン化 |
+
+#### `@plugin-creator` を使う方法（推奨）
+
+ChatGPT Work モードでは `@plugin-creator`、Codex では `$plugin-creator` を呼ぶ。`.codex-plugin/plugin.json` マニフェストの生成、フォルダ構成、ローカルマーケットプレースへの登録までを代行する。
+
+生成後の確認手順:
+1. `.codex-plugin/plugin.json` をレビュー
+2. `skills/` 配下の各スキルを確認
+3. ChatGPT / Codex を再読み込みし、ローカルマーケットプレースソースからインストール
+4. 新規会話で代表的なリクエストを投げてテスト
+
+MCP サーバーを含む場合は、先にサーバーを構築・テストし、登録済みの接続情報を `@plugin-creator` に渡す。
+
+#### 手動で作る最小構成
+
+```text
+meeting-follow-up/
+├── .codex-plugin/
+│   └── plugin.json
+└── skills/
+    └── meeting-follow-up/
+        └── SKILL.md
+```
+
+`.codex-plugin/plugin.json`:
+
+```json
+{
+  "name": "meeting-follow-up",
+  "version": "1.0.0",
+  "description": "Turn meeting notes into decisions and next steps",
+  "skills": "./skills/"
+}
+```
+
+- プラグイン名は**安定した kebab-case** を使う
+- スキルの `description` は、ChatGPT / Codex がワークフロー該当を判定できる程度に具体的に書く
+- 開発中は**ローカルマーケットプレース**でテストしてから共通ディレクトリへ提出する
+
+> 公式: [Build plugins](https://learn.chatgpt.com/docs/build-plugins) / 完全な builder ドキュメントは [developers.openai.com/plugins](https://developers.openai.com/plugins)
+>
+> 注意: GitHub の公開サンプルカタログ [openai/skills](https://github.com/openai/skills)（deprecated）と [openai/plugins](https://github.com/openai/plugins)（**2026-08-16 に archive、read-only**）はいずれも更新停止。作成手順の一次情報は上記ドキュメントと `@plugin-creator` を参照する。
+
 ---
 
 ## 7. Hooks

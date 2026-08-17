@@ -1,5 +1,40 @@
 # harness-harness 更新履歴
 
+## 2026-08-18 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Phase 1〜3（仕様書・changelog）: 変更なし**
+
+- **Claude Code**: 最新は v2.1.233（2026-08-14）据え置き（npm `latest` も 2.1.233、`stable` は 2.1.224）。`llms.txt` の md5 は前回と完全一致（`1d4fc9e4…`、193行）で新規/削除ページなし。ベースライン記録済みの 6 ページ（settings / hooks / skills / mcp / agent-teams / best-practices）も md5 が全て一致 → specs 更新不要
+- **Codex**: 安定版 0.147.0（2026-08-07）据え置き。GitHub リリースは rust-v0.148.0-alpha.20（2026-08-16）までプレリリースのみ。公式 changelog（learn.chatgpt.com/docs/changelog）の最新項目は 2026-08-13 Computer History で、8/10 以降はいずれも ChatGPT アプリ側の話題（Daybreak Blue/Red、Linux デスクトッププレビュー、iOS 更新）につき CLI 仕様への影響なし → changelog 収載見送り
+
+**Phase 3.5（スキルエコシステム巡回）: 実施（前回 2026-08-11 から 7 日経過）**
+
+最も影響が大きいのは **OpenAI の公開サンプルカタログが GitHub 上で完全に停止した**こと。`openai/skills` は 2026-06-22 に deprecated で、その README は後継として `openai/plugins` を案内していたが、その `openai/plugins` 自身が **2026-08-16 に archive（read-only）**された（5,110 stars、最終 push 2026-07-14）。つまり後継リンクを辿ると行き止まりになる。Codex 側のスキル/プラグイン作成手順の一次情報は今後 `learn.chatgpt.com/docs/build-skills` / `build-plugins` と `@plugin-creator`（Codex では `$plugin-creator`）に一本化される。この突合の過程で **specs/codex に skill-only プラグインのマニフェスト仕様（`.codex-plugin/plugin.json` + `skills/` 構成）が未収載**であることが判明したため、`specs/codex/configuration.md` に §6.9 を新設して収載した。
+
+その他の検出:
+- **anthropics/skills**: 17 → **19 スキル**（169,926 stars、前回 167K+）。2026-08-17 に `claude-academy-guide`（#1554）と `discernment-nudge`（#1553）を新規追加。2026-08-13 に claude-api スキルへ prompt-audit サブコマンドを追記
+- **agentskills.io**: 仕様（SKILL.md、3段階の段階的開示）に変更なし。採用プラットフォームは 44 → **46**（Pulumi Neo, Hermes Agent, OpenClaw 等が showcase に追加）
+- **claude.com/plugins**: Frontend Design 1.134M installs で首位継続、Superpowers 1.009M で 2 位。順位変動なし
+- **skills.sh**: find-skills が 2.9M → **3.0M** installs でトップ継続。mattpocock 系 6 本の top10 占有、handoff / agent-browser / vercel-react-best-practices も継続で顔ぶれの変動なし
+
+新規 2 スキルの扱い（多様性は善: 単一の正解に絞らず条件付きで残す）:
+- `discernment-nudge` — 実行可能な回答の直後にフォローアップ質問を付ける汎用スキル。診断・提案系ハーネスと相性が良く昇格ルーブリックでは 7 点相当（Tier A 圏）だが、公開 1 日で採用シグナルが未確定のため **Tier B に据え置き、次回巡回で再評価**
+- `claude-academy-guide` — Claude Academy のコース推薦。ハーネス構築への寄与は小さいので **Tier B（条件: Claude 製品の社内展開・教育コンテンツを扱うプロジェクト）**
+
+### 更新ファイル
+- `specs/codex/configuration.md`（§6.9「スキルのみのプラグイン化（skill-only plugin）」を新設。`@plugin-creator` 経由と手動作成の両手順、`.codex-plugin/plugin.json` の最小マニフェスト、スキル/プラグインの使い分け基準、GitHub カタログ停止の注記）
+- `kb/skills/_index.md`（`last_patrol` / `standard`（46 platforms）/ `tracked_skills` 更新、参照先テーブルに build-plugins と openai/plugins の行を追加、巡回時の注意セクションを新設）
+- `kb/skills/sources.md`（openai/plugins を「低（凍結）」に降格し archive を明記、agentskills.io を 46 プラットフォームに更新、「重要な区別」に GitHub カタログ停止と一次情報の所在を追記）
+- `kb/skills/recommended.md`（installs 数値更新、Tier B に `discernment-nudge` / `claude-academy-guide` を追加、分野カバレッジテーブルに 2 分野追加）
+
+### 未解決・次回確認事項
+- `discernment-nudge` の採用実績（skills.sh / claude.com/plugins の installs）を次回巡回で確認し Tier A 昇格を判断する
+- Codex 0.148.0 は alpha.20 まで進行中。安定版が出たら changelog 収載する
+
+---
+
 ## 2026-08-16 — 公式ドキュメント巡回
 
 ### 検出・更新
