@@ -1,6 +1,6 @@
 ---
 title: スキルエコシステム参照先
-last_checked: "2026-07-27"
+last_checked: "2026-08-18"
 ---
 
 # スキルエコシステム参照先
@@ -21,15 +21,15 @@ last_checked: "2026-07-27"
 | サイト | URL | 役割 | 巡回優先度 |
 |--------|-----|------|----------|
 | Codex Skills Docs | https://developers.openai.com/codex/skills | Skills = authoring format の仕様。**learn.chatgpt.com/docs/build-skills へ308恒久リダイレクト（2026-07確認）** | 高 |
-| Codex Plugins Docs | https://developers.openai.com/codex/plugins | Plugins = installable distribution unit | 高 |
-| openai/plugins (GitHub) | https://github.com/openai/plugins | **openai/skills の後継**（180プラグイン）。プラグイン形式でのスキル配布に一本化 | 中 |
-| openai/skills (GitHub) | https://github.com/openai/skills | **2026-06-22 に deprecated（#496）**。カタログは 5 system + 38 curated で凍結。後継は openai/plugins と codex/plugins/build ガイド | 低（凍結） |
+| Codex Plugins Docs | https://developers.openai.com/codex/plugins | Plugins = installable distribution unit。作成手順の実体は learn.chatgpt.com/docs/build-plugins | 高 |
+| openai/plugins (GitHub) | https://github.com/openai/plugins | **2026-08-16 に archive（read-only）**。5,110 stars、最終 push 2026-07-14。openai/skills の後継として案内されていたが更新停止 | 低（凍結） |
+| openai/skills (GitHub) | https://github.com/openai/skills | **2026-06-22 に deprecated（#496）**。カタログは 5 system + 38 curated で凍結。README は後継として openai/plugins を案内するが、そちらも archive 済み | 低（凍結） |
 
 ## オープン標準
 
 | サイト | URL | 役割 | 巡回優先度 |
 |--------|-----|------|----------|
-| agentskills.io | https://agentskills.io/ | Agent Skills仕様。44プラットフォーム採用（2026-07-27 確認、増減なし）。SKILL.mdフォーマット | 中 |
+| agentskills.io | https://agentskills.io/ | Agent Skills仕様。**46プラットフォーム採用**（2026-08-18 確認、44 → 46）。SKILL.mdフォーマット、3段階の段階的開示（Discovery / Activation / Execution） | 中 |
 
 ## コミュニティ
 
@@ -42,5 +42,6 @@ last_checked: "2026-07-27"
 
 - **skills.shはAnthropicの公式サイトではない**。コミュニティ運営のディレクトリとして扱う
 - **agentskills.ioはディレクトリではなく仕様サイト**。スキル一覧はここにはない
-- **OpenAI側: Skills = authoring format、Plugins = distribution unit**。公開マーケットプレイスは準備中
-- **Agent Skills標準（SKILL.md）は37+プラットフォームで共通**。Claude/Codex間でスキルファイル自体は変換不要
+- **OpenAI側: Skills = authoring format、Plugins = distribution unit**。ChatGPT と Codex は単一の共通プラグインディレクトリを共有する
+- **OpenAI の GitHub サンプルカタログは 2 つとも停止**（openai/skills = deprecated、openai/plugins = 2026-08-16 archive）。**Codex のスキル/プラグイン作成の一次情報は learn.chatgpt.com/docs/build-skills・build-plugins と `@plugin-creator`（Codex では `$plugin-creator`）**。GitHub リポジトリを参照先に書かないこと
+- **Agent Skills標準（SKILL.md）は46プラットフォームで共通**。Claude/Codex間でスキルファイル自体は変換不要
