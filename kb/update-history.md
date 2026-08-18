@@ -1,5 +1,38 @@
 # harness-harness 更新履歴
 
+## 2026-08-19 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code v2.1.234（2026-08-17）を収載。** npm `latest` が 2.1.233 → 2.1.234 に更新（`stable` は 2.1.224 → 2.1.226）。今回は「機能の削除」が2件含まれており、既存ハーネスの破壊的変更に該当する:
+
+- **`teammateDefaultModel` 削除**: 残存値は無視される。チームメイトのモデル指定はプロンプト明示か `CLAUDE_CODE_SUBAGENT_MODEL` に移行が必要
+- **`SessionEnd` の `bypass_permissions_disabled` reason 廃止**: 当該 reason を matcher に持つフックは条件が発火しなくなるため削除が必要
+
+追加機能は `CLAUDE_CODE_GOAL_CHECKIN_MINUTES`（`/goal` のバックグラウンド作業チェックイン間隔）、`CLAUDE_CODE_PROJECT_DIR_NAME`、`selection:clear` キーバインドアクション、フッター/ステータスラインの GitLab MR バッジ（`glab` CLI 認証が前提）、使用量上限リセット時の自動継続。セキュリティ面では Windows NT 名前空間（`\??\`）パスの拒否が、リモートファイル読み込み・セッション復元・CLAUDE.md インポート・ワークフロースクリプト・ファイルアップロードにも拡大され、NTLM 資格情報漏洩ベクタの事前承認前アクセス経路が塞がれた。
+
+**Codex: 変更なし。** 安定版 0.147.0（2026-08-07）据え置きで、GitHub リリースは rust-v0.148.0-alpha.22（2026-08-18）までプレリリースのみ。公式 changelog の最新項目も 2026-08-13 のまま。
+
+**Phase 3.5（スキルエコシステム巡回）: スキップ。** `kb/skills/_index.md` の `last_patrol` が 2026-08-18 で 7 日以内。
+
+### 突合で判明した既存の網羅漏れ（今回あわせて解消）
+
+今回 `settings.md` の設定キー 195 件を specs と機械的に突合したところ、v2.1.234 とは無関係の未収載キーが複数見つかったため補完した。特に **スキル一覧のコンテキストバジェット**（`skillListingBudgetFraction` / `skillListingMaxDescChars`）はハーネス設計に直接効く制約で、スキルを大量に同梱する構成では説明が切り詰められてトリガー語が落ちる。`specs/claude/skills-and-commands.md` に §7 を新設し、対処の選択肢を pros/cons つきの表で整理した。
+
+そのほか補完したキー: `autoCompactEnabled`, `autoCompactWindow`, `workflowKeywordTriggerEnabled`, `disableWorkflows`, `askUserQuestionTimeout`, `promptSuggestionEnabled`, `enableArtifact` / `disableArtifact`, `subagentStatusLine`。
+
+なお `llms.txt` の md5 は変化したが、差分は `permission-modes` と `goal` の説明文リライトのみで、新規/削除ページはなかった。`slash-commands.md` は `skills.md` と完全に同一内容（エイリアス）であることも確認済み。
+
+### 更新ファイル
+
+- `specs/claude/changelog.md` — v2.1.234 を追加、最終更新日を更新
+- `specs/claude/configuration.md` — 設定キー 11 件・環境変数 2 件を追加、`prUrlTemplate` に GitLab MR バッジの注記を追加
+- `specs/claude/hooks.md` — `SessionEnd` の reason 一覧から `bypass_permissions_disabled` を廃止扱いに
+- `specs/claude/agent-teams.md` — 「チームメイトのモデル指定」節を新設（`teammateDefaultModel` 廃止と `availableModels` 突合時の代替挙動）
+- `specs/claude/skills-and-commands.md` — §7「スキル一覧のコンテキストバジェット」を新設
+
+---
+
 ## 2026-08-18 — 公式ドキュメント巡回
 
 ### 検出・更新

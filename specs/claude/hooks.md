@@ -29,7 +29,7 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 | `Stop` | Claude の応答完了時 | Yes | - |
 | `StopFailure` | APIエラー発生時 | No | `rate_limit`, `authentication_failed`, `billing_error`, `invalid_request`, `server_error`, `max_output_tokens`, `unknown` |
 | `PermissionDenied` | Auto Mode分類器が拒否した後 | No | ツール名 |
-| `SessionEnd` | セッション終了時 | No | `clear`, `resume`, `logout`, `prompt_input_exit`, `bypass_permissions_disabled`, `other` |
+| `SessionEnd` | セッション終了時 | No | `clear`, `resume`, `logout`, `prompt_input_exit`, `other`（**v2.1.234 で `bypass_permissions_disabled` を廃止**。Claude Code は送出しなくなったため matcher から削除すること） |
 
 ### 2.2 サブエージェントイベント
 
