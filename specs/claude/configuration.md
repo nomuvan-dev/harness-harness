@@ -181,6 +181,18 @@ CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ../shared-config
 | `teammateMode` | Agent Teams表示モード（`auto` / `in-process` / `tmux` / `iterm2`〈v2.1.186〉） |
 | `feedbackSurveyRate` | セッション品質アンケート確率（0-1） |
 | `showClearContextOnPlanAccept` | プラン承認画面で「コンテキストクリア」オプション表示 |
+| `teammateDefaultModel` | **v2.1.234 で削除**。残存値は無視される。チームメイトのモデルはプロンプトで明示するか `CLAUDE_CODE_SUBAGENT_MODEL` で指定する |
+| `autoCompactEnabled` | 自動コンパクション（デフォルト: `true`）。`/config` の **Auto-compact**。環境変数で無効化する場合は `env` に `DISABLE_AUTO_COMPACT` |
+| `autoCompactWindow` | 自動コンパクション発動時のコンテキスト充填量（トークン、`100000`〜`1000000`）。未設定時はモデルごとの調整値。`/autocompact` コマンドがユーザー設定に書き込み、`--autocompact` フラグと `CLAUDE_CODE_AUTO_COMPACT_WINDOW` が上書き可 |
+| `skillListingBudgetFraction` | 毎ターンClaudeに提示するスキル一覧に割り当てるコンテキスト窓の割合（デフォルト: `0.01` = 1%）。超過時は利用頻度の低いスキルの説明が落とされ名前のみになる（呼び出しは可能だが内容が見えない）。`/doctor` が一覧コストを推定表示 |
+| `skillListingMaxDescChars` | スキル一覧における1スキルあたりの `description` + `when_to_use` の文字数上限（デフォルト: `1536`）。超過分は切り詰め |
+| `workflowKeywordTriggerEnabled` | プロンプト中の `ultracode` キーワードで動的ワークフローを発動するか（デフォルト: `true`）。`/config` の **Ultracode keyword trigger**。v2.1.157 追加、v2.1.160 でキーワードが `workflow` → `ultracode` にリネーム |
+| `disableWorkflows` | 動的ワークフローと同梱ワークフローコマンドを無効化（デフォルト: `false`）。`CLAUDE_CODE_DISABLE_WORKFLOWS=1` と同等 |
+| `askUserQuestionTimeout` | 未回答の `AskUserQuestion` ダイアログが選択済みの内容で自動続行するまでのアイドル時間（デフォルト: `"never"`。`"60s"` / `"5m"` / `"10m"` / `"never"`）。`/config` の **Question auto-continue timeout** がユーザー設定に書き込む。project / local 設定からは読まれない（v2.1.200 以降） |
+| `promptSuggestionEnabled` | プロンプト入力欄のグレー表示予測（プロンプトサジェスト）の表示（デフォルト: `true`）。`CLAUDE_CODE_ENABLE_PROMPT_SUGGESTION` が優先 |
+| `enableArtifact` | Artifact ツール（セッション成果を claude.ai の非公開Webページとして公開）のユーザー単位の有効化。未設定時はアカウントの提供状況に従う。`/config` の **Artifacts** 行が書き込む。Managed の `disableArtifact` と組織のadmin設定が優先。project / local 設定では無視される（v2.1.196 以降） |
+| `disableArtifact` | Artifact ツールの無効化。`CLAUDE_CODE_DISABLE_ARTIFACT=1` と同等 |
+| `subagentStatusLine` | サブエージェントタスク表示の行を書き換えるカスタムコマンド。`statusLine` / `fileSuggestion` と同様に `disableAllHooks` / `allowManagedHooksOnly` / ワークスペース信頼のゲートが適用される |
 | `worktree.symlinkDirectories` | ワークツリーシンボリックリンク対象 |
 | `worktree.sparsePaths` | ワークツリースパースチェックアウト対象 |
 | `sandbox.failIfUnavailable` | サンドボックス起動不可時にエラー終了（v2.1.83） |
@@ -190,7 +202,8 @@ CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ../shared-config
 | `allowedChannelPlugins` | （Managed のみ）チャンネルプラグイン許可リスト（v2.1.84） |
 | `disableSkillShellExecution` | スキル・カスタムコマンド・プラグインコマンド内のインラインシェル実行（`` !`cmd` ``）を無効化（v2.1.91） |
 | `forceRemoteSettingsRefresh` | （Managed のみ）リモート設定の取得をfail-closed化。取得失敗時にセッション起動をブロック（v2.1.92） |
-| `prUrlTemplate` | フッターの PR バッジを github.com 以外のカスタムコードレビュー URL に向けるテンプレート（v2.1.119） |
+| `prUrlTemplate` | フッターの PR バッジを github.com 以外のカスタムコードレビュー URL に向けるテンプレート（v2.1.119）。`{host}` / `{owner}` / `{repo}` / `{number}` / `{url}` を置換。Claude の文中の `#123` 自動リンクと GitLab MR バッジには影響しない |
+| （フッター GitLab MR バッジ） | v2.1.234 以降、GitLab リモートかつ `glab` CLI 認証済みのリポジトリでオープンな MR があると、GitHub PR リンクと同じフッター枠に `MR !N` バッジを表示。下線色は緑（マージ可能）/ 黄（その他のオープン状態）/ グレー（draft）。MR のマージ・クローズで消える。`glab mr create` や `git push` 成功時に即時更新 |
 | `mcpServers.<name>.alwaysLoad` | MCP サーバーのツールを tool-search のディファード化対象から外し常時ロード（v2.1.121） |
 | `skillOverrides` | スキル単位の表示制御。`off`（モデルと `/` から非表示）/ `user-invocable-only`（モデルから非表示）/ `name-only`（説明を圧縮）。v2.1.129 で実装が修正され機能するように |
 | `worktree.baseRef` | `--worktree` / `EnterWorktree` / エージェント隔離ワークツリーのベース選択（`fresh` = `origin/<default>`、`head` = ローカル `HEAD`）。v2.1.133 でデフォルト `fresh` に戻った |
@@ -452,6 +465,8 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 | `CLAUDE_CODE_MESSAGING_SOCKET` | Claude Code が各セッションの受信箱 Unix ドメインソケットのパスを hooks / Bash コマンドに自動エクスポート。`SessionStart` を含む全 hook より前に設定される（機能フラグ取得前に起動したセッションでは取得完了後に設定されるため、それ以前に起動したプロセスでは未設定）。各セッションは自身のソケットのみをエクスポートし、親セッションから継承しない |
 | `CLAUDE_CODE_MESSAGING_TOKEN` | 上記ソケットへ投函するスクリプト用のセッション単位トークン。接続の最初の行に `{"type":"auth","token":"<token>"}` を送ることで「自セッションの子プロセスからの投函」として検証される（macOS でプロセス終了後、および Claude Code が PID 1 のコンテナでは、プロセス証跡が取れないためこのトークンが唯一の検証手段） |
 | `CLAUDE_CODE_TOOL_MEMORY_LIMIT` | （Linux、オプトイン）Bash ツールコマンドに memory cgroup を適用し、暴走ビルドによるセッション停止を防ぐ（v2.1.233） |
+| `CLAUDE_CODE_GOAL_CHECKIN_MINUTES` | `/goal` 実行中、バックグラウンド作業がゴール評価を待たせ続けたときに Claude へ状況確認を促すまでの分数（デフォルト `30`、`0` で無効、最大 `10080`＝1週間。プレーンな整数以外は未設定扱い）。Claude Code は実行中タスクを列挙し、出力の確認・進捗中なら待機継続・停滞中なら修正か停止を依頼する（v2.1.234） |
+| `CLAUDE_CODE_PROJECT_DIR_NAME` | セッションごとに独自の config ディレクトリを与えるホスト向けに、プロジェクト単位のトランスクリプトディレクトリ名を短い名前で指定（v2.1.234。changelog 記載、公式 env-vars リファレンス未収載） |
 | `CLAUDE_CODE_WEBFETCH_CACHE_TTL_MS` | WebFetch のセッション内 URL キャッシュ TTL を設定（デフォルトは従来通り 15 分）（v2.1.233） |
 | `CLAUDE_CODE_ENABLE_TODO_TOOLS` | `1` で Todo / タスク追跡ツール（`TaskCreate` / `TaskGet` / `TaskUpdate` / `TaskList` / `TodoWrite`）を復活させる。**v2.1.233 で Opus 4.8 / Sonnet 5 / Fable 5 / Mythos 5 以降のモデルでは既定で提供されなくなった**ため、これらに依存するハーネスは明示設定が必要 |
 

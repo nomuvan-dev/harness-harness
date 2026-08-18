@@ -132,6 +132,18 @@ Agent Teamsは以下のhookイベントで品質を強制できる:
 - **`TeammateIdle`**: チームメイトがidle状態になるとき実行。exit code 2でフィードバックを送りて作業を継続させる
 - **`TaskCompleted`**: タスクが完了マークされるとき実行。exit code 2で完了を阻止しフィードバックを送る
 
+### チームメイトのモデル指定（v2.1.234 で `teammateDefaultModel` 廃止）
+
+プロンプトでチームメイトのモデルを指定しない場合、Claude Code はリードの現在のモデルでチームメイトを実行する（`CLAUDE_CODE_SUBAGENT_MODEL` が設定されていればそちらが優先）。
+
+**`teammateDefaultModel` 設定キーは v2.1.234 で削除された。** 残存値は無視されるため、プロンプトでモデルを明示するか `CLAUDE_CODE_SUBAGENT_MODEL` を設定する。
+
+組織の `availableModels` 許可リストとの突合と代替:
+- **ファミリーエイリアス（`opus` 等）**: Anthropic API / Claude Platform on AWS では許可リスト内で最新版にフォールバック。プロバイダ固有モデルIDを使う環境（この置換が働かない）では次項の扱い
+- **上記以外のブロック値**: リードのモデルで実行
+
+チームメイトはリードの effort level を継承する（split-pane モードでは v2.1.186 以降）。
+
 ## 7. チームメイト定義（.claude/agents/*.md）
 
 `.claude/agents/` にMarkdownファイルとして定義:
