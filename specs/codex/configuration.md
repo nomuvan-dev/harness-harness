@@ -1,6 +1,6 @@
 # OpenAI Codex CLI 設定仕様
 
-最終更新: 2026-07-13（巡回更新）
+最終更新: 2026-08-20（巡回更新）
 
 ---
 
@@ -32,7 +32,7 @@ Codex CLI の設定は TOML 形式で管理される。複数レベルの設定�
 | キー | 型 | デフォルト | 説明 |
 |------|------|-----------|------|
 | `model` | string | `"o4-mini"` | 使用する AI モデル |
-| `model_provider` | string | `"openai"` | モデルプロバイダー ID |
+| `model_provider` | string | `"openai"` | モデルプロバイダー ID。組み込みプロバイダに **`amazon-bedrock-runtime`**（0.148.0+）が追加された（下記「Amazon Bedrock Runtime プロバイダ」参照） |
 | `approval_policy` | string | `"on-request"` | 承認ポリシー（後述） |
 | `sandbox_mode` | string | `"workspace-write"` | サンドボックスモード（後述） |
 | `personality` | string | `"friendly"` | 応答スタイル（`none` / `friendly` / `pragmatic`） |
@@ -136,6 +136,19 @@ sandbox = "elevated"       # "elevated"（推奨、管理者権限必要） / "u
 - **Ultra reasoning 選択時の警告（0.144.0）**: multi-agent 並列度が高い場合に使用量急増を警告
 
 > 公式ドキュメント: [Config Basics](https://developers.openai.com/codex/config-basic) / [Config Reference](https://developers.openai.com/codex/config-reference) / [Sample Config](https://developers.openai.com/codex/config-sample)
+
+---
+
+#### Amazon Bedrock Runtime プロバイダ（0.148.0+）
+
+`model_provider = "amazon-bedrock-runtime"` で、リージョン別 `bedrock-runtime` の OpenAI 互換エンドポイントを組み込みプロバイダとして利用できる。
+
+- 認証はベアラートークンを維持しつつ、エンドポイント固有の SigV4 サービス設定を使用
+- AWS プロファイル / リージョン / トランスポートはプロバイダ単位で上書き可能
+- GPT-5.6 は **global 版**と **US クロスリージョン版**を提供。フォールバックおよびバックグラウンドタスクは global ルーティングを優先
+- 当プロバイダでは **Web 検索は非対応**（`web_search` 設定に関わらず送信されない）
+
+> 0.147.0 で入った Bedrock 向けのキャッシュ済み Web 検索・リモート会話コンパクションは、managed Bedrock APIキー認証（0.140.0）経路の話であり、本組み込みプロバイダとは別枠。
 
 ---
 
@@ -497,7 +510,7 @@ meeting-follow-up/
 
 ## 7. Hooks
 
-Codex CLI の Hooks は **0.124.0 で正式化（stable）** された。`config.toml` にインラインで設定可能、管理対象の `requirements.toml` でポリシー配布もできる。Claude Code の Hooks と比べると、対応イベントとハンドラ種別が限定されている点は引き続き同じ。
+Codex CLI の Hooks は **0.124.0 で正式化（stable）** され、0.148.0 で**非同期実行**と **MCP ツールハンドラ**に対応した。イベント数・ハンドラ種別ともに Claude Code へ大きく近づいている。
 
 ### 7.1 有効化
 
@@ -511,71 +524,142 @@ codex --enable codex_hooks
 codex_hooks = true
 ```
 
-### 7.2 設定形式
+### 7.2 定義場所
 
-`config.toml` にインラインで `[[hooks]]` テーブル配列を定義する。管理対象では `requirements.toml` でポリシー配布可:
+以下の各レイヤーが**合成**される（上位が下位を置き換えるのではなく足し合わせ）:
 
-```toml
-[[hooks]]
-event = "SessionStart"
-command = "echo 'セッション開始'"
+| レイヤー | ファイル |
+|----------|----------|
+| ユーザー | `~/.codex/hooks.json` または `~/.codex/config.toml` |
+| プロジェクト | `<repo>/.codex/hooks.json` または `<repo>/.codex/config.toml` |
+| プラグイン | プラグイン同梱の `hooks/hooks.json` またはマニフェストのエントリ |
+| Managed | `requirements.toml` / managed config レイヤー（`managed_dir` / `windows_managed_dir` で配置先指定可） |
 
-[[hooks]]
-event = "UserPromptSubmit"
-command = "python3 scripts/validate-prompt.py"
+> 同一ディレクトリに `hooks.json` と `config.toml` の両方の hooks 定義があると警告が出る。どちらか一方に寄せること。
+>
+> Managed のみ: `requirements.toml` に `allow_managed_hooks_only = true` を置くと、user / project / session の hook 設定を無視し managed hooks のみを実行する。**`config.toml` に書いても効かない**。
 
-[[hooks]]
-event = "Stop"
-command = "python3 scripts/postflight.py"
+### 7.3 設定形式
+
+イベント名 → マッチャーグループ配列 → ハンドラ配列、という3階層構造。JSON 形式:
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "shell",
+        "hooks": [
+          { "type": "command", "command": "python3 scripts/guard.py", "timeout": 30 }
+        ]
+      }
+    ]
+  }
+}
 ```
 
-### 7.3 対応イベント
+TOML 形式（`config.toml`）では同じ構造を array-of-tables で書く:
 
-| イベント | 説明 |
-|----------|------|
-| `SessionStart` | セッション開始時に実行。0.133.0+ で compact（コンテキスト要約）後の SessionStart も発火可能 |
-| `Stop` | セッション終了時に実行 |
-| `UserPromptSubmit` | ユーザーのプロンプト送信時に実行 |
-| `SubagentStart` | サブエージェント起動時に実行（0.133.0+） |
-| `SubagentStop` | サブエージェント終了時に実行（0.133.0+） |
-| `MITM` | ランタイム enforcement される MITM hook（0.133.0+、named MITM permissions config と組み合わせて使用） |
+```toml
+[[hooks.PreToolUse]]
+matcher = "shell"
 
-> **比較**: Claude Code は 17 以上のイベント（`PreToolUse`, `PostToolUse`, `Notification` 等）をサポート。Codex は 0.133.0 で 6 イベントに拡張。
+  [[hooks.PreToolUse.hooks]]
+  type = "command"
+  command = "python3 scripts/guard.py"
+  timeout = 30
 
-### 7.4 ハンドラ種別
+[[hooks.SessionStart]]
 
-| ハンドラ | Codex CLI | Claude Code |
-|----------|-----------|-------------|
-| Command | サポート | サポート |
+  [[hooks.SessionStart.hooks]]
+  type = "command"
+  command = "bash scripts/preflight.sh"
+  command_windows = "powershell -ExecutionPolicy Bypass -File scripts/preflight.ps1"
+```
+
+`matcher` は正規表現文字列。省略または `"*"` で全件マッチ。マッチ対象はイベントによって異なる:
+
+- ツール系イベント（`PreToolUse` / `PostToolUse` / `PermissionRequest`）: ツール名
+- `PreCompact` / `PostCompact`: 発動契機（`manual` / `auto`）
+- `SessionStart`: セッションの起点（`startup` / `resume` / `clear` / `compact`）
+
+### 7.4 対応イベント（0.148.0 時点で 11 種）
+
+| イベント | スコープ | 説明 |
+|----------|----------|------|
+| `PreToolUse` | ターン | ツール実行前。ブロック可能 |
+| `PermissionRequest` | ターン | 権限確認の発生時 |
+| `PostToolUse` | ターン | ツール実行後 |
+| `PreCompact` | ターン | コンテキスト要約の前 |
+| `PostCompact` | ターン | コンテキスト要約の後 |
+| `UserPromptSubmit` | ターン | ユーザーのプロンプト送信時。ブロック可能 |
+| `SubagentStop` | ターン | サブエージェント終了時（0.133.0+） |
+| `Stop` | ターン | ターン終了時 |
+| `SessionStart` | セッション | セッション開始時 |
+| `SessionEnd` | セッション | セッション終了時 |
+| `SubagentStart` | セッション | サブエージェント起動時（0.133.0+） |
+
+> **比較**: Claude Code は 17 以上のイベントをサポート。Codex は 0.133.0 で 6 → 0.148.0 時点で 11 イベント。`Notification` 系や `PreCompact` 以外の UI 系イベントは引き続き未対応。
+>
+> 別枠として `MITM` hook（0.133.0+）がランタイム enforcement 用に存在する（named MITM permissions config と組み合わせて使用）。
+
+### 7.5 ハンドラ種別
+
+| `type` | Codex CLI | Claude Code |
+|--------|-----------|-------------|
+| `command` | サポート | サポート |
+| `mcp_tool` | **0.148.0 でサポート**（`SessionEnd` と MCP 呼び出し非対応ランタイムは起動時警告付きでスキップ） | 相当機能なし |
+| `prompt` | 設定は受理されるが**未実装**（スキップ警告） | サポート |
+| `agent` | 設定は受理されるが**未実装**（スキップ警告） | サポート |
 | HTTP | **非サポート** | サポート |
-| Prompt | **非サポート** | サポート |
-| Agent | **非サポート** | サポート |
 
-Codex の Hooks は `command` ハンドラのみをサポートする。
+**`command` ハンドラのフィールド**:
 
-### 7.5 終了コード
+| フィールド | 説明 |
+|-----------|------|
+| `command` | 実行コマンド（必須） |
+| `commandWindows` / `command_windows` | Windows でのみ使う代替コマンド（0.131.0+） |
+| `timeout` | タイムアウト秒（既定 600。`SessionEnd` のみ既定 1） |
+| `async` | `true` でバックグラウンド実行（**0.148.0+**）。詳細は 7.6 |
+| `statusMessage` | 実行中に UI へ出す文言 |
+| `additionalContextLimit` | `additionalContext` をディスクへ退避する概算トークン閾値（既定 2,500。`0` で退避無効） |
+
+**`mcp_tool` ハンドラのフィールド**（0.148.0+）:
+
+| フィールド | 説明 |
+|-----------|------|
+| `server` | 呼び出す MCP サーバー名（必須） |
+| `tool` | 呼び出すツール名（必須） |
+| `input` | ツールへ渡す JSON オブジェクト。フックイベントのプレースホルダがネストしたまま JSON 型を保って展開される。**TOML で表現できない値（`null` 等）は拒否**される（trust hash のため） |
+| `timeout` | タイムアウト秒（既定 600） |
+| `statusMessage` | 実行中に UI へ出す文言 |
+
+`hooks/list` およびハンドラ名は TUI の hooks ブラウザに `server` / `tool` 付きで表示される。
+
+### 7.6 非同期 command hook（0.148.0+）
+
+`async = true` を指定した `command` ハンドラはバックグラウンドで走る。
+
+- セッション単位の同時実行上限あり
+- **起動元の操作をブロック・停止・書き換え・制御できない**（同期フックのような decision 制御は効かない）
+- 警告や `additionalContext` は安全なターン境界で配送される: 実行中のターンにはサンプリング後に注入、アイドル時は次のユーザープロンプトの直前までバッファされる
+- 設定リロードをまたいで実行中のフックは維持され、セッション終了時に中断される
+- **`SessionEnd` は常に同期**（`async` 指定は無効）
+
+> ハーネス設計上の使い分け: ガード（実行を止めたい）は同期、通知・計測・ログ送信など**結果でセッションを制御しない**用途は `async = true`。
+
+### 7.7 終了コード
 
 | 終了コード | 動作 |
 |------------|------|
 | `0` | 成功。処理を続行 |
-| `2` | ブロック（`UserPromptSubmit` のみ）。プロンプト送信をキャンセル |
+| `2` | ブロック（`UserPromptSubmit` / `PreToolUse` 等のブロック可能イベント）。当該操作をキャンセル |
 | その他 | エラーとして扱われる |
 
-### 7.6 Windows hook command overrides（0.131.0+）
+### 7.8 Hook trust の意図的バイパス（0.131.0+）
 
-プラットフォーム別に hook の `command` を差し替え可能。Windows でのみ別コマンドを実行する場合に使用:
+CI 等で hook trust 確認をスキップしたい場合は CLI フラグ `--dangerously-bypass-hook-trust` を使用。インタラクティブな信頼確認をスキップするため、信頼された CI 環境以外では使用しないこと。フックごとの信頼状態は `[hooks.state.<key>]` の `enabled` / `trusted_hash` で保持される。
 
-```toml
-[[hooks]]
-event = "SessionStart"
-command = "bash scripts/preflight.sh"
-command_windows = "powershell -ExecutionPolicy Bypass -File scripts/preflight.ps1"
-```
-
-### 7.7 Hook trust の意図的バイパス（0.131.0+）
-
-CI 等で hook trust 確認をスキップしたい場合は CLI フラグ `--dangerously-bypass-hook-trust` を使用。インタラクティブな信頼確認をスキップするため、信頼された CI 環境以外では使用しないこと。
-
-### 7.8 プラグイン Hooks（0.131.0+ デフォルト有効）
+### 7.9 プラグイン Hooks（0.131.0+ デフォルト有効）
 
 プラグインがバンドルする hooks が、明示的に opt-out しない限りデフォルトで有効化される。プラグインインストール時に hook 一覧が UI に表示され、信頼判断に利用される。
