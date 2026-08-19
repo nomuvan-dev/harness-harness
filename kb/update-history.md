@@ -1,5 +1,42 @@
 # harness-harness 更新履歴
 
+## 2026-08-20 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code v2.1.235（2026-08-18）を収載。** 新機能は `spellcheck` 設定のみ。プロンプト入力欄の誤字を入力中に下線表示する任意機能で、外部スペルチェッカー（`aspell` → `hunspell` → `ispell` の順に PATH から検出）に依存する。**ハーネス設計上の注意点として、プロジェクトの `.claude/settings.json` からは読み込まれない**（user 設定 / `--settings` / Managed 設定のみ）。つまりリポジトリにコミットして配布できないため、組織で強制するなら Managed 設定を使う。`specs/claude/configuration.md` にキー行と専用サブセクション（前提・スキップ対象・停止条件・デバッグ手順）を追加した。
+
+そのほかは修正・改善が中心。ハーネス運用に効くものとしては、クラウドセッション（`/ultrareview`・`/autofix-pr`）バックグラウンド実行時のメモリ/CPU 改善、権限ダイアログの表示テキストと「二度と確認しない」の対象範囲の整合、`SendMessage` の過大メッセージ事前拒否（従来は黙って破棄）がある。
+
+**Codex CLI 0.148.0（2026-08-18）を収載。安定版として 0.147.0 から更新。** 今回の巡回で最も影響が大きかったのはここで、**Hooks が大きく前進した**:
+
+- **対応イベントが 6 → 11 種**に拡張（`PreToolUse` / `PermissionRequest` / `PostToolUse` / `PreCompact` / `PostCompact` / `SessionEnd` が追加）
+- **`mcp_tool` ハンドラ**を実行対応（`server` / `tool` / `input` / `timeout` / `statusMessage`。`SessionEnd` と MCP 呼び出し非対応ランタイムは警告付きスキップ）
+- **`async = true`** による command hook のバックグラウンド実行（起動元操作の制御は不可。結果は安全なターン境界で注入）
+
+あわせて、`specs/codex/configuration.md` §7 の記載が実態と乖離していたことが判明したため全面的に書き直した。旧記載は `[[hooks]] event = "..."` というフラットな形式・6 イベント・command ハンドラのみとしていたが、実際は **イベント名 → `matcher` グループ → ハンドラ配列の3階層構造**で、`~/.codex/hooks.json` / `<repo>/.codex/hooks.json` / `config.toml` / プラグイン / Managed の各レイヤーが合成される。`matcher` はイベントごとに対象が異なる（ツール名 / `manual`・`auto` / `startup`・`resume`・`clear`・`compact`）。根拠は公式 hooks ドキュメントと `codex-rs/config/src/hook_config.rs`（rust-v0.148.0）の両方で確認した。
+
+Codex のその他の追加: `/export`（会話全体を Markdown へ書き出し）、`codex exec fork`（非対話モードでのセッション分岐）、resume ピッカーからのアーカイブ / 復元、`/status` のスレッド単位クレジット・USD コスト表示（対象 Business / Enterprise ワークスペース）、組み込みプロバイダ `amazon-bedrock-runtime`（AWS プロファイル / リージョン上書き、GPT-5.6 の global / US クロスリージョン版、Web 検索は非対応）。
+
+**mapping/ を3ファイルとも更新。** Hooks の変換可能性が根本的に変わったため、これまで「Claude 固有・Codex 側は AGENTS.md やラッパースクリプトで代替」としていた `PreToolUse` / `PostToolUse` / `PreCompact` / `SessionEnd` を**直接対応**に格上げした。`shared-concepts.md` の互換性サマリでも Hooks を「低」→「**高**」に変更。構造が同型になったため `hooks.json` 同士ならイベント名と matcher のツール名を差し替えるだけで移行できる。逆に Codex 固有として新たに残差になったのは `mcp_tool` ハンドラ・`async` 実行・`PermissionRequest` / `PostCompact` / `SubagentStart` イベント。
+
+**ドキュメント構成の変更**: `code.claude.com/docs/en/agent-sdk/slash-commands.md` が廃止され `agent-sdk/skills.md` に統合された（llms.txt 上のページ数 186 → 185）。SDK 側の話で specs の対象外のため specs 更新は不要。
+
+**Phase 3.5（スキルエコシステム巡回）: スキップ。** `kb/skills/_index.md` の `last_patrol` が 2026-08-18 で 7 日以内。
+
+### 更新ファイル
+
+- `specs/claude/changelog.md` — v2.1.235 を追加
+- `specs/claude/configuration.md` — `spellcheck` キーと専用サブセクションを追加
+- `specs/codex/changelog.md` — CLI 0.148.0 を追加
+- `specs/codex/configuration.md` — §7 Hooks を全面改訂、Amazon Bedrock Runtime プロバイダを追加
+- `specs/codex/commands.md` — `/export`、`codex exec fork`、resume ピッカーのアーカイブ/復元、`/status` のクレジット表示を追加
+- `mapping/claude-to-codex.md` — Hooks 対応表・設定形式・代替パターンを改訂
+- `mapping/codex-to-claude.md` — Hooks 対応表・移行ガイドを改訂
+- `mapping/shared-concepts.md` — Hooks 抽象化方針と互換性サマリを改訂
+
+---
+
 ## 2026-08-19 — 公式ドキュメント巡回
 
 ### 検出・更新

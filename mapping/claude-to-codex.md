@@ -143,53 +143,80 @@ model_reasoning_effort = "high"
 ## 6. Hooks
 
 > **2026-03-24 更新**: Codex CLI が Hooks を実験的にサポート開始。
-> **2026-05-21 更新（Codex 0.133.0）**: `SubagentStart` / `SubagentStop` / compact `SessionStart` / `MITM` を追加し対応イベントは 6 種に拡張。ハンドラは command のみは継続。
+> **2026-05-21 更新（Codex 0.133.0）**: `SubagentStart` / `SubagentStop` / compact `SessionStart` / `MITM` を追加し対応イベントは 6 種に拡張。
+> **2026-08-20 更新（Codex 0.148.0）**: 対応イベントが **11 種**に拡張され、`PreToolUse` / `PostToolUse` / `PermissionRequest` / `PreCompact` / `PostCompact` / `SessionEnd` が**直接対応**に昇格。ハンドラも `mcp_tool` が追加され、`command` は `async` 実行に対応。変換可能性が大きく改善したため、以下の代替パターンの多くは不要になった。
 
 | Claude Code | Codex CLI | 備考 |
 |:--|:--|:--|
-| Hooks システム全体 | **部分対応** | `codex_hooks` フラグで有効化（0.124.0+ デフォルト有効）。`config.toml` の `[[hooks]]` で設定 |
-| `SessionStart` | `SessionStart` | **直接対応**。0.133.0+ で compact 後の発火もサポート。command ハンドラのみ |
-| `Stop` フック | `Stop` | **直接対応**。command ハンドラのみ |
-| `UserPromptSubmit` | `UserPromptSubmit` | **直接対応**。終了コード 2 でブロック可能。command ハンドラのみ |
-| `SubagentStop` | `SubagentStop`（0.133.0+） | **直接対応**。command ハンドラのみ |
+| Hooks システム全体 | **概ね対応** | 0.124.0+ デフォルト有効。`~/.codex/hooks.json` / `<repo>/.codex/hooks.json` または `config.toml` の `[[hooks.<Event>]]` で設定 |
+| `SessionStart` | `SessionStart` | **直接対応**。matcher で `startup` / `resume` / `clear` / `compact` を切り分け可能 |
+| `SessionEnd` | `SessionEnd`（0.148.0+） | **直接対応**。既定タイムアウトが 1 秒と短く、`async` 指定と `mcp_tool` ハンドラは非対応 |
+| `Stop` フック | `Stop` | **直接対応** |
+| `UserPromptSubmit` | `UserPromptSubmit` | **直接対応**。終了コード 2 でブロック可能 |
+| `PreToolUse` | `PreToolUse`（0.148.0+） | **直接対応**。matcher はツール名の正規表現。ツール名が両者で異なる点に注意（変換表は §3 参照） |
+| `PostToolUse` | `PostToolUse`（0.148.0+） | **直接対応**。matcher はツール名の正規表現 |
+| `PreCompact` | `PreCompact`（0.148.0+） | **直接対応**。matcher は `manual` / `auto` |
+| （Claude は `SessionStart` の compact source で代替） | `PostCompact`（0.148.0+） | Codex 独自の明示イベント |
+| `SubagentStop` | `SubagentStop`（0.133.0+） | **直接対応** |
 | （Claude にはない） | `SubagentStart`（0.133.0+） | Codex 独自。サブエージェント起動契機での前処理に利用 |
-| `PreToolUse` | **MITM hook で部分代替**（0.133.0+） | MITM hook + named permissions config で一部の介入が可能。完全な置換ではない |
-| `PostToolUse` | **対応なし** | 代替: AGENTS.md に「編集後は lint を実行」と記述 |
-| `SessionEnd` | **対応なし** | `Stop` で部分的に代替可能 |
-| `Notification` 他 11+ イベント | **対応なし** | Codex は 6 イベントまで対応 |
-| HTTP ハンドラ | **対応なし** | 代替: MCP サーバーとして Webhook 連携を実装 |
-| Prompt ハンドラ | **対応なし** | 代替: AGENTS.md に判断基準を記述 |
-| Agent ハンドラ | **対応なし** | 代替: サブエージェント機能（実験的）で部分的に代替 |
+| （Claude にはない） | `PermissionRequest`（0.148.0+） | Codex 独自。権限確認の発生を捕捉 |
+| `Notification` 他の UI 系イベント | **対応なし** | Claude は 17+ イベント。残差は主に通知・UI 系 |
+| HTTP ハンドラ | **対応なし** | 代替: `mcp_tool` ハンドラ（0.148.0+）で MCP サーバー経由の外部連携、または command ハンドラ内で `curl` |
+| Prompt ハンドラ | **設定は受理されるが未実装** | `type = "prompt"` はパースされるがスキップ警告が出る。代替: AGENTS.md に判断基準を記述 |
+| Agent ハンドラ | **設定は受理されるが未実装** | `type = "agent"` も同様にスキップ。代替: サブエージェント機能で部分的に代替 |
+| （Claude にはない） | `mcp_tool` ハンドラ（0.148.0+） | Codex 独自。`server` / `tool` / `input` を指定してフックから MCP ツールを直接呼ぶ |
+| （Claude にはない） | `async = true`（0.148.0+） | Codex 独自。バックグラウンド実行。**起動元の操作を制御できない**ため、ガード用途には使わない |
 
 ### 6.1 設定形式の違い
 
-```
-# Claude Code (settings.json)
+Claude Code の JSON 構造（イベント → matcher グループ → ハンドラ配列）は、Codex 0.148.0 でほぼそのまま写せるようになった。`~/.codex/hooks.json` を使えば構造は同型で、トップレベルキーが `hooks` である点も同じ。
+
+```jsonc
+// Claude Code (.claude/settings.json)
 {
   "hooks": {
-    "SessionStart": [
-      { "type": "command", "command": "echo 'start'" }
+    "PreToolUse": [
+      { "matcher": "Bash", "hooks": [{ "type": "command", "command": "python3 guard.py" }] }
     ]
   }
 }
 
-# Codex CLI (config.toml)
-[features]
-codex_hooks = true
-
-[[hooks]]
-event = "SessionStart"
-command = "echo 'start'"
+// Codex CLI (.codex/hooks.json) — ほぼ同型
+{
+  "hooks": {
+    "PreToolUse": [
+      { "matcher": "shell", "hooks": [{ "type": "command", "command": "python3 guard.py" }] }
+    ]
+  }
+}
 ```
 
-### 6.2 Hooks の代替パターン（対応なしイベント向け）
+`config.toml` にインラインで書く場合は array-of-tables を使う:
 
-Codex の Hooks では賄えない Claude イベント（`PreToolUse`, `PostToolUse` 等）には、引き続き以下のパターンで代替する:
+```toml
+[[hooks.PreToolUse]]
+matcher = "shell"
 
-1. **ツール実行前バリデーション** → `approval_policy = "on-request"` + AGENTS.md に制約を記述
-2. **ファイル編集後の自動処理** → AGENTS.md に「ファイル編集後は必ず lint/format を実行」と記述
-3. **セッション制御** → `SessionStart` / `Stop` フックを活用（ラッパースクリプトとの併用も可能）
-4. **外部通知** → MCP サーバーで Webhook 送信機能を提供
+  [[hooks.PreToolUse.hooks]]
+  type = "command"
+  command = "python3 guard.py"
+  timeout = 30
+```
+
+変換時の主な注意点:
+
+- **matcher のツール名を変換する**: Claude の `Bash` / `Edit` / `Write` などは Codex のツール名に読み替える必要がある
+- **Windows 分岐**: Codex は `commandWindows`（`command_windows`）でプラットフォーム別コマンドを指定できる。Claude にはこの機構がないため、逆変換ではラッパースクリプトに寄せる
+- **タイムアウト既定値**: Codex は 600 秒、`SessionEnd` のみ 1 秒
+- **Managed 制約**: Codex は `requirements.toml` の `allow_managed_hooks_only = true` が Claude の `allowManagedHooksOnly` に対応する（`config.toml` に書いても効かない点に注意）
+
+### 6.2 Hooks の代替パターン（残る非対応イベント向け）
+
+0.148.0 で直接対応が大幅に増えたため、代替が必要なのは主に通知系・UI 系イベントとハンドラ種別:
+
+1. **Notification 系の外部通知** → `mcp_tool` ハンドラで MCP サーバーを呼ぶ、または command ハンドラ内で Webhook 送信
+2. **Prompt / Agent ハンドラ相当の判断** → AGENTS.md に判断基準を記述、またはサブエージェントで代替
+3. **ブロック用途と非同期用途の使い分け** → 実行を止めたいガードは同期（`async` を付けない）、通知・計測・ログ送信は `async = true`
 
 ---
 

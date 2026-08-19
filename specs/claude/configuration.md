@@ -1,6 +1,6 @@
 # Claude Code 設定仕様書
 
-最終更新: 2026-07-13（巡回更新）
+最終更新: 2026-08-20（巡回更新）
 
 公式ドキュメント: https://code.claude.com/docs/en/settings / https://code.claude.com/docs/en/memory
 
@@ -157,6 +157,7 @@ CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ../shared-config
 | `alwaysThinkingEnabled` | 拡張思考のデフォルト有効化 |
 | `plansDirectory` | プランファイル保存先 |
 | `spinnerVerbs` | スピナー動詞カスタマイズ |
+| `spellcheck` | プロンプト入力欄のスペルチェック（v2.1.235）。既定は無効。**user 設定 / `--settings` / Managed 設定のみ**から読み込まれ、プロジェクトの `.claude/settings.json` / `settings.local.json` は無視される。複数箇所にある場合は Managed → `--settings` → user の順で**1つだけ**採用しフィールドのマージはしない。フィールド: `enabled` / `checker`（`aspell` / `hunspell` / `ispell`、指定時はフォールバックしない）/ `language`（辞書名。パスや空白入りは無視）/ `color`（色名・`#rrggbb`・`rgb()`・`ansi256(n)`・`ansi:<name>`。既定はテーマのエラー色） |
 | `emojiCompletionEnabled` | プロンプト入力の絵文字ショートコード補完（`:heart:` → ❤️）の有効/無効（v2.1.217） |
 | `workflowSizeGuideline` | Dynamic workflow のサイズガイドライン（advisory）。設定時は `/config` の該当行が非表示（v2.1.219。デフォルトは medium = 15エージェント未満目安） |
 | `disableMobileSimulatorTools` | Claude の iOS Simulator ツールをブロック（Managed 設定、Claude Code Desktop / macOS）。Simulator ペイン自体は手動操作用に残る（詳細: https://code.claude.com/docs/en/desktop-ios-simulator ） |
@@ -237,6 +238,17 @@ CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ../shared-config
 | `isolatePeerMachines` | `true` でマシン外のセッションへの `SendMessage` 送信前にユーザー承認を必須化。`bypassPermissions` モードでも承認を求める。**いずれかのスコープの `true` が優先**されるため、コミット済みプロジェクト設定で有効化はできても無効化はできない。同一マシン内のメッセージには適用されない |
 
 > 補足: `allowedMcpServers` / `deniedMcpServers` 述語の `${VAR}` 参照は v2.1.166 で正しくマッチするようになった。Managed settings は invalid なエントリが含まれても、v2.1.166 から残りの valid policy は enforce される（従来は silently 全無効化）。
+
+#### スペルチェック（`spellcheck`）— v2.1.235
+
+プロンプト入力欄のテキストのみを対象とし、Claude の応答やファイルは検査しない。シェルモード（`!`）・`Ctrl+R` 履歴検索・音声入力中、およびスクリーンリーダーモードでは何も検査しない。
+
+- **前提**: `aspell` / `hunspell` / `ispell` のいずれかを PATH に用意する。Claude Code はこの順で最初に見つかった1つを実行する（Windows のパッケージマネージャが置く `.cmd` シムも対象）
+- **スキップ対象**: `/help` 等のコマンド、`@` メンション、URL、ファイルパス、`--verbose` 等のフラグ、数字・アンダースコア・2文字目以降の大文字を含む語、バッククォート内テキスト、中国語・日本語・韓国語・タイ語・ラオ語・クメール語・ミャンマー語
+- **単語の除外**: Claude Code 自身の単語リストは持たない。チェッカーのパーソナル辞書に追加し、Claude Code を再起動する
+- **停止条件**: チェッカー未インストール / `checker` 指定のものが不在 / 連続2回の失敗 / 15秒超のタイムアウトが3回、のいずれかで当該セッションのチェックを停止。原因は `claude --debug` 実行時の `~/.claude/debug/<session-id>.txt` の `[spellcheck]` 行で確認できる
+
+> ハーネス設計上の注意: プロジェクト設定に書いても効かないため、**リポジトリにコミットして配布することはできない**。組織で強制したい場合は Managed 設定を使う。
 
 #### セルフホスト環境（self-hosted-runner）— v2.1.224 で公開ベータ
 

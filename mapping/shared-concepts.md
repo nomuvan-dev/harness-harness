@@ -1,6 +1,6 @@
 # 共通概念対照表
 
-最終更新: 2026-03-24
+最終更新: 2026-08-20
 
 Claude Code と Codex CLI が共有する概念の対照表。harness-harness による抽象化レイヤー設計の基盤とする。
 
@@ -211,30 +211,37 @@ Skills は両プラットフォームで最も互換性の高い概念の一つ:
 ## 10. Hooks / ライフサイクル制御
 
 > **2026-03-24 更新**: Codex CLI が Hooks を実験的サポート開始。3 イベント・command ハンドラのみだが、共通概念として扱えるようになった。
+> **2026-08-20 更新（Codex 0.148.0）**: Codex が 11 イベント・`mcp_tool` ハンドラ・非同期実行に対応。イベント構造（イベント → matcher グループ → ハンドラ配列）も Claude と同型になり、**Hooks は「Claude 固有」から「ほぼ共通概念」へ格上げ**された。
 
 | 概念 | Claude Code | Codex CLI | 抽象化の方針 |
 |:--|:--|:--|:--|
-| **フックシステム** | 包括的なイベント駆動フック（17+ イベント） | 実験的サポート（3 イベント） | 共通の 3 イベントを抽象化。残りは Claude 固有として扱う |
-| **設定形式** | JSON (`"hooks"` オブジェクト) | TOML (`[[hooks]]` テーブル配列) | 抽象スキーマから各形式に変換 |
-| **有効化** | デフォルト有効 | `codex_hooks` フラグで有効化（デフォルト無効） | Codex では明示的に有効化が必要 |
-| **SessionStart** | サポート | サポート | **共通** |
-| **Stop** | サポート | サポート | **共通** |
-| **UserPromptSubmit** | サポート | サポート | **共通**。終了コード 2 でブロック |
-| **PreToolUse** | サポート | なし | Claude 固有。Codex は `approval_policy` で代替 |
-| **PostToolUse** | サポート | なし | Claude 固有。Codex は AGENTS.md で記述 |
-| **その他 12+ イベント** | サポート | なし | Claude 固有 |
-| **ハンドラ: Command** | サポート | サポート | **共通** |
-| **ハンドラ: HTTP** | サポート | なし | Claude 固有 |
-| **ハンドラ: Prompt** | サポート | なし | Claude 固有 |
-| **ハンドラ: Agent** | サポート | なし | Claude 固有 |
-| **ブロッキング制御** | 終了コード 2 でブロック | 終了コード 2 でブロック（`UserPromptSubmit`） | **共通** |
+| **フックシステム** | 包括的なイベント駆動フック（17+ イベント） | 11 イベント（0.148.0+） | 共通イベントを抽象化。差分は通知系・UI 系のみ |
+| **設定形式** | JSON (`"hooks"` オブジェクト) | JSON (`.codex/hooks.json`) または TOML (`[[hooks.<Event>]]`) | `hooks.json` 同士なら構造は同型。TOML 側のみ形式変換 |
+| **構造** | イベント → matcher グループ → ハンドラ配列 | 同一（0.148.0+） | **共通**。3階層構造をそのまま抽象スキーマにできる |
+| **有効化** | デフォルト有効 | デフォルト有効（0.124.0+） | **共通**（0.123.0 以前は `codex_hooks` フラグが必要） |
+| **SessionStart / Stop / UserPromptSubmit** | サポート | サポート | **共通** |
+| **SessionEnd** | サポート | サポート（0.148.0+） | **共通**。Codex は既定タイムアウト 1 秒 |
+| **PreToolUse / PostToolUse** | サポート | サポート（0.148.0+） | **共通**。matcher のツール名変換が必要 |
+| **PreCompact** | サポート | サポート（0.148.0+） | **共通**。matcher は `manual` / `auto` |
+| **PostCompact** | なし（`SessionStart` の compact source） | サポート（0.148.0+） | Codex 固有。Claude 側は compact 後の `SessionStart` に写す |
+| **SubagentStart** | なし | サポート（0.133.0+） | Codex 固有 |
+| **SubagentStop** | サポート | サポート（0.133.0+） | **共通** |
+| **PermissionRequest** | なし | サポート（0.148.0+） | Codex 固有 |
+| **Notification 等の UI 系** | サポート | なし | Claude 固有 |
+| **ハンドラ: Command** | サポート | サポート | **共通**。Codex は `commandWindows` で OS 分岐可 |
+| **ハンドラ: mcp_tool** | なし | サポート（0.148.0+） | Codex 固有。Claude は command / Agent で代替 |
+| **ハンドラ: HTTP** | サポート | なし | Claude 固有。Codex は `mcp_tool` または command + `curl` |
+| **ハンドラ: Prompt / Agent** | サポート | 設定は受理されるが未実装 | Claude 固有 |
+| **非同期実行** | なし（同期のみ） | `async = true`（0.148.0+） | Codex 固有。起動元操作を制御できないためガード用途は不可 |
+| **ブロッキング制御** | 終了コード 2 でブロック | 終了コード 2 でブロック | **共通** |
+| **Managed 限定化** | `allowManagedHooksOnly` | `requirements.toml` の `allow_managed_hooks_only` | **共通**。Codex は `config.toml` では効かない |
 
 ### 9.1 Hooks の抽象化方針
 
 Hooks は Claude が先行し Codex が部分的に追随した領域。harness-harness の抽象化では:
 
-1. **共通イベント活用**: `SessionStart`, `Stop`, `UserPromptSubmit` の 3 イベントは両プラットフォームで利用可能。抽象スキーマから各形式（JSON / TOML）に変換する
-2. **ラッパースクリプト併用**: Codex で対応していないイベント（`PreToolUse` 等）が必要な場合は、引き続きラッパースクリプトで補完する
+1. **共通イベント活用**: `SessionStart` / `SessionEnd` / `Stop` / `UserPromptSubmit` / `PreToolUse` / `PostToolUse` / `PreCompact` / `SubagentStop` の 8 イベントが両プラットフォームで利用可能。抽象スキーマから各形式（JSON / TOML）に変換する
+2. **ツール名の変換表を持つ**: `PreToolUse` / `PostToolUse` の `matcher` は両者でツール名が異なるため、抽象スキーマ側は論理名で持ち、変換時に実名へ展開する
 3. **MCP 連携パターン**: 外部通知やバリデーションは MCP サーバーとして実装し、両プラットフォームから利用
 4. **段階的移行**: Codex の Hooks が成熟するにつれ、ラッパースクリプトから Hooks ネイティブに移行する計画を持つ
 
@@ -297,7 +304,7 @@ fi
 | 権限管理 | 細粒度 | ポリシーベース | 低（抽象レベルでの統一が必要） |
 | サンドボックス | サポート | サポート | 高（3段階モデルで統一可能） |
 | セッション管理 | 包括的 | 包括的 | 高（コマンド名は異なるが機能は同等） |
-| Hooks | 包括的（17+ イベント） | 実験的（3 イベント） | 低（共通 3 イベントのみ。Claude が大幅にリード） |
+| Hooks | 包括的（17+ イベント） | 11 イベント（0.148.0+） | **高**（構造が同型。共通 8 イベント。差分は通知系と Prompt/Agent ハンドラ） |
 | サブエージェント | 正式機能 | 実験的 | 低（機能差が大きい） |
 | Skills | 包括的 | 正式サポート（stable） | 高（SKILL.md フォーマット共通、ディレクトリ名変換のみ） |
 | プロファイル | なし | サポート | なし（Codex 固有、Claude はエイリアスで代替） |
