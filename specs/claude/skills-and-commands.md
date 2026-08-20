@@ -1,6 +1,6 @@
 # Claude Code Skills & コマンド仕様書
 
-最終更新: 2026-07-13（巡回更新）
+最終更新: 2026-08-21（巡回更新）
 
 公式ドキュメント: https://code.claude.com/docs/en/skills / https://code.claude.com/docs/en/commands / https://code.claude.com/docs/en/sub-agents / https://code.claude.com/docs/en/scheduled-tasks / https://code.claude.com/docs/en/web-scheduled-tasks / https://code.claude.com/docs/en/discover-plugins
 
@@ -169,6 +169,8 @@ Claude Code に同梱されるスキル:
 
 `/` を入力して一覧表示。主要なコマンド:
 
+> **タイポ時の挙動（v2.1.236）**: 存在しないコマンド、またはそのセッションで利用できないコマンドで Enter を押しても、最も近いコマンドへのファジーマッチで勝手に実行されることはなくなり、その旨が報告される。プレフィックス入力とエイリアスは従来どおり実行される。
+
 ### 2.1 セッション管理
 
 | コマンド | 説明 |
@@ -205,7 +207,7 @@ Claude Code に同梱されるスキル:
 | `/cost` | `/usage` のトークン使用量タブを開くショートカット |
 | `/stats` | `/usage` の日次使用量・セッション履歴タブを開くショートカット |
 | `/insights` | セッション分析レポート（プロジェクト領域、操作パターン、摩擦点） |
-| `/usage-credits` | 追加使用量情報（v2.1.113 で Remote Control クライアントからも利用可能に。v2.1.144 で `/extra-usage` から改名、旧名もエイリアスとして残存。v2.1.161 で Team / Enterprise admin に再ログインを開始する代わりに組織 usage settings ページへ案内するよう修正） |
+| `/usage-credits` | 追加使用量情報（v2.1.113 で Remote Control クライアントからも利用可能に。v2.1.144 で `/extra-usage` から改名、旧名もエイリアスとして残存。v2.1.161 で Team / Enterprise admin に再ログインを開始する代わりに組織 usage settings ページへ案内するよう修正。v2.1.236 で `/usage` が Team / Enterprise メンバーにも usage-credits の消費行を表示するようになり、未消費時は 0% の行を表示） |
 | `/tui` | フリッカーフリー・フルスクリーン描画の切り替え（v2.1.110） |
 | `/focus` | フォーカスモード切替（v2.1.110。brief・focus モードは v2.1.101 で改善） |
 
@@ -254,6 +256,53 @@ Claude Code に同梱されるスキル:
 ### 2.5 MCP プロンプト
 
 MCPサーバーが公開するプロンプトは `/mcp__<server>__<prompt>` 形式でコマンドとして表示される。
+
+### 2.6 その他の組み込みコマンド
+
+2026-08-21 巡回で公式 commands リファレンスと突合し、未収載だったコマンドを補完。
+
+| コマンド | 説明 |
+|:--|:--|
+| `/goal [condition\|clear]` | ゴールを設定し、条件を満たす（または別の理由でクリアされる）までターンをまたいで作業を継続。引数なしで現在のゴールを表示。`CLAUDE_CODE_GOAL_CHECKIN_MINUTES` で停滞時の自動チェックイン間隔を制御 |
+| `/recap` | 現在のセッションの1行サマリをオンデマンド生成（離席後に自動表示されるリキャップの手動版）。v2.1.236 で 400 文字・語境界で打ち切り |
+| `/background [prompt]` | 現在のセッションをバックグラウンドエージェントとしてデタッチし端末を解放。プロンプトを渡すとデタッチ前に最後の指示を送る |
+| `/stop` | バックグラウンドセッションを停止（アタッチ中のみ表示）。トランスクリプトと worktree は保持。停止せずデタッチするには `/exit` |
+| `/advisor [model\|off]` | Advisor ツール（タスク中の要所で第2のモデルに助言を求める）の有効化 / 無効化。`fable` / `opus` / `sonnet` / 完全なモデル ID を受け付ける |
+| `/autocompact [auto\|<tokens>]` | 自動コンパクション発動のコンテキスト使用量を設定（例 `500k`、`auto` でモデル既定に戻す） |
+| `/deep-research <question>` | **バンドルワークフロー**。Web 検索を fan-out し、ソースを取得・相互検証して引用付きレポートを合成 |
+| `/run` | **バンドルスキル**。テストだけでなく実アプリを起動・操作して変更の動作を確認 |
+| `/run-skill-generator` | **バンドルスキル**。プロジェクト固有のビルド / 起動 / 操作手順をスキルとして生成し、`/run` と `/verify` に教える |
+| `/design-sync [hint]` | **バンドルスキル**。リポジトリの React デザインシステムを変換して Claude Design にアップロードし、生成デザインに実コンポーネントを使わせる |
+| `/design-login` | claude.ai アカウントで `/design-sync` のデザインシステムアクセスを認可 |
+| `/fewer-permission-prompts` | **バンドルスキル**。トランスクリプトから頻出の読み取り専用 Bash / MCP 呼び出しを抽出し、プロジェクト `.claude/settings.json` に優先度付き allowlist を追加 |
+| `/import [codex\|gemini] [--dry-run] [--yes]` | 他のコーディングエージェント（OpenAI Codex / Google Gemini CLI）の設定（指示ファイル・MCP サーバー・コマンド・サブエージェント・スキル）を Claude Code に取り込む |
+| `/statusline` | ステータスラインの設定。引数なしでシェルプロンプトから自動構成 |
+| `/keybindings` | キーボードショートカット設定ファイルを開く |
+| `/theme` | カラーテーマ変更（`auto`・light/dark・色覚多様性対応（daltonized）・ANSI テーマ等） |
+| `/scroll-speed` | マウスホイールのスクロール速度をインタラクティブ調整（フルスクリーン描画時） |
+| `/terminal-setup` | Shift+Enter 等の端末キーバインド設定（VS Code / Cursor / Alacritty / Zed 等、必要な端末でのみ表示） |
+| `/install-github-app` | リポジトリへの Claude GitHub App インストール（GitHub Actions ワークフロー・シークレット設定も任意で実施） |
+| `/install-slack-app` | Claude Slack アプリのインストール（ブラウザで OAuth フローを完了） |
+| `/setup-bedrock` | Amazon Bedrock の認証・リージョン・モデルピンをウィザードで設定（`CLAUDE_CODE_USE_BEDROCK=1` 時のみ表示） |
+| `/setup-vertex` | Google Cloud Agent Platform の認証・プロジェクト・リージョン・モデルピンをウィザードで設定（`CLAUDE_CODE_USE_VERTEX=1` 時のみ表示） |
+| `/bug [report]` | バグ報告 / 会話共有。送信履歴の範囲を選択し同意画面で確認してから送信 |
+| `/feedback [report]` | Claude Code へのプロダクトフィードバック送信（`/bug` と同じダイアログ・同意フロー） |
+| `/privacy-settings` | プライバシー設定の確認・更新（Pro / Max プランのみ） |
+| `/upgrade` | 上位プランへのアップグレードページをブラウザで開く |
+| `/passes` | Claude Code の1週間無料パスを友人に共有（対象アカウントのみ表示） |
+| `/mobile` | Claude モバイルアプリのダウンロード QR を表示。エイリアス `/ios`・`/android` |
+| `/heapdump` | JavaScript ヒープスナップショットとメモリ内訳を `~/Desktop`（Linux では home）に書き出す。メモリ使用量診断用 |
+| `/help` | ヘルプと利用可能コマンド一覧 |
+| `/radio` | Claude FM（lo-fi ラジオ）をブラウザで開く。Bedrock / Google Cloud Agent Platform / Microsoft Foundry / AWS 上の Claude Platform では利用不可 |
+| `/stickers` | Claude Code ステッカーの注文 |
+
+**削除済みコマンド**（公式リファレンスに履歴として残るもの）:
+
+| コマンド | 状態 |
+|:--|:--|
+| `/pr-comments [PR]` | v2.1.91 で削除。PR コメントの参照は Claude に直接依頼する |
+| `/vim` | v2.1.92 で削除。`/config` → Editor mode でトグルする |
+| `/ultraplan <prompt>` | 削除。プランモードを使用する（以前は Claude Code on the web セッションへ計画タスクを送っていた） |
 
 ---
 

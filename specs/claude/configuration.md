@@ -1,6 +1,6 @@
 # Claude Code 設定仕様書
 
-最終更新: 2026-08-20（巡回更新）
+最終更新: 2026-08-21（巡回更新）
 
 公式ドキュメント: https://code.claude.com/docs/en/settings / https://code.claude.com/docs/en/memory
 
@@ -149,7 +149,7 @@ CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ../shared-config
 | `deniedMcpServers` | MCPサーバー拒否リスト |
 | `statusLine` | カスタムステータスライン設定。v2.1.153 でステータスラインコマンドに `COLUMNS` / `LINES` 環境変数（端末サイズ）が渡されるようになった |
 | `fileSuggestion` | `@` ファイル補完カスタムコマンド |
-| `outputStyle` | 出力スタイル設定 |
+| `outputStyle` | 出力スタイル設定。組み込みは Default / Proactive / Explanatory / Learning に加え **Concise**（前置き・ナレーションを省き結果から書き出す。作業の徹底度は変えない。v2.1.237 追加）。`/config` の Output style 行から選択すると `.claude/settings.local.json` に保存される |
 | `agent` | メインスレッドをサブエージェントとして実行 |
 | `language` | 応答言語設定 |
 | `sandbox.*` | サンドボックス設定 |
@@ -231,6 +231,7 @@ CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ../shared-config
 | `axScreenReader` | スクリーンリーダー向けプレーンテキスト描画にオプトイン。`claude --ax-screen-reader` / `CLAUDE_AX_SCREEN_READER=1` でも可（v2.1.208） |
 | `vimInsertModeRemaps` | vim モードのインサートモードで `jj` → Escape のような 2 キーシーケンスをマップ（v2.1.208） |
 | `sandbox.filesystem.disabled` | ファイルシステム分離のみスキップし、ネットワーク egress 制御は維持（v2.1.216） |
+| `sandbox.filesystem.denyRead` | 読み取り拒否パス。ワイルドカードは全プラットフォームで有効（Linux/WSL2 では実パスに展開）。**v2.1.236（macOS）**: `**/.env` のようなワイルドカード read-deny が許可済み read 領域の内部でも優先され、マッチしたディレクトリ配下も対象に含まれ、拒否対象ファイルのリネームによる回避もできなくなった |
 | `crossSessionInbound` | セッション間メッセージ（`SendMessage`）の受信を制御（v2.1.224）。`accept`（配送） / `hold`（通知のみ・未配送、後で `accept` が適用されれば解放） / `refuse`（黙って破棄）。`/config` の「Messages from your other sessions」行からも設定可（v2.1.232、書き込み先は user 設定。`/config crossSessionInbound=value` ショートハンドは拒否される）。**未設定時は送受信両セッションの権限モードクラスから自動判定**（bypassPermissions 系 vs プロンプト系。詳細は agent-teams.md 参照） |
 | `dialogExpiry` | セッション間メッセージのダイアログ有効期限を設定（v2.1.224）。v2.1.232 で `/config` に「Dialog expiry」「Messages from your other sessions」の行が追加され GUI から設定可能に |
 | `extraKnownMarketplaces` | 既知プラグインマーケットプレースの追加登録。v2.1.232 で `additionalMarketplaces` が別名として受理される |
@@ -404,6 +405,7 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 |:--|:--|
 | `ANTHROPIC_API_KEY` | APIキー |
 | `ANTHROPIC_MODEL` | モデル指定 |
+| `ANTHROPIC_DEFAULT_MODEL` | 新規セッションが開始するモデルの既定値（v2.1.236）。`--model` / `ANTHROPIC_MODEL` / 設定ファイルの `model`（`/model` の保存選択を含む） / 組織既定モデルのいずれも無い場合のみ適用。`/model` の保存選択は次回以降も本変数より優先（`ANTHROPIC_MODEL` は毎回変数側に戻る点が異なる）。`default` / `inherit` / `opusplan` / `haiku` 指定時、`enforceAvailableModels` 有効時、`availableModels`・組織制限で除外される場合、アカウント未提供の場合は無視される。`/model` ピッカーの Default 行に「Set by ANTHROPIC_DEFAULT_MODEL」と表示 |
 | `CLAUDE_CODE_USE_BEDROCK` | Amazon Bedrock使用 |
 | `CLAUDE_CODE_USE_VERTEX` | Google Vertex AI使用 |
 | `CLAUDE_CODE_DISABLE_AUTO_MEMORY` | オートメモリ無効化 |
@@ -477,7 +479,7 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 | `CLAUDE_CODE_MESSAGING_SOCKET` | Claude Code が各セッションの受信箱 Unix ドメインソケットのパスを hooks / Bash コマンドに自動エクスポート。`SessionStart` を含む全 hook より前に設定される（機能フラグ取得前に起動したセッションでは取得完了後に設定されるため、それ以前に起動したプロセスでは未設定）。各セッションは自身のソケットのみをエクスポートし、親セッションから継承しない |
 | `CLAUDE_CODE_MESSAGING_TOKEN` | 上記ソケットへ投函するスクリプト用のセッション単位トークン。接続の最初の行に `{"type":"auth","token":"<token>"}` を送ることで「自セッションの子プロセスからの投函」として検証される（macOS でプロセス終了後、および Claude Code が PID 1 のコンテナでは、プロセス証跡が取れないためこのトークンが唯一の検証手段） |
 | `CLAUDE_CODE_TOOL_MEMORY_LIMIT` | （Linux、オプトイン）Bash ツールコマンドに memory cgroup を適用し、暴走ビルドによるセッション停止を防ぐ（v2.1.233） |
-| `CLAUDE_CODE_GOAL_CHECKIN_MINUTES` | `/goal` 実行中、バックグラウンド作業がゴール評価を待たせ続けたときに Claude へ状況確認を促すまでの分数（デフォルト `30`、`0` で無効、最大 `10080`＝1週間。プレーンな整数以外は未設定扱い）。Claude Code は実行中タスクを列挙し、出力の確認・進捗中なら待機継続・停滞中なら修正か停止を依頼する（v2.1.234） |
+| `CLAUDE_CODE_GOAL_CHECKIN_MINUTES` | `/goal` 実行中、バックグラウンド作業がゴール評価を待たせ続けたときに Claude へ状況確認を促すまでの分数（デフォルト `30`、`0` で無効、最大 `10080`＝1週間。プレーンな整数以外は未設定扱い）。Claude Code は実行中タスクを列挙し、出力の確認・進捗中なら待機継続・停滞中なら修正か停止を依頼する（v2.1.234）。v2.1.236 でアイドルセッションのゴールがバックグラウンド作業の背後で停滞している場合、ユーザーの復帰を待たず 30 分後（以降 1h・2h）に自動チェックインするよう拡張 |
 | `CLAUDE_CODE_PROJECT_DIR_NAME` | セッションごとに独自の config ディレクトリを与えるホスト向けに、プロジェクト単位のトランスクリプトディレクトリ名を短い名前で指定（v2.1.234。changelog 記載、公式 env-vars リファレンス未収載） |
 | `CLAUDE_CODE_WEBFETCH_CACHE_TTL_MS` | WebFetch のセッション内 URL キャッシュ TTL を設定（デフォルトは従来通り 15 分）（v2.1.233） |
 | `CLAUDE_CODE_ENABLE_TODO_TOOLS` | `1` で Todo / タスク追跡ツール（`TaskCreate` / `TaskGet` / `TaskUpdate` / `TaskList` / `TodoWrite`）を復活させる。**v2.1.233 で Opus 4.8 / Sonnet 5 / Fable 5 / Mythos 5 以降のモデルでは既定で提供されなくなった**ため、これらに依存するハーネスは明示設定が必要 |

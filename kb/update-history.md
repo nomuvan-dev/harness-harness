@@ -1,5 +1,37 @@
 # harness-harness 更新履歴
 
+## 2026-08-21 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code v2.1.236（2026-08-19）/ v2.1.237（2026-08-20）を収載。**
+
+v2.1.236 でハーネス設計に効く追加は 3 点。
+
+- **`ANTHROPIC_DEFAULT_MODEL`**: 新規セッションの既定モデルを指定する環境変数。既存の `ANTHROPIC_MODEL` との違いは「`/model` で保存した選択が本変数より優先され続ける」点で、`ANTHROPIC_MODEL` は起動のたびに変数側へ引き戻す。**組織や個人の既定を決めつつユーザーの上書きを尊重したい場合はこちら**を使う。`enforceAvailableModels` 有効時や `availableModels` で除外されるモデル、`default` / `inherit` / `opusplan` / `haiku` 指定時は無視される
+- **`SendMessage` の `notify_when_idle`**: 同一マシン上の他セッションに「次にアイドルになったら一度だけ通知して」と頼めるワンショット通知（macOS / Linux）。**セッション間協調でポーリングループを書く必要がなくなる**ため、並列 worktree 運用と相性が良い
+- **サンドボックス（macOS）のワイルドカード read-deny 強化**: `**/.env` 形式の deny が許可済み read 領域の内部でも優先され、ディレクトリ配下も対象になり、リネーム回避も塞がれた。**シークレット保護を allow の広さに関係なく効かせられる**ようになったので、`sandbox.filesystem.denyRead` にワイルドカードでシークレットを列挙する運用が現実的になった
+
+運用面では、auto モード中は `Monitor` の allow ルールが一時無効化され Bash と同じ基準で審査されるようになった（**`Monitor` を allowlist に入れたハーネスは auto モードでの挙動が変わる**）。またスラッシュコマンドのタイポが最近似コマンドへファジーマッチせず報告のみになり、`/goal` は停滞時 30 分（以降 1h・2h）で自動チェックインするようになった。
+
+v2.1.237 は組み込み出力スタイル **Concise** の追加が中心。前置き・ナレーションを省いて結果から書き出すスタイルで、作業の徹底度は変えない。`outputStyle` キーで指定できるため、**ハーネステンプレートで既定の応答スタイルを選べる選択肢が 1 つ増えた**（Default / Proactive / Explanatory / Learning / Concise）。公式 output-styles ページはまだ Concise 未記載で、changelog が唯一の一次情報。
+
+**突合で発見した specs の網羅性ギャップを補完。** 公式 commands リファレンス（106 コマンド）と `specs/claude/skills-and-commands.md` を機械的に突合したところ、**35 コマンドが未収載**だった（`/goal`, `/recap`, `/background`, `/stop`, `/advisor`, `/autocompact`, `/deep-research`, `/run`, `/run-skill-generator`, `/design-sync`, `/fewer-permission-prompts`, `/import` 等）。「機能ラインナップは省略せず網羅的に保持」という設計原則に反する状態だったため、§2.6 として一括収載し、削除済みの `/pr-comments`（v2.1.91）・`/vim`（v2.1.92）・`/ultraplan` も履歴として明記した。
+
+**Codex CLI は安定版更新なし。** `rust-v0.148.0`（2026-08-18）のまま。`rust-v0.149.0-alpha.1`〜`alpha.4`（2026-08-19〜20）はプレリリースのため specs 未反映。公式 changelog 側では 2026-08-19 に **GitLab support in Codex cloud（Beta）**、2026-08-20 に Apple Messages プラグインとローカル Codex スレッドの読み取り専用共有スナップショットが追加されたが、いずれもクラウド / デスクトップ領域で CLI 仕様への影響はない。
+
+**スキルエコシステム巡回（Phase 3.5）はスキップ。** `kb/skills/_index.md` の `last_patrol` が 2026-08-18 で 7 日以内。
+
+### 更新ファイル
+
+- `specs/claude/changelog.md` — v2.1.236 / v2.1.237 を追加
+- `specs/claude/configuration.md` — `ANTHROPIC_DEFAULT_MODEL`、`outputStyle` の Concise、`sandbox.filesystem.denyRead`、`CLAUDE_CODE_GOAL_CHECKIN_MINUTES` のチェックイン段階化
+- `specs/claude/agent-teams.md` — `notify_when_idle`、過大メッセージ / バーストの事前拒否
+- `specs/claude/skills-and-commands.md` — §2.6 その他の組み込みコマンド（35 件）と削除済みコマンド表、`/usage` の usage-credits 行、タイポ時のファジーマッチ廃止
+- `kb/update-history.md` — 本エントリ
+
+---
+
 ## 2026-08-20 — 公式ドキュメント巡回
 
 ### 検出・更新
