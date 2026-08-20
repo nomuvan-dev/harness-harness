@@ -306,6 +306,7 @@ Codex にはオートメモリがないため、以下のアプローチで代�
 |:--|:--|:--|
 | `ANTHROPIC_API_KEY` | `OPENAI_API_KEY` | プロバイダーが異なる |
 | `ANTHROPIC_MODEL` | `--model` フラグ or `config.toml` | Codex は環境変数でのモデル指定なし |
+| `ANTHROPIC_DEFAULT_MODEL` | `config.toml` の `model` | Claude 側は「ユーザーの `/model` 選択を上書きしない既定値」（v2.1.236）。Codex には同等の階層がなく `config.toml` の `model` が最も近い（`--model` フラグで都度上書き） |
 | `CLAUDE_CODE_USE_BEDROCK` | `model_provider` 設定 | Codex は `model_provider` で統一管理 |
 | `CLAUDE_CODE_DISABLE_AUTO_MEMORY` | **対応なし** | Codex にメモリなし |
 | `MCP_TIMEOUT` | `startup_timeout_sec` / `tool_timeout_sec` | Codex は TOML 設定で個別制御 |
