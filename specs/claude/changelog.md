@@ -3,7 +3,22 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-08-21
+最終更新: 2026-08-22
+
+---
+
+## v2.1.238 (2026-08-20)
+
+- **`keybindingFlavor` 設定追加**: `"readline"` を指定するとプロンプト内の Ctrl+W が Bash と同様に「直前の空白まで削除」になる。既定の `"classic"` は従来動作のまま
+- **プラグインマーケットプレースの `headersHelper`**: url マーケットプレース定義またはカタログエントリに `headersHelper` を指定すると、カタログ取得および同一オリジンのアーカイブ取得用の HTTP ヘッダ（短命トークン等）をコマンドで動的に生成できる
+  - カタログエントリの `headersHelper` は当該プラグインの install / update 時のみ実行され、実行前にコマンド内容が表示される。`claude plugin install/update` は `[y/N]` で確認する（`-y` で省略可）
+- **`claude self-hosted-runner --defer-shutdown-max-min <minutes>`**: SIGTERM 受信後もアタッチ中セッションを指定分数まで処理し続け、残りを park してから終了する
+- **`claude self-hosted-runner --proxy-authorization-command` / `--proxy-authorization-file`**: 接続ごとに新しい `Proxy-Authorization` ヘッダを要求する egress プロキシに対応
+- 修正: 長時間の対話セッションでのメモリ増加（サブエージェントのツール結果を表示ウィンドウ外に出た時点で解放）
+- 修正: カスタム / プロジェクト / プラグインの output style がセッション途中で既定の語り口に戻る問題
+- 修正: worktree 隔離の Bash 拒否メッセージが、リダイレクトの無いコマンドに対して「リダイレクトを外せ」と表示する問題
+- 修正: stdio MCP サーバーが `initialize` 前に `server/discover` を受け取り、遅延起動サーバーがセッション開始のたびにバックエンドを起動していた問題
+- 修正: Remote Control 関連の多数の不具合（ミッドターン送信メッセージの消失、モデル選択の未反映、ネットワーク瞬断での「login expired」切断、`claude remote-control` 実行セッションでの `ListAgents`/`SendMessage` の「未接続」誤報 ほか）
 
 ---
 

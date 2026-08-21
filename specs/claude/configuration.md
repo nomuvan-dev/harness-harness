@@ -214,6 +214,8 @@ CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ../shared-config
 | `parentSettingsBehavior` | （Managed のみ、admin tier）SDK `managedSettings`（parent tier）をポリシーマージに含めるか（`first-wins` / `merge`）。v2.1.133 |
 | `allowAllClaudeAiMcps` | （Managed のみ、Enterprise）`managed-mcp.json` と並んで claude.ai クラウド MCP コネクタを一括ロード（v2.1.149） |
 | `pluginSuggestionMarketplaces` | （Managed のみ）コンテキストアウェア tips 経由で suggest 対象とする組織マーケットプレースを allowlist 化（v2.1.152） |
+| `keybindingFlavor` | プロンプト入力のキーバインド流儀。`"readline"` で Ctrl+W が Bash 同様に「直前の空白まで削除」になる。既定は `"classic"`（従来動作）。v2.1.238 |
+| `<marketplace>.headersHelper` | url マーケットプレース定義またはカタログエントリに指定すると、カタログ取得・同一オリジンのアーカイブ取得用 HTTP ヘッダ（短命トークン等）をコマンドで動的生成する。カタログエントリ側の `headersHelper` は当該プラグインの install / update 時のみ実行され、実行前にコマンド内容が表示され `[y/N]` 確認が入る（`-y` で省略）。v2.1.238 |
 | `<marketplace>.skipLfs` | プラグインマーケットプレース定義（`github` / `git` ソース）に `skipLfs: true` を指定すると Git LFS ダウンロードをスキップ（v2.1.153） |
 | `archive` プラグインソース | HTTPS 経由の zip からプラグインをインストールするソースタイプ（v2.1.224）。任意で SHA-256 ハッシュピン止めによる完全性検証に対応。`owner/*` 形式のオーナーワイルドカードをマーケットプレース managed settings に指定可（v2.1.223） |
 | `<plugin>.defaultEnabled` | プラグインの `plugin.json` またはマーケットプレースエントリで `defaultEnabled: false` を指定するとインストール後デフォルト無効。`/plugin` または `claude plugin enable` で有効化。依存関係は引き続き自動有効化（v2.1.154） |
@@ -257,6 +259,8 @@ Team / Enterprise 向けに、クラウドセッションを自社ホスト上�
 
 - `--confine-repo-settings <warn|enforce|off>`（既定 `warn`）: リポジトリにコミットされた `settings.json` がセッション自身のワークスペース外への読み書き付与・環境変数設定・オペレータの sandbox/hooks ポスチャ上書き（例 `sandbox.enabled: false`、`disableAllHooks`）を試みた場合にフラグ立て。`enforce` で拒否
 - `--trust-workspace [bool]`（既定 on）: リポジトリコミット済みの `permissions.allow` / `additionalDirectories` を信頼するか。`false` でリポジトリ由来の権限付与を破棄しホスト側 `settings.json` の allow ルールを使用（`sandbox.*` は常に適用され `--confine-repo-settings` の走査対象）
+- `--defer-shutdown-max-min <minutes>`（v2.1.238）: SIGTERM 受信後もアタッチ中のセッションを指定分数まで処理し続け、残ったものを park してから終了する（ローリング更新時のセッション断を緩和）
+- `--proxy-authorization-command` / `--proxy-authorization-file`（v2.1.238）: 接続ごとに新規発行の `Proxy-Authorization` ヘッダを要求する egress プロキシに対応
 - 追加サブコマンド `self-hosted-runner orchestrator`（オンデマンド runner の自動起動）、環境変数は `SELF_HOSTED_RUNNER_*` / `CLAUDE_RUNNER_*` 系
 
 ### 2.4 `~/.claude.json` のグローバル設定

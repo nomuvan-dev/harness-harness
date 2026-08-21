@@ -68,6 +68,9 @@
 | コマンド | 構文 | 説明 |
 |----------|------|------|
 | `/agent` | `/agent` | アクティブなエージェントスレッドを切り替え（サブエージェント検査） |
+| `/cd` | `/cd <PATH>` | TUI セッションの作業ディレクトリを変更（0.149.0+） |
+| `/pwd` | `/pwd` | 現在の作業ディレクトリを表示（0.149.0+） |
+| `/cwd` | `/cwd` | 作業ディレクトリの管理（0.149.0+） |
 | `/apps` | `/apps` | アプリ（コネクタ）を閲覧しプロンプトに挿入 |
 | `/init` | `/init` | カレントディレクトリに AGENTS.md の雛形を生成 |
 | `/feedback` | `/feedback` | ログと診断情報をメンテナーに送信 |
@@ -247,8 +250,10 @@ max_bytes = 1048576        # 最大サイズ（超過時は自動コンパクシ
 | `codex apply <TASK_ID>` | Codex Cloud タスクの差分を適用 |
 | `codex execpolicy check` | ポリシー評価（プレビュー機能） |
 | `codex update` | CLI 自身を最新版にアップグレード（0.128.0+） |
-| `codex doctor` | runtime / auth / terminal / network / config / ローカル状態を横断する診断（0.131.0+）。0.135.0 で環境・Git・ターミナル・app-server・thread inventory のリッチ診断を追加 |
+| `codex doctor` | runtime / auth / terminal / network / config / ローカル状態を横断する診断（0.131.0+）。0.135.0 で環境・Git・ターミナル・app-server・thread inventory のリッチ診断を追加。0.149.0 でエンドポイント保護・ネットワーク/プロキシ障害・デスクトップアプリ状態・アップデート接続性・Windows サンドボックスの診断を追加 |
 | `codex remote-control` | リモート制御可能な app-server を起動（0.130.0+）。0.131.0 で daemon ライフサイクル管理・ランタイム enable/disable API・registry-backed 環境を追加 |
+| `codex agents` | タスクの検索・開始・オープン・リネーム・停止を行う対話的エージェントダッシュボード（0.149.0+）。ショートカットは設定可能。TUI の agents overview からも到達できる |
+| `codex queue` | 既存のローカル / リモートセッションへメッセージを送り込む（0.149.0+）。アイドルセッションを確実に起こす。セッション名が重複する場合は最新のものを優先 |
 | `codex plugin marketplace ...` | プラグインマーケットプレース操作 CLI（0.131.0+）。share / share checkout / version 対応。0.147.0 でポータブル Agent Plugins のインストールと local / personal / workspace / remote カタログ横断検索に対応 |
 
 > 公式ドキュメント: [CLI Reference](https://developers.openai.com/codex/cli/reference) / [CLI Features](https://developers.openai.com/codex/cli/features)
