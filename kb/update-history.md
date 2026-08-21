@@ -1,5 +1,46 @@
 # harness-harness 更新履歴
 
+## 2026-08-22 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code v2.1.238（2026-08-20）と Codex CLI 安定版 0.149.0（2026-08-20）を収載。**
+
+Claude Code v2.1.238 でハーネス設計に効く追加は 2 点。
+
+- **`keybindingFlavor`**: `"readline"` で Ctrl+W が Bash 同様「直前の空白まで削除」になる。既定 `"classic"` は従来動作。テンプレートの既定は変更せず、ユーザー好みの設定項目として configuration.md に収載
+- **プラグインマーケットプレースの `headersHelper`**: url マーケットプレース／カタログエントリで、カタログ・同一オリジンアーカイブ取得用の HTTP ヘッダをコマンドで動的生成できる。カタログエントリ側は install / update 時のみ実行され、実行前にコマンドが表示され `[y/N]` 確認が入る。社内マーケットプレースを短命トークンで保護する構成が組めるようになった
+
+加えて `claude self-hosted-runner` に `--defer-shutdown-max-min`（SIGTERM 後もアタッチ中セッションを指定分数まで処理）と `--proxy-authorization-command` / `--proxy-authorization-file`（接続ごとに新規発行の `Proxy-Authorization` を要する egress プロキシ対応）が追加された。
+
+**`/goal` のクリア条件を specs に明文化。** llms.txt の説明文変更を追って `goal.md` を突合したところ、specs 未収載の挙動が判明した。ゴールは①条件達成、②評価モデルが達成不能と判断、③**ユーザーが直さない限り解消しないエラー**でのターン失敗、④`/goal clear` でクリアされる。③に該当するのは認証失敗（Claude Code 自身が認証情報を管理している場合のみ。Desktop / VS Code 拡張 / クラウドセッションはホストが復旧するためゴール維持）・クレジット枯渇・auto-compaction でも解消できないコンテキストあふれ・利用不可モデルの 4 種のみで、レート制限やサーバー過負荷ではクリアされない。`/goal` を長時間の自律ループに使うハーネスでは、この 4 条件が実質的な停止点になるため skills-and-commands.md に収載した。
+
+**Codex CLI 0.149.0（安定版）。** 前回巡回時は alpha のみだったが安定版が出た。
+
+- **`codex agents`**: タスクの検索・開始・オープン・リネーム・停止を行う対話的ダッシュボード。ショートカット設定可
+- **`codex queue`**: 既存のローカル / リモートセッションへメッセージを送り込む。アイドルセッションを確実に起こし、名前重複時は最新セッションを優先。Claude Code の `SendMessage`／セッション間メッセージングに相当する機能が Codex 側にも揃った
+- TUI に `/cd`・`/pwd`・`/cwd`、Vim 編集に文字置換と `cw` / `c$` / `cc`
+- `codex doctor` がエンドポイント保護・ネットワーク/プロキシ障害・デスクトップアプリ状態・アップデート接続性・Windows サンドボックスまで診断
+- SDK から CLI config オーバーライドをそのまま渡せるようになり、推論努力度 `max` / `ultra` を選択可能に。スキルカタログのトークンバジェットも設定可能化
+- 修正: resume / fork したスレッドが現在の既定へ暗黙にフォールバックせず、元のアクティブな権限プロファイルを復元するようになった（権限プロファイル前提のハーネスでは挙動が変わる）
+
+### 更新ファイル
+
+- `specs/claude/changelog.md` — v2.1.238 追加
+- `specs/claude/configuration.md` — `keybindingFlavor`、`<marketplace>.headersHelper`、self-hosted-runner の新フラグ 2 件
+- `specs/claude/skills-and-commands.md` — `/goal` のクリア条件を明文化
+- `specs/codex/changelog.md` — 0.149.0 追加
+- `specs/codex/commands.md` — `codex agents` / `codex queue` / `/cd` / `/pwd` / `/cwd`、`codex doctor` の診断拡張
+- `specs/codex/configuration.md` — `model_reasoning_effort` の `max` / `ultra`、SDK config オーバーライド、スキルカタログのトークンバジェット
+
+### 更新なし
+
+- スキルエコシステム巡回（Phase 3.5）は `kb/skills/_index.md` の `last_patrol: 2026-08-18` が 7 日以内のためスキップ
+- llms.txt の差分は大半がページ説明文のリライトと `whats-new` 週次ページ（w30 / w32）の遡及追加で、specs 影響なし
+- Codex の 0.150.0-alpha 系はプレリリースのため specs 未反映
+
+---
+
 ## 2026-08-21 — 公式ドキュメント巡回
 
 ### 検出・更新

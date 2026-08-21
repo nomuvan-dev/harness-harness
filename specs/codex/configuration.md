@@ -38,7 +38,7 @@ Codex CLI の設定は TOML 形式で管理される。複数レベルの設定�
 | `personality` | string | `"friendly"` | 応答スタイル（`none` / `friendly` / `pragmatic`） |
 | `service_tier` | string | - | パフォーマンス層（`flex` / `fast`） |
 | `web_search` | string | `"cached"` | Web 検索動作（`disabled` / `cached` / `live`） |
-| `model_reasoning_effort` | string | `"high"` | 推論レベル（`minimal` 〜 `xhigh`） |
+| `model_reasoning_effort` | string | `"high"` | 推論レベル（`minimal` 〜 `xhigh`。上位に `max` / `ultra` あり。0.149.0 で SDK からも `max` / `ultra` を選択可能に） |
 | `model_reasoning_summary` | string | `"auto"` | 推論サマリー（`auto` / `concise` / `detailed` / `none`） |
 | `log_dir` | string | - | ログ出力先ディレクトリ |
 | `model_context_window` | integer | - | 利用可能なコンテキストトークン数 |
@@ -134,6 +134,8 @@ sandbox = "elevated"       # "elevated"（推奨、管理者権限必要） / "u
 - **MCP 対話型認証の標準化（0.144.0）**: MCP ツールが実験的オプトインなしに対話的な認証を要求可能
 - **認証情報の暗号化ローカル保存（0.140.0）**: CLI / MCP OAuth 認証情報の暗号化保存、managed Amazon Bedrock APIキー認証
 - **Ultra reasoning 選択時の警告（0.144.0）**: multi-agent 並列度が高い場合に使用量急増を警告
+- **SDK の config オーバーライド（0.149.0）**: SDK から CLI の config オーバーライドをそのまま渡せるようになり、推論努力度 `max` / `ultra` も選択可能
+- **スキルカタログのトークンバジェット（0.149.0）**: スキル一覧がコンテキストを圧迫しないよう、カタログのトークンバジェットを設定可能
 
 > 公式ドキュメント: [Config Basics](https://developers.openai.com/codex/config-basic) / [Config Reference](https://developers.openai.com/codex/config-reference) / [Sample Config](https://developers.openai.com/codex/config-sample)
 
