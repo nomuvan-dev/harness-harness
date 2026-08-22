@@ -1,8 +1,10 @@
 # Claude Code 設定仕様書
 
-最終更新: 2026-08-21（巡回更新）
+最終更新: 2026-08-23（巡回更新）
 
 公式ドキュメント: https://code.claude.com/docs/en/settings / https://code.claude.com/docs/en/memory
+
+> **2026-08-22 の公式ドキュメント再編**: `settings.md` が「設定の変え方・スコープの選び方・値の解決順」を扱うガイドに絞られ、全キーの網羅リファレンスが [`settings-reference.md`](https://code.claude.com/docs/en/settings-reference)、貼り付け用サンプルが [`settings-example.md`](https://code.claude.com/docs/en/settings-example)、組織配布手順が [`managed-settings.md`](https://code.claude.com/docs/en/managed-settings) に分離された。以後キーの網羅性は `settings-reference.md` を正とする（本仕様書はその 210 キーを突合済み）。
 
 ---
 
@@ -239,6 +241,49 @@ CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ../shared-config
 | `extraKnownMarketplaces` | 既知プラグインマーケットプレースの追加登録。v2.1.232 で `additionalMarketplaces` が別名として受理される |
 | `sandbox.ripgrep` | サンドボックスが使う ripgrep バイナリの指定。v2.1.232 で user / managed / `--settings` 由来のみ有効化（プロジェクト設定からの上書き不可）。サーバー管理設定からの上書きは承認必須 |
 | `isolatePeerMachines` | `true` でマシン外のセッションへの `SendMessage` 送信前にユーザー承認を必須化。`bypassPermissions` モードでも承認を求める。**いずれかのスコープの `true` が優先**されるため、コミット済みプロジェクト設定で有効化はできても無効化はできない。同一マシン内のメッセージには適用されない |
+| `claudeMd` | （Managed のみ）別ファイルを配布せずに CLAUDE.md 相当の指示を組織管理メモリとして注入する。文字列（Markdown、改行は `\n`）で書き、user / project の CLAUDE.md より先に読み込まれる |
+| `claudeMdExcludes` | メモリ読み込み時にスキップする CLAUDE.md のパターン配列（glob または絶対パス。**絶対ファイルパスに対してマッチ**）。大規模モノレポで他チームの CLAUDE.md を除外する用途 |
+| `verbose` | トランスクリプトでツール呼び出しの入出力を常に全文表示する（既定 `false` = 要約表示 + `Ctrl+O` で展開）。フック・MCP サーバー・長いシェルコマンドのデバッグ向け。`/config` の **Verbose output**。`--verbose` がセッション単位で優先。`viewMode` を設定するとこのキーは上書きされる |
+| `voice` | 音声ディクテーションの有効化と入力キーの挙動。`enabled`（Boolean）/ `autoSubmit`（Boolean、hold モードのみ）/ `mode`（`"hold"` = 押している間だけ録音、`"tap"` = 1 回目で録音開始・2 回目で送信）。`/voice` が自動で書き込む。`enabled: true` で `mode` 未指定なら `"hold"` |
+| `fastMode` | 利用可能なセッションで Fast モードを有効化（トークン単価は上がるが応答が速い。反復開発・ライブデバッグ向け）。`/fast` が `~/.claude/settings.json` に `fastMode: true` を書き込み、再度実行すると削除する。**Opus 5 / Opus 4.8 でのみ動作**し、他モデルから ON にすると Opus に切り替わり、非対応モデルに切り替えると OFF になる。`CLAUDE_CODE_DISABLE_FAST_MODE` が優先 |
+| `theme` | インターフェースの配色テーマ。`/config` の **Theme**。既定 `"dark"`。旧版が `~/.claude.json` に残した値は、どの settings ファイルも指定していない場合に適用される |
+| `tui` | 端末 UI レンダラの選択。`"fullscreen"` = 代替画面バッファのちらつきのないレンダラ（仮想スクロールバック付き）、`"default"` = 従来のメイン画面レンダラ。`/tui fullscreen` / `/tui default` が書き込む。未設定時は Claude Code が自動選択。`CLAUDE_CODE_NO_FLICKER` / `CLAUDE_CODE_DISABLE_ALTERNATE_SCREEN` がセッション単位で優先 |
+| `viewMode` | 起動時のトランスクリプト表示（`"default"` / `"verbose"` / `"focus"`）。設定すると `/focus` の記憶と `verbose` 設定の両方を上書きする。`--verbose` がセッション単位で優先 |
+| `autoScrollEnabled` | フルスクリーンレンダリングで新規出力を追って最下部へ自動スクロール（既定 `true`）。`false` にするとスクロール位置を保持したまま作業が進む（権限プロンプトは引き続き視野に入る） |
+| `syntaxHighlightingDisabled` | 端末に表示する diff・コードブロック・ファイルプレビューの言語別シンタックスハイライトを無効化しプレーンテキスト表示にする（既定 `false`）。組み込みハイライタのみを使用し、プラグインや LSP は関与しない |
+| `awaySummaryEnabled` | 数分離席して端末に戻った際の 1 行セッションリキャップ表示。`/config` の **Session recap**。未設定時は有効。`CLAUDE_CODE_ENABLE_AWAY_SUMMARY` がセッション単位で双方向に優先 |
+| `terminalTitleFromRename` | 端末タブのタイトルに `/rename` / `--name` で付けたセッション名を使うか（既定 `true`）。`false` にすると命名後も自動生成タイトルを表示し続ける。名前自体は有効なままで `/resume <name>` から引ける |
+| `externalEditorContext` | `Ctrl+G` で外部エディタを開く際、直前の Claude の応答を `#` コメント行としてバッファ冒頭に入れる（既定 `false`。保存時に自動除去）。`/config` の **Show last response in external editor**。スコープは `~/.claude.json`（Global config） |
+| `diffTool` | VS Code / JetBrains 接続時に `Edit` / `Write` の差分をどこに出すか。`"auto"` = IDE の diff ビューア、`"terminal"` = 端末内（既定 `"auto"`）。スコープは Global config。IDE 接続中のみ `/config` の **Diff tool** に出現 |
+| `permissionExplainerEnabled` | Bash / PowerShell の権限プロンプトで `Ctrl+E` を押すとモデルがコマンド解説（何をするか・なぜ実行するか・何が起きうるか、**Low/Med/High risk** ラベル付き）を生成する機能（既定 `true`）。押した時だけモデルに問い合わせ、表示してもコマンドは実行されない。スコープは Global config |
+| `switchModelsOnFlag` | 安全性分類器がリクエストをフラグした際の挙動。`true`（既定）= フォールバックモデルへ自動切替して継続、`false` = 対話セッションでは一時停止して切替か編集かを選ばせる（`-p` などダイアログを出せない場合はエラー終了）。`/config` の **Switch models when a message is flagged** |
+| `enableWorkflows` | 動的ワークフローをユーザー単位で ON/OFF（プランの既定と違う挙動にしたい場合）。`/config` の **Dynamic workflows** がユーザー設定に書き込み、既定へ戻すとキーを削除する。未設定時は Pro プランのみ無効・その他は有効。組織全体で止める場合は `disableWorkflows`（Managed）を使う。`CLAUDE_CODE_DISABLE_WORKFLOWS` が優先 |
+| `enabledPlugins` | プラグインの個別有効/無効。キーは `plugin-name@marketplace-name`、値は Boolean。どのスコープにもエントリが無いプラグインは `defaultEnabled` に従う。`/plugin` や `claude plugin enable` が自動で書き込む |
+| `pluginConfigs` | プラグインの `userConfig` ダイアログで入力した**非機微**な設定値をプラグイン ID をキーに保存。`options`（オプション名 → string / number / boolean / string 配列）と任意の `mcpServers`（サーバー別ユーザー設定）を持つ。機微なオプションは macOS Keychain（非対応環境は `~/.claude/.credentials.json`）に保存される。スコープは user / managed |
+| `fileCheckpointingEnabled` | 編集前にファイルスナップショットを取り `/rewind` で復元可能にする（既定 `true`）。`/config` の **Rewind code (checkpoints)**。`CLAUDE_CODE_DISABLE_FILE_CHECKPOINTING` と「どちらかが OFF なら OFF」 |
+| `minimumVersion` | バックグラウンド自動更新と `claude update` がこのバージョン未満をインストールしないようにする。`stable` チャンネルへ切り替える際に新しい `latest` ビルドからダウングレードされるのを防ぐ。`/config` でチャンネル切替時に「現在のバージョンに留まる」を選ぶと自動で書き込まれ、`latest` に戻すと削除される。Managed に置けば組織全体の下限を user/project から下げられなくできる |
+| `preferredNotifChannel` | タスク完了・権限待ちのローカル通知方法。`/config` の **Local notifications**。既定 `"auto"`。旧版が `~/.claude.json` に残した値も読む |
+| `inputNeededNotifEnabled` | 権限プロンプト・質問待ちの際にスマートフォンへプッシュ通知（既定 `false`）。Remote Control 接続中のみ送信。`/config` の **Push when actions required** |
+| `agentPushNotifEnabled` | 長時間タスク完了時など、Claude が送る価値ありと判断した際のスマートフォンへのプッシュ通知（既定 `false`）。アカウントに同期され、Remote Control 接続中に届く。`/config` の **Push when Claude decides** |
+| `remoteControlAtStartup` | 対話セッション開始時に Remote Control へ自動接続（`/remote-control` を待たない）。未設定時は組織の admin 既定 → Claude Code の既定の順。`--remote-control` はこのキーが `false` でも 1 セッションだけ有効化する |
+| `disableRemoteControl` | Remote Control を無効化（既定 `false`）。`claude remote-control`・`--remote-control`・自動起動・セッション内トグルを全て拒否し、組織ポリシーによる無効化である旨を表示。Managed に置けば MDM でデバイス単位に強制できる |
+| `disableAgentView` | バックグラウンドエージェントとエージェントビュー（`claude agents`, `--bg`, `/background`, オンデマンドスーパーバイザ）を無効化。`CLAUDE_CODE_DISABLE_AGENT_VIEW` と「どちらかが OFF なら OFF」 |
+| `syncClaudeAiSkills` | claude.ai で有効化したスキルのダウンロードを止める。`-p`（非対話）実行かつ `CLAUDE_CODE_SYNC_SKILLS` 設定時に `~/.claude/skills/synced/` へ落ちてくるものが対象。**`false` のみ有効**で `true` は未設定と同義（同期を ON にはできない）。スコープは user / local / managed（リポジトリからは無効化できない） |
+| `disableClaudeAiConnectors` | claude.ai の MCP コネクタの取得・接続を停止（既定 `false`）。**いずれかのスコープの `true` が優先**されるため、コミット済みプロジェクト設定でリポジトリ単位のオプトアウトはできても、project の `false` で user/managed の `true` は覆せない。v2.1.182 以降。`ENABLE_CLAUDEAI_MCP_SERVERS=false` と「どちらかが OFF なら OFF」 |
+| `skipWebFetchPreflight` | WebFetch のドメイン安全性チェック（取得前にホスト名を `api.anthropic.com` へ送る）をスキップ。Bedrock / Vertex / Foundry など Anthropic 宛通信が塞がれた環境向け |
+| `skipAutoPermissionPrompt` | 自分で Auto Mode に入った際（設定やモードセレクタ経由）に一度だけ出る Auto Mode 説明の告知をスキップ。スコープは user / managed（リポジトリからは設定できない） |
+| `skipDangerousModePermissionPrompt` | `--dangerously-skip-permissions` または `defaultMode: "bypassPermissions"` で `bypassPermissions` に入る前の確認ダイアログをスキップ。一度承認するとユーザー設定に `true` が自動で書き込まれる。スコープは user / local / managed（信頼されていないリポジトリからは設定できない） |
+| `gcpAuthRefresh` | Google Cloud の Application Default Credentials が期限切れ・読み込み不能になった際に実行する自前のリフレッシュコマンド（`awsAuthRefresh` の GCP 版） |
+| `processWrapper` | （macOS / Linux、スコープ user / managed）Claude Code が起動するバックグラウンドプロセスの前段に企業ランチャーコマンドを挟む。ランチャーは自身のコマンドラインに Claude Code のものが追記された形で呼ばれるため、最後に exec する必要がある（[corporate-launcher](https://code.claude.com/docs/en/corporate-launcher) 参照）。v2.1.210 以降。`CLAUDE_CODE_PROCESS_WRAPPER` が優先 |
+| `forceLoginGatewayUrl` | （Managed のみ）`/login` の Cloud gateway 画面が接続するゲートウェイ URL を指定。画面には URL 入力欄が無く、未設定だと「IT 管理者に問い合わせ」と表示される。`forceLoginMethod` 未設定時はこのキー単独で Cloud gateway 画面が開く。`forceLoginMethod: "gateway"` はログイン方式ピッカーも消す。`claudeai` / `console` を指定した場合はそちらが優先されるため、両方を整合させて設定する |
+| `policyHelper` | （Managed のみ）起動時に managed settings を計算する実行ファイルを走らせ、その出力をそのセッションの managed settings として扱う。デバイスポスチャ・ID・リモートサービスから動的にポリシーを導出する用途。**macOS plist / Windows HKLM レジストリ / managed settings ファイルのいずれか**（最優先の managed ソース）に置かれた場合のみ実行され、サーバー管理設定・HKCU・親設定由来のものは無視される。`path` / `refreshIntervalMs` / `timeoutMs` を持つ |
+| `strictPluginOnlyCustomization` | （Managed のみ）skills / agents / hooks / MCP サーバーを user・project ソースから読み込ませず、プラグインと managed settings 由来のみに限定する。`true` で 4 種すべて、または `["skills","agents","hooks","mcp"]` の配列で個別指定。`strictKnownMarketplaces` と組み合わせるとカスタマイズのサプライチェーン全体を統制できる |
+| `disableCommandPluginSources` | （Managed のみ）マーケットプレースが宣言したコマンドをユーザーのマシンで実行してインストールする `command` プラグインソースをブロック。`true` でコマンドを実行せず、command ソースのプラグインを install/update せず、既にインストール済みのものもロードしなくなる。未設定時は `allowManagedHooksOnly` に追随する。v2.1.229 以降 |
+| `disableSideloadFlags` | （Managed のみ）`--plugin-dir` / `--plugin-url` / `--agents` / `--mcp-config` を起動時に拒否する（これらは `strictKnownMarketplaces` を単発で回避できてしまうため）。拒否されたフラグ名を挙げてエラー終了し、内部的に CLI をこれらのフラグ付きで起動する経路（現状は Desktop の Cowork ローカルセッション）にも同じチェックを適用する。クラウドセッションではサーバーが `--mcp-config` で渡した MCP サーバー（`type: "sdk"` のインプロセス以外）を落としてセッションを開始する。v2.1.193 以降 |
+| `sshConfigs` | （user / managed、Desktop アプリのみ）Desktop の環境ドロップダウンに SSH 接続を追加する。各要素は必須の `id` / `name` / `sshHost` と任意の `sshPort` / `sshIdentityFile`。managed で定義したものは managed 表示となり、ユーザーは選択のみ可能で編集・削除できない |
+| `sshHostAllowlist` | （Managed のみ、Desktop アプリのみ）Desktop の SSH セッションが接続できるホストを制限。大文字小文字を無視し、`*` は任意ホスト、`*.example.com` は `example.com` とその全サブドメイン、それ以外は `~/.ssh/config` 解決後のホスト名との完全一致。空配列で SSH セッションを無効化 |
+| `browserExternalPageTools` | （Managed のみ、Desktop アプリのみ）Desktop の Browser ペインで Claude のツールが外部ページを読んだり操作したりするのを止める（`"disabled"`、Desktop は `"disable"` も受理）。人が外部サイトを開くことは可能で、ローカル開発サーバーのプレビューに対するツール利用も継続する。CLI はこのキーを無視 |
+| `disableBrowserExternalNavigation` | （Managed のみ、Desktop アプリのみ）Desktop の Browser ペインの外部ブラウジングを人・Claude 双方に対して無効化（JSON の `true` のみ有効）。localhost の開発サーバープレビューは動作し続ける。CLI はこのキーを無視 |
 
 > 補足: `allowedMcpServers` / `deniedMcpServers` 述語の `${VAR}` 参照は v2.1.166 で正しくマッチするようになった。Managed settings は invalid なエントリが含まれても、v2.1.166 から残りの valid policy は enforce される（従来は silently 全無効化）。
 
