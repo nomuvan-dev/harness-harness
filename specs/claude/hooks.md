@@ -1,6 +1,6 @@
 # Claude Code Hooks 仕様書
 
-最終更新: 2026-07-13（巡回更新）
+最終更新: 2026-08-23（巡回更新）
 
 公式ドキュメント: https://code.claude.com/docs/en/hooks
 
@@ -22,10 +22,12 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 |:--|:--|:--|:--|
 | `SessionStart` | セッション開始/再開 | No | `startup`, `resume`, `clear`, `compact`, `fork`（v2.1.214: フォーク開始時は `resume` ではなく `fork` を報告） |
 | `UserPromptSubmit` | ユーザープロンプト送信後、処理前 | Yes | - |
+| `UserPromptExpansion` | ユーザーが打ったコマンドがプロンプトへ展開される時（Claude に届く前） | Yes | `command_name`（スキル名 / コマンド名）。matcher 省略で全 prompt 型コマンドに発火 |
 | `PreToolUse` | ツール実行前 | Yes | ツール名 (`Bash`, `Edit`, `Write` 等) |
 | `PermissionRequest` | 権限ダイアログ表示時 | Yes | ツール名 |
 | `PostToolUse` | ツール成功後 | No | ツール名 |
 | `PostToolUseFailure` | ツール失敗後 | No | ツール名 |
+| `PostToolBatch` | 並列ツール呼び出しのバッチ全体が解決した後、次のモデル呼び出し前 | Yes | matcher非サポート（全バッチで発火） |
 | `Stop` | Claude の応答完了時 | Yes | - |
 | `StopFailure` | APIエラー発生時 | No | `rate_limit`, `authentication_failed`, `billing_error`, `invalid_request`, `server_error`, `max_output_tokens`, `unknown` |
 | `PermissionDenied` | Auto Mode分類器が拒否した後 | No | ツール名 |
@@ -287,10 +289,12 @@ v2.1.133 以降、すべてのイベントの入力 JSON に effort level も含
 |:--|:--|
 | `SessionStart` | `source`, `model`, `agent_type`(opt) |
 | `UserPromptSubmit` | `prompt` |
+| `UserPromptExpansion` | `expansion_type` (`slash_command`/`mcp_prompt`), `command_name`, `command_args`, `command_source`, `prompt` |
 | `PreToolUse` | `tool_name`, `tool_input`, `tool_use_id` |
 | `PermissionRequest` | `tool_name`, `tool_input`, `permission_suggestions`(opt) |
 | `PostToolUse` | `tool_name`, `tool_input`, `tool_response`, `tool_use_id`, `duration_ms`（v2.1.119+。権限プロンプトと PreToolUse 時間を除いたツール実行時間） |
 | `PostToolUseFailure` | `tool_name`, `tool_input`, `tool_use_id`, `error`, `is_interrupt`, `duration_ms`（v2.1.119+） |
+| `PostToolBatch` | `tool_calls`（各要素は `tool_name`, `tool_input`, `tool_use_id`, `tool_response`）。`tool_response` は `PostToolUse` と形が異なりモデルが見る `tool_result` のシリアライズ |
 | `PermissionDenied` | `tool_name`, `tool_input`, `tool_use_id`, `reason` |
 | `Stop` | `stop_hook_active`, `last_assistant_message`, `background_tasks`, `session_crons`（v2.1.145+） |
 | `StopFailure` | `error`, `error_details`, `last_assistant_message` |
@@ -443,6 +447,50 @@ echo "$WORKTREE_PATH"
 ```
 
 ---
+
+#### UserPromptExpansion
+
+ユーザーが `/skillname` のように**直接タイプしたコマンド**がプロンプトへ展開される直前に発火する。`PreToolUse` の `Skill` matcher は Claude が `Skill` ツールを呼んだ時にしか発火しないため、直接入力の経路はこのイベントでしか捕まえられない。特定コマンドの直接起動をブロックする、特定スキルにコンテキストを注入する、どのコマンドが使われたかを記録する、といった用途に使う。
+
+入力（共通フィールドに加えて）:
+
+| フィールド | 説明 |
+|:--|:--|
+| `expansion_type` | `slash_command`（スキル / カスタムコマンド）または `mcp_prompt`（MCP サーバーのプロンプト） |
+| `command_name` | コマンド名（matcher の対象） |
+| `command_args` | コマンド引数の文字列 |
+| `command_source` | コマンドの出所（`plugin` 等） |
+| `prompt` | 元のプロンプト文字列（例 `/example-skill arg1 arg2`） |
+
+出力: 全 JSON 出力フィールドが利用可能。`decision: "block"` で展開を阻止（`reason` がユーザーに表示される。終了コード 2 + stderr でも同じ経路）。`hookSpecificOutput.additionalContext` で展開後プロンプトと併せてコンテキストを追加できる。stdout のプレーンテキストは `UserPromptSubmit` / `SessionStart` と同様に Claude が読めるコンテキストとして追加される。
+
+```json
+{
+  "decision": "block",
+  "reason": "このスラッシュコマンドは利用できません",
+  "hookSpecificOutput": {
+    "hookEventName": "UserPromptExpansion",
+    "additionalContext": "展開に付随する追加コンテキスト"
+  }
+}
+```
+
+#### PostToolBatch
+
+バッチ内の**全ツール呼び出しが解決した後**、次のモデルリクエスト送信前に 1 回だけ発火する。`PostToolUse` はツール毎に発火するため並列呼び出しでは同時多発するのに対し、`PostToolBatch` はバッチ全体で正確に 1 回。バッチ単位で 1 度だけ検証やコンテキスト注入をしたい場合はこちらを使う。
+
+入力（共通フィールドに加えて）: `tool_calls` 配列。各要素は `tool_name` / `tool_input` / `tool_use_id` / `tool_response`。
+
+> **注意**: `tool_response` の形が `PostToolUse` と異なる。`PostToolUse` はツールの構造化 `Output` オブジェクト（`Write` なら `{filePath: "...", success: true}` 等）を渡すが、`PostToolBatch` は**モデルが見る `tool_result` の内容をシリアライズした文字列またはコンテンツブロック配列**を渡す。`Read` なら行番号プレフィックス付きテキストであり生のファイル内容ではない。レスポンスは大きくなりうる。
+
+出力:
+
+| フィールド | 説明 |
+|:--|:--|
+| `hookSpecificOutput.additionalContext` | 次のモデル呼び出し前に 1 度だけ注入されるコンテキスト文字列 |
+
+`decision: "block"` または `continue: false` で次のモデル呼び出し前にエージェントループを停止できる（メッセージは `reason` / `stopReason`、または終了コード 2 の stderr から）。トランスクリプトには警告として残り会話にも残るため、会話継続時に Claude から見える。
+
 
 ## 7. スクリプトパス参照
 

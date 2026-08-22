@@ -3,7 +3,36 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-08-22
+最終更新: 2026-08-23
+
+---
+
+## v2.1.239 (2026-08-21)
+
+- **Windows でセッション間メッセージが利用可能に**: `SendMessage` / `ListAgents` によるマシンをまたいだセッション間通信が macOS / Linux 同様に Windows でも動作するようになった
+- **`ListAgents` の改善**: 自セッション名（ピアが宛先に使う名前）を返すようになり、自分宛の `SendMessage` は「そのセッションは自分自身」と明示される。さらに `ListAgents` / `/list-agents` がライブのチームメイトも列挙するようになった（従来はサブエージェントと他セッションのみで、到達可能なチームメイトが不在に見えた）
+- **`keybindingFlavor: "readline"` の拡張**: 単語系キーも Bash 準拠になった。Alt+F / Ctrl・Option+→ は単語末で停止、Alt+D は単語末まで削除（Ctrl+Y で貼り戻し）、句読点が単語区切りとして扱われる
+- **`/goal` の改善**: 長時間バックグラウンド作業の再チェックインが 30 分固定から段階的バックオフ（30 分 → 1 時間 → 以降 2 時間毎）に変更。`claude --resume` のピッカーから再開したセッションでアクティブなゴールが復元されるようになった
+- **`/claude-api upgrade` 追加**: Python プロジェクトを `anthropic` 0.x → 1.x へ移行するコマンド。スキルの Python リファレンスも 1.x 準拠に更新（タイムアウトは `httpx.Timeout` ではなく `anthropic.Timeout`）
+- **クラウドセッションのプラグイン同期**: claude.ai から同期されたプラグインは `name@synced` として表示され、`claude plugin enable/disable <name>@synced` で操作できる。自分でインストールした同名プラグインを上書きしない
+- **コスト表示にデータレジデンシー割増を反映**: `/cost`・ステータスライン・`--max-budget-usd` が US-only inference の 1.1 倍プレミアムを含むようになった
+- **フルスクリーンレンダラの提供拡大**: Bedrock / Vertex / Foundry 等これまで除外されていた環境でも一度きりの利用提案が表示され、新規インストールはフルスクリーンで開始する
+- **Claude Code on the web のプロキシ経路拡大**: Bash 等から非 API の anthropic.com ホスト（www, docs 等）へのリクエストもセッションのネットワークプロキシを通るようになり、環境の許可ドメイン設定が適用される
+- **セルフホスト / リモートの安定性**: リモートセッションは長時間の `SessionStart` / `Setup` フック実行中も keep-alive を送り続け、フック途中でアイドル回収されなくなった
+- **`CLAUDE_CODE_RETRY_WATCHDOG`（永続リトライ）**: 組織の支出上限超過・クレジット切れエラーでは無限待機せず即座に失敗するようになった
+- **Claude in Chrome**: `/clear` でセッションの Chrome タブグループを閉じる。空グループは `/resume` 時と Claude Code 終了時にも閉じられる
+- 修正: `.worktreeinclude` の `**/` 始まりパターンが、対象が gitignore 済みディレクトリ配下にあると何もマッチしなかった問題
+- 修正: エージェント・スキル・コマンドの `.md` が UTF-8 BOM で始まると黙って無視される問題
+- 修正: マーケットプレースの `metadata.pluginRoot` が効かず、素のプラグインソース名がドキュメント通りに解決されなかった問題
+- 修正: `claudeMdExcludes` が、rules ディレクトリまたはシンボリックリンク自体を指定した場合に symlink 化された `.claude/rules` を除外できなかった問題
+- 修正: `PreToolUse` フックで遅延させたツール実行が新しいトレースを開始してしまう OpenTelemetry のトレース分断
+- 修正: 作業ディレクトリ削除後にフックが "posix_spawn ENOENT" で失敗する問題（プロジェクトルートまたはホームディレクトリから実行するよう変更）
+- 修正: Linux サンドボックスで存在しない `.git/config.worktree` が読めず、`extensions.worktreeConfig` 設定済みリポジトリのサンドボックス git コマンドが全滅する問題
+- 修正: `/` 始まりのタイトルを持つセッションが `SendMessage` で宛先指定できず `ListAgents` に "(untitled)" と表示される問題
+- 修正: 2 プロセスが 1 つのバックグラウンドジョブ状態を共有した際の Remote Control へのセッションタイトル同期暴走（v2.1.232 リグレッション）
+- 修正: WebFetch が期限切れページ内容を意図した 15 分ではなくセッション中ずっとメモリ保持していた問題
+- 修正: Bedrock で Content-Type ヘッダを剥がすプロキシ配下だとストリーミングが黙って毎ターン非ストリーミング再実行され API 課金が倍増していた問題
+- 修正: プロンプトキュー中の Esc 押下で、Claude が作業中なのにセッションがアイドル化し、後の再送信で同じ操作が繰り返されうるレース
 
 ---
 

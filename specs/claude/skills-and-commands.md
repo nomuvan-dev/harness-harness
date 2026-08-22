@@ -1,6 +1,6 @@
 # Claude Code Skills & コマンド仕様書
 
-最終更新: 2026-08-21（巡回更新）
+最終更新: 2026-08-23（巡回更新）
 
 公式ドキュメント: https://code.claude.com/docs/en/skills / https://code.claude.com/docs/en/commands / https://code.claude.com/docs/en/sub-agents / https://code.claude.com/docs/en/scheduled-tasks / https://code.claude.com/docs/en/web-scheduled-tasks / https://code.claude.com/docs/en/discover-plugins
 
@@ -276,6 +276,8 @@ MCPサーバーが公開するプロンプトは `/mcp__<server>__<prompt>` 形�
 | `/recap` | 現在のセッションの1行サマリをオンデマンド生成（離席後に自動表示されるリキャップの手動版）。v2.1.236 で 400 文字・語境界で打ち切り |
 | `/background [prompt]` | 現在のセッションをバックグラウンドエージェントとしてデタッチし端末を解放。プロンプトを渡すとデタッチ前に最後の指示を送る |
 | `/stop` | バックグラウンドセッションを停止（アタッチ中のみ表示）。トランスクリプトと worktree は保持。停止せずデタッチするには `/exit` |
+| `/artifacts` | 自分が所有する、または共有された Artifact 一覧を表示し、セッションへの添付・ブラウザで開く・リンクのコピーを行う。Artifact が利用可能な環境でのみ使用可（v2.1.208 以降。`Enter` での添付は v2.1.216 以降） |
+| `/auto-mode-setup` | プロジェクトと直近セッションから `autoMode.environment` エントリのドラフトを生成し、レビューしてユーザー設定へ保存する。Pro / Max / Team プランかつ v2.1.228 以降（ネイティブ Windows は v2.1.233 以降） |
 | `/advisor [model\|off]` | Advisor ツール（タスク中の要所で第2のモデルに助言を求める）の有効化 / 無効化。`fable` / `opus` / `sonnet` / 完全なモデル ID を受け付ける |
 | `/autocompact [auto\|<tokens>]` | 自動コンパクション発動のコンテキスト使用量を設定（例 `500k`、`auto` でモデル既定に戻す） |
 | `/deep-research <question>` | **バンドルワークフロー**。Web 検索を fan-out し、ソースを取得・相互検証して引用付きレポートを合成 |

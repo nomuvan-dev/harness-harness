@@ -1,5 +1,65 @@
 # harness-harness 更新履歴
 
+## 2026-08-23 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code v2.1.239（2026-08-21）の収載に加え、公式設定ドキュメントの再編を機に settings キーの網羅性ギャップ 44 件を解消し、未収載だったツールリファレンスを新規作成した。** Codex CLI は安定版 0.149.0 のままで更新なし。
+
+**1) 公式設定ドキュメントの 3 分割（2026-08-22 頃）**
+
+`settings.md` が「設定の変え方・スコープの選び方・値の解決順」のガイドに絞られ、以下が分離された:
+
+- `settings-reference.md` — 全 210 キーの網羅リファレンス（**以後キー網羅性の正はここ**）
+- `settings-example.md` — 開発者 / チーム / 組織向けの貼り付け用サンプル
+- `managed-settings.md` — OS 別の配布手順と適用確認
+
+この網羅リファレンスと `specs/claude/configuration.md` を全キー突合した結果、**44 キーが未収載**であることが判明したため全て追加した。UI 系（`theme` / `tui` / `viewMode` / `verbose` / `autoScrollEnabled` / `syntaxHighlightingDisabled` / `diffTool` / `externalEditorContext` / `awaySummaryEnabled` / `terminalTitleFromRename`）、通知・Remote Control 系（`preferredNotifChannel` / `inputNeededNotifEnabled` / `agentPushNotifEnabled` / `remoteControlAtStartup` / `disableRemoteControl` / `disableAgentView`）、プラグイン系（`enabledPlugins` / `pluginConfigs`）、そして**ハーネス統制に直結する Managed 系**（`strictPluginOnlyCustomization` / `disableSideloadFlags` / `disableCommandPluginSources` / `policyHelper` / `processWrapper` / `forceLoginGatewayUrl` / `sshConfigs` / `sshHostAllowlist` / `browserExternalPageTools` / `disableBrowserExternalNavigation`）が含まれる。
+
+**2) 未収載のフックイベント 2 件**
+
+`specs/claude/hooks.md` に `UserPromptExpansion` と `PostToolBatch` が欠けていた。
+
+- `UserPromptExpansion` — ユーザーが `/skillname` と**直接タイプした**コマンドの展開直前に発火。`PreToolUse` の `Skill` matcher は Claude がツールを呼んだ時にしか発火しないため、**直接入力の経路はこのイベントでしか捕まえられない**。特定コマンドの直接起動をブロックする、特定スキルにコンテキストを注入する、といったハーネス設計に直結する
+- `PostToolBatch` — 並列ツール呼び出しのバッチ全体が解決した後に**正確に 1 回**発火。`PostToolUse` は並列時に同時多発するため、バッチ単位で 1 度だけ検証・コンテキスト注入したい場合はこちらが正しい。`tool_response` の形が `PostToolUse` と異なる点（モデルが見る `tool_result` のシリアライズ）に注意
+
+**3) `specs/claude/tools.md` を新規作成**
+
+`tools-reference.md` の内容が specs/ に一切収載されていなかった。**ツール名は権限ルール・サブエージェント定義の `tools`/`disallowedTools`・フックの matcher・`--allowedTools`/`--tools` で完全一致文字列として使われる**ため、ハーネス設計の基礎資料として欠かせない。全 44 ツールの一覧（権限プロンプトの要否付き）に加え、以下の落とし穴を収載した:
+
+- **フックでシェルコマンドを検査する際は `Bash|PowerShell` でマッチする必要がある**（`Bash` だけでは不十分）
+- `Read` の deny ルールにマッチするパスは Edit / Write も拒否され、Bash のファイルコマンド（`cat`/`head`/`tail`/`sed` 等）にも適用される
+- Bash での閲覧（`cat`/`head`/`sed -n`/`rg` 等を単一ファイルにパイプなしで）は read-before-edit を満たす
+- 終了コード 1 が「正常な否定」として扱われるコマンド一覧
+- 自動バックグラウンド化されないコマンド（`sleep` 始まり / `git` を含む / パース不能な複合コマンド）
+- Task 系ツールが Opus 4.8 / Sonnet 5 / Fable 5 以降で既定非提供（`CLAUDE_CODE_ENABLE_TODO_TOOLS=1` 等でオプトイン）
+- WebSearch のセッション上限 200 回（サブエージェント合算、無効化不可）
+- `EndConversation` は権限プロンプトも `PreToolUse` フックも走らず、**deny/ask ルールでブロックできない**
+
+**4) v2.1.239 の主な変更**
+
+Windows でセッション間メッセージが利用可能に。`ListAgents` が自セッション名を返しライブのチームメイトも列挙するようになった（従来は到達可能なチームメイトが不在に見えた）。`keybindingFlavor: "readline"` が単語系キー（Alt+F / Alt+D / Ctrl・Option+→）も Bash 準拠に拡張。`/goal` の長時間バックグラウンド作業チェックインが 30 分固定から段階的バックオフに。エージェント・スキル・コマンドの `.md` が UTF-8 BOM で始まると黙って無視される問題、`claudeMdExcludes` が symlink 化された `.claude/rules` を除外できない問題、`PreToolUse` で遅延させたツール実行が OpenTelemetry のトレースを分断する問題などを修正。
+
+**5) 未収載だったスラッシュコマンド 2 件**
+
+`/artifacts`（Artifact 一覧・添付・リンクコピー、v2.1.208+）と `/auto-mode-setup`（プロジェクトと直近セッションから `autoMode.environment` を生成、Pro/Max/Team かつ v2.1.228+）を追加。
+
+### 更新ファイル
+
+- `specs/claude/changelog.md` — v2.1.239 追加
+- `specs/claude/configuration.md` — settings キー 44 件追加、公式ドキュメント 3 分割の注記
+- `specs/claude/hooks.md` — `UserPromptExpansion` / `PostToolBatch` をイベント一覧・入力フィールド表・詳細セクションに追加
+- `specs/claude/skills-and-commands.md` — `/artifacts` / `/auto-mode-setup` 追加
+- `specs/claude/tools.md` — **新規作成**
+- `kb/update-history.md` — 本エントリ
+
+### スキップ
+
+- Phase 3.5（スキルエコシステム巡回）: `kb/skills/_index.md` の `last_patrol` が 2026-08-18 で 7 日以内のためスキップ
+- Codex CLI: 安定版は 0.149.0（2026-08-20）のまま。0.150.0 系は alpha のみで未反映。`learn.chatgpt.com/docs/changelog` にも新規安定版なし
+
+---
+
 ## 2026-08-22 — 公式ドキュメント巡回
 
 ### 検出・更新
