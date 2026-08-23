@@ -126,10 +126,11 @@ CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ../shared-config
 | `env` | 環境変数設定 |
 | `model` | デフォルトモデル上書き |
 | `availableModels` | 選択可能モデル制限 |
+| （組織 effort 上限） | 設定キーではなく Enterprise の admin コンソール側の機能（v2.1.195 以降）。カスタムロール単位・モデル単位に最大 effort レベルを設定でき、上限超のレベルは `/effort` ピッカーに出ず、`--effort` / `/effort` で指定しても上限に丸められる。対話セッションとプレーンテキスト `--print` では警告が出るが、`json` / `stream-json` 出力やバックグラウンドエージェントでは無警告で丸められる。複数ロールが同一モデルを許可する場合は最も緩い上限が適用。組織のモデル制限と同じ経路で配信される |
 | `modelOverrides` | モデルIDマッピング |
 | `fallbackModel` | プライマリモデルが overloaded / unavailable 時に順番に試行する fallback モデルを最大 3 つまで設定。`--fallback-model` フラグは v2.1.166 からインタラクティブセッションにも適用（v2.1.166） |
 | `advisorModel` | Advisor ツール（実験的）のモデル設定。メインモデルより強力なモデルをアドバイザーとして併用し、方針決定・エラー行き詰まり・完了宣言前などの要所で Claude が相談する。`/advisor` コマンド / `--advisor` フラグでも設定可。Anthropic API 専用（Bedrock / Vertex / Foundry 不可）。アドバイザーはメインモデル以上の能力が必要（詳細: https://code.claude.com/docs/en/advisor ） |
-| `effortLevel` | エフォートレベル (`low` / `medium` / `high`) |
+| `effortLevel` | エフォートレベル。設定ファイルで指定できるのは `low` / `medium` / `high` / `xhigh` の4段階（`max` は設定ファイル不可でセッション限定、`ultracode` は別キー `ultracode` を使う）。優先順位は `CLAUDE_CODE_EFFORT_LEVEL` 環境変数 > 本設定 > モデル既定。スキル / サブエージェントの frontmatter `effort` は当該実行中のみセッションレベルを上書きする（環境変数は上書きしない）。Managed 設定に置いても**強制ではなく既定値**で、`/effort` や `--effort` でセッション単位に変更可能。モデル別対応レベル: Fable 5 / Opus 5 / Sonnet 5 / Opus 4.8 / Opus 4.7 は `low`〜`max`、Opus 4.6 / Sonnet 4.6 は `xhigh` を除く4段階（未対応レベル指定時は直下の対応レベルにフォールバック）。既定は `high`（Opus 4.7 のみ `xhigh`） |
 | `autoMode` | Auto Modeの分類器設定。`environment`, `allow`, `soft_deny`, `hard_deny` 配列で構成。共有プロジェクト設定からは読み込まれない。v2.1.118 で `"$defaults"` を配列に含めることで組み込みルールを置換せず追加可能。v2.1.136 で `hard_deny` 追加: ユーザー意図や allow 例外に関わらず無条件にマッチアクションをブロック |
 | `disableAutoMode` | `"disable"` で Auto Mode の有効化を阻止。`Shift+Tab` サイクルから除外し `--permission-mode auto` を拒否。v2.1.207 で Bedrock / Vertex / Foundry の Auto mode がオプトイン不要になったため、無効化はこの設定で行う。同版から `autoMode` はリポジトリ内 `.claude/settings.local.json` から読み込まれなくなった（`~/.claude/settings.json` を使用） |
 | `useAutoModeDuringPlan` | プランモードで Auto Mode セマンティクスを使用（デフォルト: `true`）。共有プロジェクト設定からは読み込まれない |
