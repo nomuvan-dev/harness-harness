@@ -283,6 +283,7 @@ MCPサーバーが公開するプロンプトは `/mcp__<server>__<prompt>` 形�
 | `/deep-research <question>` | **バンドルワークフロー**。Web 検索を fan-out し、ソースを取得・相互検証して引用付きレポートを合成 |
 | `/run` | **バンドルスキル**。テストだけでなく実アプリを起動・操作して変更の動作を確認 |
 | `/run-skill-generator` | **バンドルスキル**。プロジェクト固有のビルド / 起動 / 操作手順をスキルとして生成し、`/run` と `/verify` に教える |
+| `/design [brief]` | **バンドルスキル**（リサーチプレビュー、v2.1.233 以降）。Claude Design のアートボードワークフローを CLI / Claude Code Desktop に持ち込み、Artifacts 基盤で編集可能なアートボードのキャンバスを公開する。ブリーフを渡すと UI 案を複数生成し、ユーザーが選んだ案を Claude に実装させる流れ。Pro / Max / Team / Enterprise で利用可。※ 公式 commands リファレンス未収載（whats-new w34 が一次情報） |
 | `/design-sync [hint]` | **バンドルスキル**。リポジトリの React デザインシステムを変換して Claude Design にアップロードし、生成デザインに実コンポーネントを使わせる |
 | `/design-login` | claude.ai アカウントで `/design-sync` のデザインシステムアクセスを認可 |
 | `/fewer-permission-prompts` | **バンドルスキル**。トランスクリプトから頻出の読み取り専用 Bash / MCP 呼び出しを抽出し、プロジェクト `.claude/settings.json` に優先度付き allowlist を追加 |

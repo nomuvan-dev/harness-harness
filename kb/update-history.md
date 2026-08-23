@@ -1,5 +1,52 @@
 # harness-harness 更新履歴
 
+## 2026-08-24 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code は v2.1.240 / v2.1.241 がリリースされたがいずれも「バグ修正・安定性改善のみ」で新機能なし。** 一方、公式ドキュメント側で `model-config.md` / `output-styles.md` / `sandboxing.md` が更新され、これまで changelog 経由でしか裏取りできていなかった内容がドキュメント本体に反映された。この機会に specs 側の effort 関連の記述精度を上げ、未収載だった `/design` スキルを追加した。Codex CLI は安定版 0.149.0 のままで更新なし。
+
+**1) Claude Code v2.1.240 / v2.1.241**
+
+公式 changelog の記載は両版とも `Bug fixes and reliability improvements` の一行のみ。個別項目の記載がないため、その旨を明記して収載した。
+
+**2) `effortLevel` の記述精度向上（specs/claude/configuration.md）**
+
+従来 `low` / `medium` / `high` の3段階としか書いていなかったが、`model-config.md` の更新版と `settings-reference.md` の突合で以下が判明したため全面的に書き直した:
+
+- 設定ファイルで指定できるのは `low` / `medium` / `high` / `xhigh` の4段階。`max` はセッション限定（`CLAUDE_CODE_EFFORT_LEVEL` 経由を除く）、`ultracode` は別キー
+- 優先順位は `CLAUDE_CODE_EFFORT_LEVEL` > 設定 > モデル既定。スキル / サブエージェント frontmatter の `effort` はセッションレベルのみ上書きし環境変数は上書きしない
+- Managed 設定に置いても強制ではなく既定値にすぎない（ハーネス設計上の重要な注意点）
+- モデル別対応レベルの差（Opus 4.6 / Sonnet 4.6 は `xhigh` なし。未対応レベルは直下にフォールバック）
+
+**3) 組織 effort 上限（v2.1.195）を新規収載**
+
+Enterprise の admin コンソールからカスタムロール単位・モデル単位に最大 effort レベルを設定できる機能。設定キーではないため settings-reference の突合では検出できず、今回のドキュメント更新で発見した。`json` / `stream-json` 出力やバックグラウンドエージェントでは**無警告で丸められる**点は自動化ハーネスにとって重要。
+
+**4) `/design` スキルを収載（specs/claude/skills-and-commands.md）**
+
+Claude Design のアートボードワークフローを CLI / Desktop に持ち込むバンドルスキル（リサーチプレビュー、v2.1.233 以降）。公式 commands リファレンスには未収載で、whats-new Week 34 が一次情報。従来 specs には `/design-sync` と `/design-login` しかなく、本体スキルが抜けていた。
+
+**5) 差分なしを確認したページ**
+
+`output-styles.md`（Concise は v2.1.237 収載済み）、`sandboxing.md`（ワイルドカード read-deny は v2.1.236 収載済み）、`llms.txt`（whats-new の週次エントリ追加のみで新規ドキュメントページなし）、および settings / hooks / skills / mcp / agent-teams / commands / sub-agents / tools-reference / env-vars / cli-reference / plugins / workflows / interactive-mode / cross-session-messaging / managed-settings（MD5 一致）。
+
+**6) Codex CLI**
+
+公式 changelog（learn.chatgpt.com/docs/changelog）は MD5 一致で更新なし。GitHub リリースは安定版 rust-v0.149.0（2026-08-20）のままで、0.150.0 は alpha.7 まで進行中だがリリースノート本文が空のため収載対象なし。
+
+**7) Phase 3.5（スキルエコシステム巡回）はスキップ**
+
+`kb/skills/_index.md` の `last_patrol` が 2026-08-18 で7日以内のため、スキル定義通りスキップした。
+
+### 更新ファイル
+
+- `specs/claude/changelog.md` — v2.1.241 / v2.1.240 を追加
+- `specs/claude/configuration.md` — `effortLevel` を全面改訂、組織 effort 上限を追加
+- `specs/claude/skills-and-commands.md` — `/design` を追加
+- `specs/codex/changelog.md` — 最終更新日と 0.150.0 の進行状況を更新
+- `kb/update-history.md` — 本エントリ
+
 ## 2026-08-23 — 公式ドキュメント巡回
 
 ### 検出・更新
