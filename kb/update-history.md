@@ -1,5 +1,53 @@
 # harness-harness 更新履歴
 
+## 2026-08-25 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code は前回巡回（2026-08-24）以降まったく更新なし。** 最新版は v2.1.241 のまま（stable は 2.1.231）、公式ドキュメント 30 ページのコンテンツハッシュも全て一致した。一方 **Codex CLI は安定版 0.149.1 (2026-08-24) がリリースされ、`codex mcp-server` が非推奨**という harness-harness の Claude⇔Codex 連携方針に直接影響する変更が入った。あわせてスキルエコシステム巡回（前回 2026-08-18、7 日経過）を実施した。
+
+**1) `codex mcp-server` の非推奨化（Codex CLI 0.149.1）**
+
+公式 changelog の記載は「`codex mcp-server` は非推奨。Codex app server を使うこと。Claude Code から Codex を使う場合は Codex plugin for Claude Code を使うこと」。移行先が用途別に 2 つある点が重要:
+
+- **`codex app-server`**: JSON-RPC 2.0。`--listen stdio://`（既定、改行区切り JSON）/ `ws://` / `unix://`。`thread/start`・`thread/resume`・`thread/fork`・`thread/list`・`thread/archive`、`turn/start`・`turn/steer`・`turn/interrupt`、`model/list`、`command/exec`、`fs/readFile`・`fs/writeFile` などを提供。認証・会話履歴・承認・ストリーミングイベントまで扱える、プロダクト組み込み向けの深い統合インタフェース
+- **[openai/codex-plugin-cc](https://github.com/openai/codex-plugin-cc)**: Claude Code 利用者向けの公式プラグイン（32.2K stars）。`/codex:review`・`/codex:adversarial-review`・`/codex:rescue`・`/codex:transfer`・`/codex:status`・`/codex:result`・`/codex:cancel` と `codex:codex-rescue` サブエージェントを提供
+
+これまで `docs/codex-plan.md` / `mapping/codex-to-claude.md` は `codex mcp-server` を「Claude から Codex を呼ぶブリッジ候補」として扱っていたが、その前提が崩れた。**クロスレビュー運用の第一候補を codex-plugin-cc に変更**した（`/codex:review --background` → `/codex:status` → `/codex:result` なら Claude 側の作業をブロックせずレビューを回せる）。
+
+**2) スキルエコシステム巡回（Phase 3.5）**
+
+| 対象 | 変化 |
+|------|------|
+| anthropics/skills | 169.9K → **171.3K stars**。19 スキルで増減なし。2026-08-18 に `claude-academy-guide` → **`academy-guide`** へリネーム（#1605）、2026-08-21 に claude-api スキルへ **Python SDK 0.x → 1.x アップグレードガイド**追加（#1623） |
+| claude.com/plugins | 変化なし（Frontend Design 1.134M / Superpowers 1.009M で首位・2 位継続） |
+| skills.sh | find-skills 3.0M → **3.1M**、agent-browser 689.0K → **721.0K**。mattpocock 系 6 本の top10 占有継続で顔ぶれ変動なし |
+| agentskills.io | 46 プラットフォームで据え置き。仕様変更なし |
+| openai/skills, openai/plugins | 凍結状態のまま変化なし |
+| **openai/codex-plugin-cc** | **新規追跡開始**。Tier A に追加 |
+
+`recommended.md` の Tier B にあった `claude-academy-guide` を `academy-guide` にリネーム、Tier A に `codex-plugin-cc` を追加（分野カバレッジに「エージェント間連携」を新設）。
+
+### 更新ファイル
+
+| ファイル | 内容 |
+|----------|------|
+| `specs/codex/changelog.md` | CLI 0.149.1 (2026-08-24) を追加。最終更新日を更新 |
+| `specs/codex/mcp.md` | §5 を全面改稿。`codex mcp-server` 非推奨の明記と、移行先 A（`codex app-server`）/ 移行先 B（codex-plugin-cc）を追記。§6 比較表のサーバーモード行を更新 |
+| `specs/codex/commands.md` | `codex mcp-server` 行に非推奨を明記、`codex app-server` 行を新規追加 |
+| `mapping/codex-to-claude.md` | §7 MCP 対応表と §12.5 を更新。Claude→Codex は codex-plugin-cc、Codex→Claude は `claude -p` ラッパー / カスタム MCP、と方向別に整理 |
+| `mapping/shared-concepts.md` | §3 MCP 比較表のサーバーモード行を更新 |
+| `kb/skills/_index.md` | 巡回日・各サイトの数値更新。codex-plugin-cc を参照先に追加。Claude⇔Codex 連携の入口変更を「巡回時の注意」に追記 |
+| `kb/skills/recommended.md` | Tier A に codex-plugin-cc 追加、`academy-guide` にリネーム、分野カバレッジ更新 |
+| `kb/skills/sources.md` | codex-plugin-cc と Codex app server Docs を参照先に追加 |
+
+### 更新不要と判断したもの
+
+- **Claude Code 全般**: v2.1.241 から更新なし。llms.txt・settings・hooks・skills・mcp・agent-teams・best-practices・commands・sub-agents・tools-reference・env-vars・cli-reference・plugins・workflows・interactive-mode・model-config・output-styles・sandboxing・settings-reference・managed-settings の全ハッシュが前回と一致
+- **Codex 0.150.0 系**: alpha.7 まで進行中だがリリースノート本文が空で公式 changelog にも未掲載。収載対象なし
+
+---
+
 ## 2026-08-24 — 公式ドキュメント巡回
 
 ### 検出・更新

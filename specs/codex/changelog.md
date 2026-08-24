@@ -4,7 +4,15 @@
 公式: https://learn.chatgpt.com/docs/changelog
 （2026-08-15 時点で `https://developers.openai.com/codex/changelog` は上記へ 308 恒久リダイレクト）
 
-最終更新: 2026-08-24（安定版は 0.149.0 のまま。0.150.0 は alpha.7 まで進行中で公式 changelog への掲載なし）
+最終更新: 2026-08-25（安定版は 0.149.1。0.150.0 は alpha.7 まで進行中で公式 changelog への掲載なし）
+
+---
+
+## CLI 0.149.1 (2026-08-24)
+
+- **`codex mcp-server` の非推奨化**: Codex 自体を MCP サーバー化する `codex mcp-server` コマンドが非推奨になった。後継は **Codex app server**（`codex app-server`）。JSON-RPC 2.0 ベースで stdio / WebSocket / Unix socket をサポートし、認証・会話履歴・承認・ストリーミングイベントまで含む深い統合を提供する
+  - Claude Code から Codex を使う場合は、公式の **[Codex plugin for Claude Code](https://github.com/openai/codex-plugin-cc)** を使うことが公式に推奨された（`/plugin marketplace add openai/codex-plugin-cc` → `/plugin install codex@openai-codex`）
+- その他はバグ修正・パフォーマンス改善のみ
 
 ---
 

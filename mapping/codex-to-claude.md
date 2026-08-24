@@ -260,7 +260,7 @@ Claude では以下の追加機能が利用可能:
 | `startup_timeout_sec` | `MCP_TIMEOUT` 環境変数 | Claude は環境変数で制御 |
 | `tool_timeout_sec` | **対応なし** | Claude にツール個別タイムアウトなし |
 | `required = true` | **対応なし** | Claude にサーバー必須指定なし |
-| `codex mcp-server` | **対応なし** | Claude 自体を MCP サーバーにする機能なし |
+| `codex mcp-server` | **対応なし** | 0.149.1 で非推奨（→ `codex app-server`）。Claude 自体を MCP サーバーにする機能もなし |
 | `codex mcp login` | `/mcp` で OAuth フロー | Claude は対話 UI 経由 |
 | グローバル + プロジェクト | Local + Project + User + Managed | Claude の方がスコープが多い |
 
@@ -361,13 +361,15 @@ Codex の `personality` 設定（`none`/`friendly`/`pragmatic`）。Claude Code 
 - CLAUDE.md に応答スタイルの指示を記述（例: 「簡潔で実用的な応答を心がけること」）
 - `settings.json` の `outputStyle` で出力スタイルを設定
 
-### 12.5 codex mcp-server
+### 12.5 codex mcp-server / codex app-server
 
-Codex 自体を MCP サーバーとして起動する機能。Claude Code には対応なし。
+Codex 自体を外部エージェントから呼べるサーバーとして起動する機能。Claude Code に同等機能はない（Claude Code 自体をサーバー化することはできない）。
+
+なお `codex mcp-server` は **0.149.1 (2026-08-24) で非推奨**となり、後継は `codex app-server`（JSON-RPC 2.0 / stdio・ws・unix）。詳細は [specs/codex/mcp.md](../specs/codex/mcp.md) §5 参照。
 
 代替策:
-- Claude Code の API を直接呼び出す
-- カスタム MCP サーバーで Claude API をラップ
+- **Claude Code から Codex を呼びたい場合（こちらが実用上の主用途）**: 公式プラグイン [openai/codex-plugin-cc](https://github.com/openai/codex-plugin-cc) を入れる。`/codex:review`・`/codex:adversarial-review`・`/codex:rescue`・`/codex:transfer` などが使え、`codex app-server` を自前で叩く必要はない。harness-harness の Claude⇔Codex クロスレビュー運用の第一候補
+- **Codex から Claude Code を呼びたい場合**: 同等の公式手段はない。`claude -p` を非対話で叩くラッパー、または Claude API をラップしたカスタム MCP サーバーを用意する
 
 ---
 
