@@ -144,15 +144,53 @@ TUI 内では `/mcp` スラッシュコマンドで設定済みサーバーと�
 
 ---
 
-## 5. MCP サーバーモード
+## 5. MCP サーバーモード（`codex mcp-server` は 0.149.1 で非推奨）
 
-Codex 自体を MCP サーバーとして起動し、他のエージェントから利用することも可能。
+Codex 自体を MCP サーバーとして起動し、他のエージェントから利用する方式。
 
 ```bash
-codex mcp-server
+codex mcp-server   # 0.149.1 (2026-08-24) で非推奨
 ```
 
-これにより、別のエージェントが Codex の機能を MCP ツールとして消費できる。
+**非推奨**: 2026-08-24 の公式 changelog で `codex mcp-server` は非推奨となった。移行先は用途によって 2 つある。
+
+### 5.1 移行先 A: Codex app server（プロダクト組み込み向け）
+
+```bash
+codex app-server                              # stdio（既定、改行区切り JSON）
+codex app-server --listen ws://127.0.0.1:4500 # WebSocket
+codex app-server --listen unix://<path>       # Unix ソケット
+```
+
+- プロトコルは **JSON-RPC 2.0**（双方向。`method` / `params` / `id`、応答は `result` または `error`）
+- 主なメソッド: `thread/start`・`thread/resume`・`thread/fork`・`thread/list`・`thread/archive`、`turn/start`・`turn/steer`・`turn/interrupt`、`model/list`、`command/exec`、`fs/readFile`・`fs/writeFile`
+- MCP と違い、認証・会話履歴・承認フロー・ストリーミングされるエージェントイベントまで扱える。自前プロダクトへの深い組み込みが想定用途
+- 公式: https://learn.chatgpt.com/docs/app-server
+
+### 5.2 移行先 B: Codex plugin for Claude Code（Claude Code から使う場合）
+
+Claude Code から Codex を呼びたいだけなら、公式プラグイン [openai/codex-plugin-cc](https://github.com/openai/codex-plugin-cc) を使うことが公式に推奨されている。app server を自前で叩く必要はない。
+
+```bash
+/plugin marketplace add openai/codex-plugin-cc
+/plugin install codex@openai-codex
+/reload-plugins
+/codex:setup
+```
+
+提供されるもの:
+
+| 種別 | 名前 | 用途 |
+|------|------|------|
+| コマンド | `/codex:review` | 通常の read-only な Codex レビュー（Codex 内の `/review` と同等品質） |
+| コマンド | `/codex:adversarial-review` | 観点を指定できる敵対的レビュー |
+| コマンド | `/codex:rescue` / `/codex:transfer` | Codex への作業委譲・セッション引き渡し |
+| コマンド | `/codex:status` / `/codex:result` / `/codex:cancel` | バックグラウンドジョブの管理 |
+| サブエージェント | `codex:codex-rescue` | `/agents` から利用可能 |
+
+要件: ChatGPT サブスクリプション（Free 含む）または OpenAI API キー、Node.js 18.18 以上。使用量は Codex の利用上限に計上される。
+
+> harness-harness の Claude⇔Codex クロスレビュー運用では、`--background` 実行（`/codex:review --background` → `/codex:status` → `/codex:result`）が Claude 側の作業をブロックせずレビューを回せるため有力。
 
 ---
 
@@ -167,7 +205,7 @@ codex mcp-server
 | **ツールフィルタリング** | `enabled_tools` / `disabled_tools` で制御可能 | サーバー単位での有効/無効のみ |
 | **タイムアウト設定** | `startup_timeout_sec` / `tool_timeout_sec` で個別設定 | 設定なし（固定タイムアウト） |
 | **CLI 管理** | `codex mcp add/remove/list/get` コマンド | 手動で JSON 編集、または `claude mcp add` |
-| **サーバーモード** | `codex mcp-server` で Codex 自体を MCP サーバー化可能 | 非対応 |
+| **サーバーモード** | `codex mcp-server` は 0.149.1 で**非推奨**。後継は `codex app-server`（JSON-RPC 2.0） | 非対応。Codex 側から Claude Code に入るには公式プラグイン [codex-plugin-cc](https://github.com/openai/codex-plugin-cc) を使う |
 | **必須指定** | `required = true` でサーバー起動失敗時に CLI も失敗させる設定が可能 | 非対応 |
 
 ### 6.1 移行のポイント

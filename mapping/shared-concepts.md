@@ -67,7 +67,7 @@ project-root/
 | **CLI 管理** | `claude mcp add/list/get/remove` | `codex mcp add/list/get/remove` | コマンド構造が同等 |
 | **TUI 確認** | `/mcp` | `/mcp` | 同等 |
 | **OAuth 認証** | `/mcp` 経由 | `codex mcp login` | UI が異なるが機能は同等 |
-| **サーバーモード** | 非サポート | `codex mcp-server` | Codex 固有 |
+| **サーバーモード** | 非サポート | `codex mcp-server`（0.149.1 で非推奨）→ `codex app-server` | Codex 固有。Claude Code から Codex を呼ぶ場合は公式プラグイン [codex-plugin-cc](https://github.com/openai/codex-plugin-cc) |
 
 ### 3.1 MCP サーバー定義の共通スキーマ
 
