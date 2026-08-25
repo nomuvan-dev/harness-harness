@@ -107,8 +107,11 @@ Claude Code の組み込みツール一覧。**ここに書かれたツール名
 - WebFetch は取得したページを小型・高速モデルで抽出プロンプトに対して処理する。**設計上ロッシー**——「ページに書かれていない」という結果は「プロンプトが聞かなかっただけ」の可能性がある
 - HTTP は HTTPS に自動昇格。**別ホストへのリダイレクトは追わず**、元 URL とリダイレクト先を返すので Claude が 2 回目の呼び出しをする
 - レスポンスは既定 15 分キャッシュ（v2.1.233 以降 `CLAUDE_CODE_WEBFETCH_CACHE_TTL_MS` で変更可）
-- `default` / `acceptEdits` モードでは新規ドメイン初回にプロンプトが出るが、**組み込みの事前承認ドキュメントドメイン集合**はプロンプトなしで取得される。明示的な `WebFetch(domain:...)` ルール（deny / ask / allow）は事前承認集合より優先する
-- **サンドボックスのネットワークルールは別系統**。サンドボックスプロセスから到達させたいドメインには別途サンドボックス権限ルールが必要
+- Manual（`default`）/ `acceptEdits` モードでは取得前にプロンプトが出るが、権限ルールが既に allow / deny しているドメインと**組み込みの事前承認ドキュメントドメイン集合**はプロンプトなしで処理される。明示的な `WebFetch(domain:...)` ルール（deny / ask / allow）は事前承認集合より優先する。ルールが何を許可していても、取得は先に **WebFetch ドメイン安全性チェック**を通る
+- プロンプトの選択肢は 3 つ: **Yes**（今回限り。同一ドメインでも次回また聞かれる）/ **Yes, and don't ask again for `<domain>`**（そのリポジトリの `.claude/settings.local.json` に `WebFetch(domain:...)` allow ルールを保存。`allowManagedPermissionRulesOnly` が有効な組織ではこの選択肢は非表示）/ **No, and tell Claude what to do differently**
+- 事前に許可するには allow ルール `WebFetch(domain:example.com)`。`WebFetch(domain:*)` で全ドメイン許可。`auto` / `bypassPermissions` モードはプロンプトをスキップするが、明示的な `ask` ルールに合致するドメインは例外
+- **サンドボックスは組み込みの事前承認ドキュメントドメイン集合を継承しない**。サンドボックスコマンドからプロンプトなしで到達させたいドメインは `sandbox.network.allowedDomains` に追加するか `WebFetch(domain:...)` ルールで許可する（サンドボックスは後者も尊重する）。逆方向は成立せず、WebFetch はサンドボックスの allowlist を読まない
+- サンドボックスが解釈する `WebFetch(domain:...)` のワイルドカードは先頭 `*.`（`*.example.com`）と裸の `*`（v2.1.186 以降）の 2 形式のみ。`example.*` のような他の位置のワイルドカードは WebFetch 自体にはマッチするがサンドボックスには効かない
 - WebSearch は結果のタイトルと URL のみ返し**ページ本文は取得しない**。1 回の呼び出しで最大 8 回のバックエンド検索を行いうる。`allowed_domains` / `blocked_domains` は併用不可
 - **セッションあたり最大 200 回**（メイン会話と全サブエージェント合算）。`CLAUDE_CODE_MAX_WEB_SEARCHES_PER_SESSION` で引き上げ可能だが**無効化はできない**。`/clear` でリセット
 - WebSearch の権限ルールは specifier を取らない。`allow` / `deny` に裸の `WebSearch` を書く形のみ

@@ -95,6 +95,12 @@ CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ../shared-config
 5. **User** -- 最低優先
 
 配列設定（`permissions.allow` 等）は各スコープから**マージ**（結合・重複排除）される。
+ただしモデル一覧を持つ 3 キーは独自ルールに従う:
+- `fallbackModel`: 順序に意味がある連鎖のため、定義している最上位ファイルの値を丸ごと採用
+- `modelPicker`: 行のマージを一切行わず、managed / `--settings` / user のうち最上位のものを丸ごと採用。project / local では無視（v2.1.242 以降）
+- `availableModels`: managed 階層の最上位が定義していればそれをそのまま適用し user / project / local の追加を無視（Claude Code を組み込むアプリが独自リストを供給する場合を除く）。managed 以外のスコープ同士では配列をマージ
+
+また `autoContinueAtUsageLimit` は `User or managed` スコープでありながら、user / `--settings` / managed のいずれも指定していない場合に限り、project / local 設定が指定するとオフとして解釈される。
 
 #### Managed ドロップインディレクトリ
 
@@ -128,6 +134,10 @@ CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ../shared-config
 | `availableModels` | 選択可能モデル制限 |
 | （組織 effort 上限） | 設定キーではなく Enterprise の admin コンソール側の機能（v2.1.195 以降）。カスタムロール単位・モデル単位に最大 effort レベルを設定でき、上限超のレベルは `/effort` ピッカーに出ず、`--effort` / `/effort` で指定しても上限に丸められる。対話セッションとプレーンテキスト `--print` では警告が出るが、`json` / `stream-json` 出力やバックグラウンドエージェントでは無警告で丸められる。複数ロールが同一モデルを許可する場合は最も緩い上限が適用。組織のモデル制限と同じ経路で配信される |
 | `modelOverrides` | モデルIDマッピング |
+| `modelPicker` | `/model` ピッカーに並べるモデルを自前の順序・ラベルで指定（v2.1.242 以降）。`options` 配列（各行に必須 `model` と任意 `label` / `description`）と任意の `replaceBuiltInOptions`（既定 `false`）を持つ。`model` は `--model` と同じ表記を受理（エイリアス・Anthropic モデルID・Bedrock / Vertex / Foundry 形式ID）。`replaceBuiltInOptions: true` で組み込みラインナップ・`availableModels` 由来行・ゲートウェイ探索結果・`ANTHROPIC_CUSTOM_MODEL_OPTION` を全て隠し、**Default** と現在使用中モデルの行だけを残す。`false` なら組み込みの後ろに追記。提供不可の行は落とされ、選択不可の行は理由付きでグレーアウト、全行が残らなければ組み込みラインナップに戻る。`availableModels` の許可リストは引き続き適用される。**スコープは User or managed**（managed / `--settings` / user のうち最上位のものが丸ごと採用され、project / local では無視。ラインナップのマージは行われない） |
+| `promptCacheTtl` | メイン会話（対話 / `-p` / Agent SDK ターンと、それらにインラインで走るヘルパー）のプロンプトキャッシュ TTL。`"5m"` / `"1h"`。未設定時は各リクエストの既定 TTL。1h はキャッシュ書き込み単価が高くなる。優先順位は `FORCE_PROMPT_CACHING_5M` > `CLAUDE_CODE_PROMPT_CACHE_TTL` > 本キー > `ENABLE_PROMPT_CACHING_1H`。v2.1.242 以降 |
+| `subagentPromptCacheTtl` | メイン会話**以外**（サブエージェント、ワークフロー、コンパクションやセッションタイトル等のバックグラウンド / ヘルパーリクエスト）のプロンプトキャッシュ TTL。`"5m"` / `"1h"`。サブエージェント・ワークフローエージェント・エージェントチームのイン・プロセスメイトはメイン会話と別の TTL バケットに入るため、Claude サブスクリプションでも既定は 5 分。`"1h"` で 1 時間保持。優先順位は `FORCE_PROMPT_CACHING_5M` > `CLAUDE_CODE_SUBAGENT_PROMPT_CACHE_TTL` > 本キー > `ENABLE_PROMPT_CACHING_1H`。v2.1.242 以降 |
+| `autoContinueAtUsageLimit` | claude.ai の利用上限で停止した後、セッションを開いたまま待機しリセット後に自動で作業を継続する（既定 `true`、v2.1.234 以降）。**スコープは User or managed**（user / `--settings` / managed のみ読む）だが、それらのいずれも設定していない場合に限り project / local 設定が指定するとオフ扱いになる（無視されない唯一の例外）。`/config` の **Continue automatically at usage limit** はユーザー設定に書き込み、managed / `--settings` が指定している間は行自体が隠れる |
 | `fallbackModel` | プライマリモデルが overloaded / unavailable 時に順番に試行する fallback モデルを最大 3 つまで設定。`--fallback-model` フラグは v2.1.166 からインタラクティブセッションにも適用（v2.1.166） |
 | `advisorModel` | Advisor ツール（実験的）のモデル設定。メインモデルより強力なモデルをアドバイザーとして併用し、方針決定・エラー行き詰まり・完了宣言前などの要所で Claude が相談する。`/advisor` コマンド / `--advisor` フラグでも設定可。Anthropic API 専用（Bedrock / Vertex / Foundry 不可）。アドバイザーはメインモデル以上の能力が必要（詳細: https://code.claude.com/docs/en/advisor ） |
 | `effortLevel` | エフォートレベル。設定ファイルで指定できるのは `low` / `medium` / `high` / `xhigh` の4段階（`max` は設定ファイル不可でセッション限定、`ultracode` は別キー `ultracode` を使う）。優先順位は `CLAUDE_CODE_EFFORT_LEVEL` 環境変数 > 本設定 > モデル既定。スキル / サブエージェントの frontmatter `effort` は当該実行中のみセッションレベルを上書きする（環境変数は上書きしない）。Managed 設定に置いても**強制ではなく既定値**で、`/effort` や `--effort` でセッション単位に変更可能。モデル別対応レベル: Fable 5 / Opus 5 / Sonnet 5 / Opus 4.8 / Opus 4.7 は `low`〜`max`、Opus 4.6 / Sonnet 4.6 は `xhigh` を除く4段階（未対応レベル指定時は直下の対応レベルにフォールバック）。既定は `high`（Opus 4.7 のみ `xhigh`） |
@@ -279,7 +289,8 @@ CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ../shared-config
 | `forceLoginGatewayUrl` | （Managed のみ）`/login` の Cloud gateway 画面が接続するゲートウェイ URL を指定。画面には URL 入力欄が無く、未設定だと「IT 管理者に問い合わせ」と表示される。`forceLoginMethod` 未設定時はこのキー単独で Cloud gateway 画面が開く。`forceLoginMethod: "gateway"` はログイン方式ピッカーも消す。`claudeai` / `console` を指定した場合はそちらが優先されるため、両方を整合させて設定する |
 | `policyHelper` | （Managed のみ）起動時に managed settings を計算する実行ファイルを走らせ、その出力をそのセッションの managed settings として扱う。デバイスポスチャ・ID・リモートサービスから動的にポリシーを導出する用途。**macOS plist / Windows HKLM レジストリ / managed settings ファイルのいずれか**（最優先の managed ソース）に置かれた場合のみ実行され、サーバー管理設定・HKCU・親設定由来のものは無視される。`path` / `refreshIntervalMs` / `timeoutMs` を持つ |
 | `strictPluginOnlyCustomization` | （Managed のみ）skills / agents / hooks / MCP サーバーを user・project ソースから読み込ませず、プラグインと managed settings 由来のみに限定する。`true` で 4 種すべて、または `["skills","agents","hooks","mcp"]` の配列で個別指定。`strictKnownMarketplaces` と組み合わせるとカスタマイズのサプライチェーン全体を統制できる |
-| `disableCommandPluginSources` | （Managed のみ）マーケットプレースが宣言したコマンドをユーザーのマシンで実行してインストールする `command` プラグインソースをブロック。`true` でコマンドを実行せず、command ソースのプラグインを install/update せず、既にインストール済みのものもロードしなくなる。未設定時は `allowManagedHooksOnly` に追随する。v2.1.229 以降 |
+| `disableCommandPluginSources` | （Managed のみ）マーケットプレースが宣言したコマンドをユーザーのマシンで実行してインストールする `command` プラグインソースをブロック。`true` でコマンドを実行せず、command ソースのプラグインを install/update せず、既にインストール済みのものもロードしなくなる。未設定時は `allowManagedHooksOnly` に追随する。マーケットプレースの `headersHelper` コマンド（アーカイブ取得時の認証ヘッダ生成）も、本キーが明示的に `false` でない限りブロックされる（managed 設定自身が宣言したマーケットプレースは例外）。v2.1.229 以降 |
+| `modelPricing` | （Managed のみ）組織の契約単価・割引倍率を `/cost`・ステータスライン・テレメトリのコスト表示に反映させ、定価の代わりに使う（v2.1.243）。※公式 settings リファレンス未収載（changelog のみ） |
 | `disableSideloadFlags` | （Managed のみ）`--plugin-dir` / `--plugin-url` / `--agents` / `--mcp-config` を起動時に拒否する（これらは `strictKnownMarketplaces` を単発で回避できてしまうため）。拒否されたフラグ名を挙げてエラー終了し、内部的に CLI をこれらのフラグ付きで起動する経路（現状は Desktop の Cowork ローカルセッション）にも同じチェックを適用する。クラウドセッションではサーバーが `--mcp-config` で渡した MCP サーバー（`type: "sdk"` のインプロセス以外）を落としてセッションを開始する。v2.1.193 以降 |
 | `sshConfigs` | （user / managed、Desktop アプリのみ）Desktop の環境ドロップダウンに SSH 接続を追加する。各要素は必須の `id` / `name` / `sshHost` と任意の `sshPort` / `sshIdentityFile`。managed で定義したものは managed 表示となり、ユーザーは選択のみ可能で編集・削除できない |
 | `sshHostAllowlist` | （Managed のみ、Desktop アプリのみ）Desktop の SSH セッションが接続できるホストを制限。大文字小文字を無視し、`*` は任意ホスト、`*.example.com` は `example.com` とその全サブドメイン、それ以外は `~/.ssh/config` 解決後のホスト名との完全一致。空配列で SSH セッションを無効化 |
@@ -480,7 +491,10 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 | `CLAUDE_CODE_PLUGIN_KEEP_MARKETPLACE_ON_FAILURE` | `1` で `git pull` 失敗時にマーケットプレースキャッシュを保持。オフライン/エアギャップ環境向け（v2.1.90） |
 | `CLAUDE_CODE_DISABLE_FAST_MODE` | `1` でFastモードを完全無効化（v2.1.92） |
 | `CLAUDE_CODE_PERFORCE_MODE` | Perforce VCS 連携モード（v2.1.98） |
-| `ENABLE_PROMPT_CACHING_1H` | `1` でプロンプトキャッシュ TTL を 1 時間化（v2.1.108） |
+| `ENABLE_PROMPT_CACHING_1H` | `1` でプロンプトキャッシュ TTL を既定の 5 分から 1 時間に要求（v2.1.108）。API キー / Bedrock / Vertex（Google Cloud Agent Platform） / Microsoft Foundry / Claude Platform on AWS 利用者向け。優先順位は最下位で、`CLAUDE_CODE_PROMPT_CACHE_TTL` / `CLAUDE_CODE_SUBAGENT_PROMPT_CACHE_TTL` / `promptCacheTtl` / `subagentPromptCacheTtl` に負ける |
+| `CLAUDE_CODE_PROMPT_CACHE_TTL` | `5m` / `1h` のみ受理。メイン会話（対話 / `-p` / SDK ターン＋インラインヘルパー）のプロンプトキャッシュ TTL を指定。`promptCacheTtl` 設定と `ENABLE_PROMPT_CACHING_1H` より優先（v2.1.242 系） |
+| `CLAUDE_CODE_SUBAGENT_PROMPT_CACHE_TTL` | `5m` / `1h` のみ受理。サブエージェント・ワークフロー・バックグラウンド処理などメイン会話外のリクエストの TTL を指定。`subagentPromptCacheTtl` 設定と `ENABLE_PROMPT_CACHING_1H` より優先（v2.1.242 系） |
+| `FORCE_PROMPT_CACHING_5M` | `1` で 1 時間 TTL が適用される状況でも 5 分 TTL を強制。上記 2 変数・`ENABLE_PROMPT_CACHING_1H`・`promptCacheTtl` / `subagentPromptCacheTtl` の全てに優先する最上位（v2.1.242 系） |
 | `CLAUDE_REMOTE_CONTROL_SESSION_NAME_PREFIX` | Remote Controlセッション名の自動生成プレフィックス（デフォルト: ホスト名）（v2.1.92） |
 | `CLAUDE_CODE_FORK_SUBAGENT` | `1` で外部ビルド（サードパーティ）でもフォークサブエージェントを有効化（v2.1.117） |
 | `OTEL_LOG_TOOL_DETAILS` | `1` で OpenTelemetry のカスタム/MCP コマンド名の redact を解除（v2.1.117） |
