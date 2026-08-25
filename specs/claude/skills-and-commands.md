@@ -200,10 +200,10 @@ Claude Code に同梱されるスキル:
 | `/memory` | CLAUDE.md/オートメモリ管理 |
 | `/hooks` | フック設定表示 |
 | `/mcp` | MCPサーバー管理。v2.1.161 で未使用 claude.ai connector を「Show unused connectors」の下に折りたたみ表示に変更 |
-| `/status` | ステータス表示。v2.1.221 からセッション種別（`interactive` / バックグラウンドの `attached` / `unattended`）も表示。セッション間メッセージが有効なセッションでは自身の受信箱アドレスを `Peer address` 行（`uds:` プレフィックス）に表示 |
+| `/status` | ステータス表示。v2.1.221 からセッション種別（`interactive` / バックグラウンドの `attached` / `unattended`）も表示。セッション間メッセージが有効なセッションでは自身の受信箱アドレスを `Peer address` 行（`uds:` プレフィックス）に表示。v2.1.243 で `Skipped sources` 行（`managed-settings.json` 等、存在するが上位の managed ソースが有効なため適用されない managed 設定ソース）と、Claude Code on the web 向けの GitHub 接続状況行（未接続なら `/web-setup` を案内）を追加 |
 | `/list-agents` | Claude が到達可能なエージェント一覧（サブエージェント / 同一マシンの他セッション / クラウドセッション / 他マシンの Remote Control セッション）。エイリアス `/peers`。セッション間メッセージ機能の有無を確認する手段でもある（コマンド自体が未認識ならその機能を持たない）。ローカルセッションは作業ディレクトリも表示され、同名セッションの区別が可能 |
 | `/context` | コンテキスト使用量の可視化 |
-| `/usage` | 使用量・統計を統合表示（v2.1.118 で `/cost` と `/stats` を `/usage` に統合。両コマンドはタイピングショートカットとして残存、対応タブを開く。v2.1.149 で制限使用量を駆動する要因（skills / subagents / plugins / MCPサーバー単位のコスト）のカテゴリ別内訳を表示） |
+| `/usage` | 使用量・統計を統合表示（v2.1.118 で `/cost` と `/stats` を `/usage` に統合。両コマンドはタイピングショートカットとして残存、対応タブを開く。v2.1.149 で制限使用量を駆動する要因（skills / subagents / plugins / MCPサーバー単位のコスト）のカテゴリ別内訳を表示。v2.1.243 で Loops 内訳（ループ単位の実行回数・総トークン・1 実行あたりトークン・最終実行時刻）を追加し、暴走した `/loop` を特定しやすくした） |
 | `/cost` | `/usage` のトークン使用量タブを開くショートカット |
 | `/stats` | `/usage` の日次使用量・セッション履歴タブを開くショートカット |
 | `/insights` | セッション分析レポート（プロジェクト領域、操作パターン、摩擦点） |
@@ -243,7 +243,7 @@ Claude Code に同梱されるスキル:
 | `/desktop` (`/app`) | デスクトップアプリでセッション継続 |
 | `/remote-control` (`/rc`) | リモートコントロール有効化 |
 | `/teleport` (`/tp`) | Claude Code on the web のクラウドセッションをこの端末に引き込む（ピッカー→ブランチfetch＋会話履歴ロード）。claude.ai サブスクリプション認証が必要 |
-| `/tasks` (`/bashes`) | 現在セッションのバックグラウンド作業（完了済みサブエージェント含む）の表示・管理 |
+| `/tasks` (`/bashes`) | 現在セッションのバックグラウンド作業（完了済みサブエージェント含む）の表示・管理。v2.1.243 で各サブエージェントが動いたモデルと effort レベルを一覧・詳細ダイアログに表示 |
 | `/web-setup` | ローカルの `gh` CLI 認証情報で GitHub アカウントを Claude Code on the web に接続。GitHub未接続時は `/schedule` が自動でプロンプト |
 | `/remote-env` | クラウドセッションのデフォルト環境をピッカーで選択（ユーザー設定 `remote.defaultEnvironmentId` に保存） |
 | `/ide` | IDE連携管理 |
@@ -301,6 +301,7 @@ MCPサーバーが公開するプロンプトは `/mcp__<server>__<prompt>` 形�
 | `/feedback [report]` | Claude Code へのプロダクトフィードバック送信（`/bug` と同じダイアログ・同意フロー） |
 | `/privacy-settings` | プライバシー設定の確認・更新（Pro / Max プランのみ） |
 | `/upgrade` | 上位プランへのアップグレードページをブラウザで開く |
+| `/rate-limit-options` | claude.ai の利用上限でリクエストが止まった際の選択肢メニュー（リセットまで待って自動継続 / usage credits 追加 / プランのアップグレード）を開く。自分の端末で上限に達した場合は Claude Code 側から自動的に開くこともある。自動継続の ON/OFF は `autoContinueAtUsageLimit` 設定 |
 | `/passes` | Claude Code の1週間無料パスを友人に共有（対象アカウントのみ表示） |
 | `/mobile` | Claude モバイルアプリのダウンロード QR を表示。エイリアス `/ios`・`/android` |
 | `/heapdump` | JavaScript ヒープスナップショットとメモリ内訳を `~/Desktop`（Linux では home）に書き出す。メモリ使用量診断用 |

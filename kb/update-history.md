@@ -1,5 +1,41 @@
 # harness-harness 更新履歴
 
+## 2026-08-26 — 公式ドキュメント巡回
+
+### 検出・更新
+
+Claude Code に **v2.1.243 / v2.1.245** がリリースされ、設定キー 4 種（`modelPicker` / `promptCacheTtl` / `subagentPromptCacheTtl` / `modelPricing`）とプロンプトキャッシュ TTL 系の環境変数 3 種が追加された。あわせて公式ドキュメント 32 ページのハッシュ比較で 13 ページの変更を検出し、突合の結果 **v2.1.234 で入っていた「利用上限リセット後の自動継続」（`autoContinueAtUsageLimit` / `/rate-limit-options`）が specs 未収載だった網羅性ギャップ**も解消した。Codex CLI は安定版 0.149.1 のまま更新なし。スキルエコシステム巡回は前回（2026-08-25）から 7 日以内のためスキップ。
+
+**1) プロンプトキャッシュ TTL の設定分離（v2.1.242 以降）**
+
+メイン会話とサブエージェント / ワークフローで TTL を別々に選べるようになった。サブエージェント・ワークフローエージェント・エージェントチームの in-process メイトはメイン会話とは別の TTL バケットに入るため、**Claude サブスクリプションでも既定は 5 分**という点が実務上のポイント。優先順位は `FORCE_PROMPT_CACHING_5M` > `CLAUDE_CODE_(SUBAGENT_)PROMPT_CACHE_TTL` > 設定キー > `ENABLE_PROMPT_CACHING_1H`。
+
+**2) `modelPicker`（v2.1.242）**
+
+`/model` ピッカーの行を自前の順序・ラベルで構成でき、`replaceBuiltInOptions: true` で組み込みラインナップを置き換えられる。スコープは `User or managed` で、**project / local では無視され、ラインナップのマージも行われない**。設定マージ規則の例外がこれで 3 キー（`fallbackModel` / `modelPicker` / `availableModels`）になった。
+
+**3) 利用上限の自動継続（網羅性ギャップの解消）**
+
+`autoContinueAtUsageLimit`（既定 `true`）と `/rate-limit-options` を specs に追加。本キーは `User or managed` スコープでありながら、user / `--settings` / managed のいずれも指定していない場合に限り project / local の指定が「オフ」として効く特殊な扱いを持つ。`Notification` フックの matcher にも `quota_auto_resume_fired` / `_stale` / `_disabled` が追加されている。
+
+**4) WebFetch とサンドボックスのドメイン扱いの明確化**
+
+サンドボックスは WebFetch の組み込み事前承認ドキュメントドメイン集合を継承しない（逆に WebFetch はサンドボックスの allowlist を読まない）。サンドボックスが解釈する `WebFetch(domain:...)` のワイルドカードは先頭 `*.` と裸の `*` のみ。
+
+**5) `disableCommandPluginSources` の適用範囲拡大**
+
+マーケットプレースの `headersHelper` コマンドも、本キーが明示的に `false` でない限りブロックされるようになった（managed 設定自身が宣言したマーケットプレースは例外）。
+
+### 更新ファイル
+
+- `specs/claude/changelog.md` — v2.1.243 / v2.1.245 を追加
+- `specs/claude/configuration.md` — `modelPicker` / `promptCacheTtl` / `subagentPromptCacheTtl` / `autoContinueAtUsageLimit` / `modelPricing` を追加、キャッシュ TTL 系環境変数 3 種を追加、設定マージ例外の記述を刷新、`disableCommandPluginSources` の説明を更新
+- `specs/claude/skills-and-commands.md` — `/rate-limit-options` を追加、`/usage`・`/status`・`/tasks` の説明を更新
+- `specs/claude/hooks.md` — `Notification` matcher に `quota_auto_resume_*` 系と elicitation 系を追加
+- `specs/claude/tools.md` — WebFetch の権限プロンプト選択肢とサンドボックスのドメイン扱いを刷新
+- `specs/claude/agent-teams.md` — in-process チームメイトのプロンプトキャッシュ TTL を追記
+- `specs/codex/changelog.md` — 巡回日と alpha 進行状況を更新
+
 ## 2026-08-25 — 公式ドキュメント巡回
 
 ### 検出・更新

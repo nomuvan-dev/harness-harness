@@ -3,7 +3,46 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-08-24
+最終更新: 2026-08-26
+
+---
+
+## v2.1.245 (2026-08-25)
+
+- glibc 2.44 系ディストリビューション（Arch Linux / CachyOS / Fedora Rawhide 等）での起動クラッシュを修正
+
+---
+
+## v2.1.243 (2026-08-25)
+
+- **`/usage` に Loops 内訳**: ループ単位の実行回数・総トークン・1 実行あたりトークン・最終実行時刻を表示し、暴走した / 過剰な `/loop` タスクを特定しやすくした
+- **`modelPicker` 設定**: `/model` ピッカーに並べるモデルを順序付き・ラベル付きのリストで指定できる（Vertex / Bedrock 形式を含む任意のID表記）。組み込みラインナップへの追記も、置き換えも可能
+- **`promptCacheTtl` / `subagentPromptCacheTtl` 設定**: API キー / クラウドプロバイダ利用者が、メイン会話は 1 時間キャッシュ、サブエージェントは 5 分といった使い分けを設定できる
+- **`modelPricing`（Managed）**: 組織の契約単価・割引倍率を `/cost`・ステータスライン・テレメトリのコスト表示に反映（定価の代わり）
+- **キーレスサインイン**: `/login` → Anthropic Console に「Sign in with your Console account」（推奨）が追加され、API キーを許可していない組織でもサインイン可能に
+- **`/status` の拡充**: 上位の managed ソースが有効なため適用されない managed 設定ソースを `Skipped sources` 行に列挙。Claude Code on the web 向けの GitHub 接続状況行も追加（未接続時は `/web-setup` を案内）
+- **`managed` マーカー**: 組織が認証を管理する claude.ai コネクタを `/mcp`・`/plugins` に `managed` 表示
+- **`/tasks` にモデル / effort 表示**: 各サブエージェントが動いたモデルと effort レベルを一覧・詳細ダイアログに表示
+- 修正: 非対話（`-p`）/ SDK セッションでリモート MCP サーバーが切断後に復帰しない問題（自動再接続または failed 報告へ）
+- 修正: デスクトップアプリから開始した MCP サインインが、client ID metadata document 対応サーバー（Linear 等）で "Invalid redirect URI" になる問題
+- 修正: フック `if` 条件（`Bash(cat *)` 等）が、コマンド置換 `$()` / バッククォートに続けて引数がある場合に無関係な Bash コマンドで発火する問題
+- 修正: `--agents` が不正 JSON / 不正なエージェント定義を黙って無視していた（`--mcp-config` と同様に明確なエラーで終了）
+- 修正: `--plugin-dir` で同時ロードしたプラグイン間の `marketplace` フィールド依存が解決されない
+- 修正: `/reload-plugins` が最後の LSP プラグイン無効化後も LSP ツールを残す問題（会話を読み直す LSP 変更前に警告も出す）
+- 修正: API がレスポンスを開始しない場合にセッションが 10 分以上無反応になる問題（約 3 分でタイムアウト → 1 回リトライ → `API Error: No response from API`）
+- 修正: バックグラウンドサブエージェントが最後のバックグラウンド Bash タスク完了時に起きない
+- 修正: `~/.claude/history.jsonl` に不正エントリがあると `Ctrl+R` 履歴検索と上矢印履歴が壊れる
+- 修正: サンドボックスのネットワーク違反詳細が、ブロックされたコマンドが exit 0 の場合に Bash 結果から落ちる
+- 修正: `claude --teleport <session>` が未コミット変更で終了していた（stash して継続を提案するように）
+- 修正: Chrome の Claude が自動更新後に Claude Code との接続を失う（ネイティブホストが安定した `claude` ランチャー経由で起動）
+- 改善: 起動時間（サンドボックス / MCP 立ち上げが初回フレームをブロックしない等）、ネイティブインストール / 自動更新のダウンロードサイズ（zstd 圧縮で Linux x64 は約 340MB → 約 75MB）、ネイティブビルドのメモリ使用量（オンデマンドロードでセッションあたり約 40〜70MB 削減）
+- 改善: effort `xhigh` / `max` を thinking 無効で使った際のエラーが、レベル名・無効化している設定・`/effort high` という解決策を示すように
+- 改善: `/loop` で「やることがない」連続ウェイクアップを 1 行に折り畳んで表示
+- 変更: サンドボックス Bash ツールのプロンプトが許可ホスト一覧を提示しなくなり、Claude が実際にリクエストを試みる（＝未掲載ホストも承認可能）ように
+- 変更: `/model` ピッカーと同梱 `claude-api` スキルで、Sonnet 5 の $2/$10 per Mtok を期間限定プロモではなく標準の定価として表示
+- 変更: macOS の computer use で、デスクトップ / Dock / Finder ウィンドウのクリックにも Finder のアクセス許可が必要に
+- 変更: `/model`・`/fast`・`/effort` が Bedrock / Vertex / Foundry およびテレメトリ無効時もターン終了を待たず即時実行されるように
+- 変更: セッション間メッセージの受信箱ソケットが 30 秒以内に完全な 1 行を送らない接続を切断（投稿スクリプトはデータ準備後に接続すること）
 
 ---
 
