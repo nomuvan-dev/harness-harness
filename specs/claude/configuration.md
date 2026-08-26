@@ -173,6 +173,7 @@ CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ../shared-config
 | `spellcheck` | プロンプト入力欄のスペルチェック（v2.1.235）。既定は無効。**user 設定 / `--settings` / Managed 設定のみ**から読み込まれ、プロジェクトの `.claude/settings.json` / `settings.local.json` は無視される。複数箇所にある場合は Managed → `--settings` → user の順で**1つだけ**採用しフィールドのマージはしない。フィールド: `enabled` / `checker`（`aspell` / `hunspell` / `ispell`、指定時はフォールバックしない）/ `language`（辞書名。パスや空白入りは無視）/ `color`（色名・`#rrggbb`・`rgb()`・`ansi256(n)`・`ansi:<name>`。既定はテーマのエラー色） |
 | `emojiCompletionEnabled` | プロンプト入力の絵文字ショートコード補完（`:heart:` → ❤️）の有効/無効（v2.1.217） |
 | `workflowSizeGuideline` | Dynamic workflow のサイズガイドライン（advisory）。設定時は `/config` の該当行が非表示（v2.1.219。デフォルトは medium = 15エージェント未満目安） |
+| `disableDesktopLocalSessions` | （Managed のみ、Desktop アプリのみ、v2.1.246）デバイス上で動く Code セッションを無効化し、SSH 越しのリモートホスト / クラウド環境のみに限定する。`true`（JSON Boolean のみ有効）で Code タブの **Local** 環境がグレーアウトし選択不可（Windows の WSL エントリも同様。WSL セッション自体の可否は別途 admin-setup で制御）。既存のローカルセッションは一覧に残るが継続できない。文字列 `"true"` や `1` など Boolean 以外は無視され警告ログを出す。`sshConfigs` / `sshHostAllowlist` と併用するのが前提。**注意**: Claude Desktop 由来のポリシー（egress allowlist / ファイルシステムサンドボックス / MCP 制限）は、admin ソース（server-managed 設定・MDM/OS ポリシー・managed 設定ファイル）が存在すると無視されるため、本キーを admin ソース経由で新規配布すると Desktop 由来ポリシーが効かなくなる |
 | `disableMobileSimulatorTools` | Claude の iOS Simulator ツールをブロック（Managed 設定、Claude Code Desktop / macOS）。Simulator ペイン自体は手動操作用に残る（詳細: https://code.claude.com/docs/en/desktop-ios-simulator ） |
 | `remote.defaultEnvironmentId` | CLI から作成するクラウドセッション（`claude --cloud` 等）のデフォルトクラウド環境。`/remote-env` コマンドのピッカーでユーザー設定に保存される（詳細: https://code.claude.com/docs/en/cloud-environments ） |
 | `autoUpdatesChannel` | 更新チャンネル (`stable` / `latest`) |
@@ -546,11 +547,16 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 | `CLAUDE_CODE_GOAL_CHECKIN_MINUTES` | `/goal` 実行中、バックグラウンド作業がゴール評価を待たせ続けたときに Claude へ状況確認を促すまでの分数（デフォルト `30`、`0` で無効、最大 `10080`＝1週間。プレーンな整数以外は未設定扱い）。Claude Code は実行中タスクを列挙し、出力の確認・進捗中なら待機継続・停滞中なら修正か停止を依頼する（v2.1.234）。v2.1.236 でアイドルセッションのゴールがバックグラウンド作業の背後で停滞している場合、ユーザーの復帰を待たず 30 分後（以降 1h・2h）に自動チェックインするよう拡張 |
 | `CLAUDE_CODE_PROJECT_DIR_NAME` | セッションごとに独自の config ディレクトリを与えるホスト向けに、プロジェクト単位のトランスクリプトディレクトリ名を短い名前で指定（v2.1.234。changelog 記載、公式 env-vars リファレンス未収載） |
 | `CLAUDE_CODE_WEBFETCH_CACHE_TTL_MS` | WebFetch のセッション内 URL キャッシュ TTL を設定（デフォルトは従来通り 15 分）（v2.1.233） |
+| `CLAUDE_CODE_DISABLE_BEDROCK_CONTENT_TYPE_DEFAULT` | `1` で、`Content-Type` ヘッダが欠落 / 空の Amazon Bedrock ストリーミング応答をバイナリ `application/vnd.amazon.eventstream` 形式として扱う既定挙動を止める。Bedrock は常に当該ヘッダを送るため、欠落＝プロキシによる除去とみなして既定ではバイナリ解釈するが、プロキシがヘッダを除去した上で本文を SSE として再送出する場合のみ本変数を設定する（v2.1.246 系） |
 | `CLAUDE_CODE_ENABLE_TODO_TOOLS` | `1` で Todo / タスク追跡ツール（`TaskCreate` / `TaskGet` / `TaskUpdate` / `TaskList` / `TodoWrite`）を復活させる。**v2.1.233 で Opus 4.8 / Sonnet 5 / Fable 5 / Mythos 5 以降のモデルでは既定で提供されなくなった**ため、これらに依存するハーネスは明示設定が必要 |
 
 > 補足: `OTEL_LOG_TOOL_DETAILS=1` は v2.1.157 で `tool_decision` イベントに `tool_parameters`（bash コマンド、MCP/skill 名等）を追加する効果も併せ持つようになった。
 
 > Workflow キーワードトリガー: v2.1.157 から `/config` の「Workflow keyword trigger」設定で、プロンプト中のトリガーキーワードがワークフロー要求を発動するかをユーザー設定できる。**v2.1.160 でトリガーキーワードが `workflow` → `ultracode` にリネーム**。
+
+> 機能フラグ取得（feature flag fetching）: `DISABLE_GROWTHBOOK` / `DISABLE_TELEMETRY` / `DO_NOT_TRACK` / `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC` のいずれかを設定するとオフになるほか、**Claude apps gateway 経由の接続では常にオフ**、**Bedrock / Claude Platform on AWS / Google Cloud Agent Platform / Microsoft Foundry でも既定でオフ**（Claude Code を埋め込むホストプラットフォームが `CLAUDE_CODE_PROVIDER_MANAGED_BY_HOST` を設定した場合のみオン）。取得オフ時はフラグ制御下の機能が使えない。なお v2.1.246 で `/code-review` は Claude 自身の自律起動を含めこの制約から外れた。
+
+> インストール / アップグレード直後の初回セッション: フラグ取得が有効でも、フラグ制御下の機能が初回セッションでは欠けることがあり、通常は auto mode で始まるプランでも Manual モードで開始することがある（次回セッションからは正常）。新規インストール直後の非対話セッション（`claude -p` / Agent SDK / VS Code 拡張）は、開始権限モードの決定前にフラグを取得できる場合がある。
 
 完全な環境変数リファレンス: https://code.claude.com/docs/en/env-vars
 

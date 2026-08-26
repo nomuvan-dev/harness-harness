@@ -24,7 +24,7 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 | `UserPromptSubmit` | ユーザープロンプト送信後、処理前 | Yes | - |
 | `UserPromptExpansion` | ユーザーが打ったコマンドがプロンプトへ展開される時（Claude に届く前） | Yes | `command_name`（スキル名 / コマンド名）。matcher 省略で全 prompt 型コマンドに発火 |
 | `PreToolUse` | ツール実行前 | Yes | ツール名 (`Bash`, `Edit`, `Write` 等) |
-| `PermissionRequest` | 権限ダイアログ表示時 | Yes | ツール名 |
+| `PermissionRequest` | ツール使用の権限ダイアログ表示時 | Yes | ツール名 |
 | `PostToolUse` | ツール成功後 | No | ツール名 |
 | `PostToolUseFailure` | ツール失敗後 | No | ツール名 |
 | `PostToolBatch` | 並列ツール呼び出しのバッチ全体が解決した後、次のモデル呼び出し前 | Yes | matcher非サポート（全バッチで発火） |
@@ -46,7 +46,7 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 
 | イベント | 発火タイミング | ブロック可能 | matcher対象 |
 |:--|:--|:--|:--|
-| `Notification` | 通知送信時 | No | `permission_prompt`, `idle_prompt`, `auth_success`, `elicitation_dialog`, `agent_needs_input`, `agent_completed`（バックグラウンドエージェント通知、v2.1.198）, `elicitation_url_dialog`, `elicitation_complete`, `elicitation_response`, `quota_auto_resume_fired` / `quota_auto_resume_stale` / `quota_auto_resume_disabled`（利用上限リセット後の自動継続、v2.1.243 系） |
+| `Notification` | 通知送信時 | No | `permission_prompt`（ツール承認に加え、**サンドボックスコマンドのネットワークリクエスト承認**も対象。ターミナルセッションでは v2.1.246 以降）, `idle_prompt`, `auth_success`, `elicitation_dialog`, `agent_needs_input`, `agent_completed`（バックグラウンドエージェント通知、v2.1.198）, `elicitation_url_dialog`, `elicitation_complete`, `elicitation_response`, `quota_auto_resume_fired` / `quota_auto_resume_stale` / `quota_auto_resume_disabled`（利用上限リセット後の自動継続、v2.1.243 系） |
 | `MessageDisplay` | アシスタントメッセージ表示時 | No（transform/hide可） | - | アシスタントメッセージのテキストを変換または非表示にできる（v2.1.152） |
 | `ConfigChange` | 設定ファイル変更時 | Yes | `user_settings`, `project_settings`, `local_settings`, `policy_settings`, `skills` |
 | `InstructionsLoaded` | CLAUDE.md/rules読み込み時 | No | `session_start`, `nested_traversal`, `path_glob_match`, `include`, `compact` |
@@ -292,6 +292,8 @@ v2.1.133 以降、すべてのイベントの入力 JSON に effort level も含
 | `UserPromptExpansion` | `expansion_type` (`slash_command`/`mcp_prompt`), `command_name`, `command_args`, `command_source`, `prompt` |
 | `PreToolUse` | `tool_name`, `tool_input`, `tool_use_id` |
 | `PermissionRequest` | `tool_name`, `tool_input`, `permission_suggestions`(opt) |
+
+> `PermissionRequest` は **サンドボックスコマンドのネットワークリクエスト**の権限プロンプトでは発火しない（ツール使用の権限要求のみ）。ネットワークリクエスト側のシグナルが必要な場合は `Notification` の `permission_prompt` タイプを使う（ただし約 6 秒の待機後に発火）。
 | `PostToolUse` | `tool_name`, `tool_input`, `tool_response`, `tool_use_id`, `duration_ms`（v2.1.119+。権限プロンプトと PreToolUse 時間を除いたツール実行時間） |
 | `PostToolUseFailure` | `tool_name`, `tool_input`, `tool_use_id`, `error`, `is_interrupt`, `duration_ms`（v2.1.119+） |
 | `PostToolBatch` | `tool_calls`（各要素は `tool_name`, `tool_input`, `tool_use_id`, `tool_response`）。`tool_response` は `PostToolUse` と形が異なりモデルが見る `tool_result` のシリアライズ |

@@ -1,5 +1,56 @@
 # harness-harness 更新履歴
 
+## 2026-08-27 — 公式ドキュメント巡回
+
+### 検出・更新
+
+Claude Code に **v2.1.246**（2026-08-25）がリリースされた。公式ドキュメント 34 ページのハッシュ比較で 12 ページの変更を検出し、うち 7 ページ分を specs に反映。Codex CLI は安定版 0.149.1 のまま更新なし（0.150.0 は alpha.13 まで進行中だがリリースノート本文が空）。スキルエコシステム巡回は前回（2026-08-25）から 7 日以内のためスキップ。
+
+**1) `/goal` のアイドルチェックインに上限（v2.1.246）**
+
+バックグラウンド作業がゴール評価を待たせている間、アイドルセッションから自動的に始まるチェックインが **ユーザーのプロンプト間で 1 ゴールあたり最大 3 回**に制限された。3 回目で「次のプロンプトまで停止する」旨を告知し、次のユーザーメッセージでさらに 3 回分が許可される。v2.1.236 で導入されたアイドルチェックインは上限がなく、無人セッションでの `/goal` は理論上永久にチェックインし続けたため、長時間の自律ループを設計するハーネスは**チェックイン頼みの継続が 3 回で止まる**前提に変える必要がある。
+
+**2) `/permissions` に Auto mode タブ（v2.1.246）**
+
+Auto mode 分類器ルールの閲覧・編集がダイアログから直接できるようになった。従来は拒否履歴のレビューのみで、ルール自体は設定ファイル経由だった。
+
+**3) `disableDesktopLocalSessions`（Managed、v2.1.246）**
+
+Desktop アプリでデバイス上の Code セッションを禁止し、SSH 越しのリモートホスト / クラウドのみに限定する管理者向けキー。**Claude Desktop 由来のポリシー（egress allowlist・ファイルシステムサンドボックス・MCP 制限）は admin ソースが存在すると Claude Code から無視される**ため、admin ソースが無かったデバイスに本キーを配布すると Desktop 由来ポリシーが効かなくなるという副作用がある。サードパーティ配備で要注意。
+
+**4) サンドボックスのネットワーク許可プロンプトと hooks**
+
+`PermissionRequest` フックは**サンドボックスコマンドのネットワークリクエスト**の権限プロンプトでは発火しない（ツール使用の権限要求のみ）。ネットワーク側のシグナルが必要なら `Notification` の `permission_prompt` タイプを使う（約 6 秒待機後に発火、ターミナルセッションでは v2.1.246 以降）。あわせて v2.1.246 で「Network request outside of sandbox」プロンプト待機中に `Notification` が発火しない不具合が修正された。
+
+**5) 機能フラグ取得がクラウドプロバイダで既定オフ**
+
+`DISABLE_GROWTHBOOK` 等の明示設定に加え、**Claude apps gateway 経由では常にオフ**、**Bedrock / Claude Platform on AWS / Google Cloud Agent Platform / Microsoft Foundry でも既定オフ**（ホストが `CLAUDE_CODE_PROVIDER_MANAGED_BY_HOST` を設定した場合のみオン）と明文化された。一方 v2.1.246 で `/code-review` はこの制約から外れ、これらの環境でも Claude 自身がレビューを開始できるようになった。
+
+**6) `keybindings.json` の仕様変更**
+
+キー名が**大文字小文字非依存**になり、`K` は `k` と同一（Shift 併用は `shift+k` と明記が必要）。`wheelup` / `wheeldown` がマウスホイールイベントとして指定でき、既定で `scroll:lineUp` / `scroll:lineDown` にバインドされている。未知のアクション名のバインドはスキップされ既定バインドが維持される（従来はそのキーが黙って無効化されていた）。
+
+**7) その他 specs 反映**
+
+- `CLAUDE_CODE_DISABLE_BEDROCK_CONTENT_TYPE_DEFAULT`（Bedrock ストリーミングの `Content-Type` 欠落時のバイナリ解釈を止める）
+- サブエージェントが `maxTurns` 上限で止まった場合、完了扱いではなく部分出力として返し `SendMessage` での継続を促す
+- `/cd` 移動先のプロジェクト設定・hooks・`.mcp.json`・skills・agents が `--resume` を待たず即時反映
+
+### 更新ファイル
+
+- `specs/claude/changelog.md` — v2.1.246 を追加
+- `specs/claude/configuration.md` — `disableDesktopLocalSessions`、`CLAUDE_CODE_DISABLE_BEDROCK_CONTENT_TYPE_DEFAULT`、機能フラグ取得と初回セッションの注記
+- `specs/claude/hooks.md` — `PermissionRequest` のサンドボックスネットワーク例外、`permission_prompt` の対象拡大
+- `specs/claude/skills-and-commands.md` — `/permissions` の Auto mode タブ、`/goal` のアイドルチェックイン上限、`/keybindings` の仕様
+- `specs/codex/changelog.md` — 最終更新日と巡回状況の注記
+
+### specs 更新不要と判断したもの
+
+- `skills.md` / `best-practices.md` / `workflows.md` — サンプルコードの文言変更のみ（React→Vue の例が JavaScript→TypeScript に差し替え）
+- `llms.txt` — `_llms/` 配下に 11 言語版インデックスが追加されただけで、英語ドキュメントページの新規追加はなし
+- `managed-settings.md` — managed-only キー一覧に Desktop local-session が加わった旨のみで `settings-reference` 側でカバー
+- Codex 公式 changelog の 2026-08-25 エントリ — ブラウザ拡張 / Site tools (WebMCP) / クラウドブラウザサインインで ChatGPT 製品側の更新。CLI 仕様への影響なし
+
 ## 2026-08-26 — 公式ドキュメント巡回
 
 ### 検出・更新
