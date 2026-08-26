@@ -4,7 +4,7 @@
 公式: https://learn.chatgpt.com/docs/changelog
 （2026-08-15 時点で `https://developers.openai.com/codex/changelog` は上記へ 308 恒久リダイレクト）
 
-最終更新: 2026-08-26（安定版は 0.149.1 のまま。0.150.0 は alpha.9 まで進行中だがリリースノート本文が空で公式 changelog への掲載もなし）
+最終更新: 2026-08-27（安定版は 0.149.1 のまま。0.150.0 は alpha.13 まで進行中だがリリースノート本文が空で公式 changelog への掲載もなし。公式 changelog の 2026-08-25 エントリはブラウザ拡張 / Site tools (WebMCP) / クラウドブラウザサインインなど ChatGPT 製品側の更新で、CLI 仕様への影響なし）
 
 ---
 
