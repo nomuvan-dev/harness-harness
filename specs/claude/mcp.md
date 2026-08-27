@@ -110,6 +110,33 @@ v2.1.154: `claude mcp list` / `get` の出力がパイプされた場合、未�
 
 **v2.1.196 のセキュリティ修正**: `claude mcp list` / `get` は、リポジトリがコミット済み `.claude/settings.json` で自己承認した `.mcp.json` サーバーをスポーンしなくなった。未信頼ワークスペースでは `⏸ Pending approval` 表示。
 
+**接続を試みずに表示される設定ステータス**（v2.1.247 時点）:
+
+| 表示 | 意味 | どこに出るか |
+|:--|:--|:--|
+| `⏸ Pending approval (run `claude` to approve)` | 未承認の `.mcp.json` プロジェクトスコープサーバー。`claude` を対話起動して承認する | `claude mcp list` と `get` |
+| `✘ Rejected (see disabledMcpjsonServers in settings)` | `disabledMcpjsonServers` で拒否されている | `claude mcp get <name>` のみ |
+| `⊘ Disabled for this project (re-enable via /mcp)` | プロジェクトの `disabledMcpServers` に列挙されている。`/mcp` パネルから再有効化 | `claude mcp list` と `get` |
+
+> v2.1.238 より前は、無効化済みサーバーにもヘルスチェックのため接続しに行き接続結果を報告していた。
+
+**MCP 設定の警告（4 種）**:
+
+- **前後の空白**: `command` / `url` / `args` 各要素 / `env`・`headers` の値とキー名に前後の空白があると警告（`Leading or trailing whitespace in: headers.Authorization` のように値は伏せてフィールド名だけ表示）。Claude Code はトリムせずそのまま使うので設定側を直す
+- **複数スコープでの同名サーバー**: 異なるエンドポイントで同じサーバー名を複数スコープに定義すると警告。OAuth サインインはエンドポイント単位で保存されるため、別プロジェクトでは再サインインが必要になる。`claude mcp remove <name> --scope <scope>` で整理する。警告中のエンドポイントは `${VAR}` を展開せずそのまま引用される
+- **予約名**: `workspace` / `claude-in-chrome` / `computer-use` / `Claude Preview` / `Claude Browser` は組み込みサーバー用に予約済み。定義するとロード時にスキップされリネームを促す警告。`claude mcp add` はエラーで拒否（`Claude Browser` の予約は v2.1.205 以降）
+- **未設定の環境変数**: `${VAR}` 参照が未設定かつ `:-default` も無い場合、変数名を挙げて警告した上で `${VAR}` のテキストのまま**サーバーはロードされる**。変数を設定するか `${VAR:-default}` を書く
+
+**`/mcp` からの認証後に接続が失敗した場合**: HTTP ステータスやトランスポートエラーコードに加え、試行した URL の**オリジン**（scheme + host、ポート指定があればポートまで）がメッセージに含まれる。パスとクエリは出ない。オリジンは `${VAR}` 展開後の値。ステータスもエラーコードも無い失敗ではオリジンなしでエラーテキストのみ表示。
+
+**プロジェクトスコープサーバーの承認プロンプトが出せない実行形態**（`claude -p` / Agent SDK / クラウドセッション、および `skipDangerousModePermissionPrompt` 付きの `bypassPermissions` セッション）では、確認なしでロードされる。除外するには:
+
+- `disabledMcpjsonServers` に追加（全権限モードでブロック）
+- `--setting-sources` / SDK の `settingSources` でプロジェクト設定ごと除外
+- `--strict-mcp-config` で起動し `--mcp-config` で渡したサーバーのみ使う（**ロードしないプロジェクトスコープサーバーの承認待ちをスキップするのは v2.1.246 以降**。それ以前は strict セッションでも承認待ちになりバックグラウンドセッションが起動時に止まっていた）
+
+**Anthropic ホスト型コネクタ**: Microsoft 365 / Gmail / Google Calendar 等は claude.ai が登録したリダイレクト URL しか受け付けないため、Claude Code からのローカル OAuth に非対応。`claude mcp add` や `.mcp.json` で追加したサーバーがこれらを指す場合、`/mcp` や `claude mcp login` でのサインインは `is Anthropic-hosted and doesn't support local OAuth` を返す。`claude mcp remove <name>` で自前エントリを消し、[claude.ai/customize/connectors](https://claude.ai/customize/connectors) で接続すると Claude Code に自動的に現れる。
+
 セッション内 `/mcp` コマンド: v2.1.161 から、未使用の claude.ai connector は「Show unused connectors」行の下に折りたたまれ、有効な接続のみが既定で展開表示される。
 
 ### 3.3 JSON ファイルによる設定

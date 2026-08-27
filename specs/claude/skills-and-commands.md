@@ -22,6 +22,8 @@ Skills は Claude の能力を拡張する仕組み。`SKILL.md` ファイルに
 | Plugin | `<plugin>/skills/<skill-name>/SKILL.md` | プラグイン有効時 |
 | Plugin (単一スキル) | `<plugin>/SKILL.md` （`skills/` サブディレクトリなし） | プラグイン全体が単一スキルとしてサーフェスされる（v2.1.142） |
 
+> **プラグインスキルの frontmatter `name`**: `name` はコマンド名の**最終セグメント**（ディレクトリ名）を置き換える。`my-plugin/skills/review/SKILL.md` に `name: fancy` を書くと `/my-plugin:fancy` になり、他が使っていなければ素の `/fancy` でも呼べる。`name` が既にプラグイン接頭辞を含む場合（`name: my-plugin:fancy`）、**v2.1.246 以降は接頭辞を重ねない**（v2.1.216〜v2.1.245 は二重化していた）。v2.1.216 より前は `name` がコマンド名全体を置き換えていた。
+
 名前が重複する場合の優先度: Enterprise > Personal > Project。Plugin スキルは `plugin-name:skill-name` 名前空間で衝突しない。
 
 `.claude/commands/` も引き続き動作する。同名の場合は Skills が優先。
@@ -234,7 +236,7 @@ Claude Code に同梱されるスキル:
 |:--|:--|
 | `/add-dir <path>` | ワーキングディレクトリ追加 |
 | `/agents` | ~~サブエージェント管理~~ **v2.1.198 でウィザード削除**。サブエージェントの作成・管理は Claude に依頼するか `.claude/agents/` を直接編集 |
-| `/skills` | スキル一覧。長いリストでも type-to-filter 検索ボックスで即座に絞り込み（v2.1.121） |
+| `/skills` | スキル一覧。type-to-filter 検索ボックスで即座に絞り込み（v2.1.121。v2.1.247 から name だけでなく description / source も検索対象）。`t` でトークン数ソート、`Space` または `Enter`（`Enter` は v2.1.247+）で Claude と `/` メニューに対する可視性をサイクル、`Esc` で保存して閉じる。プラグインスキル・frontmatter に `disable-model-invocation: true` を持つスキル・managed settings や `--settings` の `skillOverrides` 対象のスキルはサイクル不可 |
 | `/plugin` | プラグイン管理（マーケットプレース、インストール、有効化/無効化）。`claude plugin prune` で孤立した自動インストール依存を削除、`plugin uninstall --prune` でカスケード削除（v2.1.121）。マーケットプレース browse ペインに projected context cost（ターン当たり・呼び出し当たりのトークン推定）を表示（v2.1.143）。Discover/Browse 画面でインストール前にプラグインが提供する commands / agents / skills / hooks / MCP/LSP サーバーをプレビュー（v2.1.145） |
 | `/plugin list` | インストール済みプラグイン一覧表示。`--enabled` / `--disabled` フィルタ対応（v2.1.163） |
 | `claude plugin enable/disable` | 依存関係を強制。`disable` は他の有効プラグインの依存先を拒否し disable-chain ヒントを表示。`enable` は推移的依存を強制有効化（v2.1.143） |
@@ -291,7 +293,7 @@ MCPサーバーが公開するプロンプトは `/mcp__<server>__<prompt>` 形�
 | `/fewer-permission-prompts` | **バンドルスキル**。トランスクリプトから頻出の読み取り専用 Bash / MCP 呼び出しを抽出し、プロジェクト `.claude/settings.json` に優先度付き allowlist を追加 |
 | `/import [codex\|gemini] [--dry-run] [--yes]` | 他のコーディングエージェント（OpenAI Codex / Google Gemini CLI）の設定（指示ファイル・MCP サーバー・コマンド・サブエージェント・スキル）を Claude Code に取り込む |
 | `/statusline` | ステータスラインの設定。引数なしでシェルプロンプトから自動構成 |
-| `/keybindings` | キーボードショートカット設定ファイル（`~/.claude/keybindings.json`）を開く。キー名は**大文字小文字を区別しない**（`K` は `k` と同一。Shift 併用は `shift+k` と明記する必要がある）。`wheelup` / `wheeldown` がマウスホイールイベントとして指定でき、既定で `scroll:lineUp` / `scroll:lineDown` にバインドされている。未知のアクション名を指定したバインドは v2.1.246 からスキップされ（既定バインドが維持され `--debug` で警告）、以前はそのキーが無効化されていた |
+| `/keybindings` | キーボードショートカット設定ファイル（`~/.claude/keybindings.json`）を開く。キー名は**大文字小文字を区別しない**（`K` は `k` と同一。Shift 併用は `shift+k` と明記する必要がある）。`wheelup` / `wheeldown` がマウスホイールイベントとして指定でき、既定で `scroll:lineUp` / `scroll:lineDown` にバインドされている。未知のアクション名を指定したバインドは v2.1.246 からスキップされ（既定バインドが維持され `--debug` で警告）、以前はそのキーが無効化されていた。v2.1.247 で `chat:queueSubmit`（既定 `Ctrl+X Enter`。作業中でも割り込まずキューに積む送信。オートコンプリート表示中でも送信される）と `select:pageUp` / `select:pageDown` / `select:first` / `select:last`（PageUp / PageDown / Home / End。適用は `/skills` メニュー。`/model` 等では既定の PageUp / PageDown が使われ Home / End は無視）を追加。キー名に `pageup` / `pagedown` / `home` / `end` が使えるようになった。`ctrl+x` を単独キーとして奪うには `ctrl+x ctrl+k` / `ctrl+x ctrl+e` / `ctrl+x enter`（Chat）と `ctrl+x ctrl+b`（Task）を全て `null` にする。再バインド不可: `Ctrl+C` / `Ctrl+D` / `Ctrl+M`（Enter として届く）/ `Ctrl+[`（Escape として届く）/ `Ctrl+I`（Tab として届く）/ `Ctrl+H`（ASCII backspace）/ Caps Lock。非 Latin レイアウト（キリル等）では Kitty キーボードプロトコル対応端末なら US 配列の物理位置でマッチし、AZERTY 等の Latin 系再配置レイアウトでは「そのキーが打つ文字」でマッチする（v2.1.247 以前は Kitty プロトコル端末の非 Latin レイアウトで Ctrl ショートカットが発火しなかった） |
 | `/theme` | カラーテーマ変更（`auto`・light/dark・色覚多様性対応（daltonized）・ANSI テーマ等） |
 | `/scroll-speed` | マウスホイールのスクロール速度をインタラクティブ調整（フルスクリーン描画時） |
 | `/terminal-setup` | Shift+Enter 等の端末キーバインド設定（VS Code / Cursor / Alacritty / Zed 等、必要な端末でのみ表示） |
@@ -300,7 +302,7 @@ MCPサーバーが公開するプロンプトは `/mcp__<server>__<prompt>` 形�
 | `/setup-bedrock` | Amazon Bedrock の認証・リージョン・モデルピンをウィザードで設定（`CLAUDE_CODE_USE_BEDROCK=1` 時のみ表示） |
 | `/setup-vertex` | Google Cloud Agent Platform の認証・プロジェクト・リージョン・モデルピンをウィザードで設定（`CLAUDE_CODE_USE_VERTEX=1` 時のみ表示） |
 | `/bug [report]` | バグ報告 / 会話共有。送信履歴の範囲を選択し同意画面で確認してから送信 |
-| `/feedback [report]` | Claude Code へのプロダクトフィードバック送信（`/bug` と同じダイアログ・同意フロー） |
+| `/feedback [report]` | Claude Code へのプロダクトフィードバック送信（`/bug` と同じダイアログ・同意フロー）。Claude 起草フィードバック（`SendFeedback` ツール）が有効なセッションでは、**引数なしの `/feedback` はドラフトキュー**を開き、Claude がキューしたドラフトのレビュー・編集・送信・破棄ができる（`w` で通常ダイアログ）。引数付き `/feedback` と `/bug` は常にダイアログを直接開く（v2.1.247） |
 | `/privacy-settings` | プライバシー設定の確認・更新（Pro / Max プランのみ） |
 | `/upgrade` | 上位プランへのアップグレードページをブラウザで開く |
 | `/rate-limit-options` | claude.ai の利用上限でリクエストが止まった際の選択肢メニュー（リセットまで待って自動継続 / usage credits 追加 / プランのアップグレード）を開く。自分の端末で上限に達した場合は Claude Code 側から自動的に開くこともある。自動継続の ON/OFF は `autoContinueAtUsageLimit` 設定 |

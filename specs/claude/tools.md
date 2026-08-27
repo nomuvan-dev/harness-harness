@@ -56,6 +56,7 @@ Claude Code の組み込みツール一覧。**ここに書かれたツール名
 | `PushNotification` | No | デスクトップ通知（Remote Control 接続時はスマートフォンへのプッシュも）を送る |
 | `ScheduleWakeup` | No | 自己ペースの `/loop` の次イテレーション時刻を 1 分〜1 時間の範囲で再スケジュール |
 | `RemoteTrigger` | No | claude.ai 上の Routines の作成・更新・実行・列挙。`/schedule` コマンドの実体 |
+| `SendFeedback` | No | Claude Code へのフィードバックレポート（製品不具合／Claude 自身の挙動）を起草し、ローカルにキューする。送信はユーザーの操作を待つ。v2.1.238+（§6 参照） |
 | `ReportFindings` | No | コードレビュー指摘を構造化リスト（file / summary / failure scenario）として報告し、Claude Code 側でレンダリングさせる |
 | `ShareOnboardingGuide` | Yes | `ONBOARDING.md` をアップロードし、チームメイトが Claude Code で開ける共有リンクを返す。`/team-onboarding` から呼ばれる |
 | `WebFetch` | Yes | URL の取得と抽出 |
@@ -172,6 +173,47 @@ Claude がこのツールを使うのは 2 つの場合のみ:
 対話ターミナルセッション（IDE 統合ターミナル内の `claude` を含む） / `--bare` でない /
 Bedrock・Claude Platform on AWS・Vertex・Foundry ではない。
 非対話 `-p`、Agent SDK、VS Code 拡張パネル、GitHub Actions、Claude Code on the web では提供されない。
+
+---
+
+## 6. `SendFeedback`（Claude 起草フィードバック）
+
+v2.1.238 以降。Claude が Claude Code へのフィードバックレポートを起草し、
+**ローカルの `~/.claude/feedback/drafts/`** に保存する。ユーザーが送信を選ぶまで Anthropic へは何も送られない。
+
+Claude が起草する契機:
+
+- ツールやコマンドが繰り返し失敗する
+- 依頼に対応できなかった
+- ユーザーがミスを指摘した、または Claude 自身がミスに気づいた
+- ユーザーが明示的にフィードバック提出を求めた
+
+### 6.1 ユーザー側の体験
+
+- 起草されるとプロンプト上部にタイトル入りのカードが出る（`1` = レビュー、`2` を 2 回 = そのまま送信、`0` = 却下）。却下してもドラフトはキューに残る
+- カードは既定で **1 セッションあたり最大 3 枚**（サーバー側で調整されうる）。上限後や `feedbackDrafts: "quiet"` ではプロンプトフッターに件数だけ出る
+- `/feedback`（引数なし）で全セッション分のドラフトキューを開き、タイトル / area / details の編集、**Send transcript** の yes / no 切替、送信 / 破棄ができる。`w` で通常のフィードバックダイアログ。引数付き `/feedback` と `/bug` はダイアログを直接開く
+- 送信内容: タイトル / area / details、環境情報（バージョン・OS・モデル）、直近の API リクエスト ID、**Send transcript = yes のときのみ**会話トランスクリプト。カードからの送信ではトランスクリプトは含まれない
+- ドラフトは 30 日（`cleanupPeriodDays` がそれより短ければそちら）で失効。キューは全セッション合計 10 件で、11 件目で最古が削除される。キューにドラフトを残したまま `/exit` するとレビューか破棄かを尋ねられる
+
+### 6.2 無効化
+
+| 手段 | 効果 |
+|:--|:--|
+| `/config` の **Claude-drafted feedback** → `off`（= `feedbackDrafts: "off"`） | ツール自体を提供しない |
+| `feedbackDrafts: "quiet"` | 起草は続けるがカードを出さない |
+| `CLAUDE_CODE_SEND_FEEDBACK=0` | そのセッションのみ無効 |
+| `DISABLE_FEEDBACK_COMMAND=1` / `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC` | `/feedback` ごと無効 |
+
+`feedbackDrafts` は **user または managed 設定のみ**（project / local は無視）。managed が優先する。
+
+### 6.3 提供されない条件
+
+- 非対話 `-p` 実行・Agent SDK（キューをレビューする画面がない）
+- クラウドセッション（Claude Code on the web 等。ローカルのキューに書けない）
+- Bedrock / Claude Platform on AWS / Google Cloud Agent Platform / Microsoft Foundry
+- feature-flag fetching を切っているセッション
+- 製品フィードバックを無効化した組織、ゼロデータ保持（ZDR）組織
 
 ---
 

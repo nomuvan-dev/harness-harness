@@ -190,11 +190,12 @@ CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ../shared-config
 | `awsCredentialExport` | AWS認証情報JSON出力カスタムスクリプト |
 | `voiceEnabled` | プッシュトゥトーク音声入力の有効化 |
 | `spinnerTipsEnabled` | スピナーヒント表示（デフォルト: `true`） |
-| `spinnerTipsOverride` | カスタムスピナーヒント（`excludeDefault`, `tips` キー） |
+| `spinnerTipsOverride` | カスタムスピナーヒント。`tips`（文字列または `{id, text, cooldownSessions, priority}` オブジェクトの配列）／`tipsFile`（絶対 or `~/` パスの JSON、最大 256KB。server-managed settings では不可）／`label`（接頭辞、既定 `Tip`、40 文字まで）／`excludeDefault`（組み込みTipsを隠す）。オブジェクト形式・`tipsFile`・`label` は **v2.1.247+**。project / local 設定からは**プレーン文字列の tips のみ**読まれる（それ以外のフィールドは user / `--settings` / managed のみ）。合計 200 件まで。組み込みTipsと同じローテーション（最も長く未表示のもの優先、cooldown 中はスキップ、同点は priority 順） |
 | `prefersReducedMotion` | UIアニメーション削減 |
 | `fastModePerSessionOptIn` | セッションごとのFastモードオプトイン要求 |
 | `teammateMode` | Agent Teams表示モード（`auto` / `in-process` / `tmux` / `iterm2`〈v2.1.186〉） |
 | `feedbackSurveyRate` | セッション品質アンケート確率（0-1） |
+| `feedbackDrafts` | Claude 起草フィードバック（`SendFeedback` ツール）の制御。`"notify"`（既定・カード表示）/ `"quiet"`（カードなし、フッターに件数）/ `"off"`（ツール自体を提供しない）。**User または Managed のみ**（project / local は無視）。managed が優先。`/config` の **Claude-drafted feedback**。セッション単位の無効化は `CLAUDE_CODE_SEND_FEEDBACK=0`（v2.1.247） |
 | `showClearContextOnPlanAccept` | プラン承認画面で「コンテキストクリア」オプション表示 |
 | `teammateDefaultModel` | **v2.1.234 で削除**。残存値は無視される。チームメイトのモデルはプロンプトで明示するか `CLAUDE_CODE_SUBAGENT_MODEL` で指定する |
 | `autoCompactEnabled` | 自動コンパクション（デフォルト: `true`）。`/config` の **Auto-compact**。環境変数で無効化する場合は `env` に `DISABLE_AUTO_COMPACT` |
@@ -548,6 +549,7 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 | `CLAUDE_CODE_PROJECT_DIR_NAME` | セッションごとに独自の config ディレクトリを与えるホスト向けに、プロジェクト単位のトランスクリプトディレクトリ名を短い名前で指定（v2.1.234。changelog 記載、公式 env-vars リファレンス未収載） |
 | `CLAUDE_CODE_WEBFETCH_CACHE_TTL_MS` | WebFetch のセッション内 URL キャッシュ TTL を設定（デフォルトは従来通り 15 分）（v2.1.233） |
 | `CLAUDE_CODE_DISABLE_BEDROCK_CONTENT_TYPE_DEFAULT` | `1` で、`Content-Type` ヘッダが欠落 / 空の Amazon Bedrock ストリーミング応答をバイナリ `application/vnd.amazon.eventstream` 形式として扱う既定挙動を止める。Bedrock は常に当該ヘッダを送るため、欠落＝プロキシによる除去とみなして既定ではバイナリ解釈するが、プロキシがヘッダを除去した上で本文を SSE として再送出する場合のみ本変数を設定する（v2.1.246 系） |
+| `CLAUDE_CODE_SEND_FEEDBACK` | `0` でそのセッションの Claude 起草フィードバック（`SendFeedback` ツール）を無効化。`1` は「アカウントが既に利用可能な場合に有効化」であって提供権限を付与するものではない。`DISABLE_FEEDBACK_COMMAND` や `feedbackDrafts: "off"` 等、他の無効化スイッチは引き続き効く（v2.1.247） |
 | `CLAUDE_CODE_ENABLE_TODO_TOOLS` | `1` で Todo / タスク追跡ツール（`TaskCreate` / `TaskGet` / `TaskUpdate` / `TaskList` / `TodoWrite`）を復活させる。**v2.1.233 で Opus 4.8 / Sonnet 5 / Fable 5 / Mythos 5 以降のモデルでは既定で提供されなくなった**ため、これらに依存するハーネスは明示設定が必要 |
 
 > 補足: `OTEL_LOG_TOOL_DETAILS=1` は v2.1.157 で `tool_decision` イベントに `tool_parameters`（bash コマンド、MCP/skill 名等）を追加する効果も併せ持つようになった。
@@ -555,6 +557,8 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 > Workflow キーワードトリガー: v2.1.157 から `/config` の「Workflow keyword trigger」設定で、プロンプト中のトリガーキーワードがワークフロー要求を発動するかをユーザー設定できる。**v2.1.160 でトリガーキーワードが `workflow` → `ultracode` にリネーム**。
 
 > 機能フラグ取得（feature flag fetching）: `DISABLE_GROWTHBOOK` / `DISABLE_TELEMETRY` / `DO_NOT_TRACK` / `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC` のいずれかを設定するとオフになるほか、**Claude apps gateway 経由の接続では常にオフ**、**Bedrock / Claude Platform on AWS / Google Cloud Agent Platform / Microsoft Foundry でも既定でオフ**（Claude Code を埋め込むホストプラットフォームが `CLAUDE_CODE_PROVIDER_MANAGED_BY_HOST` を設定した場合のみオン）。取得オフ時はフラグ制御下の機能が使えない。なお v2.1.246 で `/code-review` は Claude 自身の自律起動を含めこの制約から外れた。
+
+> Claude 起草フィードバック（`SendFeedback`）も機能フラグ取得下の機能。`DISABLE_FEEDBACK_COMMAND=1` / `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`（非空値）でも一括で無効化される。
 
 > インストール / アップグレード直後の初回セッション: フラグ取得が有効でも、フラグ制御下の機能が初回セッションでは欠けることがあり、通常は auto mode で始まるプランでも Manual モードで開始することがある（次回セッションからは正常）。新規インストール直後の非対話セッション（`claude -p` / Agent SDK / VS Code 拡張）は、開始権限モードの決定前にフラグを取得できる場合がある。
 
