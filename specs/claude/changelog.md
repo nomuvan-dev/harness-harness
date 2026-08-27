@@ -3,7 +3,30 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-08-27
+最終更新: 2026-08-28
+
+---
+
+## v2.1.247 (2026-08-26)
+
+- **`SendFeedback` ツール（Claude 起草フィードバック）**: セッション中に問題が起きたとき、Claude が Claude Code へのフィードバックレポートを起草し、ローカル（`~/.claude/feedback/drafts/`）にキューする。ユーザーが `/feedback` で確認・編集して送信するまで Anthropic へは何も送られない。`feedbackDrafts` 設定（`notify` / `quiet` / `off`）と `CLAUDE_CODE_SEND_FEEDBACK` 環境変数で制御。詳細は specs/claude/tools.md §6
+- **`spinnerTipsOverride` の拡張**: `tips` に `{id, text, cooldownSessions, priority}` のオブジェクト形式、`tipsFile`（外部 JSON ファイル）、`label`（接頭辞）を追加。組織が独自 Tips を組み込みTipsと同じローテーションに混ぜられる。project / local 設定からは**プレーン文字列の tips のみ**読まれる（オブジェクト・`tipsFile`・`label`・`excludeDefault` は user / `--settings` / managed のみ）
+- **`chat:queueSubmit` キーバインド（既定 `Ctrl+X Enter`）**: 送信メッセージを「順番待ち」としてマークして送る。Claude が作業中でもターンに割り込まずキューされる。オートコンプリート候補が開いていても送信される
+- **リスト操作キーバインドの追加**: `select:pageUp` / `select:pageDown` / `select:first` / `select:last`（PageUp / PageDown / Home / End）。適用されるのは `/skills` メニューで、`/model` ピッカー等では既定の PageUp / PageDown が使われ Home / End は無視される
+- **非 Latin キーボードレイアウトでの Ctrl ショートカット修正**: Kitty キーボードプロトコル対応端末（Ghostty / Kitty / WezTerm / iTerm2）で、キリル文字等のレイアウト使用時に Ctrl ショートカットが発火しなかった問題を修正。US 配列の物理位置でマッチする（AZERTY 等の Latin 系再配置レイアウトでは「そのキーが打つ文字」でマッチ）
+- **セッション間メッセージの表示変更**: 到着メッセージは全文ではなく**1 行のプレビュー**（`› Message from @api-worker: ... (ctrl+o to expand)`）で表示される。全文は `Ctrl+O` のトランスクリプトビューアか `--verbose` セッションで見る。Claude 側は常に全文を読む
+- **`/skills` メニューの操作拡張**: name だけでなく description / source でも絞り込み可能に。`Space` に加え `Enter` でも可視性をサイクル、`Esc` で保存して閉じる。プラグインスキル・`disable-model-invocation: true`・managed の `skillOverrides` 対象はサイクル不可
+- **`claude mcp list` / `get` のステータス整理**: `⏸ Pending approval` / `✘ Rejected` / `⊘ Disabled for this project` の 3 種を接続せずに表示。MCP 設定警告に「複数スコープでの同名サーバー定義」「未設定の `${VAR}` 参照」が追加
+- **プラグインスキル名のプレフィックス二重付与を修正**: frontmatter の `name` が既にプラグイン接頭辞を含む場合（`name: my-plugin:fancy`）、v2.1.246 以降は接頭辞を重ねない。v2.1.216〜v2.1.245 は二重化していた
+- **`/claude-api cost-optimize`**: 既存プロジェクトの Claude API 支出をプロファイルし、キャッシュ / トークン衛生 / バッチ / effort / モデル選択のコストレバーを 1 つずつ計測しながら潰す。`/claude-api` スキルに Admin API（組織メンバー・招待・ワークスペース・API キー・レートリミットレポート・workload identity federation・CMEK）のカバレッジを追加
+- **Bash 権限プロンプトに auto mode 案内**: ワンキーで「Yes, and switch to auto mode」を選べる
+- 修正: サブエージェントが初回呼び出しのモデル 404 で死ぬ問題（セッションのフォールバックモデル連鎖を使い、親へのエラーに error type / status / request id / model を含める）
+- 修正: フックやバックグラウンドエージェントが数 MB のエラー出力を吐くと会話が溢れ「Prompt is too long」でセッションが固まる
+- 修正: 履歴検索・`/config`・`/mcp`・`/skills`・バックグラウンドタスク・`/model` で、高速な矢印キー + Enter が 1 行上の項目に作用する
+- 修正: Bash サンドボックスの後処理が、dotfile 管理（nix/home-manager, stow）の `~/.claude/settings.json` シンボリックリンクを削除する
+- 修正: kitty プロトコル端末でマウスレポートが分割到着すると `<35;150;7M` のような文字列がプロンプトへ挿入される
+- 変更: Claude apps gateway のサインイン要求が Claude Code を名乗るようになった（`surface=claude_code` パラメータと `claude-code/<version>` User-Agent）
+- 変更: 管理者の managed settings が読めない場合、host 供給設定や per-user Windows レジストリ設定があっても起動時に終了する
 
 ---
 

@@ -77,7 +77,7 @@ unified_exec = true                      # PTY実行（stable、Windows除く）
 undo = false                             # Undo 機能
 web_search = true                        # Web 検索
 skill_mcp_dependency_install = true      # スキル依存MCPサーバーの自動インストール（stable）
-codex_hooks = true                       # Hooks システム（0.124.0+ デフォルト有効）
+hooks = true                             # Hooks システム（0.124.0+ デフォルト有効。`features.codex_hooks` は非推奨エイリアス）
 plugin_hooks = true                      # プラグインバンドル hooks（0.131.0+ デフォルト有効）
 network_proxy = false                    # ネットワークプロキシ（0.131.0+ 段階的ロールアウト）
 ```
@@ -138,6 +138,18 @@ sandbox = "elevated"       # "elevated"（推奨、管理者権限必要） / "u
 - **スキルカタログのトークンバジェット（0.149.0）**: スキル一覧がコンテキストを圧迫しないよう、カタログのトークンバジェットを設定可能
 
 > 公式ドキュメント: [Config Basics](https://developers.openai.com/codex/config-basic) / [Config Reference](https://developers.openai.com/codex/config-reference) / [Sample Config](https://developers.openai.com/codex/config-sample)
+
+---
+
+#### TUI キーバインド（`tui.keymap`）
+
+`tui.keymap.<context>.<action>` で TUI アクションのショートカットを再バインドできる。
+サポートされるコンテキスト: `global` / `chat` / `composer` / `editor` / `vim_normal` / `vim_operator` / `vim_text_object` / `pager` / `list` / `approval`。
+composer の一部アクションは `tui.keymap.global` のバインドにフォールバックし、コンテキスト固有のバインドが優先される。
+
+- `tui.keymap.<context>.<action> = []` でそのコンテキストのアクションをアンバインド
+- キー名は `ctrl-a` / `shift-enter` / `page-down` / `minus` のような正規化文字列
+- **0.150.0**: 権限モードをサイクルするアクションにショートカットをバインドできるようになった。Vim モードでは `.` が直前の編集の繰り返しに対応
 
 ---
 
@@ -521,9 +533,9 @@ Codex CLI の Hooks は **0.124.0 で正式化（stable）** され、0.148.0 �
 ```bash
 # 0.123.0 以前のみ必要
 codex --enable codex_hooks
-# または
+# または（現行キーは features.hooks。codex_hooks は非推奨エイリアス）
 [features]
-codex_hooks = true
+hooks = true
 ```
 
 ### 7.2 定義場所
@@ -585,7 +597,7 @@ matcher = "shell"
 - `PreCompact` / `PostCompact`: 発動契機（`manual` / `auto`）
 - `SessionStart`: セッションの起点（`startup` / `resume` / `clear` / `compact`）
 
-### 7.4 対応イベント（0.148.0 時点で 11 種）
+### 7.4 対応イベント（0.150.0 時点で 12 種）
 
 | イベント | スコープ | 説明 |
 |----------|----------|------|
@@ -600,8 +612,9 @@ matcher = "shell"
 | `SessionStart` | セッション | セッション開始時 |
 | `SessionEnd` | セッション | セッション終了時 |
 | `SubagentStart` | セッション | サブエージェント起動時（0.133.0+） |
+| `Interrupt` | ターン | アクティブなトップレベルターンが中断されたとき（**0.150.0+**）。command / MCP ハンドラを実行できる。公式 hooks ドキュメントには 2026-08-28 時点で未記載（リリースノートのみ） |
 
-> **比較**: Claude Code は 17 以上のイベントをサポート。Codex は 0.133.0 で 6 → 0.148.0 時点で 11 イベント。`Notification` 系や `PreCompact` 以外の UI 系イベントは引き続き未対応。
+> **比較**: Claude Code は 17 以上のイベントをサポート。Codex は 0.133.0 で 6 → 0.148.0 で 11 → 0.150.0 で 12 イベント。`Notification` 系や `PreCompact` 以外の UI 系イベントは引き続き未対応。
 >
 > 別枠として `MITM` hook（0.133.0+）がランタイム enforcement 用に存在する（named MITM permissions config と組み合わせて使用）。
 
