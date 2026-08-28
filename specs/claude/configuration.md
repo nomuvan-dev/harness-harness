@@ -102,6 +102,15 @@ CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ../shared-config
 
 また `autoContinueAtUsageLimit` は `User or managed` スコープでありながら、user / `--settings` / managed のいずれも指定していない場合に限り、project / local 設定が指定するとオフとして解釈される。
 
+#### Managed ソース同士の合成（v2.1.242 で `managedSourcesBehavior` 追加）
+
+managed 階層は単一ではなく、上から **server-managed settings → MDM / OS ポリシー → managed settings ファイル → Windows HKCU レジストリ** の順にランクされる。既定（`managedSourcesBehavior: "first-wins"`）では、**ポリシーキーを 1 つでも持つ最上位のソースだけ**が採用され、残りは「全 admin ソースから読むキー」（サンドボックスのロックと、そのロック対象 allowlist の union、`forceRemoteSettingsRefresh`、`env` の変数単位マージ、`enableArtifact` の `false` 等）を除いて無視される。スキップされたソースは `/status` の `Skipped sources` 行に出る（v2.1.242 以降）。
+
+`managedSourcesBehavior: "merge"` を最上位ソースに置くと、配信された全 admin ソースがキーの種類別に合成される（詳細は §2.3 の当該キーを参照）。HKCU と埋め込みホストの親設定は合成に参加しない。合成が起きた場合 `/status` の `Setting sources` 行は `(remote + file, merged)` のように表示される。
+
+- 「ポリシーキー」とは `wslInheritsWindowsSettings` と `managedSourcesBehavior` 以外の全設定キー。この 2 つだけを含む managed ファイル / MDM ポリシーは「ポリシーを配信していない」と見なされ、次のソースへ進む
+- self-hosted 環境のランナーイメージ内 managed settings ファイルも、この規則に従って適用可否が決まる（従来記載の「server-managed settings が何も配信しない場合のみ読む」は `"first-wins"` 時の帰結）
+
 #### Managed ドロップインディレクトリ
 
 `managed-settings.d/` ディレクトリで複数チームが独立したポリシーフラグメントをデプロイ可能（v2.1.83）:
@@ -165,7 +174,7 @@ CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ../shared-config
 | `outputStyle` | 出力スタイル設定。組み込みは Default / Proactive / Explanatory / Learning に加え **Concise**（前置き・ナレーションを省き結果から書き出す。作業の徹底度は変えない。v2.1.237 追加）。`/config` の Output style 行から選択すると `.claude/settings.local.json` に保存される |
 | `agent` | メインスレッドをサブエージェントとして実行 |
 | `language` | 応答言語設定 |
-| `sandbox.*` | サンドボックス設定 |
+| `sandbox.*` | サンドボックス設定。**v2.1.246 以降、`--setting-sources` / SDK `settingSources` で除外したソースの `sandbox.filesystem` エントリ・`Edit` 権限ルール・`Read` deny ルールはサンドボックス構成の組み立て時に無視される**。認証情報系は除外ソースの種類で扱いが分かれる: project / local を除外するとその `sandbox.credentials` エントリは一切適用されない。user 設定を除外した場合は `~/.claude/settings.json` の `deny` エントリとファイル `mask` エントリは「制限」として残る（ただし `mask` が実値への置換を許可する効果は失われる）が、**環境変数の `mask` エントリは落とされる** |
 | `attribution` | git commit/PR 帰属表記設定（`commit`, `pr` キー） |
 | `alwaysThinkingEnabled` | 拡張思考のデフォルト有効化 |
 | `plansDirectory` | プランファイル保存先 |
@@ -206,8 +215,8 @@ CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ../shared-config
 | `disableWorkflows` | 動的ワークフローと同梱ワークフローコマンドを無効化（デフォルト: `false`）。`CLAUDE_CODE_DISABLE_WORKFLOWS=1` と同等 |
 | `askUserQuestionTimeout` | 未回答の `AskUserQuestion` ダイアログが選択済みの内容で自動続行するまでのアイドル時間（デフォルト: `"never"`。`"60s"` / `"5m"` / `"10m"` / `"never"`）。`/config` の **Question auto-continue timeout** がユーザー設定に書き込む。project / local 設定からは読まれない（v2.1.200 以降） |
 | `promptSuggestionEnabled` | プロンプト入力欄のグレー表示予測（プロンプトサジェスト）の表示（デフォルト: `true`）。`CLAUDE_CODE_ENABLE_PROMPT_SUGGESTION` が優先 |
-| `enableArtifact` | Artifact ツール（セッション成果を claude.ai の非公開Webページとして公開）のユーザー単位の有効化。未設定時はアカウントの提供状況に従う。`/config` の **Artifacts** 行が書き込む。Managed の `disableArtifact` と組織のadmin設定が優先。project / local 設定では無視される（v2.1.196 以降） |
-| `disableArtifact` | Artifact ツールの無効化。`CLAUDE_CODE_DISABLE_ARTIFACT=1` と同等 |
+| `enableArtifact` | Artifact ツール（セッション成果を claude.ai の非公開Webページとして公開）の**オフ専用スイッチ**。**v2.1.242 でスコープが `Any file` に変更**され、どのファイルの `false` でも当該セッションのツールをオフにでき、`true` はどこからもオンに戻せない（未設定と同義）。未設定時はアカウントの提供状況に従う。`/config` の **Artifacts** 行をオフにすると user 設定に本キーを書き込み `disableArtifact` を消す。自分の user 設定以外がオフにしている間は `/config` の行自体が隠れる。v2.1.242 より前は project / local では無視され、上位ファイルが下位の off を覆せた |
+| `disableArtifact` | **非推奨**（`enableArtifact` に置き換え）。`disableArtifact: true` は `enableArtifact: false` と等価として引き続き尊重されるが、`disableArtifact: false` は無視される。`CLAUDE_CODE_DISABLE_ARTIFACT=1` は一度設定するとどの設定ファイルからもオンに戻せない |
 | `subagentStatusLine` | サブエージェントタスク表示の行を書き換えるカスタムコマンド。`statusLine` / `fileSuggestion` と同様に `disableAllHooks` / `allowManagedHooksOnly` / ワークスペース信頼のゲートが適用される |
 | `worktree.symlinkDirectories` | ワークツリーシンボリックリンク対象 |
 | `worktree.sparsePaths` | ワークツリースパースチェックアウト対象 |
@@ -249,7 +258,7 @@ CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ../shared-config
 | `vimInsertModeRemaps` | vim モードのインサートモードで `jj` → Escape のような 2 キーシーケンスをマップ（v2.1.208） |
 | `sandbox.filesystem.disabled` | ファイルシステム分離のみスキップし、ネットワーク egress 制御は維持（v2.1.216） |
 | `sandbox.filesystem.denyRead` | 読み取り拒否パス。ワイルドカードは全プラットフォームで有効（Linux/WSL2 では実パスに展開）。**v2.1.236（macOS）**: `**/.env` のようなワイルドカード read-deny が許可済み read 領域の内部でも優先され、マッチしたディレクトリ配下も対象に含まれ、拒否対象ファイルのリネームによる回避もできなくなった |
-| `crossSessionInbound` | セッション間メッセージ（`SendMessage`）の受信を制御（v2.1.224）。`accept`（配送） / `hold`（通知のみ・未配送、後で `accept` が適用されれば解放） / `refuse`（黙って破棄）。`/config` の「Messages from your other sessions」行からも設定可（v2.1.232、書き込み先は user 設定。`/config crossSessionInbound=value` ショートハンドは拒否される）。**未設定時は送受信両セッションの権限モードクラスから自動判定**（bypassPermissions 系 vs プロンプト系。詳細は agent-teams.md 参照） |
+| `crossSessionInbound` | セッション間メッセージ（`SendMessage`）の受信を制御（v2.1.224）。`accept`（配送） / `hold`（通知のみ・未配送、後で `accept` が適用されれば解放） / `refuse`（黙って破棄）。`/config` の「Messages from your other sessions」行からも設定可（v2.1.232、書き込み先は user 設定。`/config crossSessionInbound=value` ショートハンドは拒否される）。**未設定時は送受信両セッションの権限モードクラスから自動判定**（bypassPermissions 系 vs プロンプト系。詳細は agent-teams.md 参照）。**v2.1.248**: 認識できない値を設定すると警告が出る。user / project / local / `--settings` にある間は上位ソースが `accept` でも受信を `hold` し（他ソースの `refuse` は引き続き有効）、managed 設定にある場合は最も厳しい `refuse` として扱われる（v2.1.248 より前は黙って無視） |
 | `dialogExpiry` | セッション間メッセージのダイアログ有効期限を設定（v2.1.224）。v2.1.232 で `/config` に「Dialog expiry」「Messages from your other sessions」の行が追加され GUI から設定可能に |
 | `extraKnownMarketplaces` | 既知プラグインマーケットプレースの追加登録。v2.1.232 で `additionalMarketplaces` が別名として受理される |
 | `sandbox.ripgrep` | サンドボックスが使う ripgrep バイナリの指定。v2.1.232 で user / managed / `--settings` 由来のみ有効化（プロジェクト設定からの上書き不可）。サーバー管理設定からの上書きは承認必須 |
@@ -289,10 +298,12 @@ CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ../shared-config
 | `gcpAuthRefresh` | Google Cloud の Application Default Credentials が期限切れ・読み込み不能になった際に実行する自前のリフレッシュコマンド（`awsAuthRefresh` の GCP 版） |
 | `processWrapper` | （macOS / Linux、スコープ user / managed）Claude Code が起動するバックグラウンドプロセスの前段に企業ランチャーコマンドを挟む。ランチャーは自身のコマンドラインに Claude Code のものが追記された形で呼ばれるため、最後に exec する必要がある（[corporate-launcher](https://code.claude.com/docs/en/corporate-launcher) 参照）。v2.1.210 以降。`CLAUDE_CODE_PROCESS_WRAPPER` が優先 |
 | `forceLoginGatewayUrl` | （Managed のみ）`/login` の Cloud gateway 画面が接続するゲートウェイ URL を指定。画面には URL 入力欄が無く、未設定だと「IT 管理者に問い合わせ」と表示される。`forceLoginMethod` 未設定時はこのキー単独で Cloud gateway 画面が開く。`forceLoginMethod: "gateway"` はログイン方式ピッカーも消す。`claudeai` / `console` を指定した場合はそちらが優先されるため、両方を整合させて設定する |
+| `managedSourcesBehavior` | （Managed のみ、v2.1.242 以降）複数の managed ソースが同一マシンに配信されたときの合成方法。`"first-wins"`（既定）は**ポリシーキーを1つでも持つ最上位のソースだけを採用**し、残りは「全 admin ソースから読むキー」を除き無視する。`"merge"` は配信された全 admin ソースを種類別に合成する: リスト（`permissions.allow`・`hooks`・`sandbox.network.allowedDomains`・`deniedMcpServers` 等）は全ソースの要素を結合、ロック（`allowManagedHooksOnly`・`permissions.disableBypassPermissionsMode`・`crossSessionInbound` 等）は最も厳しい値、制限リスト（`availableModels`・`allowedMcpServers`・`strictKnownMarketplaces`・`allowedChannelPlugins`・`fallbackModel` チェーン）はそれを設定する最上位ソースの内容を丸ごと採用、最上位ソース限定キー（`apiKeyHelper`・`awsAuthRefresh`・`awsCredentialExport`・`gcpAuthRefresh`・`otelHeadersHelper`・`proxyAuthHelper`・`forceLoginOrgUUID`・`forceLoginMethod`・`forceLoginGatewayUrl`・`parentSettingsBehavior`・`modelPicker`・`permissions.defaultMode`）は最上位ソースのみ、`env` は変数単位でマージ（両モード共通）、その他は最上位ソースの値。**本キー自身は「本キーかポリシーキーを持つ最上位ソース」からのみ読まれる**ため、下位ソースが自分を merge 対象に引き上げることはできず、server-managed settings が届かないマシンでは MDM プロファイル側にも書く必要がある。Windows HKCU と埋め込みホストの親設定は merge に参加しない。`managed-settings.json` は最下位の admin ソースなので、そこに `"merge"` を書いても合成相手がいない。`"merge"` は最上位より下の全ソースが管理者の統制下にある場合のみ使う（下位ソースの allow ルールが加算されるため）。`/status` の `Setting sources` 行に `(remote + file, merged)` のように表示される |
+| `desktopSessionCleanupPeriodDays` | Claude Desktop / Cowork が書き込んだセッションのトランスクリプト保持除外に上限日数を設ける（v2.1.248）。従来 30 日でクリーンアップされ Desktop / Cowork のセッションが消えていた問題の修正に伴い追加。アプリ内に残っている限り除外されるが、本キーで上限を設定できる（組織ポリシーが保持期間を管理している場合を除く） |
 | `policyHelper` | （Managed のみ）起動時に managed settings を計算する実行ファイルを走らせ、その出力をそのセッションの managed settings として扱う。デバイスポスチャ・ID・リモートサービスから動的にポリシーを導出する用途。**macOS plist / Windows HKLM レジストリ / managed settings ファイルのいずれか**（最優先の managed ソース）に置かれた場合のみ実行され、サーバー管理設定・HKCU・親設定由来のものは無視される。`path` / `refreshIntervalMs` / `timeoutMs` を持つ |
 | `strictPluginOnlyCustomization` | （Managed のみ）skills / agents / hooks / MCP サーバーを user・project ソースから読み込ませず、プラグインと managed settings 由来のみに限定する。`true` で 4 種すべて、または `["skills","agents","hooks","mcp"]` の配列で個別指定。`strictKnownMarketplaces` と組み合わせるとカスタマイズのサプライチェーン全体を統制できる |
 | `disableCommandPluginSources` | （Managed のみ）マーケットプレースが宣言したコマンドをユーザーのマシンで実行してインストールする `command` プラグインソースをブロック。`true` でコマンドを実行せず、command ソースのプラグインを install/update せず、既にインストール済みのものもロードしなくなる。未設定時は `allowManagedHooksOnly` に追随する。マーケットプレースの `headersHelper` コマンド（アーカイブ取得時の認証ヘッダ生成）も、本キーが明示的に `false` でない限りブロックされる（managed 設定自身が宣言したマーケットプレースは例外）。v2.1.229 以降 |
-| `modelPricing` | （Managed のみ）組織の契約単価・割引倍率を `/cost`・ステータスライン・テレメトリのコスト表示に反映させ、定価の代わりに使う（v2.1.243）。※公式 settings リファレンス未収載（changelog のみ） |
+| `modelPricing` | （Managed のみ、v2.1.242 以降）組織の契約単価・割引倍率をコスト表示に反映させ、定価の代わりに使う。適用先は `/usage`・ステータスライン・Agent SDK の `total_cost_usd`・`--max-budget-usd`・OpenTelemetry のコストメトリクス／イベント。単価は管理者が自分で書く（契約や Console からは読まない）。任意の `multiplier`（0 超 1 以下、全コストに乗算）と任意の `overrides`（モデルID → `input` / `output` / `cacheRead` / `cacheWrite` の百万トークンあたり USD、4 つとも必須、各 0〜10000）を持つ。fast モード加算や US-only 推論単価は加算されない。行のキーが組み込みモデルIDなら、そのモデルの日付付きスナップショットIDやプロバイダ固有IDすべてに適用され、それ以外のキー（ゲートウェイのエイリアス等）はその ID 限定。Bedrock のアプリケーション推論プロファイルは解決後のモデルの行が適用される。パースできない行・`multiplier` は落として残りを使う。user / project / local / `--settings` / Windows HKCU では無視。server-managed settings 経由の場合、そのセッションの設定取得が完了するまでは定価表示 |
 | `disableSideloadFlags` | （Managed のみ）`--plugin-dir` / `--plugin-url` / `--agents` / `--mcp-config` を起動時に拒否する（これらは `strictKnownMarketplaces` を単発で回避できてしまうため）。拒否されたフラグ名を挙げてエラー終了し、内部的に CLI をこれらのフラグ付きで起動する経路（現状は Desktop の Cowork ローカルセッション）にも同じチェックを適用する。クラウドセッションではサーバーが `--mcp-config` で渡した MCP サーバー（`type: "sdk"` のインプロセス以外）を落としてセッションを開始する。v2.1.193 以降 |
 | `sshConfigs` | （user / managed、Desktop アプリのみ）Desktop の環境ドロップダウンに SSH 接続を追加する。各要素は必須の `id` / `name` / `sshHost` と任意の `sshPort` / `sshIdentityFile`。managed で定義したものは managed 表示となり、ユーザーは選択のみ可能で編集・削除できない |
 | `sshHostAllowlist` | （Managed のみ、Desktop アプリのみ）Desktop の SSH セッションが接続できるホストを制限。大文字小文字を無視し、`*` は任意ホスト、`*.example.com` は `example.com` とその全サブドメイン、それ以外は `~/.ssh/config` 解決後のホスト名との完全一致。空配列で SSH セッションを無効化 |
@@ -343,6 +354,15 @@ Team / Enterprise 向けに、クラウドセッションを自社ホスト上�
 - 作成時に Claude Code が自動で git ignore 設定を行う
 - Project設定やUser設定を上書きできる
 - チームに共有されない個人的なオーバーライドや実験的設定に使用
+
+**配置場所（ドキュメント改訂）**:
+
+- git リポジトリのサブディレクトリで起動した場合、Claude Code は**リポジトリルート**の `.claude/settings.local.json` を読み書きし、承認をリポジトリ全体に適用する
+- **worktree では main チェックアウトのルートのファイル**を使う
+- 次の場合はルートではなく `.claude/settings.json` と同じ場所に置かれる: git リポジトリ外、リポジトリルートがホームディレクトリ、Windows、リポジトリルート／その `.git`／`.claude` が自ユーザー所有でない
+- **ファイル内のパスはリポジトリルートを基準にしない**。`/` 始まりの権限ルールや相対サンドボックスパスは[セッションのプライマリワーキングディレクトリ](https://code.claude.com/docs/en/permissions#read-and-edit)基準で解決される
+
+**共有 `.claude/settings.json` の読み込み元**: セッションのプライマリワーキングディレクトリ。リポジトリルートにコミットしたファイルを使うにはそこで起動する。**`/cd` でセッションを移動すると（v2.1.246 以降）、移動先ディレクトリの project / local 双方を読むようになる**（local ファイルの配置は上記規則に従う）。
 
 ---
 
@@ -544,7 +564,9 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 | `CLAUDE_CODE_WORKFLOW_PREFIX_STAGGER_MS` | ワークフロー fan-out で同一 prompt prefix の兄弟エージェントを時間差起動し、後続がキャッシュ済み prefix を再利用してコストを削減。`0` で無効化（v2.1.229） |
 | `CLAUDE_CODE_MESSAGING_SOCKET` | Claude Code が各セッションの受信箱 Unix ドメインソケットのパスを hooks / Bash コマンドに自動エクスポート。`SessionStart` を含む全 hook より前に設定される（機能フラグ取得前に起動したセッションでは取得完了後に設定されるため、それ以前に起動したプロセスでは未設定）。各セッションは自身のソケットのみをエクスポートし、親セッションから継承しない |
 | `CLAUDE_CODE_MESSAGING_TOKEN` | 上記ソケットへ投函するスクリプト用のセッション単位トークン。接続の最初の行に `{"type":"auth","token":"<token>"}` を送ることで「自セッションの子プロセスからの投函」として検証される（macOS でプロセス終了後、および Claude Code が PID 1 のコンテナでは、プロセス証跡が取れないためこのトークンが唯一の検証手段） |
-| `CLAUDE_CODE_TOOL_MEMORY_LIMIT` | （Linux、オプトイン）Bash ツールコマンドに memory cgroup を適用し、暴走ビルドによるセッション停止を防ぐ（v2.1.233） |
+| `CLAUDE_CODE_TOOL_MEMORY_LIMIT` | （Linux / WSL、オプトイン）Bash / PowerShell、および **v2.1.246 以降は Monitor** ツールコマンドに memory cgroup を適用し、暴走ビルドによるセッション停止を防ぐ（v2.1.233）。`4G` のようにプレーンな数値＋`K`/`M`/`G`/`T` 接尾辞、`0` / `off` で無効。**Claude Code が最初に起動したプロセス**が有効／無効を確定した後は、値を変えても次回 `claude` 起動時まで反映されない |
+| `CLAUDE_CODE_TOOL_MEMORY_CGROUP_EXCLUDE` | （Linux / WSL、v2.1.246 以降）上記メモリ上限の対象から外すプロセス種別をカンマ区切りで指定。指定できるのは `mcp`（ローカル MCP サーバー） / `lsp`（言語サーバー） / `hooks`（フックコマンド） / `plugin`（プラグインが実行するコマンド） / `helper`（`git` 等 Claude Code 自身のヘルパー） / `agent`（エージェントチームメイト等の子 Claude Code プロセス）。`none` で全種別を上限対象、`all-new` で Bash / PowerShell / Monitor のみを対象。Bash / PowerShell / Monitor は何を指定しても常に上限対象。未知の名前は無視。**未設定時の対象集合は Anthropic がサーバーから配信する構成に従い変動する**ため、固定したい場合は明示設定する。アクションをブロック・変更しうる権限ゲート系フックと、そのフックが呼ぶ MCP サーバーは、全種別を上限対象にしても除外される（カーネルによる kill がブロックを解除してしまうのを防ぐため） |
+| `CLAUDE_CODE_RESTRICTED` | `1` で制限モード（`--restricted` と同等）で起動（v2.1.248）。**起動環境からのみ読まれ、設定ファイルの `env` ブロックでは無視される** |
 | `CLAUDE_CODE_GOAL_CHECKIN_MINUTES` | `/goal` 実行中、バックグラウンド作業がゴール評価を待たせ続けたときに Claude へ状況確認を促すまでの分数（デフォルト `30`、`0` で無効、最大 `10080`＝1週間。プレーンな整数以外は未設定扱い）。Claude Code は実行中タスクを列挙し、出力の確認・進捗中なら待機継続・停滞中なら修正か停止を依頼する（v2.1.234）。v2.1.236 でアイドルセッションのゴールがバックグラウンド作業の背後で停滞している場合、ユーザーの復帰を待たず 30 分後（以降 1h・2h）に自動チェックインするよう拡張 |
 | `CLAUDE_CODE_PROJECT_DIR_NAME` | セッションごとに独自の config ディレクトリを与えるホスト向けに、プロジェクト単位のトランスクリプトディレクトリ名を短い名前で指定（v2.1.234。changelog 記載、公式 env-vars リファレンス未収載） |
 | `CLAUDE_CODE_WEBFETCH_CACHE_TTL_MS` | WebFetch のセッション内 URL キャッシュ TTL を設定（デフォルトは従来通り 15 分）（v2.1.233） |

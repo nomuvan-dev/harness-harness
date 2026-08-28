@@ -1,5 +1,70 @@
 # harness-harness 更新履歴
 
+## 2026-08-29 — 公式ドキュメント巡回
+
+### 検出・更新
+
+Claude Code に **v2.1.248**（2026-08-27）/ **v2.1.250**（2026-08-28）がリリースされた。Codex CLI は安定版が **0.150.1** のままで、GitHub 上に `0.151.0-alpha.7`〜`alpha.10` のプレリリースのみ（`specs/codex/` は更新不要）。追跡中 36 URL のハッシュ比較で 29 件の変更を検出し、うち実質的な仕様変更を含む 17 件を specs に反映。スキルエコシステム巡回（Phase 3.5）は前回（2026-08-25）から 7 日以内のためスキップ。`llms.txt` は見出し階層が再編されただけで、ページ一覧 202 件に増減なし。
+
+**1) 制限モード `--restricted` / `CLAUDE_CODE_RESTRICTED`（v2.1.248）**
+
+共有マシン上で評価ハーネスが `claude` を駆動する用途向けの新モード。コマンド・コードを実行する組み込みツールと `WebFetch` を削除し（`--tools` で個別に名指しした場合のみ復活、`default` プリセット経由では復活しない）、組み込みファイルツールをワーキングディレクトリ内に閉じ込め、managed 設定と `--settings` だけを読み、`bypassPermissions` を拒否する。環境変数は起動環境からのみ読まれ設定ファイルの `env` では無視される。→ `specs/claude/tools.md` §4.5 新設、`specs/claude/configuration.md` 環境変数表
+
+**2) managed ソースの合成 `managedSourcesBehavior`（v2.1.242）**
+
+公式ドキュメントが「Which managed source Claude Code uses」から「How Claude Code combines managed sources」へ改題され、`"first-wins"`（既定・従来挙動）と `"merge"` の 2 モードが明文化された。`"merge"` ではリストは結合、ロックは最も厳しい値、制限リスト（`availableModels` / `allowedMcpServers` 等）は最上位ソースの内容を丸ごと、最上位ソース限定キー（`apiKeyHelper` / `modelPicker` / `permissions.defaultMode` 等）は最上位のみ、という種類別の合成規則が適用される。self-hosted 環境ランナーイメージ内 managed ファイルの扱いもこの規則に一本化された。→ `specs/claude/configuration.md` §2.2・§2.3
+
+**3) Artifact ツールのオン／オフ設計の変更（v2.1.242）**
+
+`enableArtifact` がスコープ `User or managed` から **`Any file` のオフ専用ロック**に変わり、どのファイルの `false` でもオフにでき `true` はどこからもオンに戻せない。`disableArtifact` は非推奨となり `true` のみ尊重される。→ `specs/claude/configuration.md`
+
+**4) `modelPricing` の正式収載（v2.1.242）**
+
+これまで changelog のみだった managed 専用キーが settings リファレンスに収載。`multiplier`（0 超 1 以下）と `overrides`（モデルID → `input`/`output`/`cacheRead`/`cacheWrite`）を持ち、適用先は `/usage`・ステータスライン・SDK の `total_cost_usd`・`--max-budget-usd`・OTel コストメトリクス。組み込みモデルIDをキーにした行はそのモデルの全スナップショット／プロバイダ固有IDに適用される。→ `specs/claude/configuration.md`
+
+**5) セッション間メッセージの可用性が「同一マシン」と「マシンまたぎ」で分離（v2.1.248）**
+
+同一マシン内の `SendMessage` / `ListAgents` が Bedrock / AWS / Agent Platform / Foundry でも、機能フラグ取得オフでも使えるようになった（v2.1.248 以降が必要）。マシンをまたぐ相手は従来どおり Remote Control 接続＋claude.ai サインインが前提。あわせてソケットディレクトリの `/tmp/cc-socks-<uid>` フォールバック、`@` メンションによる受信側ファイル／MCP リソースの添付、サブエージェント発メッセージの返信先、Remote Control 接続時の `/list-agents` 秘匿、`crossSessionInbound` 不正値の警告＋`hold`/`refuse` 扱いが明文化。→ `specs/claude/agent-teams.md`、`specs/claude/configuration.md`
+
+**6) エージェントチーム: 計画承認が「リードによるレビュー」ではなくなった**
+
+発動条件が「プロンプトで計画承認を要求」から「**リードが plan モードのときに spawn されたチームメイト**」に変わり、承認は**リクエスト到着と同時に自動**で行われる。「テストカバレッジを含む計画のみ承認」といったプロンプトによる判断基準の制御は現行仕様では効かない。あわせてチームメイトのモデル決定順（`CLAUDE_CODE_SUBAGENT_MODEL` → spawn プロンプト → in-process なら定義の `model` → リードのモデル）と、サブエージェント定義のどの部分が表示モード別に適用されるかの対応表が明文化された（`model` は split-pane では使われない、body は in-process では追記・split-pane では置換、`mcpServers` は split-pane でのみ適用など）。→ `specs/claude/agent-teams.md`
+
+**7) `Setup` フックの出力が破棄される仕様に**
+
+`Setup` フックは決定制御なしのイベントへ移動し、**どの終了コードでも JSON 出力フィールド（`systemMessage` / `continue` / `additionalContext`）が破棄される**。従来ドキュメントは `additionalContext` でコンテキストに情報を渡せるとしていたが、現在は渡せない。`-p` では `--output-format stream-json --verbose` 時に `hook_response` イベントとしてのみ現れる。あわせて `once` が「初回の**成功**実行後に削除」（失敗・exit 2・タイムアウトなら残る）に、`async: true` の command フックには `timeout` が適用されない旨、`PreToolUse` の matcher が `EndConversation` 以外の全ツール（`Workflow` を含む）である旨、`ask` 時の出所ラベルが `[settings]` / `[plugin:<name>]` / `[skill]` に変わった旨が明文化。→ `specs/claude/hooks.md`
+
+**8) MCP: claude.ai コネクタの配送経路と、入力スキーマ不正ツールの除外**
+
+「How connectors reach Claude Code」が新設され、ターミナル／IDE／SDK（Claude Code 自身が取得）・クラウドセッション（リモートホストが渡す）・Desktop のローカル／SSH セッション（アプリがインプロセス `type: "sdk"` で配る）の 3 経路で効く制御が異なることが明文化。`disableClaudeAiConnectors` 等は 1 経路目にしか効かない。また入力スキーマが API の検査に落ちる MCP ツールを Claude Code 側で除外する仕組み（プロパティ名・JSON Schema draft 2020-12 の 2 検査）が追加された。再接続／リトライ規則も「切断後の再接続（最大 5 回）」「初回接続失敗（最大 3 回、WebSocket と認証エラーは除外）」「discovery リクエスト（最大 3 回）」に整理された。→ `specs/claude/mcp.md`
+
+**9) 動的ワークフローの権限モデルと再開規則の全面改訂**
+
+`claude -p` / Agent SDK では Workflow ツール呼び出しが通常の権限評価を通り、`Workflow` / `Workflow(<name>)` の allow ルール・auto モード分類器・bypass・`PreToolUse` フック・`--permission-prompt-tool` のいずれかで許可する必要がある。**「ワークフローのサブエージェントは常に `acceptEdits` で動く」という従来記述は撤回**され、サブエージェントの権限モード決定規則に従う。再開についても「完了済み／停止時実行中／失敗」の 3 分類と、失敗以降の全エージェント再実行、セッション終了時の引き継ぎ（`Move to background and exit`、`~/.claude/projects/` の保存結果と `claude --resume`）が明文化。あわせて Workflow ツール説明が約 5.7k → 約 1k トークンに縮小され、スクリプト作成リファレンスが同梱スキル `workflow-authoring` へ移動（v2.1.248）。→ `specs/claude/tools.md` §4.4 新設
+
+**10) スキル: `--add-dir` 読み込みの前提条件と `$ARGUMENTS` の判定**
+
+追加ディレクトリからの skills / commands / subagents の読み込みには `project` 設定ソースが有効であることが必要で、`--safe-mode` では 3 種とも読まれない。`strictPluginOnlyCustomization` と bare モードでは 3 種の扱いが異なる（commands は skills ロックでオフ・bare でも読まれない、subagents はポリシーの `agents` エントリでオフ・bare では全 `.claude/agents/` をスキップ）。`ARGUMENTS: <value>` の自動追記条件も「`$ARGUMENTS` が無い場合」から「**どのプレースホルダも引数を受け取らなかった場合**」に精密化され、引数値に含まれる `$1` / `$ARGUMENTS` はリテラル挿入される点も明記された。`claude plugin validate .claude/skills` で壊れた frontmatter を検出できる。→ `specs/claude/skills-and-commands.md`
+
+**11) サブエージェント: description のトークン上限警告とフォールバックチェーン**
+
+組み込み以外のサブエージェントの `description` 合計が 15,000 トークンを超えると起動時に警告が出る。`maxTurns` 到達時は出力が partial とマークされ resume で継続できる（v2.1.246）。`fallbackModel` チェーンがサブエージェントにも適用され、対象障害でチェーン順に切り替えて継続する（v2.1.247。従来はサブエージェントが終了していた）。→ `specs/claude/skills-and-commands.md`
+
+**12) その他の v2.1.248 変更**
+
+`experimental.cacheTtl`（エージェント frontmatter のプロンプトキャッシュ TTL）、`claude self-hosted-runner --client-label`、server-managed settings の読み込み失敗診断（`/doctor`・`/status`）、`/usage-credits`、`desktopSessionCleanupPeriodDays`、`/loop` のセルフペース／自律モードの常時提供化、`CLAUDE_CODE_TOOL_MEMORY_CGROUP_EXCLUDE` と Monitor のメモリ上限対象化（v2.1.246）、`--setting-sources` 除外時のサンドボックス構成の扱い（v2.1.246）、`settings.local.json` の worktree での配置（main チェックアウトのルート）と `/cd` による project 設定の再読込（v2.1.246）。→ `specs/claude/configuration.md`、`specs/claude/tools.md`、`specs/claude/skills-and-commands.md`
+
+### 更新ファイル
+
+- `specs/claude/changelog.md` — v2.1.248 / v2.1.250 を追加
+- `specs/claude/configuration.md` — `managedSourcesBehavior` / `desktopSessionCleanupPeriodDays` 追加、`modelPricing` / `enableArtifact` / `disableArtifact` / `crossSessionInbound` / `sandbox.*` 改訂、`CLAUDE_CODE_RESTRICTED` / `CLAUDE_CODE_TOOL_MEMORY_CGROUP_EXCLUDE` 追加、managed ソース合成と `settings.local.json` 配置規則を追記
+- `specs/claude/tools.md` — §4.4 ワークフローの権限・再開、§4.5 制限モードを新設、メモリ上限の記述を更新
+- `specs/claude/hooks.md` — `Setup` イベント追加と出力破棄、`once` / `timeout` / `PreToolUse` matcher / `ask` ラベルを改訂
+- `specs/claude/agent-teams.md` — 計画承認、チームメイトのモデル決定順、定義の適用範囲表、セッション間メッセージの可用性を改訂
+- `specs/claude/mcp.md` — 接続堅牢性の整理、入力スキーマ不正ツールの除外（§3.7）、コネクタ配送経路（§8.9.1）を追加
+- `specs/claude/skills-and-commands.md` — `--add-dir` 読み込み条件、`$ARGUMENTS` 判定、サブエージェントの description 上限 / partial / フォールバック、`/cd` ほかコマンド行を更新
+- `kb/update-history.md` — 本エントリ
+
 ## 2026-08-28 — 公式ドキュメント巡回
 
 ### 検出・更新

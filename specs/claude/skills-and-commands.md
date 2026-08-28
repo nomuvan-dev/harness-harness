@@ -36,7 +36,24 @@ v2.1.178 から、ネストされた `.claude/skills/` のスキルは配下の�
 
 #### `--add-dir` からのスキル
 
-`--add-dir` で追加したディレクトリの `.claude/skills/` は自動読み込みされ、ライブ変更検出も有効。
+`--add-dir` で追加したディレクトリの `.claude/skills/` は自動読み込みされ、ライブ変更検出も有効。同ディレクトリの `.claude/commands/` と `.claude/agents/` も読み込まれる（ただし**監視はされない**ため、追加・編集後はセッション再起動が必要）。
+
+この例外は `--add-dir` / `/add-dir` と、**Agent SDK が追加するディレクトリ**（TypeScript の `additionalDirectories` / Python の `add_dirs`。SDK が `--add-dir` として渡す）に適用される。settings.json の `permissions.additionalDirectories` はファイルアクセス権のみを与え、skills / commands / subagents を読み込まない（TypeScript のオプション名が同じでも意味が異なる）。
+
+**読み込みの前提条件（ドキュメント追記）**:
+
+- 追加ディレクトリからの skills / commands / subagents の読み込みは、`project` [設定ソース](https://code.claude.com/docs/en/agent-sdk/claude-code-features#control-filesystem-settings-with-settingsources)が有効な場合のみ（既定は有効）。CLI で `--setting-sources` を渡す場合、SDK で `settingSources` / `setting_sources` を明示する場合は `project` を含めること
+- `--safe-mode` では 3 種とも読み込まれない
+- `strictPluginOnlyCustomization` と bare モードでは 3 種の扱いが異なる:
+  - **skills**（`.claude/skills/`）: skills をロックするポリシーでオフ。bare モードでは読み込まれる
+  - **commands**（`.claude/commands/`）: 同じ skills ロックでオフ。bare モードでは読み込まれない
+  - **subagents**（`.claude/agents/`）: ポリシーの `agents` エントリでオフ（`skills` エントリではない）。bare モードではプロジェクト自身のものを含め全ての `.claude/agents/` をスキップ
+- bare モードではスキルディレクトリの監視自体を行わない
+- 追加ディレクトリの `.claude/settings.json` / `.claude/settings.local.json` からは `enabledPlugins` と `extraKnownMarketplaces` のみ読まれる。output style 等その他の `.claude/` 設定は読み込まれない
+
+**`/cd` によるセッション移動（v2.1.246）**: 移動先ディレクトリのプロジェクトスキルが追加される。プロジェクト設定（`.claude/settings.json` / `settings.local.json`）も移動先のものを読むようになる。
+
+**frontmatter が壊れた `SKILL.md` の検出**: `claude plugin validate .claude/skills`（個人スキルなら `~/.claude/skills`）でパースできない `SKILL.md` を洗い出せる（v2.1.233 以降）。
 
 ### 1.2 SKILL.md 構造
 
@@ -94,7 +111,9 @@ my-skill/
 | `${CLAUDE_SKILL_DIR}` | スキルの `SKILL.md` があるディレクトリ |
 | `${CLAUDE_EFFORT}` | 現在の effort level（low/medium/high/xhigh/max）。スキル本文に埋め込み可能（v2.1.120） |
 
-`$ARGUMENTS` がコンテンツに含まれない場合、末尾に `ARGUMENTS: <value>` が追加される。
+**プレースホルダが 1 つも引数を受け取らなかった場合**、末尾に `ARGUMENTS: <value>` が追加される（従来記載は「`$ARGUMENTS` が含まれない場合」）。プレースホルダとは `$ARGUMENTS`・`$1` 等のインデックス形式・名前付き引数を指す。インデックス形式でその位置に引数が無い場合はリテラルテキストのまま残り「受け取った」とは数えない。名前付きはその位置に引数が無くても空文字列に展開されるため「受け取った」と数える。
+
+**引数の値自体に `$1` / `$ARGUMENTS` のような文字列が含まれていても展開されない**（リテラル挿入）。例: 本文に `Summarize $0` があるスキルを `/summarize "$ARGUMENTS from yesterday"` で呼ぶと Claude には `Summarize $ARGUMENTS from yesterday` が届く。`${CLAUDE_*}` 変数（`${CLAUDE_SKILL_DIR}` 等）は引数を挿入した**後**に置換される。
 
 ### 1.6 動的コンテキスト注入
 
@@ -182,7 +201,7 @@ Claude Code に同梱されるスキル:
 | `/resume [session]` (`/continue`) | セッション再開 |
 | `/rename [name]` | セッション名変更 |
 | `/rewind` (`/checkpoint`, `/undo`) | 会話/コードを前の状態に巻き戻し（v2.1.108 で `/undo` エイリアス追加。v2.1.191 で `/clear` 実行前からの会話再開に対応） |
-| `/cd <path>` | プロンプトキャッシュを壊さずセッションのワーキングディレクトリを移動（v2.1.169）。v2.1.206 でパス補完対応 |
+| `/cd <path>` | 会話を保ったままセッションのワーキングディレクトリを移動（v2.1.169）。v2.1.206 でパス補完対応。**v2.1.246 以降、移動と同時に移動先ディレクトリの project / local 設定、プロジェクトスキル、そのディレクトリの設定が有効化するプラグインの MCP サーバーを読み込む**（`/reload-plugins` 不要）。ファイルアクセス権だけを足したい場合は `/add-dir` を使う。`Cd` 権限ルールで移動先を制限・禁止できる |
 | `/branch [name]` (`/fork`) | 会話のブランチ作成。v2.1.212 で `/fork` は会話を新しいバックグラウンドセッション（`claude agents` に独立表示）へコピーする挙動に変更。v2.1.221 から fork セッションは元のチェックアウトを共有せず自前の worktree を作成 |
 | `/subtask` | 会話をコピーしたセッション内サブエージェントを起動（v2.1.212 で旧 `/fork` の挙動から改名） |
 | `/export [filename]` | 会話をテキストエクスポート |
@@ -241,12 +260,12 @@ Claude Code に同梱されるスキル:
 | `/plugin list` | インストール済みプラグイン一覧表示。`--enabled` / `--disabled` フィルタ対応（v2.1.163） |
 | `claude plugin enable/disable` | 依存関係を強制。`disable` は他の有効プラグインの依存先を拒否し disable-chain ヒントを表示。`enable` は推移的依存を強制有効化（v2.1.143） |
 | `/reload-plugins` | プラグイン変更の即時反映（v2.1.221 から `/plugin` 経由のインストールは安全な場合、実行不要で即時有効化） |
-| `/reload-skills` | スキルディレクトリを再スキャン。セッション再起動不要（v2.1.152） |
+| `/reload-skills` | スキル / コマンドディレクトリを再スキャン。セッション再起動不要。利用可能スキル数と増減数を報告する |
 | `/desktop` (`/app`) | デスクトップアプリでセッション継続 |
 | `/remote-control` (`/rc`) | リモートコントロール有効化 |
 | `/teleport` (`/tp`) | Claude Code on the web のクラウドセッションをこの端末に引き込む（ピッカー→ブランチfetch＋会話履歴ロード）。claude.ai サブスクリプション認証が必要 |
 | `/tasks` (`/bashes`) | 現在セッションのバックグラウンド作業（完了済みサブエージェント含む）の表示・管理。v2.1.243 で各サブエージェントが動いたモデルと effort レベルを一覧・詳細ダイアログに表示 |
-| `/web-setup` | ローカルの `gh` CLI 認証情報で GitHub アカウントを Claude Code on the web に接続。GitHub未接続時は `/schedule` が自動でプロンプト |
+| `/web-setup` | ローカルの `gh` CLI 認証情報で GitHub アカウントを Claude Code on the web に接続。**v2.1.248**: `gh` のトークンに `workflow` スコープが無い場合、巨大リポジトリへの push が拒否されうる旨を警告する |
 | `/remote-env` | クラウドセッションのデフォルト環境をピッカーで選択（ユーザー設定 `remote.defaultEnvironmentId` に保存） |
 | `/ide` | IDE連携管理 |
 | `/chrome` | Chrome設定。v2.1.154 で "Select browser…" を選択することで複数接続済みブラウザから使用ブラウザを指定可能（チャット内でも実行時に選択可） |
@@ -542,6 +561,10 @@ model: sonnet
 あなたはシニアコードレビュアーです。...
 ```
 
+`description` はメイン会話のコンテキストを常時消費するため短く保つ。**組み込み以外のサブエージェントの `description` 合計が 15,000 トークンを超えると起動時に合計トークン数付きの警告が出る**。詳細は各サブエージェントのシステムプロンプト（そのサブエージェント実行時にのみ読み込まれる）へ移す。
+
+`experimental.cacheTtl`（`"5m"` / `"1h"`、v2.1.248）: サブエージェント TTL 設定（`subagentPromptCacheTtl` / `CLAUDE_CODE_SUBAGENT_PROMPT_CACHE_TTL`）が未構成のときに使われる、エージェント単位のプロンプトキャッシュ TTL。
+
 ### 5.4 サブエージェントのスコープ
 
 | 場所 | スコープ | 優先度 |
@@ -561,7 +584,7 @@ model: sonnet
 | `disallowedTools` | No | 拒否ツール |
 | `model` | No | `sonnet` / `opus` / `haiku` / `inherit` / フルモデルID |
 | `permissionMode` | No | `default` / `acceptEdits` / `dontAsk` / `bypassPermissions` / `plan` |
-| `maxTurns` | No | 最大エージェンティックターン数 |
+| `maxTurns` | No | 最大エージェンティックターン数。**上限に達した場合、Claude Code は出力を「部分的（partial）」とマークして返し、Claude は[サブエージェントの resume](https://code.claude.com/docs/en/sub-agents#resume-subagents) で継続できる**（partial マークは v2.1.246 以降。エージェントIDを返すサブエージェントでは「メッセージを送れば続きから再開できる」旨も結果に付く） |
 | `skills` | No | 起動時にプリロードするスキル |
 | `mcpServers` | No | スコープされたMCPサーバー |
 | `hooks` | No | ライフサイクルフック |
@@ -590,6 +613,11 @@ model: sonnet
 ### 5.8 サブエージェントの再開
 
 完了したサブエージェントは `SendMessage` ツールで再開可能。会話履歴が保持される。
+
+- 完了時に Claude はエージェントIDを受け取る。組み込みの Explore / Plan は one-shot でエージェントIDを返さないため再開できない（継続が必要なら `general-purpose` かカスタムサブエージェントを使う）
+- **`maxTurns` の上限で停止した場合**、Claude Code は返却出力を「部分的（partial）」とマークする（v2.1.246 以降）。エージェントIDを返すサブエージェントでは「メッセージを送れば停止地点から継続できる」旨も結果に付く
+
+**フォールバックモデルチェーンの適用（v2.1.247）**: `fallbackModel` チェーンを構成している場合、サブエージェントのリクエストがチェーンの対象となる障害（モデル利用不可等）に遭うと、Claude Code はチェーンの順にモデルを試し、受理したモデルでサブエージェントを継続させる。セッション自身のモデルは変わらない。**v2.1.247 より前は、チェーンが対象とする障害でもサブエージェントは終了していた。**
 
 ### 5.9 MCPサーバーのスコープ
 
