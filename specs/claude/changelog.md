@@ -3,7 +3,31 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-08-28
+最終更新: 2026-08-29
+
+---
+
+## v2.1.250 (2026-08-28)
+
+- バグ修正・信頼性改善のみ
+
+---
+
+## v2.1.248 (2026-08-27)
+
+- **`--restricted` / `CLAUDE_CODE_RESTRICTED=1`（制限モード）**: 共有マシン上で評価ハーネスが `claude` を駆動する用途向け。コマンド・コードを実行する組み込みツールと `WebFetch` を削除（`--tools` で個別指定した場合のみ復活。`default` プリセット経由では復活しない）、組み込みファイルツールをワーキングディレクトリ内に閉じ込め、user / project / local の設定ファイルを読まず managed 設定と `--settings` のみを読み、`bypassPermissions` を拒否する。環境変数は起動環境からのみ読まれ、設定ファイルの `env` ブロックでは無視される
+- **`experimental.cacheTtl`（エージェント frontmatter）**: `"5m"` / `"1h"`。サブエージェント TTL 設定が未構成のときに使われるエージェント単位のプロンプトキャッシュ TTL
+- **`claude self-hosted-runner --client-label <label>` / `SELF_HOSTED_RUNNER_CLIENT_LABEL`**: ランナーが登録するラベルを上書き（既定はホスト名）
+- **server-managed settings の診断**: 読み込み失敗時の起動警告と、失敗理由・未取得理由（Bedrock / Vertex / サードパーティプロバイダ、カスタム `ANTHROPIC_BASE_URL`）を示す `/doctor`・`/status` の行を追加
+- **`/usage-credits`**: AWS Marketplace 経由課金・セルフサーブ Enterprise・Enterprise トライアルの組織で、メンバーが管理者に上限引き上げを申請できる
+- **セッション間メッセージの提供範囲拡大**: 同一マシン上のセッション間の `SendMessage` / `ListAgents` が Bedrock・Vertex・Foundry でも、またテレメトリ無効時（feature-flag 取得オフ）でも利用可能に。同一マシンの配送はマシン上のセッション単位ソケットのみを使い Anthropic サーバを経由しない
+- **`crossSessionInbound` の不正値**: 従来は黙って無視されていたが、警告を出したうえで user / project / local / `--settings` では `hold`（保留）、managed 設定では `refuse` として扱う
+- **ソケットディレクトリのフォールバック**: 既定ディレクトリを使えない場合（他ユーザー所有等）はユーザー専用の `/tmp/cc-socks-<uid>` を使う。どこも使えない場合は受信箱なしで起動し、`/status` の `Peer address` 行に `unavailable` と理由が出る
+- **`/loop` の常時提供化**: セルフペース（dynamic）モードとプロンプト無しの自律既定モードが Bedrock / Vertex / Foundry を含め常に利用可能に
+- **Workflow ツールのプロンプト削減**: ツール説明が約 5.7k → 約 1k トークンに縮小。スクリプト作成リファレンスは同梱スキル `workflow-authoring` に移動
+- **`desktopSessionCleanupPeriodDays`**: Claude Desktop / Cowork のセッションが 30 日で消えていた問題の修正に伴い追加。デスクトップ由来セッションの保持除外に上限を設ける
+- `/ultrareview` とローカル起点のクラウドセッションが `prod.env` 系・`*.tfvars`・認証ファイルのエディタ swap / temp / backup コピーをアップロードしていた問題を修正
+- managed 設定: クライアント側タイムアウト・MCP 起動モード・ストリーム watchdog 系の環境変数が設定承認プロンプトを起こさなくなった
 
 ---
 

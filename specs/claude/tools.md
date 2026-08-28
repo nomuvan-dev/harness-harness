@@ -45,7 +45,7 @@ Claude Code の組み込みツール一覧。**ここに書かれたツール名
 | `EnterWorktree` | Yes | 隔離 git worktree を作成して移動。`path` 指定で既存 worktree に入る |
 | `ExitWorktree` | No | worktree セッションを抜けて元ディレクトリへ戻る。`isolation: worktree` 等で既に自前の作業ディレクトリを持つサブエージェントには提供されない |
 | `Skill` | Yes | メイン会話内でスキルを実行 |
-| `Workflow` | Yes | 動的ワークフロー（多数のサブエージェントをバックグラウンドで統率し統合結果を返すスクリプト）を実行 |
+| `Workflow` | Yes | 動的ワークフロー（多数のサブエージェントをバックグラウンドで統率し統合結果を返すスクリプト）を実行。**v2.1.248 でツール説明が約 5.7k → 約 1k トークンに縮小**され、スクリプト作成リファレンスは同梱スキル `workflow-authoring` へ移動 |
 | `TaskCreate` / `TaskGet` / `TaskList` / `TaskUpdate` | No | タスクリストの作成・取得・列挙・更新。**モデルによっては既定で非提供**（§4 参照） |
 | `TodoWrite` | No | セッションのタスクチェックリスト。`TaskCreate` 系に置き換えられ既定で無効。`CLAUDE_CODE_ENABLE_TASKS=0` で復帰 |
 | `TaskOutput` | No | バックグラウンドタスクの出力取得。**非推奨**（タスクの出力ファイルパスを `Read` する方式が推奨） |
@@ -79,7 +79,8 @@ Claude Code の組み込みツール一覧。**ここに書かれたツール名
 - 出力: 実行中は作業ファイルへストリーム。**5 GB 超で kill**。成功時はおよそ 30,000 文字までインライン、超過分はセッションディレクトリのファイルパス（64 MiB で切り詰め）+ 冒頭プレビュー。失敗時はおよそ 10,000 文字までインライン。`BASH_MAX_OUTPUT_LENGTH` で読み戻し量を変更可（既定 30,000、上限 150,000）
 - **終了コード 1 が「正常な否定」として扱われるコマンド**: `grep`, `rg`, `egrep`, `fgrep`, `find`, `diff`, `test`, `[`, `git diff`, `git grep`
 - バックグラウンド化: `run_in_background: true`。タイムアウトに達したコマンドも自動でバックグラウンドへ移される。ただし **`sleep` 始まり / `git` を含む / 完全にパースできない複合コマンド**の 3 種は自動バックグラウンド化されず停止される
-- Linux / WSL では `CLAUDE_CODE_TOOL_MEMORY_LIMIT`（例 `4G`）で Bash / PowerShell 全体のメモリ上限を cgroup で設定できる。**セッション内の全コマンド合算**で、値変更の反映には再起動が必要
+- Linux / WSL では `CLAUDE_CODE_TOOL_MEMORY_LIMIT`（例 `4G`）で Bash / PowerShell、および **v2.1.246 以降は Monitor** ツールコマンド全体のメモリ上限を cgroup で設定できる。**セッション内の全コマンド合算**で、値変更の反映には再起動が必要（v2.1.246 より前は Monitor は上限外）
+- v2.1.246 以降、`CLAUDE_CODE_TOOL_MEMORY_CGROUP_EXCLUDE` で Claude Code が起動する他種別のプロセス（`mcp` / `lsp` / `hooks` / `plugin` / `helper` / `agent`）も同じ上限の対象にできる。列挙した種別が**除外**され、それ以外は上限対象。`none` で全種別対象、`all-new` で Bash / PowerShell / Monitor のみ対象。未設定時の対象集合はサーバー配信の構成に従って変動する。権限ゲート系フック（およびそれが呼ぶ MCP サーバー）は常に除外される
 
 ### 3.2 PowerShell
 
@@ -149,6 +150,47 @@ v2.1.233 以降、**Opus 4.8 / Sonnet 5 / Fable 5 / Mythos 5 およびそれ以�
 
 サブエージェントには**親セッションが持っている場合にのみ**提供される（サブエージェントが別モデルでも同じ）。
 インプロセスのチームメイトも親セッションに追随するが、独立ペインで動くチームメイトは自身のモデルの規則に従う。
+
+---
+
+## 4.4 動的ワークフロー（`Workflow`）の権限と再開（ドキュメント改訂）
+
+**起動時の権限**:
+
+| 権限モード | プロンプトのタイミング |
+|:--|:--|
+| Auto | 初回起動のみ。**Yes** はユーザー設定に同意を記録し以降はプロンプトなし。ultracode 有効時は完全にスキップ |
+| Manual / accept edits | 毎回（そのプロジェクトのそのワークフローに **Yes, and don't ask again** を選んだ場合を除く） |
+| Bypass permissions | プロンプトなしで即実行 |
+| `claude -p` / Agent SDK | プロンプトを出さない |
+
+- **Yes, and don't ask again for `<name>` in `<path>`** は、同梱 / 保存済み / プラグインのワークフローを名前で実行したときだけ提示される（Claude がその場で書いたスクリプトには出ない）
+- `claude -p` / Agent SDK では Workflow ツール呼び出しがセッションの通常の権限評価を通るため、deny ルール・ask ルール・`dontAsk` モードがそのまま適用される。起動を許可する手段は次のいずれか: allow ルールの `Workflow`（全ワークフロー）または `Workflow(<name>)`（保存済みワークフローを名前指定） / auto モードの分類器 / bypass permissions モード / `allow` を返す `PreToolUse` フック / `--permission-prompt-tool`（SDK では `canUseTool` コールバックか `PermissionRequest` フック）
+- **ワークフローが起動するサブエージェントは、ユーザーの権限ルールを使い、権限モードは[サブエージェントの権限モード決定規則](https://code.claude.com/docs/en/sub-agents#permission-modes)に従う**（従来記載の「常に `acceptEdits` で動く」は現行仕様ではない）。長時間実行でプロンプトを避けたい場合は、エージェントが必要とするツールを事前に allow ルールへ入れる
+
+**停止したランの再開**:
+
+- 一時停止したランは `/workflows` で選択して `p`。停止したランは同じスクリプトでの再起動を Claude に依頼する。エージェント開始順にリプレイされ、各エージェントは以下のいずれかになる:
+  - **完了済み**: 保存結果を返す。ただし前回とプロンプトが異なる最初のエージェント（スクリプト編集や先行エージェントの結果変化による）は再実行され、**それ以降のエージェントは完了済みでも全て再実行**される
+  - **停止時に実行中だったもの**: 最初からやり直し（ラン全体の停止は「失敗」扱いにならない）
+  - **失敗したもの**: 再実行され、それ以降に開始したエージェントも完了済みを含め再実行。`/workflows` で個別エージェントを選んで `x` で止めた場合は「失敗」扱い
+- fan-out の途中で失敗すると、完了済みの作業まで再実行される（A・B・C・D の順で開始し B が失敗すると、A はキャッシュ、B・C・D は再実行）
+- 再開できるのは**同一 Claude Code セッション内**。セッションをバックグラウンド化した場合は背景セッションで同様にリプレイして継続する。ワークフロー実行中に Claude Code を終了する場合、agent view が有効なら終了ダイアログに `Move to background and exit` が出て同様に引き継がれる。`Exit and stop tasks` を選ぶ／選択肢が出ない場合はセッションと共に停止するが、保存結果は `~/.claude/projects/` 配下のセッションディレクトリに残るため、`claude --resume` で再開したセッションからワークフロー再起動を依頼すればリプレイできる（新規セッションはリプレイ対象がなく最初から実行）
+
+---
+
+## 4.5 制限モード（`--restricted` / `CLAUDE_CODE_RESTRICTED=1`）
+
+v2.1.248 以降。共有マシン上で評価ハーネスが `claude` を駆動し、そのマシンのコマンド実行やユーザー／プロジェクト設定の読み取りをさせたくない用途向け。
+
+制限内容:
+
+- **コマンド・コードを実行する組み込みツールと `WebFetch` を削除**。`--tools` で**個別に名指し**した場合のみ復活し、`default` プリセット経由では復活しない
+- 組み込みファイルツールを[ワーキングディレクトリ](https://code.claude.com/docs/en/permissions#working-directories)内に閉じ込める
+- **managed 設定と `--settings` のみ**を読み、user / project / local の設定ファイルは読まない
+- `bypassPermissions` を拒否する（`setMode` による `bypassPermissions` への切り替えも no-op になる）
+
+`CLAUDE_CODE_RESTRICTED` は**起動環境からのみ**読まれ、設定ファイルの `env` ブロックでは無視される。
 
 ---
 

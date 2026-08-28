@@ -23,7 +23,7 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 | `SessionStart` | セッション開始/再開 | No | `startup`, `resume`, `clear`, `compact`, `fork`（v2.1.214: フォーク開始時は `resume` ではなく `fork` を報告） |
 | `UserPromptSubmit` | ユーザープロンプト送信後、処理前 | Yes | - |
 | `UserPromptExpansion` | ユーザーが打ったコマンドがプロンプトへ展開される時（Claude に届く前） | Yes | `command_name`（スキル名 / コマンド名）。matcher 省略で全 prompt 型コマンドに発火 |
-| `PreToolUse` | ツール実行前 | Yes | ツール名 (`Bash`, `Edit`, `Write` 等) |
+| `PreToolUse` | ツール実行前 | Yes | **`EndConversation` 以外の全ツール名**（`Bash` / `PowerShell` / `Edit` / `Write` / `Read` / `Glob` / `Grep` / `Agent` / `Workflow` / `WebFetch` / `WebSearch` / `AskUserQuestion` / `ExitPlanMode` 等の組み込みツールと MCP ツール名） |
 | `PermissionRequest` | ツール使用の権限ダイアログ表示時 | Yes | ツール名 |
 | `PostToolUse` | ツール成功後 | No | ツール名 |
 | `PostToolUseFailure` | ツール失敗後 | No | ツール名 |
@@ -54,6 +54,9 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 | `DirectoryAdded` | `/add-dir` または SDK `register_repo_root` でセッション途中に作業ディレクトリが登録された後 | No | -（v2.1.219） |
 | `FileChanged` | 監視対象ファイルのディスク変更時 | No | ファイル名（basename）例: `.envrc`, `.env` |
 | `TaskCreated` | `TaskCreate` ツールでタスク作成時 | Yes | matcherなし |
+| `Setup` | セッション開始時（`SessionStart` / `SubagentStart` と同じく最初のプロンプト前）。依存インストール等のセットアップ用 | No | - |
+
+> **`Setup` フックの出力の扱い（ドキュメント改訂）**: `Setup` はブロックできず、終了コードに関わらず処理が続く。**どの終了コードでも `systemMessage` / `continue` / `hookSpecificOutput.additionalContext` などの JSON 出力フィールドは破棄される**（以前は `additionalContext` で Claude のコンテキストへ情報を渡せると記載されていたが、現在は渡せない）。`-p` 実行では `--output-format stream-json --verbose` で起動した場合に限り、stdout / stderr / 終了コードが `hook_response` イベントとして出力に現れる。決定制御の分類も「Context only」から `WorktreeRemove` / `Notification` / `SessionEnd` などと同じ**決定制御なし**へ移動した。
 
 ### 2.4 ワークツリー・コンパクションイベント
 
@@ -61,7 +64,7 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 |:--|:--|:--|:--|
 | `WorktreeCreate` | ワークツリー作成時 | Yes | - |
 | `WorktreeRemove` | ワークツリー削除時 | No | - |
-| `PreCompact` | コンパクション前 | No | `manual`, `auto` |
+| `PreCompact` | コンパクション前 | No | `manual`, `auto`（入力の `custom_instructions` は `manual` で `/compact` に引数が渡された場合のみ文字列。引数なし・`auto` では `null`。従来は空文字列と記載されていた） |
 | `PostCompact` | コンパクション後 | No | `manual`, `auto` |
 
 ### 2.5 MCP Elicitation イベント
@@ -360,6 +363,8 @@ v2.1.133 以降、すべてのイベントの入力 JSON に effort level も含
 }
 ```
 
+> フックが `"ask"` を返したときの権限プロンプトには、そのフックの出所ラベルが付く。ラベルは **`[settings]`**（settings ファイル由来またはエージェント frontmatter 由来） / **`[plugin:<name>]`**（プラグイン由来） / **`[skill]`**（スキル frontmatter 由来）の 3 種（従来ドキュメントの `[User]` / `[Project]` / `[Plugin]` / `[Local]` から変更）。
+
 #### PostToolUse
 
 ツール出力をフックで書き換える（v2.1.121 以降は MCP 以外の全ツールが対象）:
@@ -511,9 +516,9 @@ echo "$WORKTREE_PATH"
 
 | フィールド | 説明 | デフォルト |
 |:--|:--|:--|
-| `timeout` | タイムアウト（秒） | command: 600, http: 30, prompt: 30, agent: 60 |
+| `timeout` | タイムアウト（秒）。**`async: true` の command フックには適用されない**（バックグラウンドに入った後は Claude Code が強制終了しない）。`asyncRewake` のフックには引き続き適用される | command / http / mcp_tool: 600, prompt: 30, agent: 60 |
 | `async` | バックグラウンド実行（command のみ） | `false` |
-| `once` | スキル内でセッション中1回のみ実行 | `false` |
+| `once` | **初回の成功実行後**にフックを取り除く。失敗・exit code 2 によるブロック・タイムアウトの場合はフックが残り、次の一致イベントで再実行される。スキル frontmatter で宣言したフックのみ有効（settings ファイルとエージェント frontmatter では無視） | `false` |
 | `statusMessage` | スピナーメッセージ | - |
 | `if` | ツールイベント専用の条件フィルタ（permission rule構文） | - |
 

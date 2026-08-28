@@ -204,6 +204,25 @@ v2.1.154: `claude mcp list` / `get` の出力がパイプされた場合、未�
 - v2.1.203: セッションの追加ワーキングディレクトリが MCP `roots/list` に含まれ、変更時は `notifications/roots/list_changed` を送信。
 - v2.1.206: `--mcp-config` / `.mcp.json` サーバーの per-server `request_timeout_ms` が新規セッションでも尊重されるよう修正。OAuth トークンリフレッシュ1回失敗での手動再認証要求も解消。
 
+- **再接続・リトライの整理（ドキュメント改訂）**:
+  - **セッション中に切断したリモートサーバー**: 指数バックオフで最大 5 回再接続（初回 1 秒、以降倍増）。対話セッションでは `/mcp` に pending 表示、5 回失敗で failed（再認証が必要な場合は「要認証」）となり `/mcp` から手動再試行できる。`claude -p` / Agent SDK でも同じスケジュールで再接続するが `/mcp` パネルは無い
+  - **初回接続の失敗**: HTTP / SSE サーバーが transient エラー（5xx・connection refused・タイムアウト）で初回接続に失敗した場合は最大 3 回リトライ。起動時とセッション途中の追加（クラウドセッションが構成から追加するサーバー、Agent SDK の `setMcpServers()` を含む）に適用。**WebSocket サーバーの初回接続**と**認証エラー / not-found** はリトライしない
+  - **discovery リクエストの失敗**: 接続成功後の `tools/list` / `prompts/list` / `resources/list` は transient なネットワーク／サーバーエラーで最大 3 回・短いバックオフでリトライ。認証エラー・4xx・リクエストタイムアウトはリトライしない
+  - **Claude への通知**: tool search が有効（既定）なら、接続に失敗したサーバー名と接続エラーが Claude に伝えられ（該当ツールが見つからない `ToolSearch` 結果にも含まれる）、Claude が応答内で接続失敗を報告する。tool search 無しの構成では Claude に伝わらない
+- **`/cd` によるセッション移動（v2.1.246）**: 移動先ディレクトリの設定が有効化するプラグインの MCP サーバーが接続され、有効でなくなったプラグインのサーバーは切断される（移動後に `/reload-plugins` を実行する必要はない）
+- **`headersHelper` の作業ディレクトリ（改訂）**: プロジェクト `.mcp.json` / local スコープのサーバーは**そのサーバーを宣言しているプロジェクトディレクトリ**が基準（従来記載は「Claude Code を起動したディレクトリ」）。プロジェクト内のエージェントファイル / SDK の `mcpServers`・`setMcpServers()` / `--mcp-config` 由来はセッションのプライマリワーキングディレクトリが基準。`/cd` はプライマリワーキングディレクトリから動くサーバーについてのみ作業ディレクトリを移動させる。信頼ダイアログの判定も「宣言元のプロジェクトディレクトリ」基準に変わった
+
+### 3.7 入力スキーマが不正なツールの除外
+
+Claude API はリクエスト中の全ツールの入力スキーマを検査し、1 つでも不正だとリクエスト全体を 400 で拒否する。そのため Claude Code はサーバーのツール読み込み時に API の検査のうち 2 つを自前で実行し、**当該除外を有効化するリモート構成を受け取っているデプロイでは**、失格するツールだけを除外して他のツールを生かす。
+
+- トップレベルのプロパティ名は 1〜64 文字で、ASCII 英数字・`_`・`.`・`-` のみ
+- JSON Schema draft 2020-12 のメタスキーマに対して妥当であること（`$schema` 未宣言か draft 2020-12 宣言のスキーマに適用。他方言を宣言したスキーマはこの検査をスキップするがプロパティ名検査は適用）
+
+検査はルートレベル combinator の書き換え後、実際に送信するスキーマに対して行う。除外したツールは理由をサーバーログに記録し、Claude にも「どのツールをなぜ除外したか」が伝えられる。サーバー側でスキーマを直せば次回のツール読み込みで復帰する。
+
+当該リモート構成を受け取っていないデプロイでは、検査自体は行ってログに残すが**ツールはそのまま送信される**ため、含まれるリクエストが「ツールを位置で名指しする 400 エラー」で失敗する。v2.1.216 より前はどのデプロイでも検査していなかった。
+
 ---
 
 ## 4. MCP インストールスコープ
@@ -349,6 +368,21 @@ MCP サーバーはツール結果の `_meta` フィールドに `anthropic/maxR
 ### 8.9 ツール説明とサーバー指示の上限
 
 MCP ツール説明およびサーバー指示は **2KB** に制限される（v2.1.84）。超過分は切り詰められる。
+
+### 8.9.1 claude.ai コネクタが Claude Code に届く経路（ドキュメント新設）
+
+コネクタを支配する設定はセッションの実行場所によって異なる。claude.ai から自分でコネクタを取得するのは 1 行目だけである点に注意（Desktop の WSL セッションはコネクタ未提供のため表に無い）。
+
+| セッションの実行場所 | コネクタの届き方 | 効く制御 |
+|:--|:--|:--|
+| ターミナル / VS Code / JetBrains / Agent SDK | **Claude Code 自身が claude.ai から取得** | `disableClaudeAiConnectors`・`ENABLE_CLAUDEAI_MCP_SERVERS`・`allowAllClaudeAiMcps` と managed MCP 設定 |
+| クラウドセッション（Claude Code on the web） | リモートホストが渡す | claude.ai の組織設定＋セッションに届く `allowedMcpServers` / `deniedMcpServers`＋実行ホスト上の `managed-mcp.json` |
+| Desktop アプリのローカル / SSH セッション | Desktop アプリがインプロセスで配る（`type: "sdk"` サーバーとして登録） | 組織の[コネクタツール制御](https://code.claude.com/docs/en/mcp#organization-controls-on-connector-tools)の `blocked` エントリのみ |
+
+- `disableClaudeAiConnectors` / `ENABLE_CLAUDEAI_MCP_SERVERS` / `allowAllClaudeAiMcps` は **1 行目にのみ**作用する
+- クラウドセッションではセッションプロキシがコネクタ URL を書き換えるため、コネクタ本来の URL 向けに書いた `serverUrl` パターンはマッチしない。実行ホストに `managed-mcp.json` があると（self-hosted runner ホスト等）`allowAllClaudeAiMcps` の有無に関わらず配布コネクタは落とされる
+- Desktop のローカル / SSH セッションには MCP 設定も `managed-mcp.json` も届かない。ユーザーは [claude.ai/customize/connectors](https://claude.ai/customize/connectors) で切断する、組織はツールを `blocked` にするか Desktop の Claude Code 自体を止める。`ask` 設定は Claude Code に届かないため通常の権限ルールが適用される。`blocked` は Desktop と claude.ai チャットで共通のため「Desktop のセッションだけ隠してチャットでは使う」はできない
+- `allowedMcpServers` / `deniedMcpServers` は宣言場所を問わずブロックする（プラグインのサーバー、`--mcp-config` 渡し、`managed-mcp.json` を含む）。組み込みサーバー（Claude in Chrome、VS Code / JetBrains 起動中の `ide` サーバー、CLI 自身が構成するサーバー）は allowlist の対象外で denylist は適用される。**セッションを起動したアプリが登録するインプロセスの `type: "sdk"` サーバーは両リストの対象外**
 
 ### 8.10 claude.ai コネクタの重複排除
 
