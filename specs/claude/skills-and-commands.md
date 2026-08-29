@@ -1,6 +1,6 @@
 # Claude Code Skills & コマンド仕様書
 
-最終更新: 2026-08-23（巡回更新）
+最終更新: 2026-08-30（巡回更新）
 
 公式ドキュメント: https://code.claude.com/docs/en/skills / https://code.claude.com/docs/en/commands / https://code.claude.com/docs/en/sub-agents / https://code.claude.com/docs/en/scheduled-tasks / https://code.claude.com/docs/en/web-scheduled-tasks / https://code.claude.com/docs/en/discover-plugins
 
@@ -217,15 +217,15 @@ Claude Code に同梱されるスキル:
 | `/permissions` (`/allowed-tools`) | 権限設定。allow / ask / deny ルールをスコープ別に閲覧・追加・削除し、作業ディレクトリ管理と Auto mode の拒否履歴レビューを行う。**v2.1.246 で Auto mode タブが追加**され、Auto mode 分類器ルールの閲覧・編集もダイアログから可能に。応答中に実行するとダイアログが即座に開き、変更は同一ターンの次のツール呼び出しから適用される（v2.1.234 以降） |
 | `/fast [on\|off]` | Fastモードトグル |
 | `/model [model]` | モデル変更（v2.1.144 から現在セッションにのみ適用。新規セッションのデフォルト変更はピッカーで `d` キー） |
-| `/effort [level]` | エフォートレベル設定。v2.1.154 でスライダのラベルが「Speed」/「Intelligence」→「Faster」/「Smarter」に変更。v2.1.161 でダイアログが「Reduce motion」アクセシビリティ設定を尊重 |
+| `/effort [level\|auto\|status]` | エフォートレベル設定。引数なしで対話スライダ、レベル名で直接設定、`auto` でモデル既定へリセット、`status` で現在値を表示。`max` と `ultracode` はセッション限定（設定ファイルには保存されない）。**v2.1.251 でモデルごとに既定 effort レベルを保存**するようになり、モデルを切り替えても各モデルの設定が保持される。Claude の作業中に実行しても即時反映（キュー待ちしない）。v2.1.154 でスライダのラベルが「Speed」/「Intelligence」→「Faster」/「Smarter」に変更。v2.1.161 でダイアログが「Reduce motion」アクセシビリティ設定を尊重 |
 | `/memory` | CLAUDE.md/オートメモリ管理 |
 | `/hooks` | フック設定表示 |
 | `/mcp` | MCPサーバー管理。v2.1.161 で未使用 claude.ai connector を「Show unused connectors」の下に折りたたみ表示に変更 |
 | `/status` | ステータス表示。v2.1.221 からセッション種別（`interactive` / バックグラウンドの `attached` / `unattended`）も表示。セッション間メッセージが有効なセッションでは自身の受信箱アドレスを `Peer address` 行（`uds:` プレフィックス）に表示。v2.1.243 で `Skipped sources` 行（`managed-settings.json` 等、存在するが上位の managed ソースが有効なため適用されない managed 設定ソース）と、Claude Code on the web 向けの GitHub 接続状況行（未接続なら `/web-setup` を案内）を追加 |
 | `/list-agents` | Claude が到達可能なエージェント一覧（サブエージェント / 同一マシンの他セッション / クラウドセッション / 他マシンの Remote Control セッション）。エイリアス `/peers`。セッション間メッセージ機能の有無を確認する手段でもある（コマンド自体が未認識ならその機能を持たない）。ローカルセッションは作業ディレクトリも表示され、同名セッションの区別が可能 |
 | `/context` | コンテキスト使用量の可視化 |
-| `/usage` | 使用量・統計を統合表示（v2.1.118 で `/cost` と `/stats` を `/usage` に統合。両コマンドはタイピングショートカットとして残存、対応タブを開く。v2.1.149 で制限使用量を駆動する要因（skills / subagents / plugins / MCPサーバー単位のコスト）のカテゴリ別内訳を表示。v2.1.243 で Loops 内訳（ループ単位の実行回数・総トークン・1 実行あたりトークン・最終実行時刻）を追加し、暴走した `/loop` を特定しやすくした） |
-| `/cost` | `/usage` のトークン使用量タブを開くショートカット |
+| `/usage` | 使用量・統計を統合表示。**v2.1.251 で Spend limit バーを追加**（Claude apps gateway 配下で spend limit がある開発者向け。ステータスライン用の `rate_limits.spend_limit` フィールドも追加）。（v2.1.118 で `/cost` と `/stats` を `/usage` に統合。両コマンドはタイピングショートカットとして残存、対応タブを開く。v2.1.149 で制限使用量を駆動する要因（skills / subagents / plugins / MCPサーバー単位のコスト）のカテゴリ別内訳を表示。v2.1.243 で Loops 内訳（ループ単位の実行回数・総トークン・1 実行あたりトークン・最終実行時刻）を追加し、暴走した `/loop` を特定しやすくした） |
+| `/cost` | `/usage` のトークン使用量タブを開くショートカット。**v2.1.251 でセッション単位のプロンプトキャッシュ行を追加**（ヒット率・ミス・再キャッシュしたトークン数・warm/cold）。同じ情報はステータスラインスクリプト向けに `prompt_cache` オブジェクトとしても提供される |
 | `/stats` | `/usage` の日次使用量・セッション履歴タブを開くショートカット |
 | `/insights` | セッション分析レポート（プロジェクト領域、操作パターン、摩擦点） |
 | `/usage-credits` | 追加使用量情報（v2.1.113 で Remote Control クライアントからも利用可能に。v2.1.144 で `/extra-usage` から改名、旧名もエイリアスとして残存。v2.1.161 で Team / Enterprise admin に再ログインを開始する代わりに組織 usage settings ページへ案内するよう修正。v2.1.236 で `/usage` が Team / Enterprise メンバーにも usage-credits の消費行を表示するようになり、未消費時は 0% の行を表示） |
@@ -329,7 +329,7 @@ MCPサーバーが公開するプロンプトは `/mcp__<server>__<prompt>` 形�
 | `/mobile` | Claude モバイルアプリのダウンロード QR を表示。エイリアス `/ios`・`/android` |
 | `/heapdump` | JavaScript ヒープスナップショットとメモリ内訳を `~/Desktop`（Linux では home）に書き出す。メモリ使用量診断用 |
 | `/help` | ヘルプと利用可能コマンド一覧 |
-| `/radio` | Claude FM（lo-fi ラジオ）をブラウザで開く。Bedrock / Google Cloud Agent Platform / Microsoft Foundry / AWS 上の Claude Platform では利用不可 |
+| `/radio` | Claude FM（lo-fi ラジオ）をブラウザで開く。ブラウザが無い環境ではストリーム URL を表示。**v2.1.251 で Bedrock / Vertex AI / Microsoft Foundry / AWS 上の Claude Platform、およびテレメトリ無効時でも利用可能になった**（従来はこれらで利用不可） |
 | `/stickers` | Claude Code ステッカーの注文 |
 
 **削除済みコマンド**（公式リファレンスに履歴として残るもの）:
