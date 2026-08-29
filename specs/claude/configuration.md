@@ -1,6 +1,6 @@
 # Claude Code 設定仕様書
 
-最終更新: 2026-08-23（巡回更新）
+最終更新: 2026-08-30（巡回更新）
 
 公式ドキュメント: https://code.claude.com/docs/en/settings / https://code.claude.com/docs/en/memory
 
@@ -138,7 +138,7 @@ managed 階層は単一ではなく、上から **server-managed settings → MD
 | `allowManagedHooksOnly` | Managed フックのみ許可（Managed設定のみ） |
 | `allowedHttpHookUrls` | HTTP フック許可URL |
 | `httpHookAllowedEnvVars` | HTTP フック許可環境変数 |
-| `env` | 環境変数設定 |
+| `env` | 環境変数設定。**v2.1.251 以降、project `.claude/settings.json` の `env` からは `CLAUDE_CONFIG_DIR` / `CLAUDE_CODE_TMPDIR` / `TMPDIR` / `TMP` / `TEMP` を設定できない**（シェル・user 設定・managed 設定で設定する）。`CLAUDE_CODE_RESTRICTED` は起動環境からのみ読まれ、どの設定ファイルの `env` でも無視される。managed / project 設定由来の `ANTHROPIC_CUSTOM_HEADERS` は、認証・組織/テナント・ルーティング・API 挙動系ヘッダ（`Authorization` / `Host` 等）を設定する場合、v2.1.251 以降は適用前にユーザー承認を要求する |
 | `model` | デフォルトモデル上書き |
 | `availableModels` | 選択可能モデル制限 |
 | （組織 effort 上限） | 設定キーではなく Enterprise の admin コンソール側の機能（v2.1.195 以降）。カスタムロール単位・モデル単位に最大 effort レベルを設定でき、上限超のレベルは `/effort` ピッカーに出ず、`--effort` / `/effort` で指定しても上限に丸められる。対話セッションとプレーンテキスト `--print` では警告が出るが、`json` / `stream-json` 出力やバックグラウンドエージェントでは無警告で丸められる。複数ロールが同一モデルを許可する場合は最も緩い上限が適用。組織のモデル制限と同じ経路で配信される |
@@ -299,6 +299,9 @@ managed 階層は単一ではなく、上から **server-managed settings → MD
 | `processWrapper` | （macOS / Linux、スコープ user / managed）Claude Code が起動するバックグラウンドプロセスの前段に企業ランチャーコマンドを挟む。ランチャーは自身のコマンドラインに Claude Code のものが追記された形で呼ばれるため、最後に exec する必要がある（[corporate-launcher](https://code.claude.com/docs/en/corporate-launcher) 参照）。v2.1.210 以降。`CLAUDE_CODE_PROCESS_WRAPPER` が優先 |
 | `forceLoginGatewayUrl` | （Managed のみ）`/login` の Cloud gateway 画面が接続するゲートウェイ URL を指定。画面には URL 入力欄が無く、未設定だと「IT 管理者に問い合わせ」と表示される。`forceLoginMethod` 未設定時はこのキー単独で Cloud gateway 画面が開く。`forceLoginMethod: "gateway"` はログイン方式ピッカーも消す。`claudeai` / `console` を指定した場合はそちらが優先されるため、両方を整合させて設定する |
 | `managedSourcesBehavior` | （Managed のみ、v2.1.242 以降）複数の managed ソースが同一マシンに配信されたときの合成方法。`"first-wins"`（既定）は**ポリシーキーを1つでも持つ最上位のソースだけを採用**し、残りは「全 admin ソースから読むキー」を除き無視する。`"merge"` は配信された全 admin ソースを種類別に合成する: リスト（`permissions.allow`・`hooks`・`sandbox.network.allowedDomains`・`deniedMcpServers` 等）は全ソースの要素を結合、ロック（`allowManagedHooksOnly`・`permissions.disableBypassPermissionsMode`・`crossSessionInbound` 等）は最も厳しい値、制限リスト（`availableModels`・`allowedMcpServers`・`strictKnownMarketplaces`・`allowedChannelPlugins`・`fallbackModel` チェーン）はそれを設定する最上位ソースの内容を丸ごと採用、最上位ソース限定キー（`apiKeyHelper`・`awsAuthRefresh`・`awsCredentialExport`・`gcpAuthRefresh`・`otelHeadersHelper`・`proxyAuthHelper`・`forceLoginOrgUUID`・`forceLoginMethod`・`forceLoginGatewayUrl`・`parentSettingsBehavior`・`modelPicker`・`permissions.defaultMode`）は最上位ソースのみ、`env` は変数単位でマージ（両モード共通）、その他は最上位ソースの値。**本キー自身は「本キーかポリシーキーを持つ最上位ソース」からのみ読まれる**ため、下位ソースが自分を merge 対象に引き上げることはできず、server-managed settings が届かないマシンでは MDM プロファイル側にも書く必要がある。Windows HKCU と埋め込みホストの親設定は merge に参加しない。`managed-settings.json` は最下位の admin ソースなので、そこに `"merge"` を書いても合成相手がいない。`"merge"` は最上位より下の全ソースが管理者の統制下にある場合のみ使う（下位ソースの allow ルールが加算されるため）。`/status` の `Setting sources` 行に `(remote + file, merged)` のように表示される |
+
+> **承認が必要になった managed 設定（v2.1.251）**: サンドボックスの TLS を終端する、サンドボックストラフィックを自前のプロキシへ流す、認証情報を注入する、サンドボックス隔離を弱める、といった server-managed 設定は適用前にユーザー承認を要求するようになった。`ANTHROPIC_CUSTOM_HEADERS`（managed / project 設定由来）も同様。あわせて managed 設定の承認ダイアログは、**前回承認時からの差分だけ**を列挙するようになった。同一の Claude apps gateway へ再サインインしても設定が変わっていなければ承認プロンプトは再表示されない。
+
 | `desktopSessionCleanupPeriodDays` | Claude Desktop / Cowork が書き込んだセッションのトランスクリプト保持除外に上限日数を設ける（v2.1.248）。従来 30 日でクリーンアップされ Desktop / Cowork のセッションが消えていた問題の修正に伴い追加。アプリ内に残っている限り除外されるが、本キーで上限を設定できる（組織ポリシーが保持期間を管理している場合を除く） |
 | `policyHelper` | （Managed のみ）起動時に managed settings を計算する実行ファイルを走らせ、その出力をそのセッションの managed settings として扱う。デバイスポスチャ・ID・リモートサービスから動的にポリシーを導出する用途。**macOS plist / Windows HKLM レジストリ / managed settings ファイルのいずれか**（最優先の managed ソース）に置かれた場合のみ実行され、サーバー管理設定・HKCU・親設定由来のものは無視される。`path` / `refreshIntervalMs` / `timeoutMs` を持つ |
 | `strictPluginOnlyCustomization` | （Managed のみ）skills / agents / hooks / MCP サーバーを user・project ソースから読み込ませず、プラグインと managed settings 由来のみに限定する。`true` で 4 種すべて、または `["skills","agents","hooks","mcp"]` の配列で個別指定。`strictKnownMarketplaces` と組み合わせるとカスタマイズのサプライチェーン全体を統制できる |

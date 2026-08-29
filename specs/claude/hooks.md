@@ -1,6 +1,6 @@
 # Claude Code Hooks 仕様書
 
-最終更新: 2026-08-23（巡回更新）
+最終更新: 2026-08-30（巡回更新）
 
 公式ドキュメント: https://code.claude.com/docs/en/hooks
 
@@ -74,6 +74,97 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 | `Elicitation` | MCPサーバーがユーザー入力を要求 | Yes | MCPサーバー名 |
 | `ElicitationResult` | ユーザーがMCP入力に回答 | Yes | MCPサーバー名 |
 
+### 2.6 モデル切替イベント（v2.1.251+）
+
+| イベント | 発火タイミング | ブロック可能 | matcher対象 |
+|:--|:--|:--|:--|
+| `PreModelSwitch` | ユーザー／クライアントが要求したモデル切替を適用する前 | **Yes**（切替をキャンセル） | **切替先モデルの正規名**（`[1m]` 接尾辞は無視） |
+| `PostModelSwitch` | セッションのモデルが変わった後（Claude Code 自身による変更を含む） | No（既に切替済み） | 同上 |
+
+**matcher の評価対象が特殊**: 他のイベントは stdin の JSON 入力のフィールド（ツールイベントなら `tool_name`）に対して matcher を評価するが、`PreModelSwitch` / `PostModelSwitch` は入力の `to_model` から導出した**正規名**に対して評価する。`opus` のようなエイリアス、日付付きモデルID、Bedrock 等のプロバイダ固有IDはすべて同一の正規名に解決されるため、`claude-opus-5` と書けばそのモデルの全表記をカバーできる。matcher は完全一致名・`|` 区切りリスト（`claude-opus-4-6|claude-opus-5`）・正規表現（`.*opus.*`）のいずれでも書ける。
+
+**正規名が判定できない場合**（LLM ゲートウェイのみが知るカスタムモデルID等）は matcher に関わらず**全 `PreModelSwitch` フックが実行される**。ブロックするフックは matcher だけに頼らず入力の `to_model` を必ず確認すること。
+
+**`PreModelSwitch` が発火する要求**:
+
+- `/model <name>` および `/model` ピッカー
+- `Option+P` / `Alt+P` のモデルピッカー
+- `/config` の Model 設定
+- fast モードのオン（それがセッションのモデルを変える場合）
+- Agent SDK ホストまたは Remote Control からの `set_model` 要求、`apply_flag_settings` 要求内のモデル変更
+
+**`PreModelSwitch` が発火しない**: 自動モデルフォールバック、セッション再開時のモデル復元など Claude Code 自身が行う切替。これらは `PostModelSwitch` にのみ届く。
+
+**`PostModelSwitch` が発火する変更**: 上記の明示的切替に加え、自動モデルフォールバック、`opusplan` のような設定によるプランモード出入り、セッション再開時のモデル復元。**フォールバックモデルチェーンの代替モデルが1ターンだけ応答した場合は発火しない**（セッションのモデルが変わらないため）。
+
+**入力フィールド**（`PreModelSwitch` / `PostModelSwitch` 共通、共通入力フィールドに加えて）:
+
+| フィールド | 型 | 説明 |
+|:--|:--|:--|
+| `from_model` | string | 切替前のモデルID |
+| `to_model` | string | 切替後のモデルID。matcher はこの正規名と比較される |
+| `requested_model` | string / `null` | 要求が指定した名前（`opus` 等のエイリアス、完全なモデルID、既定モデル要求なら `null`） |
+| `source` | string | `"command"`（`/model <name>` / `/config` の Model 設定 / fast モードのオン）、`"picker"`（モデルピッカー）、`"sdk"`（Agent SDK / Remote Control の `set_model` 等）。`PostModelSwitch` ではさらに `"auto"`（自動フォールバック等 Claude Code 自身の変更）と `"resume"`（再開時のモデル復元）が加わる |
+| `context_tokens` | number | 次のリクエストがプロンプトとして再送するトークン数（メイン会話の直近応答の input / cache read / cache creation / output の合計）。最初の応答前は `0` |
+| `prompt_cache_warm` | boolean | 現行モデルのプロンプトキャッシュがまだ温かい見込みか（＝切替でそれを捨てることになるか） |
+| `cache_ttl` | string | このセッションが要求しているプロンプトキャッシュ TTL（`"5m"` / `"1h"`） |
+| `estimated_cache_write_usd` | number | `to_model` に `cache_ttl` レートで `context_tokens` を書き込む推定コスト（USD、次の応答分は含まない）。サーバーが全コンテキストを再キャッシュするとは限らないため推定値 |
+| `pricing` | string | 上記の算出根拠。`"configured"`（組織の設定単価）／ `"catalog"`（定価）／ `"default"`（`to_model` の価格が不明で既定レートを仮定） |
+
+`PostModelSwitch` では `hook_event_name` が `"PostModelSwitch"` になり、`source` が `"auto"` のとき `requested_model` は `null`、`"resume"` のときは復元された保存済みモデル設定になる。
+
+**`PreModelSwitch` の決定制御**:
+
+- 終了コード 2、またはトップレベル `decision: "block"` で切替をキャンセル
+- 細かい制御は `hookSpecificOutput` の `permissionDecision`（`"allow"` / `"deny"` / `"ask"`）と `permissionDecisionReason`。`"defer"` / `updatedInput` / `additionalContext` は**受け付けない**
+  - `"allow"`: 切替を進め、キャッシュが温かいときに Claude Code が出す確認をスキップする
+  - `"deny"`: 切替をキャンセル。理由がユーザーに表示され、`set_model` 要求ではエラーとして返る
+  - `"ask"`: ユーザーに確認を求める。**`"ask"` プロンプトを出せるのは対話セッションの `/model` だけ**。それ以外（`-p` の非対話、`/config`、`set_model`）では `"ask"` は拒否として扱われる
+- 複数フックが異なる決定を返した場合の優先順位は `deny` > `ask` > `allow`
+- 決定に関わらず `systemMessage` はユーザーに表示されるため、コスト報告フックは `{"systemMessage": "..."}` を返して終了コード 0 にすればよい
+- **タイムアウトで応答しないフックは切替をブロックする**（`PreToolUse` ではタイムアウトしたコマンドフックはツール実行を継続させるので挙動が逆）。既定タイムアウトは 30 秒
+- `PreModelSwitch` は `command` / `http` / `mcp_tool` ハンドラのみ実行する（`prompt` / `agent` ハンドラは使えない）
+- 0 でも 2 でもない終了コードで JSON 決定も出さない場合はブロックせず、stderr を表示して切替を適用する
+
+**`PostModelSwitch` の決定制御**: ブロックできない。終了コード 0 のプレーンテキスト stdout、または JSON の `hookSpecificOutput.additionalContext` が、切替後の次のリクエストで Claude に届く。**次のプロンプト送信から 5 秒以内にフックが完了しない場合、そのリクエストには載らず次のリクエストへ回される**。次のリクエストまでにモデルが複数回変わった場合は、最後の切替先の出力のみが届く。
+
+設定例（Opus 4.6 への切替を拒否）:
+
+```json
+{
+  "hooks": {
+    "PreModelSwitch": [
+      {
+        "matcher": "claude-opus-4-6",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -e '.to_model | test(\"opus-4-6\")' > /dev/null && { echo 'Opus 4.6 is retired for this project.' >&2; exit 2; }; exit 0"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+設定例（Opus 系へ切り替わったらモデル固有のガイダンスを注入）:
+
+```json
+{
+  "hooks": {
+    "PostModelSwitch": [
+      {
+        "matcher": ".*opus.*",
+        "hooks": [
+          { "type": "command", "command": "echo 'On Opus, delegate implementation work to subagents.'" }
+        ]
+      }
+    ]
+  }
+}
+```
+
 ---
 
 ## 3. ハンドラタイプ
@@ -108,7 +199,20 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 - `2`: ブロッキングエラー（stderr がエラーメッセージ）
 - その他: 非ブロッキングエラー
 
+> **stdout を JSON と読むかプレーンテキストと読むかの判定（ドキュメント明文化）**: 前後の空白を無視して、
+> - **`{` で始まり `}` で終わる**: JSON としてパースする。ただし出力が複数行で各行が単独で JSON としてパースでき、かつどの行も JSON 出力オブジェクトのフィールドを設定していない場合は、全体をプレーンテキストとして扱う。いずれかの行がフィールドを設定している場合は全体を JSON として扱う
+> - **`{` で始まるが `}` で終わらない**: プレーンテキストとして扱う
+>
+> 標準の決定モデルを使うイベントで JSON パースに失敗した場合、**終了コード 2 以外のすべてで非ブロッキングエラー**を報告し、トランスクリプトに `<hook name> hook error` 通知（パースメッセージ付き）を表示する。
+>
+> **stdout がほとんどのイベントではデバッグログ行きでトランスクリプトに出ない**。例外は `UserPromptSubmit` / `UserPromptExpansion` / `SessionStart` / **`PostModelSwitch`（v2.1.251+）** で、これらはプレーンテキスト stdout を Claude が見られるコンテキストとして追加する。
+
 > セキュリティ（v2.1.207）: プラグインの hooks / monitors / MCP headersHelper で、シェル形式コマンド内の `${user_config.*}` 展開はシェルインジェクション対策として拒否されるようになった。hooks は exec 形式（`args` 配列）または `$CLAUDE_PLUGIN_OPTION_<KEY>` 環境変数を使用する。また v2.1.199 から `SessionStart` / `Setup` / `SubagentStart` フックが exit code 2 で終了した際の stderr がトランスクリプトに表示される。
+
+> **ハンドラの作業ディレクトリ（ドキュメント追記）**: ハンドラはカレントディレクトリで Claude Code の環境を引き継いで実行される。**カレントディレクトリが既に存在しない場合**（別シェルがセッション中に worktree や一時ディレクトリを削除した等）、Claude Code は「セッションを開始したディレクトリ → プロジェクトルート → ホームディレクトリ → システム一時ディレクトリ」の順に、存在する最初のものから command フックを実行し、警告を記録する。
+
+> **`$CLAUDE_MODEL` は存在しない**。フックからモデルを知るには `SessionStart` の `model` フィールド（常に含まれるとは限らない）か、`PreModelSwitch` / `PostModelSwitch` の `from_model` / `to_model` を使う。`$ANTHROPIC_MODEL` はシェルで設定した場合に読めるが、セッション中に `/model` で切り替えても値は変わらない。フックプロセスは親環境を継承するが、Claude Code が全サブプロセスから除去する `OTEL_*` エクスポータ変数は除く。
+
 
 ### 3.2 HTTP ハンドラ
 
@@ -290,7 +394,7 @@ v2.1.133 以降、すべてのイベントの入力 JSON に effort level も含
 
 | イベント | 追加入力フィールド |
 |:--|:--|
-| `SessionStart` | `source`, `model`, `agent_type`(opt) |
+| `SessionStart` | `source`, `model`, `agent_type`(opt)。**v2.1.251 以降、`source` が `resume` / `fork` かつトランスクリプトに Claude の応答が1件以上ある場合のみ** `seconds_since_last_response`（直近応答からの経過秒）, `context_tokens`（再開後の最初のリクエストが再送するトークン数）, `prompt_cache_likely_expired`（直近応答がプロンプトキャッシュ寿命より古い、または後続のコンパクションがキャッシュ済み会話を置換した場合 `true`）, `estimated_cache_write_usd`（`context_tokens` をセッションのモデルへ書き込む推定 USD、応答分は含まない）が加わる |
 | `UserPromptSubmit` | `prompt` |
 | `UserPromptExpansion` | `expansion_type` (`slash_command`/`mcp_prompt`), `command_name`, `command_args`, `command_source`, `prompt` |
 | `PreToolUse` | `tool_name`, `tool_input`, `tool_use_id` |
@@ -315,6 +419,7 @@ v2.1.133 以降、すべてのイベントの入力 JSON に effort level も含
 | `WorktreeRemove` | `worktree_path` |
 | `PreCompact` | `trigger`, `custom_instructions` |
 | `PostCompact` | `trigger`, `compact_summary` |
+| `PreModelSwitch` / `PostModelSwitch` | `from_model`, `to_model`, `requested_model`, `source`, `context_tokens`, `prompt_cache_warm`, `cache_ttl`, `estimated_cache_write_usd`, `pricing`（§2.6 参照、v2.1.251+） |
 | `Elicitation` | `mcp_server_name`, `message`, `mode`(opt), `url`(opt), `elicitation_id`, `requested_schema` |
 | `TeammateIdle` | `teammate_name`, `team_name` |
 | `TaskCompleted` | `task_id`, `task_subject`, `task_description`(opt), `teammate_name`, `team_name` |
@@ -516,7 +621,7 @@ echo "$WORKTREE_PATH"
 
 | フィールド | 説明 | デフォルト |
 |:--|:--|:--|
-| `timeout` | タイムアウト（秒）。**`async: true` の command フックには適用されない**（バックグラウンドに入った後は Claude Code が強制終了しない）。`asyncRewake` のフックには引き続き適用される | command / http / mcp_tool: 600, prompt: 30, agent: 60 |
+| `timeout` | タイムアウト（秒）。**`async: true` の command フックには適用されない**（バックグラウンドに入った後は Claude Code が強制終了しない）。`asyncRewake` のフックには引き続き適用される。`UserPromptSubmit` / **`PreModelSwitch`（v2.1.251+）** では command / http / mcp_tool の既定が 30 に、`MessageDisplay` では 10 に下がる。`SessionEnd` は全フックで 1.5 秒の共通予算 | command / http / mcp_tool: 600, prompt: 30, agent: 60 |
 | `async` | バックグラウンド実行（command のみ） | `false` |
 | `once` | **初回の成功実行後**にフックを取り除く。失敗・exit code 2 によるブロック・タイムアウトの場合はフックが残り、次の一致イベントで再実行される。スキル frontmatter で宣言したフックのみ有効（settings ファイルとエージェント frontmatter では無視） | `false` |
 | `statusMessage` | スピナーメッセージ | - |

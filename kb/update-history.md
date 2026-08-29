@@ -1,5 +1,59 @@
 # harness-harness 更新履歴
 
+## 2026-08-30 — 公式ドキュメント巡回
+
+### 検出・更新
+
+Claude Code に **v2.1.251**（2026-08-28）がリリースされ、Codex CLI は安定版が **0.151.0**（2026-08-29）へ上がった。追跡中 49 URL のハッシュ比較で 39 件の変更を検出したが、うち大半は前回巡回（2026-08-29）でページキャッシュを更新しなかったことによる既反映分と、HTML ページの動的差分。実質的な新規変更は Claude Code のモデル切替フック導入と Codex 0.151.0 の 2 系統。`llms.txt` は見出し階層の再編のみでページ一覧に増減なし。スキルエコシステム巡回（Phase 3.5）は前回（2026-08-25）から 7 日以内のためスキップ。
+
+**1) `PreModelSwitch` / `PostModelSwitch` フック新設（v2.1.251）— 今回最大の変更**
+
+モデル切替をブロック・確認要求・注釈できる 2 イベントが追加された。設計上の特徴が 3 点ある。
+
+- **matcher の評価対象が他イベントと異なる**。他は stdin JSON のフィールド（ツールイベントなら `tool_name`）だが、本イベントは `to_model` から導出した**正規名**に対して評価する。`opus` 等のエイリアス・日付付きID・Bedrock 等のプロバイダ固有IDはすべて同一の正規名へ解決されるため `claude-opus-5` 一つで全表記をカバーできる。正規名を判定できない場合（ゲートウェイ固有ID等）は matcher に関わらず全フックが走るため、ブロックするフックは `to_model` を必ず自前で確認する必要がある
+- **タイムアウトの挙動が `PreToolUse` と逆**。`PreToolUse` はタイムアウトしたコマンドフックがツール実行を通すのに対し、`PreModelSwitch` はタイムアウトすると切替を**ブロック**する。既定タイムアウトは 30 秒で、`command` / `http` / `mcp_tool` ハンドラのみ利用できる（`prompt` / `agent` は不可）
+- **切替コストが入力に載る**。`context_tokens` / `prompt_cache_warm` / `cache_ttl` / `estimated_cache_write_usd` / `pricing` により、切替前に再キャッシュコストを提示できる。`"ask"` を返せる（＝確認プロンプトを出せる）のは**対話セッションの `/model` のみ**で、`-p` / `/config` / `set_model` では拒否として扱われる
+
+`PostModelSwitch` はブロックできない代わりに、切替後の次リクエストへ `additionalContext` を注入でき、CLAUDE.md を編集せずにモデル固有のガイダンスを与える用途に向く。ただし**次のプロンプト送信から 5 秒以内に完了しないと当該リクエストには載らない**。自動フォールバックやセッション再開時のモデル復元は `PostModelSwitch` にのみ届く（`PreModelSwitch` は発火しない）。→ `specs/claude/hooks.md` §2.6 新設、§6.2 入力フィールド表
+
+**2) `SessionStart` に再開コストのフィールド追加（v2.1.251）**
+
+`source` が `resume` / `fork` かつトランスクリプトに Claude の応答が 1 件以上ある場合に限り、`seconds_since_last_response` / `context_tokens` / `prompt_cache_likely_expired` / `estimated_cache_write_usd` が入力に加わる。放置していた会話を再開する際のコストを最初のリクエスト前に `systemMessage` で提示するフックが書けるようになった。→ `specs/claude/hooks.md` §6.2
+
+**3) `CLAUDE_CODE_SUBAGENT_MODEL` の意味変更（v2.1.251）— ハーネス影響あり**
+
+「すべてを上書き」から「サブエージェントの**既定**モデルを設定」へ変わり、**エージェント定義の `model:` と spawn 時の明示指定が本変数より優先される**ようになった。本変数でチームメイト／サブエージェントのモデルを一括固定していたハーネスは、エージェント定義の `model:` が意図せず勝つようになる。公式 agent-teams ドキュメントの優先順位表は 2026-08-30 時点で旧順序のままで未追随（changelog のみに記載）。→ `specs/claude/agent-teams.md`
+
+**4) 設定・承認まわりの引き締め（v2.1.251）**
+
+- project `.claude/settings.json` の `env` から `CLAUDE_CONFIG_DIR` / `CLAUDE_CODE_TMPDIR` / `TMPDIR` / `TMP` / `TEMP` を設定できなくなった
+- サンドボックス TLS 終端・自前プロキシ経由・認証情報注入・サンドボックス隔離を弱める server-managed 設定、および managed / project 由来で認証系ヘッダを設定する `ANTHROPIC_CUSTOM_HEADERS` は、適用前にユーザー承認を要求する
+- managed 設定の承認ダイアログは前回承認時からの差分だけを列挙するようになった
+- セキュリティ修正が多い版でもある（権限チェック後のシンボリックリンク差し替え、プラグインコマンドのパストラバーサル、Grep / Glob がシンボリックリンク経由で `Read(...)` deny を適用しない、Bash 権限チェックが整数変数への算術式代入を自動承認、Workflow の `scriptPath` 事前読み込み）。→ `specs/claude/configuration.md`
+
+**5) `/effort` のモデル別保存・`/cost` のキャッシュ行・`/usage` の Spend limit（v2.1.251）**
+
+`/effort` が**モデルごとに**既定 effort を保存するようになり、モデル切替後も各モデルの設定が保持される。`/cost` にセッション単位のプロンプトキャッシュ行（ヒット率・ミス・再キャッシュトークン数・warm/cold）が加わり、同じ情報が `prompt_cache` オブジェクトとしてステータスラインスクリプトへ提供される。`/usage` には Spend limit バーと `rate_limits.spend_limit` フィールドが追加。`/radio` は Bedrock / Vertex / Foundry / AWS 上の Claude Platform とテレメトリ無効時でも使えるようになった。→ `specs/claude/skills-and-commands.md`
+
+**6) Codex CLI 0.151.0（2026-08-29）**
+
+オプション MCP サーバーのツール検出猶予期間が設定可能になった（設定キー名は公式 config reference に未収載）。**拡張が MCP ツールの結果をモデルに届く前に検査・置換できる**ようになり、Claude Code の `PostToolUse` に相当する介入点が MCP 結果に対して開いた。プラグインカタログがリポジトリ単位設定を合成し、不正な project marketplace があっても有効なプラグインを隠さなくなった。修正側では、`/cd` がサンドボックス制限を弱めない・モデル切替／フォールバック時にツール可否と reasoning effort が保たれる・ネストしたサブエージェントのトークンがルートゴール予算に算入される、が実務上効く。→ `specs/codex/changelog.md`
+
+### 更新ファイル
+
+- `specs/claude/changelog.md` — v2.1.251 追加
+- `specs/claude/hooks.md` — §2.6「モデル切替イベント」新設、§6.2 入力フィールド表（`SessionStart` の resume 系 4 フィールド、モデル切替イベント）、§3.1 ハンドラの作業ディレクトリのフォールバックと `$CLAUDE_MODEL` 不在の明記、stdout の JSON / プレーンテキスト判定規則、`timeout` 既定の引き下げ対象に `PreModelSwitch` を追加
+- `specs/claude/configuration.md` — `env` キーの制限、managed 設定の承認要件
+- `specs/claude/agent-teams.md` — `CLAUDE_CODE_SUBAGENT_MODEL` の優先順位変更
+- `specs/claude/skills-and-commands.md` — `/effort` / `/cost` / `/usage` / `/radio`
+- `specs/codex/changelog.md` — CLI 0.151.0 追加
+
+### 変更なし
+
+`specs/claude/mcp.md`（再接続・リトライ、不正スキーマ除外は前回巡回で反映済み）、`specs/claude/tools.md`、`specs/claude/best-practices.md`、`specs/codex/configuration.md` / `commands.md` / `mcp.md` / `best-practices.md`、`kb/skills/`（Phase 3.5 スキップ）、`mapping/`
+
+---
+
 ## 2026-08-29 — 公式ドキュメント巡回
 
 ### 検出・更新

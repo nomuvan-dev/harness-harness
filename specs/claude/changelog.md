@@ -3,7 +3,33 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-08-29
+最終更新: 2026-08-30
+
+---
+
+## v2.1.251 (2026-08-28)
+
+- **`PreModelSwitch` / `PostModelSwitch` フック（新イベント）**: モデル切替をブロック・確認要求・注釈できる。matcher は切替先モデルの正規名（`[1m]` 接尾辞は無視）に対して評価される。詳細は `specs/claude/hooks.md` §2.6
+- **`SessionStart` の resume 系入力フィールド追加**: `seconds_since_last_response` / `context_tokens` / `prompt_cache_likely_expired` / `estimated_cache_write_usd`。停止していた会話の再開コストを最初のリクエスト前に提示できる（`source` が `resume` / `fork` で、かつトランスクリプトに Claude の応答が1件以上ある場合のみ）
+- **フォアグラウンドサブエージェントのツール呼び出し／結果を Remote Control クライアントへライブ配信**（既定のバックグラウンドサブエージェントは従来通りステータスのみ）
+- **`/usage` に Spend limit バー**、ステータスライン向けに `rate_limits.spend_limit` フィールドを追加（Claude apps gateway 配下で spend limit がある場合）
+- **`/cost` にセッション単位のプロンプトキャッシュ行**（ヒット率・ミス・再キャッシュしたトークン数・warm/cold）、ステータスラインスクリプト向けに `prompt_cache` オブジェクトを追加
+- **`claude --help` に `attach` / `logs` / `stop` / `respawn` / `rm` を収載**。実行中バックグラウンドセッションへの `--resume` メッセージが `claude attach <id>` を明示するようになった
+- **`CLAUDE_CODE_SUBAGENT_MODEL` の意味変更**: 「すべてを上書き」から「サブエージェントの既定モデルを設定」へ。**エージェント定義の `model:` と spawn 時の明示指定が優先される**（公式 agent-teams ドキュメントの優先順位表は 2026-08-30 時点で未追随）
+- **`/effort` がモデルごとに既定の effort レベルを保存**するようになり、モデルを切り替えても各モデルの設定が保持される
+- **project `.claude/settings.json` の `env` から `CLAUDE_CONFIG_DIR` / `CLAUDE_CODE_TMPDIR` / `TMPDIR` / `TMP` / `TEMP` を設定できなくなった**。シェル・user 設定・managed 設定で設定する
+- **承認が必要になった managed / project 設定**: サンドボックス TLS 終端、サンドボックストラフィックの自前プロキシ経由、認証情報の注入、サンドボックス隔離を弱める server-managed 設定は適用前に承認を要求。`ANTHROPIC_CUSTOM_HEADERS` も managed / project 設定由来で認証・組織/テナント・ルーティング・API 挙動系ヘッダ（`Authorization` / `Host` 等）を設定する場合は承認が必要
+- **既定コミットトレーラーの変更**: アクティブモデルが既知の Claude モデルでない場合（カスタム `ANTHROPIC_BASE_URL` 配下のサードパーティモデル等）は `Co-Authored-By: Claude Code` になる
+- **シート課金の Enterprise サブスクリプションの既定モデルが Opus 5** に変更（他の上位プランと同じ）
+- **`/radio` が Bedrock / Vertex AI / Foundry / Claude Platform on AWS、およびテレメトリ無効時でも利用可能に**
+- **Claude in Chrome のブラウザ操作が常に Claude Code の権限チェックを経由**するようになった（テレメトリ無効セッションを含む。従来は Chrome 拡張自身のプロンプトを使用）
+- **フッター PR バッジの取得方法変更**: Bedrock / Vertex / Foundry およびテレメトリ無効時は `gh pr view` ではなく GitHub API を直接呼ぶ（`gh auth token` / `GH_TOKEN` / `GITHUB_TOKEN` を使用）
+- **サンドボックス内 Bash の出力ファイルの生成・読み戻し方法を変更**し、サンドボックス化されたコマンドがそれをリダイレクト・置換できないようにした
+- **プラグイン / LSP のインストール提案と auto mode 既定化のオファーが、入力中のテキストを送信・クリアするまで表示されなくなった**（プロンプト送信の Enter が誤って回答してしまうのを防ぐ）
+- **シンタックスハイライトから 6 言語を削除**（1c, gml, isbl, mathematica, maxima, sqf）。バイナリが 2.5MB 減。ネイティブバイナリ全体では約 5MB 減
+- **分析（analytics）の挙動変更**: managed 設定がゲートウェイログインを強制する（または設定が読めない）だけを理由にサインイン前にオフになることはなくなった。ゲートウェイへサインイン後、または `DISABLE_TELEMETRY` でオフになる
+- セキュリティ修正: ファイルツール（Read / Write / Edit）の権限チェック後にワーキングディレクトリ内でシンボリックリンクが差し替えられると承認範囲外を読み書きできた問題、マーケットプレイスエントリで宣言されたプラグインコマンドがプラグインディレクトリ外を指せた問題（パストラバーサルとして拒否）、project 設定が詳細ベータトレーシング／生APIボディログを有効化できた問題、Workflow ツールが権限チェック前にセッションの読取許可外の `scriptPath` を読んでいた問題、Grep / Glob がシンボリックリンク経由の探索パスに `Read(...)` deny ルールを適用していなかった問題、Bash 権限チェックが整数シェル変数への算術式代入（`OPTIND=1/0` 等）を自動承認していた問題
+- 修正: thinking のみを出力したターンの後に「text content blocks must be non-empty」で会話が停止する、Opus 5 で effort が xhigh/max かつ thinking 無効時に「effort … is not supported when thinking is disabled」で失敗する（この場合 effort を `high` として送るよう修正）、managed 設定の `disableAutoMode` がセッション途中に届いても実行中の auto mode セッションが default モードへ戻らない、エージェントチームでチームメイトの最終回答がリードへ届かない、バックグラウンドセッションとそのサブエージェントが `git worktree add` で作った worktree 内のファイルを編集できない、`--input-format stream-json` でメッセージID無しのクライアント注入ツール呼び出しがマージされ結果が失われる、ディレクトリ移動によりセッションのトランスクリプトが同一IDの既存ファイルを上書きする、SDK / クラウドセッションが SDK MCP サーバーのハンドシェイク応答喪失で無限に停止する（70秒でタイムアウト）、ほか
 
 ---
 
