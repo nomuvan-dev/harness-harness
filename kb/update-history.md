@@ -1,5 +1,63 @@
 # harness-harness 更新履歴
 
+## 2026-08-31 — 公式ドキュメント巡回
+
+### 検出・更新
+
+Claude Code は **v2.1.251 のまま**（changelog ページのハッシュ変化なし）、Codex CLI も安定版 **0.151.0** で据え置き（`0.152.0-alpha.4` まで進行中だがリリースノート本文は空）。追跡中 49 URL のハッシュ比較で 16 件の変更を検出したが、GitHub / skills.sh 等の HTML ページは動的差分（Stars・installs 表示）で実質変更なし。**バージョンを伴わないドキュメント側の改訂が今回の中身**で、実質 4 系統。`llms.txt` と Claude / Codex の changelog ページはいずれもハッシュ変化なし。スキルエコシステム巡回（Phase 3.5）は前回（2026-08-25）から 7 日以内のためスキップ。
+
+**1) クラウド環境に API クレデンシャルが追加された（cloud-environments.md）— 今回最大の変更**
+
+Anthropic ホスト型のクラウド環境に API キー / トークンを保存し、**Claude に値を渡さないまま**外部 API を呼べるようになった。Anthropic の agent proxy が、セッションの VM を出た後のリクエストに対して、登録ホスト向けにだけヘッダを付与する。鍵はセッションの環境変数にもファイルにも現れない。
+
+- 従来の「クラウド環境には専用のシークレットストアが無いので秘密情報を置くな」という前提が変わった。ドキュメント側でも「What carries over from your setup」表の *Static API tokens and credentials → No* 行が *API keys and tokens for services Claude calls → Yes, as API credentials* に置き換わっている
+- 前提条件が 4 つある: claude.ai 組織の admin ロール（Admin / Owner）／**既存の** Anthropic ホスト型環境（セルフホスト環境は非対応、新規作成ダイアログにも出ない）／API がインターネット到達可能／CMEK 未使用
+- 登録は環境編集ダイアログの **API credentials** から 1 件ずつ。**編集不可**（変更は削除→再追加）、保存後は値を再表示できない。既定は `Bearer` 型で、`X-Api-Key` のようなヘッダ名・prefix なしにも変更可
+- ネットワーク許可より優先される: クレデンシャルに列挙したホストは、環境の network access level が本来許可しない場合でも到達できる
+- **クレデンシャルが付かないリクエスト**が明記された: GitHub（GitHub プロキシが認証）／`api.anthropic.com` と公開パッケージレジストリ 7 ホスト／**セットアップスクリプトからのリクエスト**（Claude Code が agent proxy に接続するのは setup script 実行後のため）
+- 環境をアーカイブしても実行中セッションにはクレデンシャルが付いたまま残る
+
+ハーネス設計上は「`curl` 等で当該ホストを叩く形」に限って有効で、鍵の値をスクリプト内で参照する用途には使えない。→ `specs/claude/configuration.md` §2.3 に新規サブセクション
+
+**2) `permissions.additionalDirectories` がサンドボックスの書き込み可能パスに含まれることが明文化（settings-reference.md / sandbox.md）**
+
+サンドボックス既定の書き込み可能範囲が「作業ディレクトリ＋`--add-dir` / `/add-dir`＋セッション一時ディレクトリ」から、**`permissions.additionalDirectories` を含む**形に改訂された。挙動変更なのか記述漏れの修正なのかは changelog に記載がないため判別できないが、`settings.json` にディレクトリを足すだけでサンドボックスの書き込み境界も広がる点はハーネス設計上見落としやすい。`sandbox.filesystem.allowWrite` を明示していないハーネスでは、`additionalDirectories` が実質的な書き込み許可になる。→ `specs/claude/configuration.md`
+
+**3) `policyHelper` の失敗条件と失敗時挙動が明文化（settings-reference.md / managed-settings.md）**
+
+「Helper failures」節が新設され、これまで曖昧だった失敗時の扱いが確定した。
+
+- 失敗条件は 5 種: `path` の規則違反／`path` に通常ファイルが無い（**存在確認も `timeoutMs` の予算内**で行うため、応答しないネットワークマウントでも失敗する）／非ゼロ終了・タイムアウト・実行権限なし／stdout か stderr へ **1 MiB** 超（従来「1 MB」と書かれていた上限が MiB に訂正）／stdout が単一 JSON でない・修復不能なスキーマ違反
+- **起動時の実行に失敗すると Claude Code は起動を拒否する**。対話セッション・`claude -p`・Agent SDK・バックグラウンドセッション・大半のサブコマンドが対象。これは意図的な設計と明記されたので、障害耐性が要るヘルパーは自前キャッシュから応答して `0` で終了させる必要がある
+- バックグラウンド更新の失敗時は直前に成功したポリシーを維持。`policyHelper` の値自体が不正（裸のパス文字列、`timeoutMs` が最小値未満）ならドロップ扱いで、ヘルパーを実行せず残りの managed 設定で起動する
+- `path` の型が「Windows ではドライブレターまたは UNC かつ `.exe` 終端」と厳密化された
+
+→ `specs/claude/configuration.md`
+
+**4) `agent_needs_input` 通知の発火条件拡大（hooks.md）**
+
+`Notification` の `agent_needs_input` matcher が、agent view でのバックグラウンドセッション入力待ちに加え、**agent team のチームメイト用ターミナル設定の質問**でも（一定時間ユーザーが入力しないと）発火するようになった。**v2.1.248 以降**。agent teams を使うハーネスで、この通知をバックグラウンドエージェント専用として扱っていると誤検知する。→ `specs/claude/hooks.md` §2.3
+
+**5) 環境変数 2 件を新規収載（env-vars.md）**
+
+- `CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS`: 記述が「最終ターン後の待機時間の上限」から「**連続アイドル待機時間**の上限」へ改訂された（デフォルト `600000`）。合計待機時間の上限ではないため、進捗が続く限り 10 分を超えて待つ。`-p` でバックグラウンドサブエージェント／ワークフローの結果を出力に含めるハーネスに効く
+- `CLAUDE_CODE_DISABLE_BEDROCK_CONTENT_TYPE_GUARD`: 併せて収載
+
+→ `specs/claude/configuration.md` §6
+
+### 更新なしと判断したもの
+
+- `commands.md` / `managed-settings.md`: 他ページへの相互リンク追加のみ
+- `github.com/anthropics/skills`・`openai/skills`・`openai/plugins`・`skills.sh`・`agentskills.io`・`codex-plugin-cc`: Stars / installs 表示の動的差分のみ。Phase 3.5 はスキップ期間内
+- Codex `0.152.0-alpha.1` / `alpha.4`: リリースノート本文が「Release 0.152.0-alpha.N」のみで内容不明。安定版昇格時に再確認する
+
+### 更新ファイル
+
+- `specs/claude/configuration.md`（クラウド環境 API クレデンシャル新設、`permissions.additionalDirectories`、`policyHelper`、環境変数 2 件）
+- `specs/claude/hooks.md`（`agent_needs_input`）
+- `specs/claude/changelog.md`・`specs/codex/changelog.md`（最終更新日）
+- `kb/update-history.md`（本エントリ）
+
 ## 2026-08-30 — 公式ドキュメント巡回
 
 ### 検出・更新
