@@ -131,7 +131,7 @@ managed 階層は単一ではなく、上から **server-managed settings → MD
 | `permissions.deny` | 拒否するツール使用ルール配列。**v2.1.166** でツール名位置の glob パターン（`"*"` で全ツール deny 等）をサポート。未知ツール名は起動時に警告 |
 | `permissions.ask` | 確認を求めるツール使用ルール配列 |
 | `permissions.defaultMode` | デフォルト権限モード。v2.1.200 で `default` モードの表示名が「Manual」に変更（`"manual"` も `default` と同義で受理） |
-| `permissions.additionalDirectories` | 追加ワーキングディレクトリ |
+| `permissions.additionalDirectories` | 追加ワーキングディレクトリ。**サンドボックス既定の書き込み可能パスにも含まれる**（2026-08-31 時点の公式ドキュメント改訂で明文化）: 既定では作業ディレクトリ・セッション一時ディレクトリ（`$TMPDIR`）・`--add-dir` / `/add-dir` で追加したディレクトリに加え、本キーのディレクトリにもサンドボックスコマンドが書き込める。ファイルアクセス権のみを与え skills / commands / subagents は読み込まない点は従来通り（`skills-and-commands.md` 参照） |
 | `permissions.disableBypassPermissionsMode` | `bypassPermissions` モード無効化 |
 | `hooks` | ライフサイクルフック設定 |
 | `disableAllHooks` | 全フック無効化 |
@@ -303,7 +303,7 @@ managed 階層は単一ではなく、上から **server-managed settings → MD
 > **承認が必要になった managed 設定（v2.1.251）**: サンドボックスの TLS を終端する、サンドボックストラフィックを自前のプロキシへ流す、認証情報を注入する、サンドボックス隔離を弱める、といった server-managed 設定は適用前にユーザー承認を要求するようになった。`ANTHROPIC_CUSTOM_HEADERS`（managed / project 設定由来）も同様。あわせて managed 設定の承認ダイアログは、**前回承認時からの差分だけ**を列挙するようになった。同一の Claude apps gateway へ再サインインしても設定が変わっていなければ承認プロンプトは再表示されない。
 
 | `desktopSessionCleanupPeriodDays` | Claude Desktop / Cowork が書き込んだセッションのトランスクリプト保持除外に上限日数を設ける（v2.1.248）。従来 30 日でクリーンアップされ Desktop / Cowork のセッションが消えていた問題の修正に伴い追加。アプリ内に残っている限り除外されるが、本キーで上限を設定できる（組織ポリシーが保持期間を管理している場合を除く） |
-| `policyHelper` | （Managed のみ）起動時に managed settings を計算する実行ファイルを走らせ、その出力をそのセッションの managed settings として扱う。デバイスポスチャ・ID・リモートサービスから動的にポリシーを導出する用途。**macOS plist / Windows HKLM レジストリ / managed settings ファイルのいずれか**（最優先の managed ソース）に置かれた場合のみ実行され、サーバー管理設定・HKCU・親設定由来のものは無視される。`path` / `refreshIntervalMs` / `timeoutMs` を持つ |
+| `policyHelper` | （Managed のみ）起動時に managed settings を計算する実行ファイルを走らせ、その出力をそのセッションの managed settings として扱う。デバイスポスチャ・ID・リモートサービスから動的にポリシーを導出する用途。**macOS plist / Windows HKLM レジストリ / managed settings ファイルのいずれか**（最優先の managed ソース）に置かれた場合のみ実行され、サーバー管理設定・HKCU・親設定由来のものは無視される。`path` / `refreshIntervalMs` / `timeoutMs` を持つ。`path` は正規化済み絶対パス（`.` / `..` セグメント不可）で、Windows ではドライブレター付きパスか UNC パスかつ `.exe` 終端であること。**ヘルパー実行が失敗する条件（2026-08-31 時点で明文化）**: `path` が規則違反 / `path` に通常ファイルが無い（存在確認も `timeoutMs` の予算内で行うため応答しないネットワークマウントでも失敗する） / 非ゼロ終了・`timeoutMs` 超過・実行権限なしで起動しない / stdout または stderr へ 1 MiB 超を出力 / stdout が単一 JSON オブジェクトでない・`managedSettings` に修復不能なスキーマ違反がある。**起動時の実行に失敗すると Claude Code は理由を表示して起動を拒否する**（対話セッション・`claude -p`・Agent SDK・バックグラウンドセッション・大半のサブコマンドが対象。非ゼロ終了／タイムアウト時は stderr も表示）。この拒否は意図的な設計なので、障害耐性が必要なヘルパーは自前キャッシュから応答して `0` で終了させる。バックグラウンド更新の失敗時は直前に成功したポリシーを維持する（`--debug` で毎回の stderr がデバッグログに残る）。`policyHelper` の値自体が不正（裸のパス文字列、`timeoutMs` が最小値未満など）な場合はドロップされたエントリとして報告し、ヘルパーを実行せず残りの managed 設定でセッションを開始する。起動時の `forceRemoteSettingsRefresh` チェックはヘルパーより先に全 admin ソースを読む。`managedSettings` キーを含まない envelope で `0` 終了した場合は managed 設定に何も寄与せず、他ソースが通常どおり適用される。無効化はキーを削除して行う（stdout 上限は 1 MB ではなく 1 MiB） |
 | `strictPluginOnlyCustomization` | （Managed のみ）skills / agents / hooks / MCP サーバーを user・project ソースから読み込ませず、プラグインと managed settings 由来のみに限定する。`true` で 4 種すべて、または `["skills","agents","hooks","mcp"]` の配列で個別指定。`strictKnownMarketplaces` と組み合わせるとカスタマイズのサプライチェーン全体を統制できる |
 | `disableCommandPluginSources` | （Managed のみ）マーケットプレースが宣言したコマンドをユーザーのマシンで実行してインストールする `command` プラグインソースをブロック。`true` でコマンドを実行せず、command ソースのプラグインを install/update せず、既にインストール済みのものもロードしなくなる。未設定時は `allowManagedHooksOnly` に追随する。マーケットプレースの `headersHelper` コマンド（アーカイブ取得時の認証ヘッダ生成）も、本キーが明示的に `false` でない限りブロックされる（managed 設定自身が宣言したマーケットプレースは例外）。v2.1.229 以降 |
 | `modelPricing` | （Managed のみ、v2.1.242 以降）組織の契約単価・割引倍率をコスト表示に反映させ、定価の代わりに使う。適用先は `/usage`・ステータスライン・Agent SDK の `total_cost_usd`・`--max-budget-usd`・OpenTelemetry のコストメトリクス／イベント。単価は管理者が自分で書く（契約や Console からは読まない）。任意の `multiplier`（0 超 1 以下、全コストに乗算）と任意の `overrides`（モデルID → `input` / `output` / `cacheRead` / `cacheWrite` の百万トークンあたり USD、4 つとも必須、各 0〜10000）を持つ。fast モード加算や US-only 推論単価は加算されない。行のキーが組み込みモデルIDなら、そのモデルの日付付きスナップショットIDやプロバイダ固有IDすべてに適用され、それ以外のキー（ゲートウェイのエイリアス等）はその ID 限定。Bedrock のアプリケーション推論プロファイルは解決後のモデルの行が適用される。パースできない行・`multiplier` は落として残りを使う。user / project / local / `--settings` / Windows HKCU では無視。server-managed settings 経由の場合、そのセッションの設定取得が完了するまでは定価表示 |
@@ -335,6 +335,19 @@ Team / Enterprise 向けに、クラウドセッションを自社ホスト上�
 - `--defer-shutdown-max-min <minutes>`（v2.1.238）: SIGTERM 受信後もアタッチ中のセッションを指定分数まで処理し続け、残ったものを park してから終了する（ローリング更新時のセッション断を緩和）
 - `--proxy-authorization-command` / `--proxy-authorization-file`（v2.1.238）: 接続ごとに新規発行の `Proxy-Authorization` ヘッダを要求する egress プロキシに対応
 - 追加サブコマンド `self-hosted-runner orchestrator`（オンデマンド runner の自動起動）、環境変数は `SELF_HOSTED_RUNNER_*` / `CLAUDE_RUNNER_*` 系
+
+#### クラウド環境の API クレデンシャル（2026-08-31 時点で公式ドキュメントに追加）
+
+Anthropic ホスト型のクラウド環境（Claude Code on the web）に **API クレデンシャル**を保存し、Claude が鍵の値を見ないまま外部 API を呼べるようにする仕組みが追加された。Anthropic の agent proxy が、セッションの VM を出た後のリクエストに対して、環境に登録されたホスト向けだけヘッダを付与する。鍵はセッションの環境変数にもファイルにも現れない。
+
+- **前提条件**: claude.ai 組織の admin ロール（Admin / Owner。Pro / Max は自分の組織で保有）／**既存の** Anthropic ホスト型クラウド環境（セルフホスト環境は非対応、新規作成ダイアログにも項目は出ない）／API がインターネットから到達可能／組織が顧客管理暗号鍵（CMEK）を使っていないこと
+- **登録方法**: [claude.ai/code](https://claude.ai/code) の環境編集ダイアログ「Update cloud environment」の **Environment variables** 直下にある **API credentials** から1件ずつ追加する。編集は不可（変更するには削除して再追加）。既定の Credential type は `Bearer`（`Authorization: Bearer <値>` ヘッダ。`X-Api-Key` のようなヘッダ名・prefix なしにも変更可）。**Allowed websites** に対象ホストを列挙し、先頭 `*.` で全サブドメインにマッチ。保存後は値を再表示できない
+- **ネットワーク許可との関係**: クレデンシャルに列挙したホストは、環境の [network access level] が本来許可しない場合でもセッションから到達できる（agent proxy がスキップするホストを除く）。GitHub（専用プロキシ）・MCP コネクタ（Anthropic サーバー経由）も従来どおりセッションの allowlist を通らない
+- **クレデンシャルが付かないリクエスト**: GitHub（GitHub プロキシが認証）／`api.anthropic.com` と公開パッケージレジストリ（`registry.npmjs.org`, `jsr.io`, `npm.jsr.io`, `pypi.org`, `files.pythonhosted.org`, `index.crates.io`, `proxy.golang.org`）／**セットアップスクリプトからのリクエスト**（Claude Code は setup script の実行後に agent proxy へ接続するため）
+- **共有環境**: 組織共有環境も環境セレクタから開けるようになり、Admin / Owner はそこで編集・API クレデンシャル追加ができる。環境変数とセットアップスクリプトは利用者全員が読めるため、秘密情報は環境変数ではなく API クレデンシャルに置く
+- **アーカイブ時**: 環境をアーカイブしても実行中セッションにはクレデンシャルが付いたままになるため、不要なものは事前に削除する
+
+> ハーネス設計上の注意: 「クラウド環境には専用のシークレットストアが無い」という従来の前提が変わった。ただし**鍵をコマンドラインやスクリプトで参照する用途には使えない**（Claude に値は渡らず、proxy が付与するだけ）。`curl` 等で当該ホストを叩く形のハーネスに限って有効。
 
 ### 2.4 `~/.claude.json` のグローバル設定
 
@@ -575,6 +588,8 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 | `CLAUDE_CODE_WEBFETCH_CACHE_TTL_MS` | WebFetch のセッション内 URL キャッシュ TTL を設定（デフォルトは従来通り 15 分）（v2.1.233） |
 | `CLAUDE_CODE_DISABLE_BEDROCK_CONTENT_TYPE_DEFAULT` | `1` で、`Content-Type` ヘッダが欠落 / 空の Amazon Bedrock ストリーミング応答をバイナリ `application/vnd.amazon.eventstream` 形式として扱う既定挙動を止める。Bedrock は常に当該ヘッダを送るため、欠落＝プロキシによる除去とみなして既定ではバイナリ解釈するが、プロキシがヘッダを除去した上で本文を SSE として再送出する場合のみ本変数を設定する（v2.1.246 系） |
 | `CLAUDE_CODE_SEND_FEEDBACK` | `0` でそのセッションの Claude 起草フィードバック（`SendFeedback` ツール）を無効化。`1` は「アカウントが既に利用可能な場合に有効化」であって提供権限を付与するものではない。`DISABLE_FEEDBACK_COMMAND` や `feedbackDrafts: "off"` 等、他の無効化スイッチは引き続き効く（v2.1.247） |
+| `CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS` | 非対話モード（`-p`）で最終ターン後、出力に含まれるバックグラウンドサブエージェント / ワークフローの完了を待つ際の**連続アイドル待機時間の上限**（ms、デフォルト `600000`＝10分）。合計待機時間の上限ではなく「何も進捗が無いまま待ち続けられる時間」の上限である点に注意（2026-08-31 の公式ドキュメント改訂で明確化） |
+| `CLAUDE_CODE_DISABLE_BEDROCK_CONTENT_TYPE_GUARD` | `1` で、Amazon Bedrock ストリーミング応答が `application/vnd.amazon.eventstream` content-type を持つかの検査をスキップする。未設定時、異なる content-type の応答はエラーになる |
 | `CLAUDE_CODE_ENABLE_TODO_TOOLS` | `1` で Todo / タスク追跡ツール（`TaskCreate` / `TaskGet` / `TaskUpdate` / `TaskList` / `TodoWrite`）を復活させる。**v2.1.233 で Opus 4.8 / Sonnet 5 / Fable 5 / Mythos 5 以降のモデルでは既定で提供されなくなった**ため、これらに依存するハーネスは明示設定が必要 |
 
 > 補足: `OTEL_LOG_TOOL_DETAILS=1` は v2.1.157 で `tool_decision` イベントに `tool_parameters`（bash コマンド、MCP/skill 名等）を追加する効果も併せ持つようになった。
