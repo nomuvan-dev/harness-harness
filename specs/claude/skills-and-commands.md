@@ -216,8 +216,8 @@ Claude Code に同梱されるスキル:
 | `/doctor` (`/checkup`) | セットアップの総合チェックアップ。問題の診断と修正まで実行（v2.1.205 で強化・`/checkup` エイリアス追加）。CLAUDE.md の冗長部分の削減提案も（v2.1.206） |
 | `/permissions` (`/allowed-tools`) | 権限設定。allow / ask / deny ルールをスコープ別に閲覧・追加・削除し、作業ディレクトリ管理と Auto mode の拒否履歴レビューを行う。**v2.1.246 で Auto mode タブが追加**され、Auto mode 分類器ルールの閲覧・編集もダイアログから可能に。応答中に実行するとダイアログが即座に開き、変更は同一ターンの次のツール呼び出しから適用される（v2.1.234 以降） |
 | `/fast [on\|off]` | Fastモードトグル |
-| `/model [model]` | モデル変更（v2.1.144 から現在セッションにのみ適用。新規セッションのデフォルト変更はピッカーで `d` キー） |
-| `/effort [level\|auto\|status]` | エフォートレベル設定。引数なしで対話スライダ、レベル名で直接設定、`auto` でモデル既定へリセット、`status` で現在値を表示。`max` と `ultracode` はセッション限定（設定ファイルには保存されない）。**v2.1.251 でモデルごとに既定 effort レベルを保存**するようになり、モデルを切り替えても各モデルの設定が保持される。Claude の作業中に実行しても即時反映（キュー待ちしない）。v2.1.154 でスライダのラベルが「Speed」/「Intelligence」→「Faster」/「Smarter」に変更。v2.1.161 でダイアログが「Reduce motion」アクセシビリティ設定を尊重 |
+| `/model [model]` | モデル変更（v2.1.144 から現在セッションにのみ適用。新規セッションのデフォルト変更はピッカーで `d` キー、保存せず切り替えるだけなら `s` キー）。ピッカーの effort スライダを矢印キーで動かして effort を設定でき、`ultracode` まで動かすと当該セッションで ultracode が有効になる（そのモデルを既定として保存した場合でもセッション限定）。低〜`xhigh` を選ぶと `modelSettings` にモデル別で保存される |
+| `/effort [level\|auto\|status]` | エフォートレベル設定。引数なしで対話スライダ、レベル名で直接設定、`auto` で**現在のモデルの保存済みレベルをクリア**（他モデルのエントリと最上位の `effortLevel` は残る）、`status` で現在値を表示。`max` と `ultracode` はセッション限定（設定ファイルには保存されない）。**v2.1.251 でモデルごとに既定 effort レベルを保存**するようになり、保存先は `effortLevel` ではなく設定キー [`modelSettings`](configuration.md)（user 設定）に変わった。モデルを切り替えても各モデルの設定が保持される。Claude の作業中に実行しても即時反映（キュー待ちしない）。v2.1.154 でスライダのラベルが「Speed」/「Intelligence」→「Faster」/「Smarter」に変更。v2.1.161 でダイアログが「Reduce motion」アクセシビリティ設定を尊重 |
 | `/memory` | CLAUDE.md/オートメモリ管理 |
 | `/hooks` | フック設定表示 |
 | `/mcp` | MCPサーバー管理。v2.1.161 で未使用 claude.ai connector を「Show unused connectors」の下に折りたたみ表示に変更 |
@@ -306,7 +306,7 @@ MCPサーバーが公開するプロンプトは `/mcp__<server>__<prompt>` 形�
 | `/deep-research <question>` | **バンドルワークフロー**。Web 検索を fan-out し、ソースを取得・相互検証して引用付きレポートを合成 |
 | `/run` | **バンドルスキル**。テストだけでなく実アプリを起動・操作して変更の動作を確認 |
 | `/run-skill-generator` | **バンドルスキル**。プロジェクト固有のビルド / 起動 / 操作手順をスキルとして生成し、`/run` と `/verify` に教える |
-| `/design [brief]` | **バンドルスキル**（リサーチプレビュー、v2.1.233 以降）。Claude Design のアートボードワークフローを CLI / Claude Code Desktop に持ち込み、Artifacts 基盤で編集可能なアートボードのキャンバスを公開する。ブリーフを渡すと UI 案を複数生成し、ユーザーが選んだ案を Claude に実装させる流れ。Pro / Max / Team / Enterprise で利用可。※ 公式 commands リファレンス未収載（whats-new w34 が一次情報） |
+| `/design [brief]` | **バンドルスキル**（リサーチプレビュー、v2.1.234 以降）。Claude Design のアートボードワークフローを CLI / Claude Code Desktop に持ち込み、Artifacts 基盤で編集可能なアートボードのキャンバスを公開する。ブリーフを渡すと UI 案を複数生成し、ユーザーが選んだ案を Claude に実装させる流れ。Pro / Max / Team / Enterprise、かつ [Artifacts が利用可能なセッション](https://code.claude.com/docs/en/artifacts#availability)で利用可。アカウントで保存が有効ならキャンバス上でアートボードを編集して新バージョンを公開でき、無効ならドラフトの閲覧と PNG / PDF エクスポートのみ。2026-09-01 巡回で公式 commands リファレンスに収載されたことを確認 |
 | `/design-sync [hint]` | **バンドルスキル**。リポジトリの React デザインシステムを変換して Claude Design にアップロードし、生成デザインに実コンポーネントを使わせる |
 | `/design-login` | claude.ai アカウントで `/design-sync` のデザインシステムアクセスを認可 |
 | `/fewer-permission-prompts` | **バンドルスキル**。トランスクリプトから頻出の読み取り専用 Bash / MCP 呼び出しを抽出し、プロジェクト `.claude/settings.json` に優先度付き allowlist を追加 |
@@ -502,7 +502,7 @@ cloud / 共有レポでは `.claude/settings.json` の `enabledPlugins` で宣�
 
 `claude-plugins-official` 配下の公式プラグイン。セッション内でマルチエージェント脆弱性スキャンを実行するオンデマンド・ディープスキャン層。エージェントチームがアーキテクチャ把握→脅威モデル構築→脆弱性ハント→独立検証エージェントによる全 finding レビュー→レポート作成を行う。
 
-**前提条件**: Claude Code v2.1.154 以降＋有料プラン（動的ワークフロー必須。Pro は `/config` の Dynamic workflows で有効化）、`python3` 3.9.6 以降（標準ライブラリのみ使用）、変更スキャン・パッチ生成には git。
+**前提条件**: Claude Code v2.1.154 以降＋有料プラン（動的ワークフロー必須。Pro は `/config` の Dynamic workflows で有効化）、`python3` 3.9 以降（標準ライブラリのみ使用。2026-09-01 の公式ドキュメント改訂で 3.9.6 → 3.9 に修正）、変更スキャン・パッチ生成には git。
 
 **インストール**:
 
@@ -543,8 +543,9 @@ cloud / 共有レポでは `.claude/settings.json` の `enabledPlugins` で宣�
 | **Plan** | 継承 | プランモード時のリサーチ。読み取り専用 |
 | **general-purpose** | 継承 | 探索と変更の両方が必要な複雑タスク |
 | **Bash** | 継承 | 別コンテキストでのターミナルコマンド実行 |
-| **statusline-setup** | 継承 | ステータスライン設定用の専用エージェント |
-| **Claude Code Guide** | 継承 | Claude Code の使い方ガイド |
+| **statusline-setup** | Sonnet 固定 | ステータスライン設定用の専用エージェント |
+| **Claude Code Guide** | Haiku 固定 | Claude Code の使い方ガイド |
+| **claude** | 固定モデルを持たず、上記「サブエージェントのモデル優先順位」に従う | 専門エージェントに当てはまらないタスク向けの catch-all。サブエージェントが使える全ツールを持ち、dispatched バックグラウンドセッションの既定エージェントでもある |
 
 ### 5.3 カスタムサブエージェントの作成
 
@@ -582,7 +583,7 @@ model: sonnet
 | `description` | Yes | Claude が委譲判断に使用する説明 |
 | `tools` | No | 許可ツール。省略時は全ツール継承 |
 | `disallowedTools` | No | 拒否ツール |
-| `model` | No | `sonnet` / `opus` / `haiku` / `inherit` / フルモデルID |
+| `model` | No | `sonnet` / `opus` / `haiku` / `fable` / `inherit` / フルモデルID（`claude-opus-5` 等）。**省略時は下記のサブエージェントモデル優先順位に従う**（v2.1.251 以前は `inherit` が既定扱い） |
 | `permissionMode` | No | `default` / `acceptEdits` / `dontAsk` / `bypassPermissions` / `plan` |
 | `maxTurns` | No | 最大エージェンティックターン数。**上限に達した場合、Claude Code は出力を「部分的（partial）」とマークして返し、Claude は[サブエージェントの resume](https://code.claude.com/docs/en/sub-agents#resume-subagents) で継続できる**（partial マークは v2.1.246 以降。エージェントIDを返すサブエージェントでは「メッセージを送れば続きから再開できる」旨も結果に付く） |
 | `skills` | No | 起動時にプリロードするスキル |
@@ -593,6 +594,19 @@ model: sonnet
 | `effort` | No | エフォートレベル |
 | `isolation` | No | `worktree` で一時ワークツリーでの隔離実行 |
 | `initialPrompt` | No | 最初のターンで自動送信するプロンプト（v2.1.83） |
+
+#### サブエージェントのモデル優先順位（v2.1.251〜）
+
+**最初に該当したもの**が使われる:
+
+1. 呼び出しごとの `model` パラメータ（Agent ツール等でメインの Claude が指定した値）
+2. サブエージェント定義の `model` frontmatter（`inherit` はメイン会話のモデルを選ぶ）
+3. `CLAUDE_CODE_SUBAGENT_MODEL` 環境変数（モデルエイリアスまたはモデルID。`inherit` は未設定と同義）
+4. メイン会話のモデル
+
+- **v2.1.251 より前はこの順序の先頭が `CLAUDE_CODE_SUBAGENT_MODEL`** で、呼び出しごとの指定と frontmatter（`model: inherit` を含む）を上書きしていた
+- `CLAUDE_CODE_SUBAGENT_MODEL` を設定するだけでは、ビルトインの Explore / Plan サブエージェントが動くモデルは変わらない
+- 組織の `availableModels` 許可リストでブロックされた値は、ファミリーエイリアスなら許可リスト内の最新版に置換され、それ以外は継承モデルへフォールバックする（`CLAUDE_CODE_SUBAGENT_MODEL` を設定している場合は同じ規則の下でまずそのモデルが試される）。インタラクティブセッションでは置換時に要求モデルと置換モデルを示す警告が出る
 
 ### 5.6 呼び出し方法
 

@@ -211,7 +211,7 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 
 > **ハンドラの作業ディレクトリ（ドキュメント追記）**: ハンドラはカレントディレクトリで Claude Code の環境を引き継いで実行される。**カレントディレクトリが既に存在しない場合**（別シェルがセッション中に worktree や一時ディレクトリを削除した等）、Claude Code は「セッションを開始したディレクトリ → プロジェクトルート → ホームディレクトリ → システム一時ディレクトリ」の順に、存在する最初のものから command フックを実行し、警告を記録する。
 
-> **`$CLAUDE_MODEL` は存在しない**。フックからモデルを知るには `SessionStart` の `model` フィールド（常に含まれるとは限らない）か、`PreModelSwitch` / `PostModelSwitch` の `from_model` / `to_model` を使う。`$ANTHROPIC_MODEL` はシェルで設定した場合に読めるが、セッション中に `/model` で切り替えても値は変わらない。フックプロセスは親環境を継承するが、Claude Code が全サブプロセスから除去する `OTEL_*` エクスポータ変数は除く。
+> **`$CLAUDE_MODEL` は存在しない**。フックからモデルを知るには `SessionStart` の `model` フィールド（常に含まれるとは限らない）か、`PreModelSwitch` / `PostModelSwitch` の `from_model` / `to_model` を使う。`$ANTHROPIC_MODEL` はシェルで設定した場合に読めるが、セッション中に `/model` で切り替えても値は変わらない。フックプロセスは親環境を継承するが、Claude Code が全サブプロセスから除去する `OTEL_*` エクスポータ変数と、`CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1` のときに除去される変数は除く。
 
 
 ### 3.2 HTTP ハンドラ
@@ -467,6 +467,8 @@ v2.1.133 以降、すべてのイベントの入力 JSON に effort level も含
   }
 }
 ```
+
+> `updatedInput` はツール入力を**丸ごと置換**するため、変更しないフィールドも含めて返す必要がある。**Claude Code は権限ルールの評価と Bash コマンドの[自動バックグラウンド化の可否判定](https://code.claude.com/docs/en/tools-reference#background-commands)を、Claude が送った入力ではなくフックが返した入力に対して行う**（`"defer"` の場合は無視される）。
 
 > フックが `"ask"` を返したときの権限プロンプトには、そのフックの出所ラベルが付く。ラベルは **`[settings]`**（settings ファイル由来またはエージェント frontmatter 由来） / **`[plugin:<name>]`**（プラグイン由来） / **`[skill]`**（スキル frontmatter 由来）の 3 種（従来ドキュメントの `[User]` / `[Project]` / `[Plugin]` / `[Local]` から変更）。
 

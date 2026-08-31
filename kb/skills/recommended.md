@@ -1,8 +1,8 @@
 ---
 title: 推薦スキル一覧
-last_checked: "2026-08-25"
+last_checked: "2026-09-01"
 tier_a_count: 11
-tier_b_count: 9
+tier_b_count: 10
 policy: 特定分野に偏らず、多様な分野からバランスよく推薦する
 ---
 
@@ -36,8 +36,9 @@ harness-harness各機能で活用可能なスキル。分野の偏りを避け�
 | **landing-page-guide** | マーケティング | コミュニティ | 高CVランディングページ、CRO原則 | Webマーケティング系 |
 | **deploy-checklist** | DevOps | コミュニティ | デプロイ前検証（環境変数、ロールバック計画） | 本番デプロイがあるプロジェクト |
 | **brainstorming** | 企画/設計 | コミュニティ上位 | 構造化アイデーション、制約・エッジケース洗い出し | 設計フェーズ重視 |
-| **agent-browser** | ブラウザ自動化 | vercel-labs/agent-browser (689.0K installs、skills.sh top10) | エージェントからのブラウザ操作 CLI（開く・クリック・入力・スクリーンショット） | E2E検証・Web操作を伴うプロジェクト |
+| **agent-browser** | ブラウザ自動化 | vercel-labs/agent-browser (760.2K installs、skills.sh top10) | エージェントからのブラウザ操作 CLI（開く・クリック・入力・スクリーンショット） | E2E検証・Web操作を伴うプロジェクト |
 | **discernment-nudge** | 回答品質/検証 | anthropics/skills（2026-08-17 追加） | 実行可能な回答・ドラフト・見積り・分析の直後に、根拠確認/前提の吟味/欠落文脈を突く短いフォローアップ質問を2〜3個付ける（会話あたり1回まで） | 診断・提案系ハーネス（diagnose-harness 等）でユーザーが結果を鵜呑みにするリスクを下げたい場合。**新規につき採用シグナル未確定**——ルーブリックでは7点相当だが、次回巡回で実績を見て Tier A 昇格を再評価 |
+| **microsoft/azure-skills** | クラウド基盤 | microsoft/azure-skills（skills.sh、14 スキル合計 7.8M installs。`microsoft-foundry` 562.2K が最上位） | Azure 各サービス（Foundry / messaging ほか）のベストプラクティスをスキル化したベンダー公式クラスタ | **2026-09-01 巡回で新規追跡**。分野カバレッジで空白だった「クラウド基盤」を埋める候補。ベンダー固有色が強く harness-harness 本体への寄与は限定的なため、Azure を使うプロジェクトのハーネス作成時にのみ提案する。個別スキルの精査は未実施 |
 | **academy-guide** | 教育/オンボーディング | anthropics/skills（2026-08-17 追加、2026-08-18 に `claude-academy-guide` からリネーム） | Claude 製品の使い方を尋ねられた際に Claude Academy（academy.claude.com）の該当コース/チュートリアルを推薦 | Claude 製品の社内展開・教育コンテンツを扱うプロジェクト。ハーネス構築そのものへの寄与は小さいため Tier B 据え置き |
 
 ## 分野カバレッジ
@@ -60,6 +61,7 @@ harness-harness各機能で活用可能なスキル。分野の偏りを避け�
 | 回答品質/検証 | 0 | 1 | 1 |
 | 教育/オンボーディング | 0 | 1 | 1 |
 | エージェント間連携 | 1 | 0 | 1 |
+| クラウド基盤 | 0 | 1 | 1 |
 
 ## 昇格/降格ルール
 
