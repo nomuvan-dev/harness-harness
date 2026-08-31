@@ -156,7 +156,7 @@ Codex と Claude の Skills は SKILL.md フォーマットが共通のため、
 | `PermissionRequest`（0.148.0+） | **相当なし** | Claude では `PreToolUse` + 権限ルールで近い制御を行う |
 | 11 イベント | 17+ イベント | 差分は主に通知系・UI 系（`Notification` 等） |
 | `command` ハンドラ | `command` ハンドラ | 同等。Codex 固有の `commandWindows` は Claude 側ではラッパースクリプトへ寄せる |
-| `mcp_tool` ハンドラ（0.148.0+） | **相当なし** | Claude では command ハンドラ内から MCP を叩くか、Agent ハンドラで代替 |
+| `mcp_tool` ハンドラ（0.148.0+） | **相当なし** | Claude では command ハンドラ内から MCP を叩くか、Agent ハンドラで代替。2026-09-01 に公式仕様が確定し、Codex 側は「エラー・サーバー不在ではブロックしない」「`SessionEnd` 非対応」「同期実行・ツール承認なし」。ブロックを期待する変換をしないこと |
 | `async = true`（0.148.0+） | **相当なし** | Claude のフックは同期実行。移行時は同期化するか、command 側でバックグラウンド起動する |
 | HTTP / Prompt / Agent ハンドラなし（`prompt` / `agent` はパースのみ・未実装） | command / HTTP / Prompt / Agent | Claude の方がハンドラ種別が豊富 |
 | 終了コード 2 でブロック | 終了コード 2 でブロック | 同等 |

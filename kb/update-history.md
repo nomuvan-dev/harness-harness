@@ -1,5 +1,82 @@
 # harness-harness 更新履歴
 
+## 2026-09-01 — 公式ドキュメント巡回
+
+### 検出・更新
+
+Claude Code は **v2.1.251 のまま**、Codex CLI も安定版 **0.151.0** で据え置き（`0.152.0-alpha.7` まで進行中。リリースノート本文は依然として空）。追跡中 49 URL のハッシュ比較で 26 件の変更を検出したが、GitHub / skills.sh / learn.chatgpt.com 等の HTML ページの多くはナビゲーション改定と Stars・installs 表示の動的差分。**バージョンを伴わないドキュメント側の改訂**が今回の中身で、v2.1.251 で入っていたが未文書化だった挙動が一斉に明文化された。`llms.txt` と Claude / Codex の changelog ページはいずれもハッシュ変化なし。
+
+**1) `modelSettings` 設定キーが正式収載された（settings-reference.md）— 今回最大の変更**
+
+v2.1.251 の「`/effort` がモデルごとに effort を保存する」挙動の**保存先**が判明した。新設キー `modelSettings` は「モデル正規名 → `{ "effortLevel": ... }`」のオブジェクトで、`/effort low|medium|high|xhigh` や `/model` ピッカーの effort スライダ操作時に **user 設定へ自動で書き込まれる**。
+
+- `effortLevel` は「保存済みレベルを持たないモデルに対する既定値」へ降格。同一ファイル内ではモデル別エントリが `effortLevel` より優先
+- **ファイル間の解決はモデル単位**。「そのモデルのエントリまたは `effortLevel` を設定している最上位ファイル」が決めるため、managed の `effortLevel` は user 設定の保存済みレベルに勝つ
+- キーはエイリアス・日付サフィックス・`[1m]`・プロバイダ固有 ID をすべて同じエントリに解決する。`/effort auto` は使用中モデルのエントリのみクリア
+- ハーネス影響: **managed 設定で effort を統制している組織は挙動が変わらない**（`effortLevel` が引き続き勝つ）。一方、user 設定に `effortLevel` を書いて全モデル共通の既定にしていた運用は、`/effort` を一度使うとそのモデルだけ `modelSettings` に固定される
+
+**2) サブエージェント／チームメイト／ワークフローエージェントのモデル優先順位が新順序で明文化された**
+
+前回巡回で「changelog にのみ記載、公式ドキュメント未追随」と注記していた v2.1.251 の順序変更が、sub-agents / agent-teams / workflows / env-vars の 4 ページに反映された。新順序は **①呼び出し時の明示指定 → ②定義の `model:`（`inherit` は継承） → ③`CLAUDE_CODE_SUBAGENT_MODEL` → ④親のモデル**。
+
+- あわせて**チームメイト定義の `model:` が split-pane モードでも使われる**ようになったことが明記された（従来は in-process 限定で split-pane は無視）。これはドキュメント上の初出
+- `CLAUDE_CODE_SUBAGENT_MODEL` を設定しても**ビルトインの Explore / Plan は影響を受けない**
+- `availableModels` でブロックされた場合のフォールバックは「選ばれたモデル」に対して行われ、`CLAUDE_CODE_SUBAGENT_MODEL` があれば同じ規則でまずそれが試される
+- ハーネス影響: 環境変数で全サブエージェントを安価なモデルに寄せる運用は、**エージェント定義に `model:` を書いていると効かなくなる**。定義側の `model:` を意図的に外すか、明示指定に切り替える必要がある
+
+**3) project / local 設定の `env` で禁止される変数が拡大した**
+
+v2.1.251 の変更として changelog には 5 変数だけ挙がっていたが、実際の禁止対象は 3 カテゴリに整理されて公開された。①ファイル配置系（`CLAUDE_CONFIG_DIR` / `CLAUDE_CODE_TMPDIR` / `HOME` / `TMPDIR` / `TMP` / `TEMP` / `XDG_*`）、②セッション内容の書き出し系（`OTEL_LOG_RAW_API_BODIES` / `ENABLE_BETA_TRACING_DETAILED` / `BETA_TRACING_ENDPOINT`）、③起動・同期系（`CLAUDE_CODE_PROCESS_WRAPPER` / `CLAUDE_CODE_SYNC_SKILLS` / `CLAUDE_CODE_SYNC_PLUGINS` / `CLAUDE_CODE_PLUGIN_CACHE_DIR` / `CLAUDE_CODE_PLUGIN_SEED_DIR`）。落とされた変数は `claude --debug` に警告が出る。
+
+- ハーネス影響: **リポジトリにコミットする `.claude/settings.json` の `env` にこれらを書いても黙って無視される**。テンプレート側でこれらを使っていないか確認済み（該当なし）
+
+**4) 新規環境変数 3 つ**
+
+- `CLAUDE_CODE_AUTO_BACKGROUND_WORKER_CHECKIN_SECONDS`（v2.1.248+）: バックグラウンドサブエージェントの確認リマインダー間隔。`1`〜`86400` の素の整数のみ受理し、それ以外は未設定扱い。未設定ならリマインダーなし
+- `BETA_TRACING_ENDPOINT` / `ENABLE_BETA_TRACING_DETAILED`: 詳細ベータトレーシング。内容を含むスパン属性と `claude_code.hook` スパンを出す。project / local 設定では無視
+
+**5) hooks の `updatedInput` が権限判定にも使われることが明文化された**
+
+`PreToolUse` フックが返した `updatedInput` は、**権限ルールの評価と Bash の自動バックグラウンド化の可否判定にも使われる**（Claude が送った元の入力ではなく）。フックで書き換えた結果が権限ルールにマッチするかどうかを設計時に考える必要がある。あわせて `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1` が hooks プロセスの環境からも変数を除去することが明記された。
+
+**6) その他の細かい確定事項**
+
+- **MCP の不正スキーマ除外は機能フラグ制**: 「リモート構成」という曖昧な表現が「Anthropic から取得する機能フラグ」と明記された。フラグ取得オフ／エアギャップ環境では除外が効かず 400 エラーになる。ルートレベル combinator の書き換えは別系統で従来どおり
+- **`apiKeyHelper` の再実行条件**: キャッシュ寿命（既定 5 分）経過に加え、**API リクエストが `401` / `403` で失敗したとき**にも再実行される
+- **managed 設定が読めない場合**: 他の admin ソースがポリシーを供給していなければ、claude.ai / Console 認証のセッションは起動時に終了する
+- **Bash 自動バックグラウンド化**: パラメータ展開（`${VAR}`）を含む複合コマンドはパース不能扱いになり、末尾が `; exit "${PIPESTATUS[0]}"` のコマンドはタイムアウトで停止する
+- **クラウド環境の権限**: Team / Enterprise では admin ロールを **Owner のみが保有し Admin は持たない**（前回巡回で「Admin / Owner」と記載していた箇所を訂正）
+- **プラン別既定モデル**: Max / Team Premium / Enterprise / Anthropic API は Opus 5、Pro / Team Standard は Sonnet 5。従量課金 Enterprise という区別が消えた
+- **`/design`** が公式 commands リファレンスに収載（必要バージョンは v2.1.233 ではなく **v2.1.234**）
+- **Claude Security プラグイン**の Python 要件が 3.9.6 → **3.9** に訂正
+
+**7) Codex: `mcp_tool` フックの実行・ライフサイクル仕様が公式収載された**
+
+harness-harness は 0.148.0 のリリースノートから先行して `mcp_tool` を specs に収載していたが、今回公式 hooks ドキュメントが追いつき、実行時の挙動が確定した。既存の MCP 接続を使う（起動・再接続はしない）／エラー・サーバー不在・ツール利用不可では**ブロックしない**／同期実行でツール承認を要求せず他フックを誘発しない／タイムアウトはフックとサーバーの短い方／elicitation 待ちは算入しない／`SessionStart` は MCP 準備前に走りうるがセッションをブロックしない／**`SessionEnd` は非対応**。
+
+**8) スキルエコシステム巡回（Phase 3.5、前回 2026-08-25 から 7 日経過）**
+
+- anthropics/skills: **19 スキルで増減なし**、最終 push も 2026-08-21 のまま（172.8K stars）。openai/skills（deprecated）・openai/plugins（archive）も状況変化なし
+- claude.com/plugins・agentskills.io は**ハッシュ変化なし**（仕様バージョン・採用 46 プラットフォームとも据え置き）
+- skills.sh: find-skills 3.2M でトップ継続。**ベンダー公式スキルクラスタが台頭**し、open.feishu.cn が 24 スキル計 15.3M、microsoft/azure-skills が 14 スキル計 7.8M。個別スキルでは mattpocock 系が優勢だが組織単位の合計では逆転
+- **microsoft/azure-skills を Tier B に新規追加**（分野カバレッジで空白だった「クラウド基盤」を埋める）。ただしベンダー固有色が強いため、Azure を使うプロジェクトのハーネス作成時にのみ提案する方針を `_index.md` に明記
+
+### 更新ファイル
+
+- `specs/claude/configuration.md` — `modelSettings` 新設、`effortLevel` の位置づけ変更、`env` 禁止変数の 3 カテゴリ整理、`apiKeyHelper` 再実行条件、新規環境変数 3 つ、managed 設定読み込み失敗時の挙動、`requiredMinimumVersion` の fail open、クラウド環境の権限（Owner のみ）、プラン別既定モデル
+- `specs/claude/skills-and-commands.md` — サブエージェントのモデル優先順位を新設、`model` frontmatter の既定挙動、ビルトイン `claude` エージェント追加、`statusline-setup`/`claude-code-guide` の固定モデル明記、`/effort auto` と `/model` ピッカーの effort スライダ、`/design` の収載確認とバージョン訂正、Python 要件訂正
+- `specs/claude/agent-teams.md` — チームメイトのモデル優先順位を新順序へ、定義の `model:` が split-pane でも有効に、`availableModels` フォールバックの記述更新
+- `specs/claude/hooks.md` — `updatedInput` が権限判定・自動バックグラウンド判定にも使われること、`CLAUDE_CODE_SUBPROCESS_ENV_SCRUB` と hooks 環境
+- `specs/claude/mcp.md` — 不正スキーマ除外の機能フラグ制を明記
+- `specs/claude/tools.md` — パラメータ展開を含むコマンドの自動バックグラウンド化不可
+- `specs/claude/changelog.md` — 最終更新日と v2.1.251 エントリ 3 件の追記
+- `specs/codex/configuration.md` — `mcp_tool` ハンドラの実行・ライフサイクル仕様、`input` プレースホルダ展開規則
+- `specs/codex/changelog.md` — 最終更新日
+- `kb/skills/_index.md` — 巡回日、Stars / installs 更新、ベンダー公式クラスタ台頭の注記
+- `kb/skills/recommended.md` — microsoft/azure-skills を Tier B に追加、分野カバレッジに「クラウド基盤」追加、agent-browser の installs 更新
+
+---
+
 ## 2026-08-31 — 公式ドキュメント巡回
 
 ### 検出・更新

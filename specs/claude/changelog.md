@@ -3,7 +3,7 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-08-31（v2.1.251 のまま。ドキュメント側のみ改訂）
+最終更新: 2026-09-01（v2.1.251 のまま。公式 changelog に変更なし。ドキュメント側のみ大幅改訂され、`modelSettings` 設定キーの新設・サブエージェント／チームメイトのモデル優先順位の新順序・project/local `env` の禁止変数拡大が明文化された）
 
 ---
 
@@ -15,9 +15,9 @@
 - **`/usage` に Spend limit バー**、ステータスライン向けに `rate_limits.spend_limit` フィールドを追加（Claude apps gateway 配下で spend limit がある場合）
 - **`/cost` にセッション単位のプロンプトキャッシュ行**（ヒット率・ミス・再キャッシュしたトークン数・warm/cold）、ステータスラインスクリプト向けに `prompt_cache` オブジェクトを追加
 - **`claude --help` に `attach` / `logs` / `stop` / `respawn` / `rm` を収載**。実行中バックグラウンドセッションへの `--resume` メッセージが `claude attach <id>` を明示するようになった
-- **`CLAUDE_CODE_SUBAGENT_MODEL` の意味変更**: 「すべてを上書き」から「サブエージェントの既定モデルを設定」へ。**エージェント定義の `model:` と spawn 時の明示指定が優先される**（公式 agent-teams ドキュメントの優先順位表は 2026-08-30 時点で未追随）
-- **`/effort` がモデルごとに既定の effort レベルを保存**するようになり、モデルを切り替えても各モデルの設定が保持される
-- **project `.claude/settings.json` の `env` から `CLAUDE_CONFIG_DIR` / `CLAUDE_CODE_TMPDIR` / `TMPDIR` / `TMP` / `TEMP` を設定できなくなった**。シェル・user 設定・managed 設定で設定する
+- **`CLAUDE_CODE_SUBAGENT_MODEL` の意味変更**: 「すべてを上書き」から「サブエージェントの既定モデルを設定」へ。**エージェント定義の `model:` と spawn 時の明示指定が優先される**（2026-09-01 に公式 sub-agents / agent-teams / workflows ドキュメントが新順序へ追随。あわせて**チームメイト定義の `model:` が split-pane モードでも使われる**ようになったことが明文化された）
+- **`/effort` がモデルごとに既定の effort レベルを保存**するようになり、モデルを切り替えても各モデルの設定が保持される。保存先は新設の設定キー **`modelSettings`**（user 設定。`{ "claude-opus-5": { "effortLevel": "medium" } }` 形式）で、`effortLevel` は「保存済みレベルを持たないモデルの既定値」に降格した。`/effort auto` は使用中モデルのエントリのみクリアする（2026-09-01 の公式ドキュメント改訂で明文化）
+- **project / local 設定の `env` から「リポジトリに委ねるべきでない変数」を設定できなくなった**。`CLAUDE_CONFIG_DIR` / `CLAUDE_CODE_TMPDIR` / `HOME` / `TMPDIR` / `TMP` / `TEMP` / `XDG_*`、`OTEL_LOG_RAW_API_BODIES` と詳細ベータトレーシングの `ENABLE_BETA_TRACING_DETAILED` / `BETA_TRACING_ENDPOINT`、および起動・同期系（`CLAUDE_CODE_PROCESS_WRAPPER` / `CLAUDE_CODE_SYNC_SKILLS` / `CLAUDE_CODE_SYNC_PLUGINS` / `CLAUDE_CODE_PLUGIN_CACHE_DIR` / `CLAUDE_CODE_PLUGIN_SEED_DIR`）が対象。落とした変数は `claude --debug` に警告が出る。シェル・user 設定・managed 設定で設定する（2026-09-01 の改訂で対象範囲が明文化）
 - **承認が必要になった managed / project 設定**: サンドボックス TLS 終端、サンドボックストラフィックの自前プロキシ経由、認証情報の注入、サンドボックス隔離を弱める server-managed 設定は適用前に承認を要求。`ANTHROPIC_CUSTOM_HEADERS` も managed / project 設定由来で認証・組織/テナント・ルーティング・API 挙動系ヘッダ（`Authorization` / `Host` 等）を設定する場合は承認が必要
 - **既定コミットトレーラーの変更**: アクティブモデルが既知の Claude モデルでない場合（カスタム `ANTHROPIC_BASE_URL` 配下のサードパーティモデル等）は `Co-Authored-By: Claude Code` になる
 - **シート課金の Enterprise サブスクリプションの既定モデルが Opus 5** に変更（他の上位プランと同じ）

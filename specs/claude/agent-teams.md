@@ -155,18 +155,18 @@ Agent Teamsは以下のhookイベントで品質を強制できる:
 
 チームメイトのモデルは以下の**最初に該当したもの**が使われる:
 
-1. `CLAUDE_CODE_SUBAGENT_MODEL`（`inherit` 以外の値が設定されている場合）
-2. spawn プロンプトがそのチームメイトに指定したモデル
-3. サブエージェント定義から起動した**in-process** チームメイトの場合、定義の `model`（split-pane チームメイトは定義の `model` を使わない）
+1. spawn プロンプトがそのチームメイトに指定したモデル
+2. サブエージェント定義から起動したチームメイトの場合、定義の `model`（`inherit` はリードのモデルを選ぶ）。**表示モードを問わず適用される**（従来は in-process のみ）
+3. `CLAUDE_CODE_SUBAGENT_MODEL`（`inherit` 以外の値が設定されている場合）
 4. リードの現在のモデル
 
-**`teammateDefaultModel` 設定キーは v2.1.234 で削除された。** 残存値は無視されるため、プロンプトでモデルを明示するか `CLAUDE_CODE_SUBAGENT_MODEL` を設定する。
+> **v2.1.251 より前は `CLAUDE_CODE_SUBAGENT_MODEL` がこの順序の先頭**で、定義の `model:` と spawn 時の明示指定を上書きしていた。同変数は「すべてを上書きする」から「他で割り当てられなかった場合の**既定**モデル」へ意味が変わっている。ハーネス側で本変数に依存している場合、エージェント定義の `model:` が意図せず勝つようになった点に注意する（2026-09-01 巡回で公式 agent-teams ドキュメントが新順序に追随したことを確認）。
 
-> **v2.1.251 で `CLAUDE_CODE_SUBAGENT_MODEL` の意味が変わった**: 「すべてを上書きする」から「サブエージェントの**既定**モデルを設定する」へ変更され、**エージェント定義の `model:` と spawn 時の明示指定が本変数より優先される**。したがって実際の優先順位は「spawn プロンプトの明示指定 → エージェント定義の `model:` → `CLAUDE_CODE_SUBAGENT_MODEL` → リードの現在のモデル」になる。公式 agent-teams ドキュメントの優先順位表は 2026-08-30 時点で上記の旧順序のままであり未追随（changelog のみに記載）。ハーネス側で本変数に依存している場合は、エージェント定義の `model:` が意図せず勝つようになった点に注意する。
+**`teammateDefaultModel` 設定キーは v2.1.234 で削除された。** 残存値は無視されるため、プロンプトでモデルを明示する。
 
-組織の `availableModels` 許可リストとの突合と代替:
+組織の `availableModels` 許可リストとの突合と代替（**選ばれたモデル**に対して行われる）:
 - **ファミリーエイリアス（`opus` 等）**: Anthropic API / Claude Platform on AWS では許可リスト内で最新版にフォールバック。プロバイダ固有モデルIDを使う環境（この置換が働かない）では次項の扱い
-- **上記以外のブロック値**: リードのモデルで実行
+- **上記以外のブロック値**（置換が働かないプロバイダのエイリアス、許可版が存在しないファミリーを含む）: リードのモデルで実行。ただし `CLAUDE_CODE_SUBAGENT_MODEL` が設定されている場合は、同じ規則の下でまずそのモデルが試される
 
 チームメイトはリードの effort level を継承する（split-pane モードでは v2.1.186 以降）。
 
@@ -179,7 +179,7 @@ Agent Teamsは以下のhookイベントで品質を強制できる:
 | frontmatter | in-process | split-pane |
 |:--|:--|:--|
 | `tools` | 定義の許可リストに制限。`SendMessage` が追加され、[Task ツールを持つセッション](https://code.claude.com/docs/en/tools-reference#task-tool-availability)では `TaskCreate` / `TaskGet` / `TaskList` / `TaskUpdate` も追加 | 同左 |
-| `model` | `CLAUDE_CODE_SUBAGENT_MODEL` も spawn プロンプトもモデルを指定していない場合に使われる | **使われない** |
+| `model` | spawn プロンプトがモデルを指定していない場合に使われる（v2.1.251〜） | **同左**（v2.1.251 で split-pane でも使われるようになった。従来は無視） |
 | 本文（body） | 既定のシステムプロンプトに**追記**される | 既定のシステムプロンプトを**置き換える** |
 | `skills` | 適用されない（プロジェクト／ユーザー設定からロード） | 適用されない（同左） |
 | `mcpServers` | 無視（プロジェクト／ユーザー設定からロード） | [サブエージェントの当該フィールドの規則](https://code.claude.com/docs/en/sub-agents#scope-mcp-servers-to-a-subagent)に従って適用される（`--agent` で開始したセッションと同じ扱い） |

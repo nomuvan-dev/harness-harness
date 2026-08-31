@@ -133,7 +133,7 @@ servers:
 | 概念 | Claude Code | Codex CLI | 抽象化の方針 |
 |:--|:--|:--|:--|
 | **モデル指定** | `model` 設定 / `ANTHROPIC_MODEL` / `/model` | `model` 設定 / `--model` / `/model` | キー名は同じ。値は異なる |
-| **推論レベル** | `effortLevel` (`low`/`medium`/`high`) | `model_reasoning_effort` (`minimal`〜`xhigh`) | レベル名の変換が必要 |
+| **推論レベル** | `effortLevel`（`low`/`medium`/`high`/`xhigh`）＋ **v2.1.251 以降はモデル別の `modelSettings`**（`/effort` の保存先。同一ファイル内では `effortLevel` より優先） | `model_reasoning_effort` (`minimal`〜`xhigh`) | レベル名の変換が必要。Codex にはモデル別保存の相当機能が無いため、変換時は `effortLevel`（全モデル共通の既定）側を写像元にする |
 | **プロバイダー** | Anthropic / Bedrock / Vertex | OpenAI / Azure / OpenRouter / Gemini / 他 | プロバイダーごとの認証設定が異なる |
 | **拡張思考** | `alwaysThinkingEnabled` | `model_reasoning_summary` | 概念は近いが制御方法が異なる |
 

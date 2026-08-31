@@ -138,7 +138,7 @@ managed 階層は単一ではなく、上から **server-managed settings → MD
 | `allowManagedHooksOnly` | Managed フックのみ許可（Managed設定のみ） |
 | `allowedHttpHookUrls` | HTTP フック許可URL |
 | `httpHookAllowedEnvVars` | HTTP フック許可環境変数 |
-| `env` | 環境変数設定。**v2.1.251 以降、project `.claude/settings.json` の `env` からは `CLAUDE_CONFIG_DIR` / `CLAUDE_CODE_TMPDIR` / `TMPDIR` / `TMP` / `TEMP` を設定できない**（シェル・user 設定・managed 設定で設定する）。`CLAUDE_CODE_RESTRICTED` は起動環境からのみ読まれ、どの設定ファイルの `env` でも無視される。managed / project 設定由来の `ANTHROPIC_CUSTOM_HEADERS` は、認証・組織/テナント・ルーティング・API 挙動系ヘッダ（`Authorization` / `Host` 等）を設定する場合、v2.1.251 以降は適用前にユーザー承認を要求する |
+| `env` | 環境変数設定。**v2.1.251 以降、project / local 設定の `env` からは「チェックアウトしたリポジトリに委ねるべきでない変数」を設定できない**（該当変数は破棄され `claude --debug` で確認できる警告が出る。シェル・user 設定・managed 設定で設定する）。対象は ①Claude Code が自分のファイルを置く場所を決める変数（`CLAUDE_CONFIG_DIR` / `CLAUDE_CODE_TMPDIR` および `HOME` / `TMPDIR` / `TMP` / `TEMP` / `XDG_*` 系）、②セッション内容を外部へ書き出す変数（`OTEL_LOG_RAW_API_BODIES`、詳細ベータトレーシングの `ENABLE_BETA_TRACING_DETAILED` / `BETA_TRACING_ENDPOINT`）、③起動・同期の挙動を変える変数（`CLAUDE_CODE_PROCESS_WRAPPER` / `CLAUDE_CODE_SYNC_SKILLS` / `CLAUDE_CODE_SYNC_PLUGINS` / `CLAUDE_CODE_PLUGIN_CACHE_DIR` / `CLAUDE_CODE_PLUGIN_SEED_DIR`）。v2.1.251 より前は、`HOME` / `XDG_CONFIG_HOME` と ③ を除きすべて project / local 設定から設定できた。`CLAUDE_CODE_RESTRICTED` は起動環境からのみ読まれ、どの設定ファイルの `env` でも無視される。managed / project 設定由来の `ANTHROPIC_CUSTOM_HEADERS` は、認証・組織/テナント・ルーティング・API 挙動系ヘッダ（`Authorization` / `Host` 等）を設定する場合、v2.1.251 以降は適用前にユーザー承認を要求する |
 | `model` | デフォルトモデル上書き |
 | `availableModels` | 選択可能モデル制限 |
 | （組織 effort 上限） | 設定キーではなく Enterprise の admin コンソール側の機能（v2.1.195 以降）。カスタムロール単位・モデル単位に最大 effort レベルを設定でき、上限超のレベルは `/effort` ピッカーに出ず、`--effort` / `/effort` で指定しても上限に丸められる。対話セッションとプレーンテキスト `--print` では警告が出るが、`json` / `stream-json` 出力やバックグラウンドエージェントでは無警告で丸められる。複数ロールが同一モデルを許可する場合は最も緩い上限が適用。組織のモデル制限と同じ経路で配信される |
@@ -149,13 +149,14 @@ managed 階層は単一ではなく、上から **server-managed settings → MD
 | `autoContinueAtUsageLimit` | claude.ai の利用上限で停止した後、セッションを開いたまま待機しリセット後に自動で作業を継続する（既定 `true`、v2.1.234 以降）。**スコープは User or managed**（user / `--settings` / managed のみ読む）だが、それらのいずれも設定していない場合に限り project / local 設定が指定するとオフ扱いになる（無視されない唯一の例外）。`/config` の **Continue automatically at usage limit** はユーザー設定に書き込み、managed / `--settings` が指定している間は行自体が隠れる |
 | `fallbackModel` | プライマリモデルが overloaded / unavailable 時に順番に試行する fallback モデルを最大 3 つまで設定。`--fallback-model` フラグは v2.1.166 からインタラクティブセッションにも適用（v2.1.166） |
 | `advisorModel` | Advisor ツール（実験的）のモデル設定。メインモデルより強力なモデルをアドバイザーとして併用し、方針決定・エラー行き詰まり・完了宣言前などの要所で Claude が相談する。`/advisor` コマンド / `--advisor` フラグでも設定可。Anthropic API 専用（Bedrock / Vertex / Foundry 不可）。アドバイザーはメインモデル以上の能力が必要（詳細: https://code.claude.com/docs/en/advisor ） |
-| `effortLevel` | エフォートレベル。設定ファイルで指定できるのは `low` / `medium` / `high` / `xhigh` の4段階（`max` は設定ファイル不可でセッション限定、`ultracode` は別キー `ultracode` を使う）。優先順位は `CLAUDE_CODE_EFFORT_LEVEL` 環境変数 > 本設定 > モデル既定。スキル / サブエージェントの frontmatter `effort` は当該実行中のみセッションレベルを上書きする（環境変数は上書きしない）。Managed 設定に置いても**強制ではなく既定値**で、`/effort` や `--effort` でセッション単位に変更可能。モデル別対応レベル: Fable 5 / Opus 5 / Sonnet 5 / Opus 4.8 / Opus 4.7 は `low`〜`max`、Opus 4.6 / Sonnet 4.6 は `xhigh` を除く4段階（未対応レベル指定時は直下の対応レベルにフォールバック）。既定は `high`（Opus 4.7 のみ `xhigh`） |
+| `effortLevel` | エフォートレベル。設定ファイルで指定できるのは `low` / `medium` / `high` / `xhigh` の4段階（`max` は設定ファイル不可でセッション限定、`ultracode` は別キー `ultracode` を使う）。**v2.1.251 以降は「保存済みレベルを持たないモデルに対する既定値」という位置づけ**に変わり、`/effort` は本キーではなく `modelSettings` に書き込む。同一設定ファイル内ではモデル別 `modelSettings` エントリが本キーより優先される。スキル / サブエージェントの frontmatter `effort` は当該実行中のみセッションレベルを上書きする（環境変数は上書きしない）。Managed 設定に置いても**強制ではなく既定値**で、`/effort` や `--effort` でセッション単位に変更可能。モデル別対応レベル: Fable 5 / Opus 5 / Sonnet 5 / Opus 4.8 / Opus 4.7 は `low`〜`max`、Opus 4.6 / Sonnet 4.6 は `xhigh` を除く4段階（未対応レベル指定時は直下の対応レベルにフォールバック）。既定は `high`（Opus 4.7 のみ `xhigh`。組織が[組織既定モデル](https://code.claude.com/docs/en/model-config#organization-default-model)に既定 effort を設定している場合はそのモデルでその値が既定になる） |
+| `modelSettings` | **v2.1.251 で追加**。モデルごとに effort レベルを保存するオブジェクト。型は「モデル名 → `{ "effortLevel": "low" \| "medium" \| "high" \| "xhigh" }`」。既定は未設定。インタラクティブセッションで `/effort low|medium|high|xhigh` を実行するか `/model` ピッカーの effort スライダを動かすと、Claude Code が**使用中モデルのエントリとして user 設定に自動で書き込む**ため手で編集する機会は少ない。キーは `claude-opus-5` のような正規名で書かれ、そのモデルのエイリアス・日付サフィックス付き ID・`[1m]` 付き ID・認識済みプロバイダ固有 ID が同じエントリにマッチする。`/effort auto` で使用中モデルのエントリのみクリアされる。**優先順位**: 同一設定ファイル内ではモデル別エントリ > `effortLevel`。ファイル間ではモデルごとに独立して解決され、「そのモデルのエントリまたは `effortLevel` を設定している最上位の設定ファイル」が決める（したがって managed の `effortLevel` は user 設定の保存済みレベルに勝つ）。`ultracode` はこれらすべてに優先する。スコープ: Any file |
 | `autoMode` | Auto Modeの分類器設定。`environment`, `allow`, `soft_deny`, `hard_deny` 配列で構成。共有プロジェクト設定からは読み込まれない。v2.1.118 で `"$defaults"` を配列に含めることで組み込みルールを置換せず追加可能。v2.1.136 で `hard_deny` 追加: ユーザー意図や allow 例外に関わらず無条件にマッチアクションをブロック |
 | `disableAutoMode` | `"disable"` で Auto Mode の有効化を阻止。`Shift+Tab` サイクルから除外し `--permission-mode auto` を拒否。v2.1.207 で Bedrock / Vertex / Foundry の Auto mode がオプトイン不要になったため、無効化はこの設定で行う。同版から `autoMode` はリポジトリ内 `.claude/settings.local.json` から読み込まれなくなった（`~/.claude/settings.json` を使用） |
 | `useAutoModeDuringPlan` | プランモードで Auto Mode セマンティクスを使用（デフォルト: `true`）。共有プロジェクト設定からは読み込まれない |
 | `defaultShell` | `!` コマンドのデフォルトシェル。`"bash"`（デフォルト）または `"powershell"`（Windows、`CLAUDE_CODE_USE_POWERSHELL_TOOL=1` 必要） |
 | `otelHeadersHelper` | 動的OpenTelemetryヘッダー生成スクリプト。起動時と定期的に実行 |
-| `apiKeyHelper` | カスタムAPIキー生成スクリプト |
+| `apiKeyHelper` | カスタムAPIキー生成スクリプト。値はキャッシュされ、**①キャッシュ寿命（既定 5 分。`CLAUDE_CODE_API_KEY_HELPER_TTL_MS` で変更）経過後、②Anthropic API（LLM ゲートウェイ経由を含む）へのリクエストが `401` / `403` で失敗したとき**に再実行される。インタラクティブセッションで project / local 設定由来のコマンドは、ワークスペース信頼プロンプトを受け入れるまで実行されない |
 | `autoMemoryEnabled` | オートメモリ有効/無効（デフォルト: true） |
 | `autoMemoryDirectory` | オートメモリ保存先ディレクトリ |
 | `cleanupPeriodDays` | セッション保持日数（デフォルト: 30）。`0` は全トランスクリプト削除+永続化無効。検証エラーで拒否されなくなった（v2.1.89で `0` の動作変更）。v2.1.117 で `~/.claude/tasks/`、`~/.claude/shell-snapshots/`、`~/.claude/backups/` もスイープ対象に拡張 |
@@ -243,7 +244,7 @@ managed 階層は単一ではなく、上から **server-managed settings → MD
 | `<marketplace>.skipLfs` | プラグインマーケットプレース定義（`github` / `git` ソース）に `skipLfs: true` を指定すると Git LFS ダウンロードをスキップ（v2.1.153） |
 | `archive` プラグインソース | HTTPS 経由の zip からプラグインをインストールするソースタイプ（v2.1.224）。任意で SHA-256 ハッシュピン止めによる完全性検証に対応。`owner/*` 形式のオーナーワイルドカードをマーケットプレース managed settings に指定可（v2.1.223） |
 | `<plugin>.defaultEnabled` | プラグインの `plugin.json` またはマーケットプレースエントリで `defaultEnabled: false` を指定するとインストール後デフォルト無効。`/plugin` または `claude plugin enable` で有効化。依存関係は引き続き自動有効化（v2.1.154） |
-| `requiredMinimumVersion` | （Managed のみ）Claude Code の最小許容バージョン。範囲外なら起動を拒否し承認済みバージョンへ案内（v2.1.163） |
+| `requiredMinimumVersion` | （Managed のみ）Claude Code の最小許容バージョン。範囲外なら起動を拒否し承認済みバージョンへ案内（v2.1.163）。`requiredMaximumVersion` ともども **fail open** 設計で、不正な値は強制されず破棄される |
 | `requiredMaximumVersion` | （Managed のみ）Claude Code の最大許容バージョン。範囲外なら起動を拒否し承認済みバージョンへ案内（v2.1.163） |
 | `disableBundledSkills` | バンドルスキル・ワークフロー・組み込みスラッシュコマンドをモデルから隠す（v2.1.169）。環境変数 `CLAUDE_CODE_DISABLE_BUNDLED_SKILLS` でも可 |
 | `wheelScrollAccelerationEnabled` | フルスクリーンモードのマウスホイールスクロール加速を無効化（v2.1.174） |
@@ -300,6 +301,8 @@ managed 階層は単一ではなく、上から **server-managed settings → MD
 | `forceLoginGatewayUrl` | （Managed のみ）`/login` の Cloud gateway 画面が接続するゲートウェイ URL を指定。画面には URL 入力欄が無く、未設定だと「IT 管理者に問い合わせ」と表示される。`forceLoginMethod` 未設定時はこのキー単独で Cloud gateway 画面が開く。`forceLoginMethod: "gateway"` はログイン方式ピッカーも消す。`claudeai` / `console` を指定した場合はそちらが優先されるため、両方を整合させて設定する |
 | `managedSourcesBehavior` | （Managed のみ、v2.1.242 以降）複数の managed ソースが同一マシンに配信されたときの合成方法。`"first-wins"`（既定）は**ポリシーキーを1つでも持つ最上位のソースだけを採用**し、残りは「全 admin ソースから読むキー」を除き無視する。`"merge"` は配信された全 admin ソースを種類別に合成する: リスト（`permissions.allow`・`hooks`・`sandbox.network.allowedDomains`・`deniedMcpServers` 等）は全ソースの要素を結合、ロック（`allowManagedHooksOnly`・`permissions.disableBypassPermissionsMode`・`crossSessionInbound` 等）は最も厳しい値、制限リスト（`availableModels`・`allowedMcpServers`・`strictKnownMarketplaces`・`allowedChannelPlugins`・`fallbackModel` チェーン）はそれを設定する最上位ソースの内容を丸ごと採用、最上位ソース限定キー（`apiKeyHelper`・`awsAuthRefresh`・`awsCredentialExport`・`gcpAuthRefresh`・`otelHeadersHelper`・`proxyAuthHelper`・`forceLoginOrgUUID`・`forceLoginMethod`・`forceLoginGatewayUrl`・`parentSettingsBehavior`・`modelPicker`・`permissions.defaultMode`）は最上位ソースのみ、`env` は変数単位でマージ（両モード共通）、その他は最上位ソースの値。**本キー自身は「本キーかポリシーキーを持つ最上位ソース」からのみ読まれる**ため、下位ソースが自分を merge 対象に引き上げることはできず、server-managed settings が届かないマシンでは MDM プロファイル側にも書く必要がある。Windows HKCU と埋め込みホストの親設定は merge に参加しない。`managed-settings.json` は最下位の admin ソースなので、そこに `"merge"` を書いても合成相手がいない。`"merge"` は最上位より下の全ソースが管理者の統制下にある場合のみ使う（下位ソースの allow ルールが加算されるため）。`/status` の `Setting sources` 行に `(remote + file, merged)` のように表示される |
 
+> **managed 設定ファイル / drop-in ファイルが読めない・パースできない場合**: 他の admin ソースがポリシーを供給していなければ、claude.ai または Claude Console の認証情報でサインインしたセッションは起動時に「管理者に連絡してください」というメッセージを出して終了する。
+
 > **承認が必要になった managed 設定（v2.1.251）**: サンドボックスの TLS を終端する、サンドボックストラフィックを自前のプロキシへ流す、認証情報を注入する、サンドボックス隔離を弱める、といった server-managed 設定は適用前にユーザー承認を要求するようになった。`ANTHROPIC_CUSTOM_HEADERS`（managed / project 設定由来）も同様。あわせて managed 設定の承認ダイアログは、**前回承認時からの差分だけ**を列挙するようになった。同一の Claude apps gateway へ再サインインしても設定が変わっていなければ承認プロンプトは再表示されない。
 
 | `desktopSessionCleanupPeriodDays` | Claude Desktop / Cowork が書き込んだセッションのトランスクリプト保持除外に上限日数を設ける（v2.1.248）。従来 30 日でクリーンアップされ Desktop / Cowork のセッションが消えていた問題の修正に伴い追加。アプリ内に残っている限り除外されるが、本キーで上限を設定できる（組織ポリシーが保持期間を管理している場合を除く） |
@@ -340,11 +343,11 @@ Team / Enterprise 向けに、クラウドセッションを自社ホスト上�
 
 Anthropic ホスト型のクラウド環境（Claude Code on the web）に **API クレデンシャル**を保存し、Claude が鍵の値を見ないまま外部 API を呼べるようにする仕組みが追加された。Anthropic の agent proxy が、セッションの VM を出た後のリクエストに対して、環境に登録されたホスト向けだけヘッダを付与する。鍵はセッションの環境変数にもファイルにも現れない。
 
-- **前提条件**: claude.ai 組織の admin ロール（Admin / Owner。Pro / Max は自分の組織で保有）／**既存の** Anthropic ホスト型クラウド環境（セルフホスト環境は非対応、新規作成ダイアログにも項目は出ない）／API がインターネットから到達可能／組織が顧客管理暗号鍵（CMEK）を使っていないこと
+- **前提条件**: claude.ai 組織の admin ロール（**Team / Enterprise では Owner のみが保有し Admin は持たない**。Pro / Max は自分の組織で保有）／**既存の** Anthropic ホスト型クラウド環境（セルフホスト環境は非対応、新規作成ダイアログにも項目は出ない）／API がインターネットから到達可能／組織が顧客管理暗号鍵（CMEK）を使っていないこと
 - **登録方法**: [claude.ai/code](https://claude.ai/code) の環境編集ダイアログ「Update cloud environment」の **Environment variables** 直下にある **API credentials** から1件ずつ追加する。編集は不可（変更するには削除して再追加）。既定の Credential type は `Bearer`（`Authorization: Bearer <値>` ヘッダ。`X-Api-Key` のようなヘッダ名・prefix なしにも変更可）。**Allowed websites** に対象ホストを列挙し、先頭 `*.` で全サブドメインにマッチ。保存後は値を再表示できない
 - **ネットワーク許可との関係**: クレデンシャルに列挙したホストは、環境の [network access level] が本来許可しない場合でもセッションから到達できる（agent proxy がスキップするホストを除く）。GitHub（専用プロキシ）・MCP コネクタ（Anthropic サーバー経由）も従来どおりセッションの allowlist を通らない
 - **クレデンシャルが付かないリクエスト**: GitHub（GitHub プロキシが認証）／`api.anthropic.com` と公開パッケージレジストリ（`registry.npmjs.org`, `jsr.io`, `npm.jsr.io`, `pypi.org`, `files.pythonhosted.org`, `index.crates.io`, `proxy.golang.org`）／**セットアップスクリプトからのリクエスト**（Claude Code は setup script の実行後に agent proxy へ接続するため）
-- **共有環境**: 組織共有環境も環境セレクタから開けるようになり、Admin / Owner はそこで編集・API クレデンシャル追加ができる。環境変数とセットアップスクリプトは利用者全員が読めるため、秘密情報は環境変数ではなく API クレデンシャルに置く
+- **共有環境**: 組織共有環境も環境セレクタから開けるようになり、**Owner** はそこで編集・API クレデンシャル追加ができる（他メンバーは読み取り専用）。環境変数とセットアップスクリプトは利用者全員が読めるため、秘密情報は環境変数ではなく API クレデンシャルに置く
 - **アーカイブ時**: 環境をアーカイブしても実行中セッションにはクレデンシャルが付いたままになるため、不要なものは事前に削除する
 
 > ハーネス設計上の注意: 「クラウド環境には専用のシークレットストアが無い」という従来の前提が変わった。ただし**鍵をコマンドラインやスクリプトで参照する用途には使えない**（Claude に値は渡らず、proxy が付与するだけ）。`curl` 等で当該ホストを叩く形のハーネスに限って有効。
@@ -496,6 +499,8 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 
 ---
 
+> **プラン別の既定モデル（2026-09-01 時点）**: Max / Team Premium / Enterprise / Anthropic API は **Opus 5**、Pro / Team Standard は **Sonnet 5**。v2.1.251 でシート課金の Enterprise サブスクリプションも Opus 5 になり、従量課金（pay-as-you-go）との区別が公式ドキュメントから消えた。
+
 ## 6. 環境変数
 
 主要な環境変数（`settings.json` の `env` キーまたはシェルで設定）:
@@ -518,7 +523,7 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 | `MAX_MCP_OUTPUT_TOKENS` | MCPツール出力トークン上限 |
 | `SLASH_COMMAND_TOOL_CHAR_BUDGET` | スキル説明の文字数バジェット |
 | `CLAUDE_CODE_REMOTE` | Webリモート環境で `"true"` |
-| `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB` | `1` でサブプロセス環境から認証情報を除去（v2.1.83） |
+| `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB` | `1` でサブプロセス環境から認証情報を除去（v2.1.83）。**hooks プロセスも対象**で、常に除去される `OTEL_*` エクスポータ変数に加えて、本変数が `1` のときは除去対象の変数が hook からも見えなくなる |
 | `CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK` | 非ストリーミングフォールバック無効化（v2.1.83） |
 | `CLAUDE_STREAM_IDLE_TIMEOUT_MS` | ストリーミングアイドルウォッチドッグ閾値（デフォルト90秒）（v2.1.84） |
 | `ANTHROPIC_DEFAULT_{OPUS,SONNET,HAIKU}_MODEL_SUPPORTS` | ピンモデルのeffort/thinking検出オーバーライド（v2.1.84） |
@@ -591,6 +596,9 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 | `CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS` | 非対話モード（`-p`）で最終ターン後、出力に含まれるバックグラウンドサブエージェント / ワークフローの完了を待つ際の**連続アイドル待機時間の上限**（ms、デフォルト `600000`＝10分）。合計待機時間の上限ではなく「何も進捗が無いまま待ち続けられる時間」の上限である点に注意（2026-08-31 の公式ドキュメント改訂で明確化） |
 | `CLAUDE_CODE_DISABLE_BEDROCK_CONTENT_TYPE_GUARD` | `1` で、Amazon Bedrock ストリーミング応答が `application/vnd.amazon.eventstream` content-type を持つかの検査をスキップする。未設定時、異なる content-type の応答はエラーになる |
 | `CLAUDE_CODE_ENABLE_TODO_TOOLS` | `1` で Todo / タスク追跡ツール（`TaskCreate` / `TaskGet` / `TaskUpdate` / `TaskList` / `TodoWrite`）を復活させる。**v2.1.233 で Opus 4.8 / Sonnet 5 / Fable 5 / Mythos 5 以降のモデルでは既定で提供されなくなった**ため、これらに依存するハーネスは明示設定が必要 |
+| `CLAUDE_CODE_AUTO_BACKGROUND_WORKER_CHECKIN_SECONDS` | `CLAUDE_AUTO_BACKGROUND_TASKS` 有効時に、実行中のバックグラウンドサブエージェントを確認するよう Claude へ促すリマインダーの間隔（秒）。**`1`〜`86400` の素の整数のみ受理**し、それ以外の値・表記は未設定として読まれる。未設定時はリマインダーなし（v2.1.248 以降） |
+| `BETA_TRACING_ENDPOINT` | [詳細ベータトレーシング](https://code.claude.com/docs/en/monitoring-usage#traces-beta)の OTLP エンドポイント。`ENABLE_BETA_TRACING_DETAILED=1` と併用するとログ・トレースが構成済みエクスポータではなくこちらへ送られる。シェル・user 設定・managed 設定でのみ設定可（project / local 設定では無視） |
+| `ENABLE_BETA_TRACING_DETAILED` | `1` かつ `BETA_TRACING_ENDPOINT` 設定時に詳細ベータトレーシングを有効化。内容を含むスパン属性と `claude_code.hook` スパンが追加される。インタラクティブ CLI セッションでは組織がベータの許可リストに入っている必要がある。project / local 設定では無視 |
 
 > 補足: `OTEL_LOG_TOOL_DETAILS=1` は v2.1.157 で `tool_decision` イベントに `tool_parameters`（bash コマンド、MCP/skill 名等）を追加する効果も併せ持つようになった。
 
