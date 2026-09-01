@@ -1,5 +1,50 @@
 # harness-harness 更新履歴
 
+## 2026-09-02 — 公式ドキュメント巡回
+
+### 検出・更新
+
+Claude Code は **v2.1.252**（2026-08-31、修正のみ）、Codex CLI は安定版 **0.152.0**（2026-09-01）へ更新。追跡中 49 URL のハッシュ比較で 29 件の変更を検出したが、GitHub / skills.sh / learn.chatgpt.com 等の HTML ページはナビゲーション項目（`User lifecycle management` 追加）と Stars・installs の動的差分が大半。実質的な中身は下記 3 点。
+
+**1) Claude Fable 5.1 と v2.1.255 がリファレンスに先行記載された — 今回最大の変更**
+
+公式 changelog は v2.1.252 までだが、model-config / advisor / env-vars / cli-reference / claude-security / interactive-mode の各ページが **未リリースの v2.1.255 と Claude Fable 5.1** を前提に一斉改訂された。文面も「Fable 5」から「Fable models」へ横断的に一般化されている。
+
+- **`fable` エイリアスの解決先が Fable 5.1 に変わる**（`ANTHROPIC_DEFAULT_FABLE_MODEL` 未設定時）。Fable 5 を使い続けるにはモデルID指定（`/model claude-fable-5` 等）が必要
+- **user 設定の `model` 値が自動書き換えされる**: `claude-fable-5` / `claude-fable-5[1m]` かつ Anthropic API 直結なら、v2.1.255 初回起動時に `fable` / `fable[1m]` へ書き換えられ、起動時モデル行に `(auto-updated)` が一度出る。project / local / managed の値は不変
+- **`availableModels` のバージョン接頭辞は後続モデルIDにも一致**する。`claude-fable-5` は Fable 5.1 も許可してしまうため、**Fable 5 だけに絞りたい組織は許可リストの見直しが必要**（Fable 5.1 のみなら `claude-fable-5-1`）
+- ファミリーエイリアスの解決規則も改訂: 「常に最新版へ解決」ではなく「**許可リストが通常の解決先を許すならそのモデル、ブロック時のみ最新許可版へ置換**」
+- `VERTEX_REGION_CLAUDE_FABLE_5_1`（v2.1.255）追加。Fable 5.1 は effort の既定値ホールドを持たない（Opus 5 と同じ）。advisor は Fable 5.1 メインなら Fable 5.1 のみ受理
+- ハーネス影響: **モデルを `fable` エイリアスで固定しているハーネスは、意図せず Fable 5.1 に乗り換わる**。バージョンを固定したいならモデルIDで書く
+
+**2) Codex 0.152.0 でプランニングツールが既定オフに — 破壊的既定変更**
+
+`update_plan` ツールが既定で無効化され、`tools.update_plan.enabled = true` を明示しないと使えなくなった（#41744）。**プラン提示を運用ルールに組み込んだ AGENTS.md / Codex ハーネスは要見直し**。他に MCP ツール単位の `output_token_limit`（#41421）、MCP サーバー名に `:` `@` `/` `.` を許可（#41700）、app-server の `thread/shellCommand` タイムアウト設定（#41384）、Vim モードの `/` `?` 検索（#41586）。
+
+**3) 細部の明文化**
+
+- `StopFailure` フックの error 値に **`account_on_hold`** が追加（specs/claude/hooks.md の一覧は `overloaded` / `oauth_org_not_allowed` / `model_not_found` も欠落していたため併せて補完）
+- `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB` の除去対象が「Anthropic / クラウドプロバイダの認証情報」から「**Claude Code が認証情報と認識する任意の変数＋パッケージレジストリ URL に埋め込まれた認証情報**」へ拡大明記
+- `autoCompactWindow` / `CLAUDE_CODE_AUTO_COMPACT_WINDOW` の実効値が**モデルのコンテキストウィンドウでも頭打ち**になることを明記
+- `/tasks` のモデル・effort 表示要件は v2.1.243 ではなく **v2.1.242 以降**（effort は定義側が `effort` を設定している場合のみ併記）
+- サンドボックスの `mask` / `network.tlsTerminate` / `credentials.allowPlaintextInject` が server-managed 設定経由なら承認対象、という記述が sandboxing 側にも追記（specs 側は v2.1.251 の記述で既にカバー済み）
+
+### 更新ファイル
+
+- `specs/claude/changelog.md` — v2.1.252 追加、「ドキュメント先行記載（v2.1.255 / Fable 5.1）」節を新設
+- `specs/claude/configuration.md` — `availableModels` / `autoCompactWindow` / `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB`
+- `specs/claude/hooks.md` — `StopFailure` の error 値一覧を補完
+- `specs/claude/skills-and-commands.md` — `/tasks` のモデル・effort 表示要件を修正
+- `specs/codex/changelog.md` — CLI 0.152.0 追加
+- `specs/codex/configuration.md` — `[tools]` セクション新設（`update_plan.enabled`）
+- `specs/codex/mcp.md` — `output_token_limit`、サーバー名の使用可能文字
+
+### スキルエコシステム巡回
+
+`kb/skills/_index.md` の `last_patrol` が 2026-09-01 で 7 日以内のため Phase 3.5 はスキップ。
+
+---
+
 ## 2026-09-01 — 公式ドキュメント巡回
 
 ### 検出・更新

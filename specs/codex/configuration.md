@@ -84,6 +84,16 @@ network_proxy = false                    # ネットワークプロキシ（0.13
 
 > 0.131.0+: 設定スキーマ外フィールドは **strict config parsing** により拒否される。旧来 unknown フィールドが警告だった挙動から変更されている点に注意。
 
+#### ツール有効化（`[tools]`）
+
+```toml
+[tools]
+update_plan.enabled = true   # プランニングツール。0.152.0 で既定 false に変更されたため明示有効化が必要
+```
+
+> **0.152.0 の破壊的既定変更**: プランニングツール（`update_plan`）が既定で無効になった。プラン提示を前提にした AGENTS.md の運用ルールやハーネスは、`tools.update_plan.enabled = true` を設定するか、プラン非依存の記述へ改めること。
+
+
 #### Agent 管理
 
 ```toml

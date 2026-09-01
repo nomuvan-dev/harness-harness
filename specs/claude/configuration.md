@@ -140,7 +140,7 @@ managed 階層は単一ではなく、上から **server-managed settings → MD
 | `httpHookAllowedEnvVars` | HTTP フック許可環境変数 |
 | `env` | 環境変数設定。**v2.1.251 以降、project / local 設定の `env` からは「チェックアウトしたリポジトリに委ねるべきでない変数」を設定できない**（該当変数は破棄され `claude --debug` で確認できる警告が出る。シェル・user 設定・managed 設定で設定する）。対象は ①Claude Code が自分のファイルを置く場所を決める変数（`CLAUDE_CONFIG_DIR` / `CLAUDE_CODE_TMPDIR` および `HOME` / `TMPDIR` / `TMP` / `TEMP` / `XDG_*` 系）、②セッション内容を外部へ書き出す変数（`OTEL_LOG_RAW_API_BODIES`、詳細ベータトレーシングの `ENABLE_BETA_TRACING_DETAILED` / `BETA_TRACING_ENDPOINT`）、③起動・同期の挙動を変える変数（`CLAUDE_CODE_PROCESS_WRAPPER` / `CLAUDE_CODE_SYNC_SKILLS` / `CLAUDE_CODE_SYNC_PLUGINS` / `CLAUDE_CODE_PLUGIN_CACHE_DIR` / `CLAUDE_CODE_PLUGIN_SEED_DIR`）。v2.1.251 より前は、`HOME` / `XDG_CONFIG_HOME` と ③ を除きすべて project / local 設定から設定できた。`CLAUDE_CODE_RESTRICTED` は起動環境からのみ読まれ、どの設定ファイルの `env` でも無視される。managed / project 設定由来の `ANTHROPIC_CUSTOM_HEADERS` は、認証・組織/テナント・ルーティング・API 挙動系ヘッダ（`Authorization` / `Host` 等）を設定する場合、v2.1.251 以降は適用前にユーザー承認を要求する |
 | `model` | デフォルトモデル上書き |
-| `availableModels` | 選択可能モデル制限 |
+| `availableModels` | 選択可能モデル制限。エントリはモデルファミリー（`sonnet`）・バージョン接頭辞（`claude-sonnet-4-5`）・完全なモデルID のいずれでも一致する。**バージョン接頭辞は「もう1セグメント伸ばした後続モデルID」にも一致する**ため、`claude-fable-5` は Fable 5 と Fable 5.1 の両方を許可し、Fable 5.1 だけに絞るには `claude-fable-5-1` と書く（2026-09-02 の公式ドキュメント改訂で明文化）。ファミリーエイリアス（`opus` / `sonnet` / `haiku` / `fable`）は**許可リストが通常の解決先を許すならそのモデルに解決**し、ブロックされている場合のみ許可リスト内の最新版に置換されて要求モデルと置換モデルを示す通知が出る |
 | （組織 effort 上限） | 設定キーではなく Enterprise の admin コンソール側の機能（v2.1.195 以降）。カスタムロール単位・モデル単位に最大 effort レベルを設定でき、上限超のレベルは `/effort` ピッカーに出ず、`--effort` / `/effort` で指定しても上限に丸められる。対話セッションとプレーンテキスト `--print` では警告が出るが、`json` / `stream-json` 出力やバックグラウンドエージェントでは無警告で丸められる。複数ロールが同一モデルを許可する場合は最も緩い上限が適用。組織のモデル制限と同じ経路で配信される |
 | `modelOverrides` | モデルIDマッピング |
 | `modelPicker` | `/model` ピッカーに並べるモデルを自前の順序・ラベルで指定（v2.1.242 以降）。`options` 配列（各行に必須 `model` と任意 `label` / `description`）と任意の `replaceBuiltInOptions`（既定 `false`）を持つ。`model` は `--model` と同じ表記を受理（エイリアス・Anthropic モデルID・Bedrock / Vertex / Foundry 形式ID）。`replaceBuiltInOptions: true` で組み込みラインナップ・`availableModels` 由来行・ゲートウェイ探索結果・`ANTHROPIC_CUSTOM_MODEL_OPTION` を全て隠し、**Default** と現在使用中モデルの行だけを残す。`false` なら組み込みの後ろに追記。提供不可の行は落とされ、選択不可の行は理由付きでグレーアウト、全行が残らなければ組み込みラインナップに戻る。`availableModels` の許可リストは引き続き適用される。**スコープは User or managed**（managed / `--settings` / user のうち最上位のものが丸ごと採用され、project / local では無視。ラインナップのマージは行われない） |
@@ -209,7 +209,7 @@ managed 階層は単一ではなく、上から **server-managed settings → MD
 | `showClearContextOnPlanAccept` | プラン承認画面で「コンテキストクリア」オプション表示 |
 | `teammateDefaultModel` | **v2.1.234 で削除**。残存値は無視される。チームメイトのモデルはプロンプトで明示するか `CLAUDE_CODE_SUBAGENT_MODEL` で指定する |
 | `autoCompactEnabled` | 自動コンパクション（デフォルト: `true`）。`/config` の **Auto-compact**。環境変数で無効化する場合は `env` に `DISABLE_AUTO_COMPACT` |
-| `autoCompactWindow` | 自動コンパクション発動時のコンテキスト充填量（トークン、`100000`〜`1000000`）。未設定時はモデルごとの調整値。`/autocompact` コマンドがユーザー設定に書き込み、`--autocompact` フラグと `CLAUDE_CODE_AUTO_COMPACT_WINDOW` が上書き可 |
+| `autoCompactWindow` | 自動コンパクション発動時のコンテキスト充填量（トークン、`100000`〜`1000000`）。未設定時はモデルごとの調整値。`/autocompact` コマンドがユーザー設定に書き込み、`--autocompact` フラグと `CLAUDE_CODE_AUTO_COMPACT_WINDOW` が上書き可。**実効値はモデルのコンテキストウィンドウでも頭打ちになる**（2026-09-02 の改訂で明文化） |
 | `skillListingBudgetFraction` | 毎ターンClaudeに提示するスキル一覧に割り当てるコンテキスト窓の割合（デフォルト: `0.01` = 1%）。超過時は利用頻度の低いスキルの説明が落とされ名前のみになる（呼び出しは可能だが内容が見えない）。`/doctor` が一覧コストを推定表示 |
 | `skillListingMaxDescChars` | スキル一覧における1スキルあたりの `description` + `when_to_use` の文字数上限（デフォルト: `1536`）。超過分は切り詰め |
 | `workflowKeywordTriggerEnabled` | プロンプト中の `ultracode` キーワードで動的ワークフローを発動するか（デフォルト: `true`）。`/config` の **Ultracode keyword trigger**。v2.1.157 追加、v2.1.160 でキーワードが `workflow` → `ultracode` にリネーム |
@@ -523,7 +523,7 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 | `MAX_MCP_OUTPUT_TOKENS` | MCPツール出力トークン上限 |
 | `SLASH_COMMAND_TOOL_CHAR_BUDGET` | スキル説明の文字数バジェット |
 | `CLAUDE_CODE_REMOTE` | Webリモート環境で `"true"` |
-| `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB` | `1` でサブプロセス環境から認証情報を除去（v2.1.83）。**hooks プロセスも対象**で、常に除去される `OTEL_*` エクスポータ変数に加えて、本変数が `1` のときは除去対象の変数が hook からも見えなくなる |
+| `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB` | `1` でサブプロセス環境（Bash ツール・hooks・MCP stdio サーバー）から認証情報を除去（v2.1.83）。除去対象は Anthropic / クラウドプロバイダの認証情報に限らず、**Claude Code が認証情報と認識する任意の変数と、パッケージレジストリ URL に埋め込まれた認証情報**まで広がる（2026-09-02 の改訂で明文化）。**hooks プロセスも対象**で、常に除去される `OTEL_*` エクスポータ変数に加えて、本変数が `1` のときは除去対象の変数が hook からも見えなくなる |
 | `CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK` | 非ストリーミングフォールバック無効化（v2.1.83） |
 | `CLAUDE_STREAM_IDLE_TIMEOUT_MS` | ストリーミングアイドルウォッチドッグ閾値（デフォルト90秒）（v2.1.84） |
 | `ANTHROPIC_DEFAULT_{OPUS,SONNET,HAIKU}_MODEL_SUPPORTS` | ピンモデルのeffort/thinking検出オーバーライド（v2.1.84） |
