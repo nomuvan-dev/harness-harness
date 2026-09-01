@@ -3,7 +3,33 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-09-01（v2.1.251 のまま。公式 changelog に変更なし。ドキュメント側のみ大幅改訂され、`modelSettings` 設定キーの新設・サブエージェント／チームメイトのモデル優先順位の新順序・project/local `env` の禁止変数拡大が明文化された）
+最終更新: 2026-09-02（v2.1.252 を追加。公式 changelog は v2.1.252 までだが、リファレンス各ページは**未リリースの v2.1.255 と Claude Fable 5.1** を先行記載している。下記「ドキュメント先行記載（v2.1.255 / Fable 5.1）」を参照）
+
+---
+
+## ドキュメント先行記載（v2.1.255 / Fable 5.1、2026-09-02 時点で公式 changelog 未掲載）
+
+公式 changelog にはまだエントリが無いが、model-config / advisor / env-vars / claude-security 等のリファレンスが v2.1.255 と **Claude Fable 5.1** に言及している。実際のリリース時に本節を通常のバージョンエントリへ格上げすること。
+
+- **Claude Fable 5.1**（v2.1.255 以降）: Fable 系の新リリース。`fable` エイリアスは既定で **Fable 5.1** に解決する（`ANTHROPIC_DEFAULT_FABLE_MODEL` 未設定時。v2.1.255 より前は Fable 5 に解決していた）。Fable 5 を使うにはモデルID指定（Anthropic API なら `/model claude-fable-5` / `claude --model claude-fable-5`）が必要
+- **保存済みモデル値の自動書き換え**: user 設定の `model` が `claude-fable-5` / `claude-fable-5[1m]` で、かつ Anthropic API に直結している場合、v2.1.255 初回起動時に `fable` / `fable[1m]` エイリアスへ書き換えられ、起動時のモデル行に `(auto-updated)` が一度表示される。project / local / managed 設定の値は変更されない
+- **`availableModels` のバージョン接頭辞は後続モデルIDにも一致**: `claude-fable-5` は Fable 5 と Fable 5.1 の両方を許可する。Fable 5.1 のみに絞るなら `claude-fable-5-1`
+- **ファミリーエイリアスの解決規則を明確化**: エイリアスは許可リストが通常の解決先を許すならそのモデルに解決し、ブロックされている場合のみファミリー内の最新許可モデルへ置換される
+- **`VERTEX_REGION_CLAUDE_FABLE_5_1` 環境変数追加**（v2.1.255）: Google Cloud's Agent Platform 利用時の Fable 5.1 リージョン上書き
+- **Fable 5.1 は effort の既定値ホールドを持たない**（Fable 5 / Opus 4.8 / Opus 4.7 が持つ「初回実行時のモデル既定 effort をセッション横断で保持する」挙動の対象外。Opus 5 と同じ扱い）
+- **Fable 5.1 の advisor 制約**: Fable 5.1 メインは Fable 5.1 のみを advisor として受理する（Fable 5 advisor は拒否される）。Fable 5 メインは Fable 5.1 または Fable 5 を受理
+- 安全性分類器によるフォールバックは Fable 5.1 も Fable 5 と同じ（生物学は Opus 5、サイバーセキュリティは Opus 4.8 へ再実行）
+- 1M コンテキスト・常時 extended thinking（thinking 無効化不可）も Fable 5 と同じ
+
+---
+
+## v2.1.252 (2026-08-31)
+
+- 修正のみ:
+  - 一部 Mac で Bash コマンドが `task output swap refused (tasks dir moved or linked)` で失敗する
+  - `.claude/settings.local.json` がまだ無いプロジェクトで「always allow」が保存されない
+  - Claude Desktop / VS Code がホストする Remote Control セッションが、claude.ai への接続が劣化しているとツール完了後に数分停止する
+  - 失敗出力が非常に大きいバックグラウンドタスク通知（ディスクフル時の git エラー等）で会話が API リクエストサイズ上限を超える
 
 ---
 

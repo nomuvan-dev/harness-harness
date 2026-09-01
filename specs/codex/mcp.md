@@ -105,6 +105,9 @@ codex mcp add my-oauth-server --url https://example.com/mcp \
 | `disabled_tools` | なし | 無効化するツールのブラックリスト |
 | `mcp_oauth_callback_port` | 自動 | OAuth コールバックポート |
 | `mcp_oauth_callback_url` | 自動 | OAuth コールバック URL |
+| `output_token_limit` | なし | **ツール単位**の出力トークン上限（0.152.0+）。セッション再開をまたいでも truncation が一貫する。設定キーの正確な配置は 2026-09-02 時点で公式 config reference に未収載 |
+
+> **サーバー名の使用可能文字（0.152.0+）**: `mcp_servers.<サーバー名>` の名前に `:` `@` `/` `.` を使えるようになり、`@scope/pkg` のようなパッケージ形式の名前を CLI コマンド・認証まわり全体で扱える。
 
 ### 3.4 設定ファイルの配置
 

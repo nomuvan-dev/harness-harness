@@ -29,7 +29,7 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 | `PostToolUseFailure` | ツール失敗後 | No | ツール名 |
 | `PostToolBatch` | 並列ツール呼び出しのバッチ全体が解決した後、次のモデル呼び出し前 | Yes | matcher非サポート（全バッチで発火） |
 | `Stop` | Claude の応答完了時 | Yes | - |
-| `StopFailure` | APIエラー発生時 | No | `rate_limit`, `authentication_failed`, `billing_error`, `invalid_request`, `server_error`, `max_output_tokens`, `unknown` |
+| `StopFailure` | APIエラー発生時 | No | `rate_limit`, `overloaded`, `authentication_failed`, `oauth_org_not_allowed`, `account_on_hold`, `billing_error`, `invalid_request`, `model_not_found`, `server_error`, `max_output_tokens`, `unknown`（`account_on_hold` は 2026-09-02 の公式ドキュメント改訂で追加） |
 | `PermissionDenied` | Auto Mode分類器が拒否した後 | No | ツール名 |
 | `SessionEnd` | セッション終了時 | No | `clear`, `resume`, `logout`, `prompt_input_exit`, `other`（**v2.1.234 で `bypass_permissions_disabled` を廃止**。Claude Code は送出しなくなったため matcher から削除すること） |
 
@@ -406,7 +406,7 @@ v2.1.133 以降、すべてのイベントの入力 JSON に effort level も含
 | `PostToolBatch` | `tool_calls`（各要素は `tool_name`, `tool_input`, `tool_use_id`, `tool_response`）。`tool_response` は `PostToolUse` と形が異なりモデルが見る `tool_result` のシリアライズ |
 | `PermissionDenied` | `tool_name`, `tool_input`, `tool_use_id`, `reason` |
 | `Stop` | `stop_hook_active`, `last_assistant_message`, `background_tasks`, `session_crons`（v2.1.145+） |
-| `StopFailure` | `error`, `error_details`, `last_assistant_message` |
+| `StopFailure` | `error`（`rate_limit` / `overloaded` / `authentication_failed` / `oauth_org_not_allowed` / `account_on_hold` / `billing_error` / `invalid_request` / `model_not_found` / `server_error` / `max_output_tokens` / `unknown`）, `error_details`, `last_assistant_message` |
 | `Notification` | `message`, `title`, `notification_type` |
 | `SubagentStart` | `agent_id`, `agent_type` |
 | `SubagentStop` | `stop_hook_active`, `agent_id`, `agent_type`, `agent_transcript_path`, `last_assistant_message`, `background_tasks`, `session_crons`（v2.1.145+） |
