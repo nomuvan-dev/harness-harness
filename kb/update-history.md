@@ -1,5 +1,49 @@
 # harness-harness 更新履歴
 
+## 2026-09-03 — 公式ドキュメント巡回
+
+### 検出・更新
+
+Claude Code は **v2.1.257 / v2.1.258**（ともに 2026-09-01）、Codex CLI は安定版 **0.152.1**（2026-09-01、修正のみ）へ更新。追跡中 49 URL のハッシュ比較で 30 件の変更を検出したが、GitHub / skills.sh / learn.chatgpt.com 等の HTML ページはナビゲーション項目（`ChatGPT Work` 追加）の差分が大半で、実質的な中身は Claude Code v2.1.257 に集中している。
+
+**1) v2.1.257 は今年でも屈指の「ハーネス影響が大きい」リリース**
+
+- **`permissions.defaultMode` の scope 変更（破壊的）**: `auto` に加えて **`bypassPermissions` も project / local 設定からは有効にならなくなった**。`.claude/settings.json` に `bypassPermissions` を書いて配布していたハーネスは無効化される。user / managed 設定に置くか `--permission-mode` で渡す
+- **`permissionExplainerEnabled` 設定と `Ctrl+E` コマンド解説を削除**。キーバインド `confirm:toggleExplanation` も同時に廃止。設定ファイルに残っていても無視される
+- **`CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1` 追加**: v2.1.251 で「すべてを上書き」から「既定値」へ弱まった `CLAUDE_CODE_SUBAGENT_MODEL` を、再び全サブエージェント・チームメイト・ワークフローエージェントへ**強制適用**できる。組み込みの Explore / Plan にも効き、Explore の「Claude API では Opus 上限」制約も上書きされる。**サブエージェントを安価なモデルへ寄せたいハーネスの決定打**
+- **`permissions.blockReadsOutsideWorkingDirectories` 追加** + auto モードでの作業ディレクトリ外読み取りに初回確認プロンプト。auto モードに **Containment Escape ルール**（クラウドのメタデータ認証情報取得・egress 回避・テナント跨ぎは既定で自動承認しない）
+- **`timeFormat` / `timeZone` 設定追加**: ターン終了時刻とトランスクリプトのタイムスタンプを 12/24時間・UTC・strftime パターンで制御。ログ突合を UTC 揃えしたいチームに有用
+- **`allowManagedPermissionRulesOnly` の意味を明確化**: 「**設定ファイル由来**の権限ルールを managed に限定」であり、`--disallowedTools` とセッション中の `deny` / `ask` は設定リロード後も生き続けるようになった（従来は初回リロードで失われる不具合）
+- **`/effort` に `s`（セッション限定）**、`claude agents` のキーバインド `Agents` コンテキスト追加、`/doctor` にサンドボックスマスク残骸の警告
+- セキュリティ修正が厚い: プラグインが symlink 経由で自ディレクトリ外を読めた件、auto モードで複合コマンド／サブシェル内に `permissions.ask` が効かなかった件、Bash の `Read()`/`Edit()` deny が `< file` リダイレクトや `tac`/`egrep` に効かなかった件、Remote Control の同意プロンプトを Esc で閉じると同意扱いになっていた件
+
+**2) Claude Fable 5.1 が正式リリース（v2.1.257）**
+
+2026-09-02 巡回で「リファレンス先行記載」として記録していた内容が公式 changelog に掲載され、**Fable 5.1（`claude-fable-5-1`）が既定の Fable モデル**になった。1M コンテキスト、$10/$50 per Mtok（キャッシュ読み $0.25/Mtok）。`specs/claude/changelog.md` の該当節は「先行記載」から通常のまとめ節へ格上げ済み。`fable` エイリアス固定のハーネスは意図せず 5.1 に乗り換わる点は前回記載のとおり。
+
+**3) hooks の `setMode` 制約を specs に追記**
+
+公式 hooks ドキュメントが `setMode` の `bypassPermissions` について「**`destination` の指定に関わらず `defaultMode` として永続化されない**」を明記。併せて有効化条件（起動時に bypass が使える状態だったか）を `specs/claude/hooks.md` §6.3 に新規記載した。
+
+**4) Codex は静か**
+
+0.152.1 は Guardian（自動承認レビュー）がモデルメタデータ経由の Node REPL ポリシーを尊重する修正のみ。0.153.0 は alpha.6 まで進行中だがリリースノート本文が空でスペック反映対象なし。`learn.chatgpt.com/docs/hooks` はナビゲーション以外の差分ゼロ。
+
+### 更新ファイル
+
+- `specs/claude/changelog.md` — v2.1.257 / v2.1.258 追加、Fable 5.1 節を「先行記載」から格上げ
+- `specs/claude/configuration.md` — `timeFormat` / `timeZone` / `permissions.blockReadsOutsideWorkingDirectories` / `CLAUDE_CODE_SUBAGENT_MODEL_FORCE` / `CLAUDE_CODE_DISABLE_CFC_PROMPT` 追加、`permissions.defaultMode` の scope 変更、`permissionExplainerEnabled` 削除、`allowManagedPermissionRulesOnly` 改訂
+- `specs/claude/hooks.md` — `setMode` の制約と `bypassPermissions` 非永続化を追記
+- `specs/claude/skills-and-commands.md` — サブエージェントモデル優先順位に `CLAUDE_CODE_SUBAGENT_MODEL_FORCE` を追記
+- `specs/claude/agent-teams.md` — チームメイトにも `FORCE` が効くことを追記
+- `specs/codex/changelog.md` — 0.152.1 追加
+
+### スキルエコシステム巡回
+
+`kb/skills/_index.md` の `last_patrol` が 2026-09-01 で 7 日以内のため Phase 3.5 はスキップ。
+
+---
+
 ## 2026-09-02 — 公式ドキュメント巡回
 
 ### 検出・更新

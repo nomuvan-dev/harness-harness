@@ -3,13 +3,13 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-09-02（v2.1.252 を追加。公式 changelog は v2.1.252 までだが、リファレンス各ページは**未リリースの v2.1.255 と Claude Fable 5.1** を先行記載している。下記「ドキュメント先行記載（v2.1.255 / Fable 5.1）」を参照）
+最終更新: 2026-09-03（v2.1.257 / v2.1.258 を追加。先行記載されていた **Claude Fable 5.1** は v2.1.257 で正式リリースされ、既定の Fable モデルになった）
 
 ---
 
-## ドキュメント先行記載（v2.1.255 / Fable 5.1、2026-09-02 時点で公式 changelog 未掲載）
+## Claude Fable 5.1 まとめ（v2.1.257 で正式リリース）
 
-公式 changelog にはまだエントリが無いが、model-config / advisor / env-vars / claude-security 等のリファレンスが v2.1.255 と **Claude Fable 5.1** に言及している。実際のリリース時に本節を通常のバージョンエントリへ格上げすること。
+リファレンス各ページが v2.1.255 時点で先行記載していた内容。公式 changelog では **v2.1.257** で「Fable 5.1 を追加、既定の Fable モデルに」として掲載された。以下は各リファレンスに散在する詳細をまとめたもの。
 
 - **Claude Fable 5.1**（v2.1.255 以降）: Fable 系の新リリース。`fable` エイリアスは既定で **Fable 5.1** に解決する（`ANTHROPIC_DEFAULT_FABLE_MODEL` 未設定時。v2.1.255 より前は Fable 5 に解決していた）。Fable 5 を使うにはモデルID指定（Anthropic API なら `/model claude-fable-5` / `claude --model claude-fable-5`）が必要
 - **保存済みモデル値の自動書き換え**: user 設定の `model` が `claude-fable-5` / `claude-fable-5[1m]` で、かつ Anthropic API に直結している場合、v2.1.255 初回起動時に `fable` / `fable[1m]` エイリアスへ書き換えられ、起動時のモデル行に `(auto-updated)` が一度表示される。project / local / managed 設定の値は変更されない
@@ -20,6 +20,46 @@
 - **Fable 5.1 の advisor 制約**: Fable 5.1 メインは Fable 5.1 のみを advisor として受理する（Fable 5 advisor は拒否される）。Fable 5 メインは Fable 5.1 または Fable 5 を受理
 - 安全性分類器によるフォールバックは Fable 5.1 も Fable 5 と同じ（生物学は Opus 5、サイバーセキュリティは Opus 4.8 へ再実行）
 - 1M コンテキスト・常時 extended thinking（thinking 無効化不可）も Fable 5 と同じ
+
+---
+
+## v2.1.258 (2026-09-01)
+
+- 修正のみ:
+  - macOS 12 (Monterey) で Claude Code が起動しない（v2.1.255 で混入したリグレッション）
+  - 再送された権限承認が適用できず、リモート／スケジュール実行セッションが `user messages must have non-empty content` で失敗する
+
+---
+
+## v2.1.257 (2026-09-01)
+
+- **Claude Fable 5.1 (`claude-fable-5-1`) 追加**: 既定の Fable モデルになった。1M コンテキスト、$10/$50 per Mtok（キャッシュ読み取り $0.25/Mtok）。詳細は本ファイル冒頭「Claude Fable 5.1 まとめ」
+- **時刻表示設定 `timeFormat` / `timeZone` 追加**: ターン終了時の時刻表示とトランスクリプトビューのタイムスタンプを 12時間 / 24時間 / 24時間UTC / strftime パターンで指定できる。`timeZone` は IANA タイムゾーン名。`/config` の **Time format** から プリセット選択可。詳細は `specs/claude/configuration.md`
+- **auto モードに Containment Escape ルール追加**: クラウドのメタデータ認証情報取得、egress 回避、テナント跨ぎのアクセスは、環境側で「想定内」と明示しない限り自動承認されなくなった
+- **`CLAUDE_CODE_SUBAGENT_MODEL_FORCE` 追加**: `1` にすると `CLAUDE_CODE_SUBAGENT_MODEL`（未設定ならメインモデル）を、サブエージェント定義・呼び出し時のモデル指定を無視して全サブエージェント／チームメイト／ワークフローエージェントに強制適用する。組み込みの Explore / Plan にも適用される
+- **`/effort` に `s`（セッション限定変更）追加**: `/model` と同様、現在のセッションのみ effort を変更できる
+- **auto モードでの作業ディレクトリ外ファイル読み取りに初回確認プロンプト追加**: 併せて `permissions.blockReadsOutsideWorkingDirectories` で読み取り自体をブロックできる
+- **`permissions.defaultMode` の scope 変更（破壊的）**: `auto` に加えて **`bypassPermissions` も project / local 設定からは有効にならなくなった**。user / managed 設定に置くか `--permission-mode` を使う。v2.1.257 より前は `bypassPermissions` は任意の設定ファイルから有効だった
+- **`permissionExplainerEnabled` 設定と `Ctrl+E` コマンド解説を削除**: 権限プロンプト上の `confirm:toggleExplanation` キーバインドも廃止
+- **`allowManagedPermissionRulesOnly` の挙動明確化・改善**: 「設定ファイル由来の権限ルールを managed のみに限定する」ものであり、`--disallowedTools` とセッション中の `deny` / `ask` ルールは（設定リロード後も）引き続き有効になった。v2.1.257 より前は最初の設定リロードでこれらが失われていた
+- **`/doctor` に警告追加**: 強制終了されたセッションが残したサンドボックスマスクファイルを検出
+- **ゲートウェイ由来 `/model` エントリの `description` 対応**（`CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY`）: description が無いエントリは従来通り "From gateway" 表示
+- **`claude agents` のキーバインド `Agents` コンテキスト追加**: Ctrl+S / Ctrl+T を `keybindings.json` で再割り当てできるようになった（Ctrl+G の再割り当てが無視される不具合も修正）
+- 主な修正:
+  - 起動後に作成された `.claude/` フォルダの設定が再起動まで読まれない
+  - `/add-dir` が現在の作業ディレクトリ配下を拒否していた（`--add-dir` と同様に skills / commands / agents を読み込むようになった）
+  - プラグインが宣言したコンポーネントパスの symlink 経由で自ディレクトリ外のファイルを読めた（エラーで拒否するよう修正）
+  - auto モードで複合コマンド・サブシェル内のコマンドに `permissions.ask` ルールが適用されず確認なしで実行された
+  - Bash の `Read()` / `Edit()` deny ルールが `< file` リダイレクトや `tac` / `egrep` に適用されなかった
+  - 末尾にドットが付くサンドボックスネットワークホスト（`example.com.`）が `deniedDomains` でブロックされない
+  - Remote Control の同意プロンプトを Esc / `n` で閉じると同意扱いになっていた
+  - `--disallowedTools` とセッション deny ルールが `allowManagedPermissionRulesOnly` 有効時に設定リロードで失われる
+  - `strictPluginOnlyCustomization` / managed MCP allow-deny リストが起動後に読まれた場合に `/mcp` の再接続・有効化がブロックされない
+  - `policyHelper` の `timeoutMs` / `refreshIntervalMs` がタイマー最大値 (2147483647) を超えると失敗または毎ミリ秒再実行される（クランプするよう修正）
+  - 応答がストリーム途中で切れた際にサブエージェントが停止する（自動継続するよう修正）
+  - サブエージェントのトランスクリプトが 5MB を超えると resume / メッセージ送信が "No transcript found" で失敗する
+  - `claude -p` が Monitor 実行中でも最終結果の約5秒後に終了する
+  - advisor モデル設定時にバックグラウンドリクエスト（compaction / `/recap` / プロンプト提案）がプロンプトキャッシュを外す
 
 ---
 
