@@ -1,6 +1,6 @@
 # Claude Code Hooks 仕様書
 
-最終更新: 2026-08-30（巡回更新）
+最終更新: 2026-09-03（巡回更新）
 
 公式ドキュメント: https://code.claude.com/docs/en/hooks
 
@@ -449,6 +449,13 @@ v2.1.133 以降、すべてのイベントの入力 JSON に effort level も含
   }
 }
 ```
+
+`updatedPermissions` の `setMode`（`mode` / `destination`）による権限モード変更の制約:
+
+- 有効な `mode` は `default` / `auto` / `acceptEdits` / `dontAsk` / `bypassPermissions` / `plan`、および `default` の別名 `manual`（`manual` は v2.1.200+）
+- `bypassPermissions` への変更は、**セッション起動時点で bypass モードが使える状態だった場合のみ**有効。すなわち `--dangerously-skip-permissions` / `--permission-mode bypassPermissions` / `--allow-dangerously-skip-permissions`、または **user / `--settings` / managed 設定**の `permissions.defaultMode: "bypassPermissions"` のいずれか（v2.1.257 以降、project / local 設定の同値は効かない）。それ以外は no-op
+- `permissions.disableBypassPermissionsMode` で無効化されている場合、および restricted モードで起動したセッションでも no-op
+- **`bypassPermissions` は `destination` の指定に関わらず `defaultMode` として設定ファイルに永続化されない**
 
 `terminalSequence`（v2.1.141+）: 制御端末を持たない hook からデスクトップ通知・ウィンドウタイトル・ベル等の端末シーケンスを発行できる。例: `"\u0007"`（ベル）、`"\u001b]0;title\u0007"`（ウィンドウタイトル設定）。バックグラウンド hooks や HTTP hooks から端末 UX を制御する用途に有効。
 

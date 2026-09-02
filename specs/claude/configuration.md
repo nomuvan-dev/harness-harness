@@ -1,6 +1,6 @@
 # Claude Code 設定仕様書
 
-最終更新: 2026-08-30（巡回更新）
+最終更新: 2026-09-03（巡回更新）
 
 公式ドキュメント: https://code.claude.com/docs/en/settings / https://code.claude.com/docs/en/memory
 
@@ -130,9 +130,10 @@ managed 階層は単一ではなく、上から **server-managed settings → MD
 | `permissions.allow` | 許可するツール使用ルール配列。**v2.1.166** で MCP 以外の glob 使用は拒否されるようになった。**v2.1.178** で `Tool(param:value)` 構文（`*` ワイルドカード可）によるツール入力パラメータマッチをサポート（例: `Agent(model:opus)`）。**v2.1.214** で単一セグメント `dir/**`（`Edit(src/**)` 等）の allow ルールは `<cwd>/dir` のみにマッチするよう修正（従来はツリー内任意の同名ディレクトリに誤マッチ）。`deny`/`ask` は従来通り任意深度マッチ |
 | `permissions.deny` | 拒否するツール使用ルール配列。**v2.1.166** でツール名位置の glob パターン（`"*"` で全ツール deny 等）をサポート。未知ツール名は起動時に警告 |
 | `permissions.ask` | 確認を求めるツール使用ルール配列 |
-| `permissions.defaultMode` | デフォルト権限モード。v2.1.200 で `default` モードの表示名が「Manual」に変更（`"manual"` も `default` と同義で受理） |
+| `permissions.defaultMode` | デフォルト権限モード。v2.1.200 で `default` モードの表示名が「Manual」に変更（`"manual"` も `default` と同義で受理）。**v2.1.257 以降、`auto` に加えて `bypassPermissions` も project / local 設定からは有効にならない**（user / managed 設定に置くか `--permission-mode` で指定する。v2.1.257 より前は `bypassPermissions` は任意の設定ファイルから有効だった）。VS Code 拡張が開始する会話では user / managed / `--settings` の値のみ読まれる |
 | `permissions.additionalDirectories` | 追加ワーキングディレクトリ。**サンドボックス既定の書き込み可能パスにも含まれる**（2026-08-31 時点の公式ドキュメント改訂で明文化）: 既定では作業ディレクトリ・セッション一時ディレクトリ（`$TMPDIR`）・`--add-dir` / `/add-dir` で追加したディレクトリに加え、本キーのディレクトリにもサンドボックスコマンドが書き込める。ファイルアクセス権のみを与え skills / commands / subagents は読み込まない点は従来通り（`skills-and-commands.md` 参照） |
 | `permissions.disableBypassPermissionsMode` | `bypassPermissions` モード無効化 |
+| `permissions.blockReadsOutsideWorkingDirectories` | （v2.1.257）auto モードで作業ディレクトリ外のファイル読み取り自体をブロックする。v2.1.257 では auto モードの初回の作業ディレクトリ外読み取り時に一度確認プロンプトが出て、その場で本設定を有効化できる |
 | `hooks` | ライフサイクルフック設定 |
 | `disableAllHooks` | 全フック無効化 |
 | `allowManagedHooksOnly` | Managed フックのみ許可（Managed設定のみ） |
@@ -191,7 +192,7 @@ managed 階層は単一ではなく、上から **server-managed settings → MD
 | `includeGitInstructions` | 組み込みcommit/PRワークフロー指示の有効化（デフォルト: `true`） |
 | `includeCoAuthoredBy` | **非推奨**: `attribution` を使用 |
 | `channelsEnabled` | （Managed のみ）Team/Enterprise ユーザーのチャンネル機能 |
-| `allowManagedPermissionRulesOnly` | （Managed のみ）ユーザー/プロジェクトの権限ルール定義を禁止 |
+| `allowManagedPermissionRulesOnly` | （Managed のみ）**設定ファイル由来**の権限ルールを managed のみに限定する。user / project / local / `--settings` の `allow` / `ask` / `deny` と `--allowedTools` を無視し、権限プロンプトの always-allow 選択肢を隠し、新規ルールの保存も止める。埋め込みホストの親設定は managed 扱いとなり `deny` / `ask` は保持、`allow` と `additionalDirectories` は破棄される。**`--disallowedTools` と当該セッションの `deny` / `ask` ルールは引き続き有効**（設定リロード後も。制限方向にしか働かないため managed の許可を広げることはない）。v2.1.257 より前は最初の設定リロードでこれらが失われる不具合があった |
 | `strictKnownMarketplaces` | プラグインマーケットプレース許可リスト。v2.1.232 で `allowedMarketplaces` が別名として受理される |
 | `wslInheritsWindowsSettings` | （Managed のみ）WSL on Windows が Windows 側の managed settings を継承（v2.1.118） |
 | `blockedMarketplaces` | （Managed のみ）マーケットプレースブロックリスト。v2.1.232 で素のリポジトリ URL に対する url 型エントリが、CLI が git clone と分類した場合もブロックを継続 |
@@ -278,7 +279,9 @@ managed 階層は単一ではなく、上から **server-managed settings → MD
 | `terminalTitleFromRename` | 端末タブのタイトルに `/rename` / `--name` で付けたセッション名を使うか（既定 `true`）。`false` にすると命名後も自動生成タイトルを表示し続ける。名前自体は有効なままで `/resume <name>` から引ける |
 | `externalEditorContext` | `Ctrl+G` で外部エディタを開く際、直前の Claude の応答を `#` コメント行としてバッファ冒頭に入れる（既定 `false`。保存時に自動除去）。`/config` の **Show last response in external editor**。スコープは `~/.claude.json`（Global config） |
 | `diffTool` | VS Code / JetBrains 接続時に `Edit` / `Write` の差分をどこに出すか。`"auto"` = IDE の diff ビューア、`"terminal"` = 端末内（既定 `"auto"`）。スコープは Global config。IDE 接続中のみ `/config` の **Diff tool** に出現 |
-| `permissionExplainerEnabled` | Bash / PowerShell の権限プロンプトで `Ctrl+E` を押すとモデルがコマンド解説（何をするか・なぜ実行するか・何が起きうるか、**Low/Med/High risk** ラベル付き）を生成する機能（既定 `true`）。押した時だけモデルに問い合わせ、表示してもコマンドは実行されない。スコープは Global config |
+| `permissionExplainerEnabled` | **v2.1.257 で削除**。Bash / PowerShell の権限プロンプトで `Ctrl+E` を押してコマンド解説を出す機能ごと廃止された（キーバインド `confirm:toggleExplanation` も同時に削除） |
+| `timeFormat` | （v2.1.257）UI 上の時刻表示形式。ターン終了時の `done 6:05 PM` やトランスクリプトビューのタイムスタンプに適用。`"auto"`（既定・ロケール準拠）/ `"12-hour"` / `"24-hour"` / `"24-hour-utc"`（UTC・`18:05Z` 形式、`timeZone` は無視）/ strftime パターン（`"%H:%M"` 等。`%` を含む値はパターン扱い、プリセット外のその他の値は `"auto"` 扱い）。`/config` の **Time format** はプリセットのみ提供、パターンは設定ファイルに直接書く。トランスクリプトビューではパターンがタイムスタンプ全体を置き換えるため日付も出したい場合は `"%Y-%m-%d %H:%M"` のように書く。スコープは Any file |
+| `timeZone` | （v2.1.257）UI 上の時刻を表示するタイムゾーン。IANA タイムゾーン名（`"UTC"` / `"Europe/Dublin"` 等）。`timeFormat` が `"24-hour-utc"` の場合は無視される。認識できない名前ならシステムのタイムゾーンにフォールバック。既定は未設定（システムのタイムゾーン）。スコープは Any file |
 | `switchModelsOnFlag` | 安全性分類器がリクエストをフラグした際の挙動。`true`（既定）= フォールバックモデルへ自動切替して継続、`false` = 対話セッションでは一時停止して切替か編集かを選ばせる（`-p` などダイアログを出せない場合はエラー終了）。`/config` の **Switch models when a message is flagged** |
 | `enableWorkflows` | 動的ワークフローをユーザー単位で ON/OFF（プランの既定と違う挙動にしたい場合）。`/config` の **Dynamic workflows** がユーザー設定に書き込み、既定へ戻すとキーを削除する。未設定時は Pro プランのみ無効・その他は有効。組織全体で止める場合は `disableWorkflows`（Managed）を使う。`CLAUDE_CODE_DISABLE_WORKFLOWS` が優先 |
 | `enabledPlugins` | プラグインの個別有効/無効。キーは `plugin-name@marketplace-name`、値は Boolean。どのスコープにもエントリが無いプラグインは `defaultEnabled` に従う。`/plugin` や `claude plugin enable` が自動で書き込む |
@@ -597,6 +600,8 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 | `CLAUDE_CODE_DISABLE_BEDROCK_CONTENT_TYPE_GUARD` | `1` で、Amazon Bedrock ストリーミング応答が `application/vnd.amazon.eventstream` content-type を持つかの検査をスキップする。未設定時、異なる content-type の応答はエラーになる |
 | `CLAUDE_CODE_ENABLE_TODO_TOOLS` | `1` で Todo / タスク追跡ツール（`TaskCreate` / `TaskGet` / `TaskUpdate` / `TaskList` / `TodoWrite`）を復活させる。**v2.1.233 で Opus 4.8 / Sonnet 5 / Fable 5 / Mythos 5 以降のモデルでは既定で提供されなくなった**ため、これらに依存するハーネスは明示設定が必要 |
 | `CLAUDE_CODE_AUTO_BACKGROUND_WORKER_CHECKIN_SECONDS` | `CLAUDE_AUTO_BACKGROUND_TASKS` 有効時に、実行中のバックグラウンドサブエージェントを確認するよう Claude へ促すリマインダーの間隔（秒）。**`1`〜`86400` の素の整数のみ受理**し、それ以外の値・表記は未設定として読まれる。未設定時はリマインダーなし（v2.1.248 以降） |
+| `CLAUDE_CODE_SUBAGENT_MODEL_FORCE` | `1` で `CLAUDE_CODE_SUBAGENT_MODEL`（未設定ならメインの会話モデル）を、エージェント定義や呼び出し時のモデル指定を**無視して**全サブエージェント・チームメイト・ワークフローエージェントに強制適用する。組み込みの Explore / Plan にも適用され、Explore の「Claude API では Opus 上限」も上書きされる。v2.1.257 以降 |
+| `CLAUDE_CODE_DISABLE_CFC_PROMPT` | `1` で Claude in Chrome のブラウザツールは使えるまま、システムプロンプトの Chrome セクションと `/claude-in-chrome` バンドルスキルを省略する。Claude Code を埋め込むホスト向け |
 | `BETA_TRACING_ENDPOINT` | [詳細ベータトレーシング](https://code.claude.com/docs/en/monitoring-usage#traces-beta)の OTLP エンドポイント。`ENABLE_BETA_TRACING_DETAILED=1` と併用するとログ・トレースが構成済みエクスポータではなくこちらへ送られる。シェル・user 設定・managed 設定でのみ設定可（project / local 設定では無視） |
 | `ENABLE_BETA_TRACING_DETAILED` | `1` かつ `BETA_TRACING_ENDPOINT` 設定時に詳細ベータトレーシングを有効化。内容を含むスパン属性と `claude_code.hook` スパンが追加される。インタラクティブ CLI セッションでは組織がベータの許可リストに入っている必要がある。project / local 設定では無視 |
 

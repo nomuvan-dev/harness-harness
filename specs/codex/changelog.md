@@ -4,7 +4,13 @@
 公式: https://learn.chatgpt.com/docs/changelog
 （2026-08-15 時点で `https://developers.openai.com/codex/changelog` は上記へ 308 恒久リダイレクト）
 
-最終更新: 2026-09-02（安定版 **0.152.0** リリース。プランニングツールが既定オフ化、MCP ツール単位の `output_token_limit`、MCP サーバー名の使用可能文字拡大など。0.153.0 は alpha.2 まで進行中）
+最終更新: 2026-09-03（安定版 **0.152.1** リリース（Guardian の Node REPL ポリシー対応の修正のみ）。0.153.0 は alpha.6 まで進行中でリリースノートは未記載）
+
+---
+
+## CLI 0.152.1 (2026-09-01)
+
+- 修正のみ: Guardian（自動承認レビュー）が、モデルメタデータ経由で渡された Node REPL ポリシーを尊重するようになった
 
 ---
 

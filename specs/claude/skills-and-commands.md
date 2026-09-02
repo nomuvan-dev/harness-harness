@@ -605,7 +605,8 @@ model: sonnet
 4. メイン会話のモデル
 
 - **v2.1.251 より前はこの順序の先頭が `CLAUDE_CODE_SUBAGENT_MODEL`** で、呼び出しごとの指定と frontmatter（`model: inherit` を含む）を上書きしていた
-- `CLAUDE_CODE_SUBAGENT_MODEL` を設定するだけでは、ビルトインの Explore / Plan サブエージェントが動くモデルは変わらない
+- **`CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1`（v2.1.257）を設定すると、この優先順位を無視して `CLAUDE_CODE_SUBAGENT_MODEL`（未設定ならメイン会話のモデル）が全サブエージェント・チームメイト・ワークフローエージェントに強制適用される。** ビルトインの Explore / Plan にも適用され、Explore の「Claude API では Opus 上限」制約も上書きされる
+- （`FORCE` を使わない場合）`CLAUDE_CODE_SUBAGENT_MODEL` を設定するだけでは、ビルトインの Explore / Plan サブエージェントが動くモデルは変わらない
 - 組織の `availableModels` 許可リストでブロックされた値は、ファミリーエイリアスなら許可リスト内の最新版に置換され、それ以外は継承モデルへフォールバックする（`CLAUDE_CODE_SUBAGENT_MODEL` を設定している場合は同じ規則の下でまずそのモデルが試される）。インタラクティブセッションでは置換時に要求モデルと置換モデルを示す警告が出る
 
 ### 5.6 呼び出し方法
