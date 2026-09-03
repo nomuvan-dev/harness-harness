@@ -4,7 +4,26 @@
 公式: https://learn.chatgpt.com/docs/changelog
 （2026-08-15 時点で `https://developers.openai.com/codex/changelog` は上記へ 308 恒久リダイレクト）
 
-最終更新: 2026-09-03（安定版 **0.152.1** リリース（Guardian の Node REPL ポリシー対応の修正のみ）。0.153.0 は alpha.6 まで進行中でリリースノートは未記載）
+最終更新: 2026-09-04（安定版 **0.153.0** リリース。プラグイン CLI のリモートマーケットプレイス対応、`tui.auto_recap`、`features.context_management.experimental_mode` が主な内容。0.154.0 は alpha.1 が出た段階）
+
+---
+
+## CLI 0.153.0 (2026-09-03)
+
+- **プラグイン CLI がリモートマーケットプレイスに対応**（#42150）。`list` / `install` / `remove` をリモートマーケットプレイス相手に実行できる。Claude Code の `claude plugin` + マーケットプレイスに相当する導線が Codex 側にも揃った
+- **`tui.auto_recap = false` 追加**（#42101）。自動リキャップを止めつつ手動 `/recap` は残せる。長いセッションで自動要約による文脈の作り替えを避けたいハーネスで有効
+- **`features.context_management.experimental_mode` 追加（既定無効）**（#42385）。有効化すると**トークンバジェット方式のコンテキスト管理・history notes・`new_context` ツール**が使える。対象は **Codex バックエンドを使う適格な ChatGPT Plus / Pro / Pro Lite セッション**のみで、**API キーセッション・カスタムプロバイダ・一時的な structured thread は除外**
+- **`tui.disable_paste_burst` へ移動**（#41976）。従来のトップレベル設定を置き換える（旧キーもフォールバックとして引き続き有効）
+- **Vim モードの undo / redo**（#41941, #42140）。`u` / `Ctrl+R`。ペースト内容や添付を含むドラフト全体を保持
+- **TUI 履歴の表示改善**（#41893, #42107）。パッチ全体、バックグラウンドターミナルへ送った入力、完了コマンドを個別に表示
+- Plus / Team ユーザーに、約5時間の使用量ウィンドウの残りが半分を切った時点で早期警告（#42142）
+- **`Interrupt` フックが公式 hooks ドキュメントへ収載**（0.150.0 で追加済み）。メインスレッドのアクティブターン中断時に走り、アイドルスレッドとサブエージェントでは走らない。`matcher` は無視。入力に `turn_id` / `permission_mode` を含む。command ハンドラの既定タイムアウトは **1 秒・上限 3 秒**。中断を阻止・再開はできず、出力は終了コード 0 の無出力か `systemMessage` を含む JSON のみ（プレーンテキストは不正）
+- 修正: 外部 app-server 接続断のあと TUI セッションが自動再接続し、ドラフトとトランスクリプトを保持。不確実・キュー済みの送信は確認のため保留される（#41911, #41916, #41918）
+- 修正: Full Access では確認のみのアクションで Guardian レビューをスキップ。User approval モードではバックグラウンドの Guardian スコアリングと prewarming をスキップ（機微アクションのチェックとユーザー入力要求は従来どおり）（#42147, #42256）
+- 修正: Guardian のレビュー履歴が compaction・再起動・ユーザー作成 fork をまたいで維持され、ロールバック境界を尊重しつつサブエージェント履歴を分離（#41879, #42065）
+- 修正: 記憶された MCP ツール承認が選択中のアプリアカウント単位にスコープされ、macOS で MCP 実行ファイルの相対パス起動が安定化（#42133, #42117）
+- 修正: rollout 圧縮が共有履歴を含むようになり、`codex exec resume` が作業ディレクトリ選択時に圧縮済み rollout を扱え、symlink されたセッションルートでも thread fork が機能（#42039, #42135）
+- API: app-server の thread メタデータに nullable な `model` / `reasoningEffort` を追加。モデルカタログが許可した場合 `request_user_input_async` による構造化非同期質問に対応（#42151, #42178）
 
 ---
 

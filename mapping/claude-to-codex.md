@@ -144,6 +144,7 @@ model_reasoning_effort = "high"
 
 > **2026-03-24 更新**: Codex CLI が Hooks を実験的にサポート開始。
 > **2026-05-21 更新（Codex 0.133.0）**: `SubagentStart` / `SubagentStop` / compact `SessionStart` / `MITM` を追加し対応イベントは 6 種に拡張。
+> **2026-09-03 更新（Codex 0.150.0 / 0.153.0）**: `Interrupt` が加わり対応イベントは **12 種**。0.153.0 で公式 hooks ドキュメントに収載された。
 > **2026-08-20 更新（Codex 0.148.0）**: 対応イベントが **11 種**に拡張され、`PreToolUse` / `PostToolUse` / `PermissionRequest` / `PreCompact` / `PostCompact` / `SessionEnd` が**直接対応**に昇格。ハンドラも `mcp_tool` が追加され、`command` は `async` 実行に対応。変換可能性が大きく改善したため、以下の代替パターンの多くは不要になった。
 
 | Claude Code | Codex CLI | 備考 |
@@ -160,6 +161,7 @@ model_reasoning_effort = "high"
 | `SubagentStop` | `SubagentStop`（0.133.0+） | **直接対応** |
 | （Claude にはない） | `SubagentStart`（0.133.0+） | Codex 独自。サブエージェント起動契機での前処理に利用 |
 | （Claude にはない） | `PermissionRequest`（0.148.0+） | Codex 独自。権限確認の発生を捕捉 |
+| （Claude にはない） | `Interrupt`（0.150.0+、2026-09-03 に公式ドキュメント収載） | Codex 独自。メインスレッドのターン中断時に走る。**アイドルスレッドとサブエージェントでは走らず `matcher` は無視**。入力に `turn_id` / `permission_mode` を含む。既定タイムアウト 1 秒・上限 3 秒で、中断の阻止やターン再開はできない。出力は終了コード 0 の無出力か `systemMessage` を含む JSON のみ（プレーンテキストは不正）。Claude 側は Esc 中断を捕捉するイベントを持たないため、変換時は Codex 側限定の機能として残す |
 | `Notification` 他の UI 系イベント | **対応なし** | Claude は 17+ イベント。残差は主に通知・UI 系 |
 | HTTP ハンドラ | **対応なし** | 代替: `mcp_tool` ハンドラ（0.148.0+）で MCP サーバー経由の外部連携、または command ハンドラ内で `curl` |
 | Prompt ハンドラ | **設定は受理されるが未実装** | `type = "prompt"` はパースされるがスキップ警告が出る。代替: AGENTS.md に判断基準を記述 |
@@ -207,7 +209,7 @@ matcher = "shell"
 
 - **matcher のツール名を変換する**: Claude の `Bash` / `Edit` / `Write` などは Codex のツール名に読み替える必要がある
 - **Windows 分岐**: Codex は `commandWindows`（`command_windows`）でプラットフォーム別コマンドを指定できる。Claude にはこの機構がないため、逆変換ではラッパースクリプトに寄せる
-- **タイムアウト既定値**: Codex は 600 秒、`SessionEnd` のみ 1 秒
+- **タイムアウト既定値**: Codex は 600 秒、`SessionEnd` は 1 秒、`Interrupt` は 1 秒（上限 3 秒）
 - **Managed 制約**: Codex は `requirements.toml` の `allow_managed_hooks_only = true` が Claude の `allowManagedHooksOnly` に対応する（`config.toml` に書いても効かない点に注意）
 
 ### 6.2 Hooks の代替パターン（残る非対応イベント向け）

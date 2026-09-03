@@ -259,8 +259,9 @@ Claude API はリクエスト中の全ツールの入力スキーマを検査し
 ```
 
 - `allowManagedMcpServersOnly`: Managed 設定のみから許可リストを適用
-- `allowedMcpServers`: 許可するMCPサーバーのホワイトリスト
-- `deniedMcpServers`: 拒否するMCPサーバーのブラックリスト（許可リストより優先）
+- `allowedMcpServers`: 許可するMCPサーバーのホワイトリスト。**v2.1.259 以降はユーザーが追加したサーバーのみが対象**（`managed-mcp.json` / `managedMcpServers` 由来のサーバーには効かない。アップグレード後、従来 allowlist で落としていた managed サーバーがロードされる点に注意）
+- `deniedMcpServers`: 拒否するMCPサーバーのブラックリスト（許可リストより優先）。managed 由来のサーバーを止めるにはこちらを使う
+- `managedMcpServers`（**v2.1.259**、managed 設定内）: 組織が HTTP / SSE の MCP サーバーを全ユーザーへ配布する新キー。エントリ形式は `.mcp.json` と同じだが `command` 形式（ローカルコマンド起動）はスキップされる。`managed-mcp.json` をファイルとして配布する代わりに managed settings 経由で配れる
 
 `managed-mcp.json` の配置先:
 - macOS: `/Library/Application Support/ClaudeCode/`

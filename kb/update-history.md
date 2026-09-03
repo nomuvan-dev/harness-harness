@@ -1,5 +1,68 @@
 # harness-harness 更新履歴
 
+## 2026-09-04 — 公式ドキュメント巡回
+
+### 検出・更新
+
+Claude Code は **v2.1.259**（2026-09-02）、Codex CLI は安定版 **0.153.0**（2026-09-03）へ更新。追跡中 49 URL のハッシュ比較で 23 件の変更を検出。うち GitHub / skills.sh / claude.com/plugins 等の HTML ページはナビゲーション・動的要素の差分が大半で、実質的な中身は Claude Code v2.1.259 と Codex 0.153.0 に集中している。
+
+**1) Claude Code v2.1.259 — MCP のガバナンス構造が変わった**
+
+- **`allowedMcpServers` のスコープ変更（破壊的）**: **ユーザーが自分で追加したサーバーのみが対象**になった。従来 allowlist に載せないことで落としていた `managed-mcp.json` 由来のサーバーは、アップグレード後は allowlist 非掲載でもロードされる。**managed サーバーを止めるには `deniedMcpServers` へ移す必要がある**。組織配布ハーネスで allowlist を絞り込み手段として使っている場合は要見直し
+- **managed 設定 `managedMcpServers` 追加**: 組織が HTTP / SSE の MCP サーバーを全ユーザーへ配布できる。エントリ形式は `.mcp.json` と同じだが、**ローカルコマンドを起動する `command` 形式はスキップされる**（配布経路でのコマンド実行を避ける設計）。`managed-mcp.json` をファイルで配る代わりに managed settings 経由で配れるようになった。2026-09-04 時点で公式 settings / MCP リファレンス未記載（changelog のみ）
+- **`--permission-prompts none` 追加**: 無人ヘッドレスホスト向け。プロンプトが出るはずの操作を自動拒否する。アクティブな権限モード（auto を含む）の判定自体は従来どおり働くため、「auto で通るものは通し、迷ったら止める」CI 運用が組める。**`--dangerously-skip-permissions` を CI で使っているハーネスの、より安全な代替候補**
+- **managed 設定のパース失敗が fail-closed に**: managed-settings ファイル・drop-in・MDM plist・HKLM 値がパースできない場合、従来は silently 無効化されていたが、**起動を拒否して原因のソース名を表示する**ようになった。managed 設定を配布する側は、壊れた JSON が全社の起動を止め得る点に注意
+- **Bash の `Read()` deny ルール強化**: オプション値として渡されたファイル（`--ignore-revs-file=.env` / `-f.env` / `@file`）、`git diff` / `git grep` のファイルオペランド、`cd DIR && cat FILE` の複合コマンドをカバー。denied ファイルを含むディレクトリへの `grep -r` / `cp -r` は確認を求める。**秘密ファイルを deny で守るハーネスの実効性が上がった**
+- **frontmatter `model:` の無視バグ修正**: コマンド / スキルの `model:` が対話セッションで無視されていた。モデル指定付きスキルを配るハーネスは v2.1.259 以降で意図どおり動く
+- 同時セッションが互いの `~/.claude.json` を silently 巻き戻す問題を修正（ワークスペース信頼のリセット・MCP 状態消失）。複数 worktree 並列運用での地味な事故が減る
+- **フッター PR / MR バッジの認証要件が明文化**: github.com は `GH_TOKEN` / `GITHUB_TOKEN` か `gh auth login` のトークン、GitHub Enterprise（`GH_HOST`）は `GH_ENTERPRISE_TOKEN` / `GITHUB_ENTERPRISE_TOKEN`、その他ホストは `gh auth login --hostname` のみ。`CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC` 設定時はステータスを一切チェックしない。従来ドキュメントにあった更新間隔（90秒/60秒）の記述は削除された
+- `glab mr create/merge/close/reopen/note/update` を認識し折りたたみツールサマリに `MR !N` 表示。`claude plugin validate --json` 追加
+
+**2) 公式 `sub-agents` ドキュメントに「Run every subagent on one model」節が新設**
+
+v2.1.257 で追加された `CLAUDE_CODE_SUBAGENT_MODEL_FORCE` の記述が独立節になり、**これまで specs/ に書いていた理解の一部が不正確だったことが判明**したため訂正した。
+
+- `CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1` **のみ**を設定（`CLAUDE_CODE_SUBAGENT_MODEL` 未設定）した場合、サブエージェントはメイン会話のモデルで走り、**組み込み Explore の「Claude API では Opus 上限」は維持される**。上限まで上書きされるのは**両方を設定したとき**
+- fork と `model: inherit` のサブエージェント実行スキルは、FORCE が有効でも常にメイン会話のモデルで動く
+- 効いているかの確認方法は、サブエージェント実行中に `/tasks` を開いて各行のモデル名を見る
+
+**3) Codex CLI 0.153.0 — プラグイン配布とコンテキスト管理**
+
+- **プラグイン CLI がリモートマーケットプレイスに対応**（`list` / `install` / `remove`）。Claude Code の `claude plugin` + マーケットプレイスに相当する配布導線が Codex 側にも揃った。**両プラットフォームでプラグインを配るハーネス戦略が現実的になった転換点**
+- **`features.context_management.experimental_mode`（既定無効）**: トークンバジェット方式のコンテキスト管理・history notes・`new_context` ツールが使えるようになる。ただし **Codex バックエンドを使う適格な ChatGPT Plus / Pro / Pro Lite セッション限定**で、**API キーセッション・カスタムプロバイダ・一時的な structured thread は除外**。常用前提にはできないが、長時間セッションの検証には価値がある
+- **`tui.auto_recap = false`**: 自動リキャップを止めつつ手動 `/recap` を残せる。自動要約による文脈の作り替えを嫌うハーネスで有効
+- **`tui.disable_paste_burst`**: トップレベル設定から `[tui]` 配下へ移動（旧キーもフォールバックとして有効）
+- Vim モードの undo / redo（`u` / `Ctrl+R`）、TUI 履歴でのパッチ全体・完了コマンド個別表示
+- Guardian 周りの整理: Full Access は確認のみのアクションでレビューをスキップ、User approval モードはバックグラウンドのスコアリングと prewarming をスキップ。レビュー履歴は compaction・再起動・fork をまたいで維持
+
+**4) Codex `Interrupt` フックが公式 hooks ドキュメントへ収載**
+
+0.150.0 で追加されリリースノートのみだった `Interrupt` の正式仕様が判明したため、specs/ と mapping/ を実仕様で埋めた。
+
+- メインスレッドのアクティブターン中断時に走る。**アイドルスレッドとサブエージェントでは走らない**。`matcher` を書いても無視される
+- 共通入力フィールドに加え `turn_id`（中断されたターンのID）と `permission_mode` を受け取る
+- **既定タイムアウト 1 秒・設定可能範囲 1〜3 秒**（他イベントの既定 600 秒と大きく異なる）。async 実行時も同じ
+- **中断の阻止やターン再開はできない**。出力は「終了コード 0 かつ無出力」か「任意の `systemMessage` を含む JSON」のみで、**プレーンテキスト出力は不正**
+- 用途は中断の記録と、フックが始めた作業の後始末に限られる。Claude Code に対応イベントは無く、変換時は Codex 側限定機能として残す
+
+### 更新ファイル
+
+- `specs/claude/changelog.md` — v2.1.259 追加
+- `specs/claude/configuration.md` — `managedMcpServers` / `allowedMcpServers` スコープ変更 / `--permission-prompts none` / PR バッジ認証要件 / `prUrlTemplate` 文言 / GitLab MR コマンド認識 / `CLAUDE_CODE_SUBAGENT_MODEL_FORCE` の Explore 上限に関する訂正
+- `specs/claude/mcp.md` — `allowedMcpServers` スコープ変更と `managedMcpServers`
+- `specs/claude/skills-and-commands.md` — FORCE 単独指定時の挙動を訂正
+- `specs/claude/agent-teams.md` — FORCE の確認方法（`/tasks`）を追記
+- `specs/codex/changelog.md` — 0.153.0 追加
+- `specs/codex/configuration.md` — `Interrupt` の実仕様 / `tui.auto_recap` / `tui.disable_paste_burst` / `features.context_management.experimental_mode`
+- `mapping/claude-to-codex.md` — `Interrupt` 行追加、対応イベント 12 種へ更新
+- `mapping/shared-concepts.md` — `Interrupt` 行追加、フックイベント数を 12 へ更新
+
+### スキルエコシステム巡回
+
+`kb/skills/_index.md` の `last_patrol` が 2026-09-01（3日以内）のため Phase 3.5 はスキップ。
+
+---
+
 ## 2026-09-03 — 公式ドキュメント巡回
 
 ### 検出・更新
