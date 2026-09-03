@@ -153,6 +153,7 @@ managed 階層は単一ではなく、上から **server-managed settings → MD
 | `effortLevel` | エフォートレベル。設定ファイルで指定できるのは `low` / `medium` / `high` / `xhigh` の4段階（`max` は設定ファイル不可でセッション限定、`ultracode` は別キー `ultracode` を使う）。**v2.1.251 以降は「保存済みレベルを持たないモデルに対する既定値」という位置づけ**に変わり、`/effort` は本キーではなく `modelSettings` に書き込む。同一設定ファイル内ではモデル別 `modelSettings` エントリが本キーより優先される。スキル / サブエージェントの frontmatter `effort` は当該実行中のみセッションレベルを上書きする（環境変数は上書きしない）。Managed 設定に置いても**強制ではなく既定値**で、`/effort` や `--effort` でセッション単位に変更可能。モデル別対応レベル: Fable 5 / Opus 5 / Sonnet 5 / Opus 4.8 / Opus 4.7 は `low`〜`max`、Opus 4.6 / Sonnet 4.6 は `xhigh` を除く4段階（未対応レベル指定時は直下の対応レベルにフォールバック）。既定は `high`（Opus 4.7 のみ `xhigh`。組織が[組織既定モデル](https://code.claude.com/docs/en/model-config#organization-default-model)に既定 effort を設定している場合はそのモデルでその値が既定になる） |
 | `modelSettings` | **v2.1.251 で追加**。モデルごとに effort レベルを保存するオブジェクト。型は「モデル名 → `{ "effortLevel": "low" \| "medium" \| "high" \| "xhigh" }`」。既定は未設定。インタラクティブセッションで `/effort low|medium|high|xhigh` を実行するか `/model` ピッカーの effort スライダを動かすと、Claude Code が**使用中モデルのエントリとして user 設定に自動で書き込む**ため手で編集する機会は少ない。キーは `claude-opus-5` のような正規名で書かれ、そのモデルのエイリアス・日付サフィックス付き ID・`[1m]` 付き ID・認識済みプロバイダ固有 ID が同じエントリにマッチする。`/effort auto` で使用中モデルのエントリのみクリアされる。**優先順位**: 同一設定ファイル内ではモデル別エントリ > `effortLevel`。ファイル間ではモデルごとに独立して解決され、「そのモデルのエントリまたは `effortLevel` を設定している最上位の設定ファイル」が決める（したがって managed の `effortLevel` は user 設定の保存済みレベルに勝つ）。`ultracode` はこれらすべてに優先する。スコープ: Any file |
 | `autoMode` | Auto Modeの分類器設定。`environment`, `allow`, `soft_deny`, `hard_deny` 配列で構成。共有プロジェクト設定からは読み込まれない。v2.1.118 で `"$defaults"` を配列に含めることで組み込みルールを置換せず追加可能。v2.1.136 で `hard_deny` 追加: ユーザー意図や allow 例外に関わらず無条件にマッチアクションをブロック |
+| （CLI）`--permission-prompts none` | **v2.1.259**。無人のヘッドレスホスト向けフラグ。プロンプトが出るはずの操作を自動的に拒否する。アクティブな権限モード（auto モードを含む）の判定自体は従来どおり働く。2026-09-04 時点で公式 CLI リファレンス未記載（changelog のみ） |
 | `disableAutoMode` | `"disable"` で Auto Mode の有効化を阻止。`Shift+Tab` サイクルから除外し `--permission-mode auto` を拒否。v2.1.207 で Bedrock / Vertex / Foundry の Auto mode がオプトイン不要になったため、無効化はこの設定で行う。同版から `autoMode` はリポジトリ内 `.claude/settings.local.json` から読み込まれなくなった（`~/.claude/settings.json` を使用） |
 | `useAutoModeDuringPlan` | プランモードで Auto Mode セマンティクスを使用（デフォルト: `true`）。共有プロジェクト設定からは読み込まれない |
 | `defaultShell` | `!` コマンドのデフォルトシェル。`"bash"`（デフォルト）または `"powershell"`（Windows、`CLAUDE_CODE_USE_POWERSHELL_TOOL=1` 必要） |
@@ -169,8 +170,9 @@ managed 階層は単一ではなく、上から **server-managed settings → MD
 | `enabledMcpjsonServers` | 承認するMCPサーバーリスト |
 | `disabledMcpjsonServers` | 拒否するMCPサーバーリスト |
 | `allowManagedMcpServersOnly` | Managed MCPサーバーのみ許可 |
-| `allowedMcpServers` | MCPサーバー許可リスト |
+| `allowedMcpServers` | MCPサーバー許可リスト。**v2.1.259 以降、ユーザーが自分で追加したサーバーのみを対象とする**（`managed-mcp.json` / `managedMcpServers` 由来のサーバーは allowlist に載っていなくてもロードされる。止めるには `deniedMcpServers` を使う） |
 | `deniedMcpServers` | MCPサーバー拒否リスト |
+| `managedMcpServers` | （Managed のみ、**v2.1.259**）組織が HTTP / SSE の MCP サーバーを全ユーザーへ配布する。エントリの形は `.mcp.json` と同じだが、**ローカルコマンドを起動する `command` 形式のエントリはスキップされる**。2026-09-04 時点で公式 settings / MCP リファレンス未記載（changelog のみ） |
 | `statusLine` | カスタムステータスライン設定。v2.1.153 でステータスラインコマンドに `COLUMNS` / `LINES` 環境変数（端末サイズ）が渡されるようになった |
 | `fileSuggestion` | `@` ファイル補完カスタムコマンド |
 | `outputStyle` | 出力スタイル設定。組み込みは Default / Proactive / Explanatory / Learning に加え **Concise**（前置き・ナレーションを省き結果から書き出す。作業の徹底度は変えない。v2.1.237 追加）。`/config` の Output style 行から選択すると `.claude/settings.local.json` に保存される |
@@ -229,8 +231,9 @@ managed 階層は単一ではなく、上から **server-managed settings → MD
 | `allowedChannelPlugins` | （Managed のみ）チャンネルプラグイン許可リスト（v2.1.84） |
 | `disableSkillShellExecution` | スキル・カスタムコマンド・プラグインコマンド内のインラインシェル実行（`` !`cmd` ``）を無効化（v2.1.91） |
 | `forceRemoteSettingsRefresh` | （Managed のみ）リモート設定の取得をfail-closed化。取得失敗時にセッション起動をブロック（v2.1.92） |
-| `prUrlTemplate` | フッターの PR バッジを github.com 以外のカスタムコードレビュー URL に向けるテンプレート（v2.1.119）。`{host}` / `{owner}` / `{repo}` / `{number}` / `{url}` を置換。Claude の文中の `#123` 自動リンクと GitLab MR バッジには影響しない |
-| （フッター GitLab MR バッジ） | v2.1.234 以降、GitLab リモートかつ `glab` CLI 認証済みのリポジトリでオープンな MR があると、GitHub PR リンクと同じフッター枠に `MR !N` バッジを表示。下線色は緑（マージ可能）/ 黄（その他のオープン状態）/ グレー（draft）。MR のマージ・クローズで消える。`glab mr create` や `git push` 成功時に即時更新 |
+| `prUrlTemplate` | フッターの PR バッジを github.com 以外のカスタムコードレビュー URL に向けるテンプレート（v2.1.119）。`{host}` / `{owner}` / `{repo}` / `{number}` / `{url}` を PR URL から置換（v2.1.259 で公式記述から「`gh` が報告した URL」の限定が外れた）。Claude の文中の `#123` 自動リンクと GitLab MR バッジには影響しない |
+| （フッター GitHub PR バッジの認証） | PR ステータス取得には GitHub トークンが必要。リモートのホスト別に探索される（v2.1.259 で明文化）: **github.com** = `GH_TOKEN` / `GITHUB_TOKEN` または `gh auth login` 保存トークン（無い場合フッターに `install gh for PR status` / `gh auth login for PR status`）、**`GH_HOST` に設定した GitHub Enterprise** = `GH_ENTERPRISE_TOKEN` / `GITHUB_ENTERPRISE_TOKEN` または `gh auth login --hostname <host>`、**その他の GitHub ホスト** = `gh auth login --hostname <host>` のみ（無い場合バッジもヒントも出ない）。`CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC` 設定時は PR / MR ステータスを一切チェックしない |
+| （フッター GitLab MR バッジ） | v2.1.234 以降、GitLab リモートかつ `glab` CLI 認証済みのリポジトリでオープンな MR があると、GitHub PR リンクと同じフッター枠に `MR !N` バッジを表示。下線色は緑（マージ可能）/ 黄（その他のオープン状態）/ グレー（draft）。MR のマージ・クローズで消える。`glab mr create` や `git push` 成功時に即時更新。v2.1.259 で `glab mr create/merge/close/reopen/note/update` を認識し、折りたたみツールサマリにも `MR !N` として表示されるようになった |
 | `mcpServers.<name>.alwaysLoad` | MCP サーバーのツールを tool-search のディファード化対象から外し常時ロード（v2.1.121） |
 | `skillOverrides` | スキル単位の表示制御。`off`（モデルと `/` から非表示）/ `user-invocable-only`（モデルから非表示）/ `name-only`（説明を圧縮）。v2.1.129 で実装が修正され機能するように |
 | `worktree.baseRef` | `--worktree` / `EnterWorktree` / エージェント隔離ワークツリーのベース選択（`fresh` = `origin/<default>`、`head` = ローカル `HEAD`）。v2.1.133 でデフォルト `fresh` に戻った |
@@ -600,7 +603,7 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 | `CLAUDE_CODE_DISABLE_BEDROCK_CONTENT_TYPE_GUARD` | `1` で、Amazon Bedrock ストリーミング応答が `application/vnd.amazon.eventstream` content-type を持つかの検査をスキップする。未設定時、異なる content-type の応答はエラーになる |
 | `CLAUDE_CODE_ENABLE_TODO_TOOLS` | `1` で Todo / タスク追跡ツール（`TaskCreate` / `TaskGet` / `TaskUpdate` / `TaskList` / `TodoWrite`）を復活させる。**v2.1.233 で Opus 4.8 / Sonnet 5 / Fable 5 / Mythos 5 以降のモデルでは既定で提供されなくなった**ため、これらに依存するハーネスは明示設定が必要 |
 | `CLAUDE_CODE_AUTO_BACKGROUND_WORKER_CHECKIN_SECONDS` | `CLAUDE_AUTO_BACKGROUND_TASKS` 有効時に、実行中のバックグラウンドサブエージェントを確認するよう Claude へ促すリマインダーの間隔（秒）。**`1`〜`86400` の素の整数のみ受理**し、それ以外の値・表記は未設定として読まれる。未設定時はリマインダーなし（v2.1.248 以降） |
-| `CLAUDE_CODE_SUBAGENT_MODEL_FORCE` | `1` で `CLAUDE_CODE_SUBAGENT_MODEL`（未設定ならメインの会話モデル）を、エージェント定義や呼び出し時のモデル指定を**無視して**全サブエージェント・チームメイト・ワークフローエージェントに強制適用する。組み込みの Explore / Plan にも適用され、Explore の「Claude API では Opus 上限」も上書きされる。v2.1.257 以降 |
+| `CLAUDE_CODE_SUBAGENT_MODEL_FORCE` | `1` で `CLAUDE_CODE_SUBAGENT_MODEL`（未設定ならメインの会話モデル）を、エージェント定義や呼び出し時のモデル指定を**無視して**全サブエージェント・チームメイト・ワークフローエージェントに強制適用する。組み込みの Explore / Plan の `model` フィールドも無視される。**ただし本変数のみを設定し `CLAUDE_CODE_SUBAGENT_MODEL` を設定しない場合、Explore は「Claude API では Opus 上限」を維持する**（両方設定したときのみ上限も上書きされる）。除外されるのは fork と `model: inherit` のサブエージェント実行スキルで、これらは常にメイン会話のモデルで動く。v2.1.257 以降 |
 | `CLAUDE_CODE_DISABLE_CFC_PROMPT` | `1` で Claude in Chrome のブラウザツールは使えるまま、システムプロンプトの Chrome セクションと `/claude-in-chrome` バンドルスキルを省略する。Claude Code を埋め込むホスト向け |
 | `BETA_TRACING_ENDPOINT` | [詳細ベータトレーシング](https://code.claude.com/docs/en/monitoring-usage#traces-beta)の OTLP エンドポイント。`ENABLE_BETA_TRACING_DETAILED=1` と併用するとログ・トレースが構成済みエクスポータではなくこちらへ送られる。シェル・user 設定・managed 設定でのみ設定可（project / local 設定では無視） |
 | `ENABLE_BETA_TRACING_DETAILED` | `1` かつ `BETA_TRACING_ENDPOINT` 設定時に詳細ベータトレーシングを有効化。内容を含むスパン属性と `claude_code.hook` スパンが追加される。インタラクティブ CLI セッションでは組織がベータの許可リストに入っている必要がある。project / local 設定では無視 |

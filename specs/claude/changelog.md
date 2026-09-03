@@ -3,7 +3,7 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-09-03（v2.1.257 / v2.1.258 を追加。先行記載されていた **Claude Fable 5.1** は v2.1.257 で正式リリースされ、既定の Fable モデルになった）
+最終更新: 2026-09-04（v2.1.259 を追加。`managedMcpServers` / `--permission-prompts none` / `allowedMcpServers` のスコープ変更（破壊的）が主な内容）
 
 ---
 
@@ -20,6 +20,46 @@
 - **Fable 5.1 の advisor 制約**: Fable 5.1 メインは Fable 5.1 のみを advisor として受理する（Fable 5 advisor は拒否される）。Fable 5 メインは Fable 5.1 または Fable 5 を受理
 - 安全性分類器によるフォールバックは Fable 5.1 も Fable 5 と同じ（生物学は Opus 5、サイバーセキュリティは Opus 4.8 へ再実行）
 - 1M コンテキスト・常時 extended thinking（thinking 無効化不可）も Fable 5 と同じ
+
+---
+
+## v2.1.259 (2026-09-02)
+
+- **managed 設定 `managedMcpServers` 追加**: 組織が HTTP / SSE の MCP サーバーを全ユーザーへ配布できる。エントリの形は `.mcp.json` と同じで、**ローカルコマンドを起動する `command` 形式のエントリはスキップされる**（配布経路でのコマンド実行を避けるため）。2026-09-04 時点で公式 settings / MCP リファレンスには未記載（changelog のみ）
+- **`allowedMcpServers` のスコープ変更（破壊的）**: **ユーザーが追加したサーバーのみを対象**とするようになった。従来 allowlist で除外できていた `managed-mcp.json` 由来のサーバーは、アップグレード後は allowlist に載っていなくてもロードされる。止めたい場合は `deniedMcpServers` を使う
+- **`--permission-prompts none` 追加**: 無人のヘッドレス環境向け。プロンプトが出るはずの操作を自動的に拒否する。アクティブな権限モード（auto モードを含む）の判定自体は従来どおり働く
+- **GitLab MR コマンドの認識拡張**: `glab mr create/merge/close/reopen/note/update` を認識し、折りたたみツールサマリに `MR !N` として表示、フッターの MR バッジも即時更新する
+- **`claude plugin validate --json` 追加**: 機械可読な検証レポートを出力
+- **フッター PR / MR バッジの認証情報要件を明確化**（公式 interactive-mode ドキュメント側の記述も更新）: GitHub PR ステータスには GitHub トークンが必要で、リモートのホストに応じて探索される
+  - github.com: `GH_TOKEN` / `GITHUB_TOKEN`、または `gh auth login` が保存したトークン。無い場合フッターに `install gh for PR status`（gh 未インストール時）/ `gh auth login for PR status`（インストール済み時）を表示
+  - `GH_HOST` に設定した GitHub Enterprise ホスト: `GH_ENTERPRISE_TOKEN` / `GITHUB_ENTERPRISE_TOKEN`、または `gh auth login --hostname <host>` のトークン
+  - その他の GitHub ホスト: `gh auth login --hostname <host>` のトークンのみ。無い場合はバッジもヒントも出ない
+  - `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC` を設定すると PR / MR ステータスのチェック自体を行わない。従来ドキュメントにあった「アクティブ時 90 秒 / それ以外 60 秒」等の更新間隔の記述は削除された
+- 主な修正:
+  - 多数の同時セッションが互いの `~/.claude.json` 変更を silently 巻き戻し、ワークスペース信頼のリセットや MCP / プロジェクト状態の消失を起こす
+  - 一度 thinking が拒否された会話が以降の全ターンで拒否され続ける
+  - Bash の `Read()` deny ルールがオプション値として渡されたファイル（`--ignore-revs-file=.env` / `-f.env` / `@file`）、`git diff` / `git grep` のファイルオペランド、`cd DIR && cat FILE` の複合コマンドをカバーしない。denied ファイルを含むディレクトリへの `grep -r` / `cp -r` は確認を求めるようになった
+  - テレメトリ無効セッションで OAuth トークン更新時にプロンプトキャッシュが無効化される
+  - コマンド / スキルの frontmatter `model:` が対話セッションで無視される。また auto モードが frontmatter で指定された非対応モデルでターンを実行してしまう（セッションのモデルを維持するよう修正）
+  - `CLAUDE_CODE_MAX_CONTEXT_TOKENS` が Vertex 形式のモデルID（`@YYYYMMDD` サフィックス）で無視される
+  - managed 設定ファイル・drop-in・MDM plist・HKLM 値がパースできないとき managed 設定が silently 無効化される → **起動を拒否し、原因のソース名を表示するようになった**
+  - managed `forceRemoteSettingsRefresh` が、MDM / managed settings で設定された policy helper が既に実行済みの場合に起動時無視される
+  - `--resume` / `--continue` が、ペイロードの無い添付エントリを含む保存済みセッションで失敗する
+  - リモートコントロールセッションで Stop がバックグラウンドエージェント / ワークフローを実際には停止しない。停止済みタスクの resume 中に前の実行が残っていてエージェントが二重起動する
+  - ブロッキング Stop フックがブロック後のターンで推論を失わせ、プロンプトキャッシュを外す
+  - ワークツリー隔離が、フック生成のワークツリーや、メインチェックアウトに到達できない Bash ループ・xargs パイプライン・ランチャ経由コマンドを拒否する
+  - MCP サーバーが起動時のツール一覧取得中に切断すると「接続済み・ツール0件」と表示される（エラーを報告するよう修正）
+  - クラウドセッション由来の OpenTelemetry メトリクス / イベントに `user.email` / `organization.id` / `user.account_uuid` 属性が欠落
+  - マーケットプレイス repo URL 末尾のスラッシュや空の `?` / `#` が不正な `.git` clone URL を生む
+  - フルスクリーンモードで数百ツール呼び出しの長いターン後に会話が空白表示になる
+  - 実行中シェルコマンドのライブ出力プレビューで、途中の行が折り返されると最新行が隠れる
+- 改善:
+  - 長い応答での端末リサイズ・初回レンダリング性能（テキスト計測の再利用）
+  - `/workflows` のエージェント詳細: JSON の結果を色付き整形＋改行表示し、長い結果は展開トグルで折りたたむ
+  - ヘッドレス / SDK のセッション開始が最大 50ms 短縮
+  - `/install-github-app` が GitLab リポジトリ内で実行されたとき GitHub 専用である旨と GitLab CI/CD ドキュメントを案内
+  - ネストしたバックグラウンドサブエージェントの結果を親サブエージェントのトランスクリプトに保存（resume 後も保持、共有トランスクリプトにも表示）
+  - \[VSCode] セッション一覧サイドバーに Active クイックフィルタとステータスフィルタメニュー（Needs input / Working / Completed）を追加
 
 ---
 

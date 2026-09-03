@@ -80,7 +80,12 @@ skill_mcp_dependency_install = true      # スキル依存MCPサーバーの自�
 hooks = true                             # Hooks システム（0.124.0+ デフォルト有効。`features.codex_hooks` は非推奨エイリアス）
 plugin_hooks = true                      # プラグインバンドル hooks（0.131.0+ デフォルト有効）
 network_proxy = false                    # ネットワークプロキシ（0.131.0+ 段階的ロールアウト）
+
+[features.context_management]
+experimental_mode = false                # 実験的コンテキスト管理（0.153.0+、既定無効）
 ```
+
+> `features.context_management.experimental_mode`（0.153.0+）: 有効化すると **トークンバジェット方式のコンテキスト管理・history notes・`new_context` ツール**が使えるようになる。対象は **Codex バックエンドを使う ChatGPT Plus / Pro / Pro Lite セッションのうち適格なもの**に限られ、**API キーセッション・カスタムプロバイダ・一時的な structured thread は対象外**。長時間セッションのコンテキスト運用を検証するハーネスでは試す価値があるが、既定無効かつ対象限定のため常用前提にはしないこと。
 
 > 0.131.0+: 設定スキーマ外フィールドは **strict config parsing** により拒否される。旧来 unknown フィールドが警告だった挙動から変更されている点に注意。
 
@@ -113,6 +118,8 @@ theme = "monokai"            # シンタックスハイライトテーマ
 animations = true            # ターミナルアニメーション
 notifications = true         # 通知の有効化
 status_line = ["model", "context", "git"]  # フッターステータスライン項目
+auto_recap = false           # 自動リキャップを無効化（0.153.0+。手動 `/recap` は引き続き使える）
+disable_paste_burst = true   # ペーストバースト検出の無効化（0.153.0 でトップレベル設定から `[tui]` 配下へ移動。旧トップレベルキーもフォールバックとして有効）
 ```
 
 #### 承認粒度（Granular Approval）
@@ -622,7 +629,7 @@ matcher = "shell"
 | `SessionStart` | セッション | セッション開始時 |
 | `SessionEnd` | セッション | セッション終了時 |
 | `SubagentStart` | セッション | サブエージェント起動時（0.133.0+） |
-| `Interrupt` | ターン | アクティブなトップレベルターンが中断されたとき（**0.150.0+**）。command / MCP ハンドラを実行できる。公式 hooks ドキュメントには 2026-08-28 時点で未記載（リリースノートのみ） |
+| `Interrupt` | ターン | **メインスレッドの**アクティブなターンが中断されたとき（**0.150.0+**。2026-09-03 に公式 hooks ドキュメントへ収載）。中断の記録や、フックが始めた作業の後始末に使う。**アイドルスレッドとサブエージェントでは走らない**。`matcher` を書いても無視される。共通入力フィールドに加え `turn_id`（中断されたターンのID）と `permission_mode` を受け取る。**`command` ハンドラの既定タイムアウトは 1 秒、設定可能な範囲は 1〜3 秒**。フック出力で中断を阻止したりターンを再開したりはできない。出力は「終了コード `0` かつ無出力」か「任意の `systemMessage` を含む JSON」のみで、**プレーンテキスト出力は不正**。async 実行時も同じタイムアウトが適用される |
 
 > **比較**: Claude Code は 17 以上のイベントをサポート。Codex は 0.133.0 で 6 → 0.148.0 で 11 → 0.150.0 で 12 イベント。`Notification` 系や `PreCompact` 以外の UI 系イベントは引き続き未対応。
 >
@@ -644,7 +651,7 @@ matcher = "shell"
 |-----------|------|
 | `command` | 実行コマンド（必須） |
 | `commandWindows` / `command_windows` | Windows でのみ使う代替コマンド（0.131.0+） |
-| `timeout` | タイムアウト秒（既定 600。`SessionEnd` のみ既定 1） |
+| `timeout` | タイムアウト秒（既定 600。`SessionEnd` は既定 1。`Interrupt` は既定 1 で上限 3） |
 | `async` | `true` でバックグラウンド実行（**0.148.0+**）。詳細は 7.6 |
 | `statusMessage` | 実行中に UI へ出す文言 |
 | `additionalContextLimit` | `additionalContext` をディスクへ退避する概算トークン閾値（既定 2,500。`0` で退避無効） |
