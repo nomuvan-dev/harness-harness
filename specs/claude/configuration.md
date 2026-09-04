@@ -133,7 +133,7 @@ managed 階層は単一ではなく、上から **server-managed settings → MD
 | `permissions.defaultMode` | デフォルト権限モード。v2.1.200 で `default` モードの表示名が「Manual」に変更（`"manual"` も `default` と同義で受理）。**v2.1.257 以降、`auto` に加えて `bypassPermissions` も project / local 設定からは有効にならない**（user / managed 設定に置くか `--permission-mode` で指定する。v2.1.257 より前は `bypassPermissions` は任意の設定ファイルから有効だった）。VS Code 拡張が開始する会話では user / managed / `--settings` の値のみ読まれる |
 | `permissions.additionalDirectories` | 追加ワーキングディレクトリ。**サンドボックス既定の書き込み可能パスにも含まれる**（2026-08-31 時点の公式ドキュメント改訂で明文化）: 既定では作業ディレクトリ・セッション一時ディレクトリ（`$TMPDIR`）・`--add-dir` / `/add-dir` で追加したディレクトリに加え、本キーのディレクトリにもサンドボックスコマンドが書き込める。ファイルアクセス権のみを与え skills / commands / subagents は読み込まない点は従来通り（`skills-and-commands.md` 参照） |
 | `permissions.disableBypassPermissionsMode` | `bypassPermissions` モード無効化 |
-| `permissions.blockReadsOutsideWorkingDirectories` | （v2.1.257）auto モードで作業ディレクトリ外のファイル読み取り自体をブロックする。v2.1.257 では auto モードの初回の作業ディレクトリ外読み取り時に一度確認プロンプトが出て、その場で本設定を有効化できる |
+| `permissions.blockReadsOutsideWorkingDirectories` | （v2.1.257 で追加、**v2.1.260 で settings リファレンスに正式収載**）作業ディレクトリ外のファイル読み取りを **`bypassPermissions` を含む全権限モード**でブロックする（Read / Grep / Glob / LSP）。`cat` 等の認識済みファイルコマンドを使う Bash コマンドは、auto モードや `bypassPermissions` モードでも確認プロンプトが出る。**スコープは `Any file`**（いずれかの設定ソースが `true` なら有効。リポジトリのコミット済み設定でプロジェクト単位に有効化できるが、既に有効なブロックの解除はできない）。auto モードの初回の作業ディレクトリ外読み取りプロンプトで「ブロックする」を選ぶと Claude Code が本キーに `true` を書き込む。サンドボックス有効時は、サンドボックスコマンドからのホームディレクトリ・マウントボリュームルートの読み取りも拒否し、サンドボックス外での再試行は `bypassPermissions` モードでも承認を求める（`sandbox.filesystem.denyRead` にパスを列挙する代わりに使える）。`~/.claude/` 配下の skills / plugins / rules / agents / commands / `CLAUDE.md` は読める。リンクされた git worktree（セッション途中で入ったものを含む）では共通 `.git` ディレクトリは読み書き可能なまま |
 | `hooks` | ライフサイクルフック設定 |
 | `disableAllHooks` | 全フック無効化 |
 | `allowManagedHooksOnly` | Managed フックのみ許可（Managed設定のみ） |
@@ -153,7 +153,7 @@ managed 階層は単一ではなく、上から **server-managed settings → MD
 | `effortLevel` | エフォートレベル。設定ファイルで指定できるのは `low` / `medium` / `high` / `xhigh` の4段階（`max` は設定ファイル不可でセッション限定、`ultracode` は別キー `ultracode` を使う）。**v2.1.251 以降は「保存済みレベルを持たないモデルに対する既定値」という位置づけ**に変わり、`/effort` は本キーではなく `modelSettings` に書き込む。同一設定ファイル内ではモデル別 `modelSettings` エントリが本キーより優先される。スキル / サブエージェントの frontmatter `effort` は当該実行中のみセッションレベルを上書きする（環境変数は上書きしない）。Managed 設定に置いても**強制ではなく既定値**で、`/effort` や `--effort` でセッション単位に変更可能。モデル別対応レベル: Fable 5 / Opus 5 / Sonnet 5 / Opus 4.8 / Opus 4.7 は `low`〜`max`、Opus 4.6 / Sonnet 4.6 は `xhigh` を除く4段階（未対応レベル指定時は直下の対応レベルにフォールバック）。既定は `high`（Opus 4.7 のみ `xhigh`。組織が[組織既定モデル](https://code.claude.com/docs/en/model-config#organization-default-model)に既定 effort を設定している場合はそのモデルでその値が既定になる） |
 | `modelSettings` | **v2.1.251 で追加**。モデルごとに effort レベルを保存するオブジェクト。型は「モデル名 → `{ "effortLevel": "low" \| "medium" \| "high" \| "xhigh" }`」。既定は未設定。インタラクティブセッションで `/effort low|medium|high|xhigh` を実行するか `/model` ピッカーの effort スライダを動かすと、Claude Code が**使用中モデルのエントリとして user 設定に自動で書き込む**ため手で編集する機会は少ない。キーは `claude-opus-5` のような正規名で書かれ、そのモデルのエイリアス・日付サフィックス付き ID・`[1m]` 付き ID・認識済みプロバイダ固有 ID が同じエントリにマッチする。`/effort auto` で使用中モデルのエントリのみクリアされる。**優先順位**: 同一設定ファイル内ではモデル別エントリ > `effortLevel`。ファイル間ではモデルごとに独立して解決され、「そのモデルのエントリまたは `effortLevel` を設定している最上位の設定ファイル」が決める（したがって managed の `effortLevel` は user 設定の保存済みレベルに勝つ）。`ultracode` はこれらすべてに優先する。スコープ: Any file |
 | `autoMode` | Auto Modeの分類器設定。`environment`, `allow`, `soft_deny`, `hard_deny` 配列で構成。共有プロジェクト設定からは読み込まれない。v2.1.118 で `"$defaults"` を配列に含めることで組み込みルールを置換せず追加可能。v2.1.136 で `hard_deny` 追加: ユーザー意図や allow 例外に関わらず無条件にマッチアクションをブロック |
-| （CLI）`--permission-prompts none` | **v2.1.259**。無人のヘッドレスホスト向けフラグ。プロンプトが出るはずの操作を自動的に拒否する。アクティブな権限モード（auto モードを含む）の判定自体は従来どおり働く。2026-09-04 時点で公式 CLI リファレンス未記載（changelog のみ） |
+| （CLI）`--permission-prompts <host\|none>` | **v2.1.259**。print モードで権限プロンプトに誰が答えるかを指定する。既定の `host` は Agent SDK ホストまたは `--permission-prompt-tool` のツールへ転送、`none` は答える者がいない無人ホスト向けでプロンプトが出るはずの操作を自動的に拒否する。アクティブな権限モード（auto モードを含む）の判定自体は従来どおり働く。**2026-09-05 時点で公式 CLI リファレンスに収載済み** |
 | `disableAutoMode` | `"disable"` で Auto Mode の有効化を阻止。`Shift+Tab` サイクルから除外し `--permission-mode auto` を拒否。v2.1.207 で Bedrock / Vertex / Foundry の Auto mode がオプトイン不要になったため、無効化はこの設定で行う。同版から `autoMode` はリポジトリ内 `.claude/settings.local.json` から読み込まれなくなった（`~/.claude/settings.json` を使用） |
 | `useAutoModeDuringPlan` | プランモードで Auto Mode セマンティクスを使用（デフォルト: `true`）。共有プロジェクト設定からは読み込まれない |
 | `defaultShell` | `!` コマンドのデフォルトシェル。`"bash"`（デフォルト）または `"powershell"`（Windows、`CLAUDE_CODE_USE_POWERSHELL_TOOL=1` 必要） |
@@ -262,7 +262,7 @@ managed 階層は単一ではなく、上から **server-managed settings → MD
 | `axScreenReader` | スクリーンリーダー向けプレーンテキスト描画にオプトイン。`claude --ax-screen-reader` / `CLAUDE_AX_SCREEN_READER=1` でも可（v2.1.208） |
 | `vimInsertModeRemaps` | vim モードのインサートモードで `jj` → Escape のような 2 キーシーケンスをマップ（v2.1.208） |
 | `sandbox.filesystem.disabled` | ファイルシステム分離のみスキップし、ネットワーク egress 制御は維持（v2.1.216） |
-| `sandbox.filesystem.denyRead` | 読み取り拒否パス。ワイルドカードは全プラットフォームで有効（Linux/WSL2 では実パスに展開）。**v2.1.236（macOS）**: `**/.env` のようなワイルドカード read-deny が許可済み read 領域の内部でも優先され、マッチしたディレクトリ配下も対象に含まれ、拒否対象ファイルのリネームによる回避もできなくなった |
+| `sandbox.filesystem.denyRead` | 読み取り拒否パス（ホームディレクトリやマウントボリュームを丸ごと塞ぐ用途なら、パスルールを書く代わりに `permissions.blockReadsOutsideWorkingDirectories: true` が使える）。ワイルドカードは全プラットフォームで有効（Linux/WSL2 では実パスに展開）。**v2.1.236（macOS）**: `**/.env` のようなワイルドカード read-deny が許可済み read 領域の内部でも優先され、マッチしたディレクトリ配下も対象に含まれ、拒否対象ファイルのリネームによる回避もできなくなった |
 | `crossSessionInbound` | セッション間メッセージ（`SendMessage`）の受信を制御（v2.1.224）。`accept`（配送） / `hold`（通知のみ・未配送、後で `accept` が適用されれば解放） / `refuse`（黙って破棄）。`/config` の「Messages from your other sessions」行からも設定可（v2.1.232、書き込み先は user 設定。`/config crossSessionInbound=value` ショートハンドは拒否される）。**未設定時は送受信両セッションの権限モードクラスから自動判定**（bypassPermissions 系 vs プロンプト系。詳細は agent-teams.md 参照）。**v2.1.248**: 認識できない値を設定すると警告が出る。user / project / local / `--settings` にある間は上位ソースが `accept` でも受信を `hold` し（他ソースの `refuse` は引き続き有効）、managed 設定にある場合は最も厳しい `refuse` として扱われる（v2.1.248 より前は黙って無視） |
 | `dialogExpiry` | セッション間メッセージのダイアログ有効期限を設定（v2.1.224）。v2.1.232 で `/config` に「Dialog expiry」「Messages from your other sessions」の行が追加され GUI から設定可能に |
 | `extraKnownMarketplaces` | 既知プラグインマーケットプレースの追加登録。v2.1.232 で `additionalMarketplaces` が別名として受理される |
@@ -307,7 +307,17 @@ managed 階層は単一ではなく、上から **server-managed settings → MD
 | `forceLoginGatewayUrl` | （Managed のみ）`/login` の Cloud gateway 画面が接続するゲートウェイ URL を指定。画面には URL 入力欄が無く、未設定だと「IT 管理者に問い合わせ」と表示される。`forceLoginMethod` 未設定時はこのキー単独で Cloud gateway 画面が開く。`forceLoginMethod: "gateway"` はログイン方式ピッカーも消す。`claudeai` / `console` を指定した場合はそちらが優先されるため、両方を整合させて設定する |
 | `managedSourcesBehavior` | （Managed のみ、v2.1.242 以降）複数の managed ソースが同一マシンに配信されたときの合成方法。`"first-wins"`（既定）は**ポリシーキーを1つでも持つ最上位のソースだけを採用**し、残りは「全 admin ソースから読むキー」を除き無視する。`"merge"` は配信された全 admin ソースを種類別に合成する: リスト（`permissions.allow`・`hooks`・`sandbox.network.allowedDomains`・`deniedMcpServers` 等）は全ソースの要素を結合、ロック（`allowManagedHooksOnly`・`permissions.disableBypassPermissionsMode`・`crossSessionInbound` 等）は最も厳しい値、制限リスト（`availableModels`・`allowedMcpServers`・`strictKnownMarketplaces`・`allowedChannelPlugins`・`fallbackModel` チェーン）はそれを設定する最上位ソースの内容を丸ごと採用、最上位ソース限定キー（`apiKeyHelper`・`awsAuthRefresh`・`awsCredentialExport`・`gcpAuthRefresh`・`otelHeadersHelper`・`proxyAuthHelper`・`forceLoginOrgUUID`・`forceLoginMethod`・`forceLoginGatewayUrl`・`parentSettingsBehavior`・`modelPicker`・`permissions.defaultMode`）は最上位ソースのみ、`env` は変数単位でマージ（両モード共通）、その他は最上位ソースの値。**本キー自身は「本キーかポリシーキーを持つ最上位ソース」からのみ読まれる**ため、下位ソースが自分を merge 対象に引き上げることはできず、server-managed settings が届かないマシンでは MDM プロファイル側にも書く必要がある。Windows HKCU と埋め込みホストの親設定は merge に参加しない。`managed-settings.json` は最下位の admin ソースなので、そこに `"merge"` を書いても合成相手がいない。`"merge"` は最上位より下の全ソースが管理者の統制下にある場合のみ使う（下位ソースの allow ルールが加算されるため）。`/status` の `Setting sources` 行に `(remote + file, merged)` のように表示される |
 
-> **managed 設定ファイル / drop-in ファイルが読めない・パースできない場合**: 他の admin ソースがポリシーを供給していなければ、claude.ai または Claude Console の認証情報でサインインしたセッションは起動時に「管理者に連絡してください」というメッセージを出して終了する。
+> **managed 設定ソースが JSON オブジェクトとしてパースできない場合（2026-09-05 時点の公式 managed-settings ドキュメントで細分化）**: managed 設定ファイル・drop-in ファイル・MDM plist・HKLM レジストリ値のいずれかが**存在するのにパースできない**と、Claude Code は**他の admin ソースがポリシーを供給していても起動を拒否**し、原因のソース名を挙げたエラーを表示する。
+>
+> - **managed 設定ファイル / drop-in ファイル**: JSON として不正、またはトップレベルがオブジェクトでない
+> - **MDM plist**: macOS の `plutil` が malformed と報告する、または変換結果が JSON オブジェクトでない
+> - **HKLM レジストリ値**: `Settings` 値が文字列でない・空・JSON オブジェクトを保持していない
+>
+> 一方、次の 3 つは起動拒否にならない: ①ファイル・プロファイル・レジストリ値が**存在しない**（そのソース無しで起動）、②**空の** managed 設定ファイルは `{}` 扱い、③ユーザーが書ける **HKCU** の不正値は起動をブロックせず `/status` と `claude doctor` に注意として表示される。
+>
+> なお、managed 設定ファイル・drop-in・`managed-settings.d/` が**読めない**（パース以前の I/O 失敗）場合は従来どおり、他の admin ソースがポリシーを供給していなければ claude.ai / Claude Console 認証のセッションが起動時に「管理者に連絡してください」と表示して終了する。
+>
+> また `policyHelper` が出力する `managedSettings` に対しては通常の managed ソースより厳しく、エントリ単位の修復は同様に行うものの**修復後もスキーマ違反が残ればヘルパー実行全体が失敗扱い**となり、起動時はヘルパーが非ゼロ終了した場合と同じく起動を拒否する。
 
 > **承認が必要になった managed 設定（v2.1.251）**: サンドボックスの TLS を終端する、サンドボックストラフィックを自前のプロキシへ流す、認証情報を注入する、サンドボックス隔離を弱める、といった server-managed 設定は適用前にユーザー承認を要求するようになった。`ANTHROPIC_CUSTOM_HEADERS`（managed / project 設定由来）も同様。あわせて managed 設定の承認ダイアログは、**前回承認時からの差分だけ**を列挙するようになった。同一の Claude apps gateway へ再サインインしても設定が変わっていなければ承認プロンプトは再表示されない。
 
@@ -349,14 +359,15 @@ Team / Enterprise 向けに、クラウドセッションを自社ホスト上�
 
 Anthropic ホスト型のクラウド環境（Claude Code on the web）に **API クレデンシャル**を保存し、Claude が鍵の値を見ないまま外部 API を呼べるようにする仕組みが追加された。Anthropic の agent proxy が、セッションの VM を出た後のリクエストに対して、環境に登録されたホスト向けだけヘッダを付与する。鍵はセッションの環境変数にもファイルにも現れない。
 
-- **前提条件**: claude.ai 組織の admin ロール（**Team / Enterprise では Owner のみが保有し Admin は持たない**。Pro / Max は自分の組織で保有）／**既存の** Anthropic ホスト型クラウド環境（セルフホスト環境は非対応、新規作成ダイアログにも項目は出ない）／API がインターネットから到達可能／組織が顧客管理暗号鍵（CMEK）を使っていないこと
+- **対象プラン（2026-09-05 時点の公式記述で明確化）**: **Pro / Max プランのみ**。**Team / Enterprise プランでは未提供**で、環境ダイアログに **API credentials** セクション自体が出ない。したがってこれらのプランでは外部 API の鍵は環境変数に置くしかなく、環境の利用者全員が読める点に注意
+- **前提条件**: claude.ai 組織の admin ロール（Pro / Max は自分の組織で保有）／**既存の** Anthropic ホスト型クラウド環境（セルフホスト環境は非対応、新規作成ダイアログにも項目は出ない）／API がインターネットから到達可能／組織が顧客管理暗号鍵（CMEK）を使っていないこと
 - **登録方法**: [claude.ai/code](https://claude.ai/code) の環境編集ダイアログ「Update cloud environment」の **Environment variables** 直下にある **API credentials** から1件ずつ追加する。編集は不可（変更するには削除して再追加）。既定の Credential type は `Bearer`（`Authorization: Bearer <値>` ヘッダ。`X-Api-Key` のようなヘッダ名・prefix なしにも変更可）。**Allowed websites** に対象ホストを列挙し、先頭 `*.` で全サブドメインにマッチ。保存後は値を再表示できない
 - **ネットワーク許可との関係**: クレデンシャルに列挙したホストは、環境の [network access level] が本来許可しない場合でもセッションから到達できる（agent proxy がスキップするホストを除く）。GitHub（専用プロキシ）・MCP コネクタ（Anthropic サーバー経由）も従来どおりセッションの allowlist を通らない
 - **クレデンシャルが付かないリクエスト**: GitHub（GitHub プロキシが認証）／`api.anthropic.com` と公開パッケージレジストリ（`registry.npmjs.org`, `jsr.io`, `npm.jsr.io`, `pypi.org`, `files.pythonhosted.org`, `index.crates.io`, `proxy.golang.org`）／**セットアップスクリプトからのリクエスト**（Claude Code は setup script の実行後に agent proxy へ接続するため）
-- **共有環境**: 組織共有環境も環境セレクタから開けるようになり、**Owner** はそこで編集・API クレデンシャル追加ができる（他メンバーは読み取り専用）。環境変数とセットアップスクリプトは利用者全員が読めるため、秘密情報は環境変数ではなく API クレデンシャルに置く
+- **共有環境**: 組織共有環境も環境セレクタから開けるようになり、**Owner** はそこで編集できる（他メンバーは読み取り専用）。環境変数とセットアップスクリプトは利用者全員が読めるため秘密情報を置いてはならないが、**共有環境が使える Team / Enterprise プランでは API クレデンシャルが未提供**のため、現状は代替手段が無い
 - **アーカイブ時**: 環境をアーカイブしても実行中セッションにはクレデンシャルが付いたままになるため、不要なものは事前に削除する
 
-> ハーネス設計上の注意: 「クラウド環境には専用のシークレットストアが無い」という従来の前提が変わった。ただし**鍵をコマンドラインやスクリプトで参照する用途には使えない**（Claude に値は渡らず、proxy が付与するだけ）。`curl` 等で当該ホストを叩く形のハーネスに限って有効。
+> ハーネス設計上の注意: 「クラウド環境には専用のシークレットストアが無い」という従来の前提が変わったが、**適用範囲は Pro / Max に限られる**（Team / Enterprise は 2026-09-05 時点で従来どおり環境変数のみ）。また**鍵をコマンドラインやスクリプトで参照する用途には使えない**（Claude に値は渡らず、proxy が付与するだけ）。`curl` 等で当該ホストを叩く形のハーネスに限って有効。
 
 ### 2.4 `~/.claude.json` のグローバル設定
 

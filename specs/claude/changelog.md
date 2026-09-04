@@ -3,7 +3,7 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-09-04（v2.1.259 を追加。`managedMcpServers` / `--permission-prompts none` / `allowedMcpServers` のスコープ変更（破壊的）が主な内容）
+最終更新: 2026-09-05（v2.1.260 を追加。`/diff` の diff パネル、`permissions.blockReadsOutsideWorkingDirectories` の全権限モード化、v2.1.259 の `Read()` deny ルール Bash 引数適用の巻き戻しが主な内容）
 
 ---
 
@@ -22,6 +22,36 @@
 - 1M コンテキスト・常時 extended thinking（thinking 無効化不可）も Fable 5 と同じ
 
 ---
+
+## v2.1.260 (2026-09-03)
+
+- **`/diff` の diff パネル追加**: フルスクリーンレンダリング時、`/diff` が会話の横に diff パネルを開き、Claude の編集に追随して更新され続ける（開いたまま作業を継続できる）。クラシックレンダラでは従来どおりプロンプト位置に diff ビューアが開く
+  - 必要条件: フルスクリーンレンダリング / git リポジトリ / 端末幅 110 桁以上 / v2.1.260 以降。開けない場合は diff ビューアにフォールバックするか理由を表示
+  - 端末幅 **144 桁以上**なら Claude がファイル編集を始めた時点で自動的に開く。一度 `/diff` で自分で開くと、以降のセッションでは幅が足りる端末で編集開始時に自動で開くようになる。閉じた状態はそのセッションで維持される
+  - パネル内で: 行をマウス選択すると次のプロンプトに添付される / テスト・生成ファイルは折りたたまれ、当セッション以前の変更は末尾 1 行に集約（クリックで展開）/ `Ctrl+X B` で比較基準を「今セッションの変更 → 未コミット全体 → 既定ブランチからの分岐点以降」と巡回（プロジェクトごとに記憶）
+  - 新キーバインドコンテキスト **`DiffPanel`** と `app:toggleReplTab` / `app:cycleDiffBase`（既定 `Ctrl+X B`）/ `app:diffFileListUp` / `app:diffFileListDown` / `app:toggleDiffNoiseFilter` / `app:toggleDiffPreSession` を追加
+- **`permissions.blockReadsOutsideWorkingDirectories` が正式な設定として settings リファレンスに収載**: auto モード限定ではなく、**`bypassPermissions` を含む全権限モード**で Read / Grep / Glob / LSP による作業ディレクトリ外の読み取りをブロックする。`cat` 等の認識済みファイルコマンド経由の Bash 読み取りは auto / `bypassPermissions` でも確認プロンプトが出る
+  - **スコープは `Any file`**: いずれかの設定ソースが `true` なら有効。リポジトリのコミット済み設定でプロジェクト単位に有効化できるが、既に有効なブロックを解除することはできない
+  - サンドボックス有効時は、サンドボックスコマンドからのホームディレクトリ・マウントボリュームルートの読み取りも拒否する。`~/.claude/` 配下の skills / plugins / rules / agents / commands / `CLAUDE.md` は読める。リンクされた git worktree では共通 `.git` ディレクトリは読み書き可能なまま
+- **`/cost` とステータスラインの `prompt_cache` にキャッシュミスの推定原因を表示**（ツール定義やシステムプロンプトの変更、TTL 超過のアイドル等）
+- **`/advisor` のテキスト形式追加**: `/advisor` / `/advisor <model>` / `/advisor off` をデスクトップアプリ・Remote Control・ヘッドレス（`-p` / Agent SDK）でも使える
+- **`/reload-plugins` をヘッドレスセッションに追加**（Claude Code Desktop / SDK のコマンド一覧に出る）
+- **Claude apps gateway**: `oidc.scope_on_refresh` 追加（リフレッシュ時に `openid` を再要求しないと id_token を返さない IdP 向け）。`desktop` ポリシーブロックで `userPluginMarketplacesEnabled` / `userPluginUploadsEnabled` に対応
+- **サブエージェントの応答が途中で切れたときの継続**: 部分応答にテキストがあってツール呼び出しが無い場合、実行を終了せずサブエージェントに継続を促す（対話セッションでも同様）
+- 主な修正:
+  - **v2.1.259 で入った「`Read()` deny ルールを Bash 引数に適用する」変更を巻き戻し**: `Read(./**/build/**)` ルール下で `npm run build` が全モードで拒否され、`cd … && grep` が auto モードでもプロンプトを出す問題があったため
+  - パスに括弧を含む `Edit` / `Write` / `Read` 権限ルールが不正扱いで破棄され、Bash サンドボックスからも無視されて「読み取り専用」フォルダが書き込み可能になる
+  - コンパイル不能なパターン（閉じない `[` 等）を持つファイル権限ルールが 1 つあるだけで全ファイル編集が `Invalid regular expression` で失敗する
+  - zsh の `REPORTTIME` / `REPORTMEMORY` / `DIRSTACKSIZE` 代入にコマンド置換を隠したコマンドが自動承認される
+  - Bedrock のモデル探索・トークンカウント・AWS SSO/STS 認証が、企業ルート CA が OS 証明書ストアにしか無い環境で失敗する
+  - macOS の `permissions.blockReadsOutsideWorkingDirectories` がサンドボックス化された git からユーザーの git config を隠し、worktree 隔離サブエージェント自身のチェックアウトも隠す
+  - `/login` の残存 API キーがある claude.ai Enterprise / Team ユーザーで managed 設定が読み込まれない。`/status` が claude.ai アカウントと API キーの両方を有効なように表示する（使われていない方に印が付く）
+  - バンドルスキルのエイリアス（`/doctor` に対する `checkup` 等）をキーにした managed `skillOverrides` が効かない。`Skill(name)` deny ルールが `<dir>:name` 形式のネストスキルをカバーしない
+  - `model: fable` のエージェントが `ANTHROPIC_DEFAULT_FABLE_MODEL` ピンの `[1m]` タグを無視して 200K コンテキストで動く
+  - `/model` ピッカーに Fable 5.1 が出ない（`/model claude-fable-5-1` と打つ必要があった）。Fable 5.1 でツール結果後のコンテキストがプロンプトキャッシュに乗らない
+  - プラグインフック読み込み失敗・組織管理プラグインのマーケットプレイス読み込み失敗で、以降そのセッションのモデル切り替えがブロックされ続ける
+  - `/rewind` が、チェックポイントのバックアップファイルが無く実際には何も復元していないのに成功と報告する。巻き戻した先のターンのファイル読み取り追跡が残る
+  - SendMessage で別エージェントを resume したサブエージェントが、そのエージェントの完了で起こされない（通知がメイン会話へ行っていた）
 
 ## v2.1.259 (2026-09-02)
 

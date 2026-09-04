@@ -4,7 +4,19 @@
 公式: https://learn.chatgpt.com/docs/changelog
 （2026-08-15 時点で `https://developers.openai.com/codex/changelog` は上記へ 308 恒久リダイレクト）
 
-最終更新: 2026-09-04（安定版 **0.153.0** リリース。プラグイン CLI のリモートマーケットプレイス対応、`tui.auto_recap`、`features.context_management.experimental_mode` が主な内容。0.154.0 は alpha.1 が出た段階）
+最終更新: 2026-09-05（安定版 **0.153.2** まで。0.153.1 で **GPT-6-Astra** のモデルカタログがバックポートされ、0.153.2 は Astra Fast の表示文言修正のみ。0.154.0 は alpha.3 が出た段階）
+
+---
+
+## CLI 0.153.2 (2026-09-03)
+
+- GPT-6-Astra の Fast ティア説明を「1.5x speed」から「**2x speed, increased usage**」に修正（#42632）。表示文言のみの変更でリクエストの挙動は変わらない
+
+---
+
+## CLI 0.153.1 (2026-09-03)
+
+- **GPT-6-Astra のモデルカタログをバックポート**（#42605）。既定モデルを変えず、モデルピッカーにも出さないまま、**API 経由で GPT-6-Astra を設定できる**ようになった。ハーネス側で明示的にモデル指定して試すことは可能だが、既定の挙動には影響しない
 
 ---
 
