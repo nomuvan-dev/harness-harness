@@ -1,5 +1,44 @@
 # harness-harness 更新履歴
 
+## 2026-09-05 — 公式ドキュメント巡回
+
+### 検出・更新
+
+Claude Code は **v2.1.260**（2026-09-03）、Codex CLI は安定版 **0.153.2**（2026-09-03）へ更新。追跡中 49 URL のハッシュ比較で 31 件の変更を検出したが、GitHub / skills.sh / claude.com/plugins 等の HTML ページは動的要素の差分が大半で、実質的な中身は Claude Code v2.1.260 と Codex 0.153.1 / 0.153.2 に集中している。スキルエコシステム巡回（Phase 3.5）は前回巡回が 2026-09-01 で 7 日以内のためスキップ。
+
+**1) Claude Code v2.1.260 — `/diff` の diff パネルと読み取りブロックの正式化**
+
+- **`/diff` が diff パネルになった**: フルスクリーンレンダリング時、会話の横にパネルが開き Claude の編集に追随して更新され続ける。要件はフルスクリーン・git リポジトリ・端末幅 110 桁以上・v2.1.260 以降。**幅 144 桁以上なら Claude が編集を始めた時点で自動的に開く**ため、ワイド端末を使うハーネスでは何もしなくても差分が常時可視になる。パネル内の行をマウス選択すると次のプロンプトに添付される（「この行について」と聞く導線が短くなった）。新キーバインドコンテキスト `DiffPanel` と `app:cycleDiffBase`（既定 `Ctrl+X B`）ほか 5 アクションが追加
+- **`permissions.blockReadsOutsideWorkingDirectories` が settings リファレンスに正式収載**: v2.1.257 で auto モード向けに入った設定が、**`bypassPermissions` を含む全権限モード**で効く正式な設定として文書化された。スコープが `Any file`（どれか 1 つのソースが `true` なら有効・解除不能）なので、**リポジトリのコミット済み設定でプロジェクト単位に読み取り範囲を締められる**。サンドボックス有効時はホームディレクトリ・マウントボリュームの読み取りも塞ぐため、`sandbox.filesystem.denyRead` にパスを列挙する運用の代替になる
+- **v2.1.259 の「`Read()` deny ルールを Bash 引数へ適用」が巻き戻された**: `Read(./**/build/**)` 下で `npm run build` が全モードで拒否され、`cd … && grep` が auto モードでもプロンプトを出す実害があったため。前回巡回で「秘密ファイルを deny で守るハーネスの実効性が上がった」と記録した項目は**取り消し**。秘密ファイルの保護は `blockReadsOutsideWorkingDirectories` や sandbox の `denyRead` 側で組むのが妥当
+- **managed 設定のパース失敗条件が細分化**: パースできない managed ソース（ファイル / drop-in / MDM plist / HKLM）は**他の admin ソースがポリシーを供給していても起動を拒否**する。一方、①ソース不在、②空ファイル（`{}` 扱い）、③HKCU の不正値（`/status` と `claude doctor` に注意表示のみ）は起動をブロックしない。`policyHelper` の `managedSettings` はさらに厳しく、修復後もスキーマ違反が残ればヘルパー実行全体が失敗扱いになる
+- **ヘッドレスの機能追加**: `/advisor` のテキスト形式（`/advisor` / `/advisor <model>` / `/advisor off`）と `/reload-plugins` がヘッドレス（`-p` / Agent SDK）・デスクトップ・Remote Control で使えるようになった。**`-p` 実行のハーネスから advisor を切り替えられる**
+- **サブエージェントの途中切れ継続**: 応答がストリーム途中で切れ、部分応答にテキストがありツール呼び出しが無い場合、実行を終了せず継続を促すようになった。長時間サブエージェントの取りこぼしが減る
+- **`/cost` とステータスラインにプロンプトキャッシュミスの推定原因を表示**: ツール定義やシステムプロンプトの変更、TTL 超過のアイドル等。ハーネスの CLAUDE.md / MCP 定義を頻繁に書き換えるとキャッシュが飛ぶことを、実測で確認できるようになった
+
+**2) クラウド環境の API クレデンシャルは Pro / Max 限定だった**
+
+- 2026-08-31 巡回で記録した「クラウド環境に API クレデンシャルを保存できる」機能は、公式記述の更新で **Pro / Max プランのみ**であることが明示された。**Team / Enterprise では未提供**で、環境ダイアログに **API credentials** セクション自体が出ない
+- 共有環境（Team / Enterprise）では引き続き秘密情報を置く先が環境変数しかなく、**利用者全員が読める**。「クラウド環境にシークレットストアができた」という前回の前提は、対象プランを限定して読み替える必要がある
+
+**3) Codex CLI 0.153.1 / 0.153.2 — GPT-6-Astra**
+
+- **0.153.1**: **GPT-6-Astra のモデルカタログをバックポート**。既定モデルを変えずモデルピッカーにも出さないまま、API 経由で明示指定すれば使える。ハーネス側で `model` を明示すれば試せるが、既定挙動には影響しない
+- **0.153.2**: GPT-6-Astra の Fast ティア説明を「1.5x speed」から「**2x speed, increased usage**」へ修正。表示文言のみ
+- 0.154.0 は alpha.3 まで進行（リリースノート本文は未公開）
+
+### 更新ファイル
+
+- `specs/claude/changelog.md` — v2.1.260 を追加
+- `specs/claude/configuration.md` — `permissions.blockReadsOutsideWorkingDirectories` の全権限モード化、`--permission-prompts` の CLI リファレンス収載、managed 設定パース失敗条件の細分化、クラウド環境 API クレデンシャルの Pro / Max 限定、`sandbox.filesystem.denyRead` からの相互参照
+- `specs/claude/skills-and-commands.md` — `/diff` の diff パネル
+- `specs/claude/hooks.md` — `PermissionRequest` の `permission_suggestions` と `updatedPermissions` の関係を明確化
+- `specs/claude/agent-teams.md` — 停止させたサブエージェントの resume 規則、応答途中切れ時の継続
+- `specs/codex/changelog.md` — 0.153.1 / 0.153.2 を追加
+- `specs/codex/configuration.md` — `model` に GPT-6-Astra を追記
+
+---
+
 ## 2026-09-04 — 公式ドキュメント巡回
 
 ### 検出・更新

@@ -401,6 +401,8 @@ v2.1.133 以降、すべてのイベントの入力 JSON に effort level も含
 | `PermissionRequest` | `tool_name`, `tool_input`, `permission_suggestions`(opt) |
 
 > `PermissionRequest` は **サンドボックスコマンドのネットワークリクエスト**の権限プロンプトでは発火しない（ツール使用の権限要求のみ）。ネットワークリクエスト側のシグナルが必要な場合は `Notification` の `permission_prompt` タイプを使う（ただし約 6 秒の待機後に発火）。
+>
+> `permission_suggestions`（2026-09-05 時点の公式記述で明確化）: `PreToolUse` と同じ `tool_name` / `tool_input` を受け取るが `tool_use_id` は無い。`permission_suggestions` には Claude Code がその要求に対して提案する**権限更新（allow ルールの追加、権限モードの変更など）**が入る。**権限ダイアログの「always allow」選択肢はこの配列から作られるが、配列＝表示される選択肢そのものではない**（`allowManagedPermissionRulesOnly` などの理由で、配列に残ったまま選択肢が表示されないことがある）。フックは受け取った `permission_suggestions` の 1 つをそのまま `updatedPermissions` として出力できる。
 | `PostToolUse` | `tool_name`, `tool_input`, `tool_response`, `tool_use_id`, `duration_ms`（v2.1.119+。権限プロンプトと PreToolUse 時間を除いたツール実行時間） |
 | `PostToolUseFailure` | `tool_name`, `tool_input`, `tool_use_id`, `error`, `is_interrupt`, `duration_ms`（v2.1.119+） |
 | `PostToolBatch` | `tool_calls`（各要素は `tool_name`, `tool_input`, `tool_use_id`, `tool_response`）。`tool_response` は `PostToolUse` と形が異なりモデルが見る `tool_result` のシリアライズ |
@@ -449,6 +451,8 @@ v2.1.133 以降、すべてのイベントの入力 JSON に effort level も含
   }
 }
 ```
+
+`updatedPermissions` に `permission_suggestions` の要素をそのまま返すと、その権限更新が適用される（従来ドキュメントにあった「ダイアログでその always-allow 選択肢を選んだのと等価」という言い回しは、選択肢と提案が一対一でないため 2026-09-05 時点の記述から削除された）。
 
 `updatedPermissions` の `setMode`（`mode` / `destination`）による権限モード変更の制約:
 
