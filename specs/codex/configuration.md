@@ -31,7 +31,7 @@ Codex CLI の設定は TOML 形式で管理される。複数レベルの設定�
 
 | キー | 型 | デフォルト | 説明 |
 |------|------|-----------|------|
-| `model` | string | `"o4-mini"` | 使用する AI モデル。**0.153.1 で `GPT-6-Astra` のモデルカタログがバックポート**され、API 経由で明示指定すれば利用できる（既定モデルは変わらず、モデルピッカーにも表示されない）。Fast ティアは「2x speed, increased usage」（0.153.2 で表示文言を 1.5x から修正） |
+| `model` | string | 版により異なる（従来 `"o4-mini"`、**0.153.4 以降はバンドル既定が `GPT-6-Astra`**） | 使用する AI モデル。0.153.1 でカタログがバックポートされ API 経由で明示指定できるようになり、0.153.3 で Amazon Bedrock カタログ（Mantle / Runtime の global・US ルート）に追加、**0.153.4 でモデルピッカーに露出し、`model` を明示していない場合のバンドル既定モデルになった**。Fast ティアは「2x speed, increased usage」（0.153.2 で表示文言を 1.5x から修正）。**ハーネスで使用モデルを固定したい場合は `model` を明示すること**（未指定だと更新で既定が動く） |
 | `model_provider` | string | `"openai"` | モデルプロバイダー ID。組み込みプロバイダに **`amazon-bedrock-runtime`**（0.148.0+）が追加された（下記「Amazon Bedrock Runtime プロバイダ」参照） |
 | `approval_policy` | string | `"on-request"` | 承認ポリシー（後述） |
 | `sandbox_mode` | string | `"workspace-write"` | サンドボックスモード（後述） |

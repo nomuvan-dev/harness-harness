@@ -1,5 +1,42 @@
 # harness-harness 更新履歴
 
+## 2026-09-06 — 公式ドキュメント巡回
+
+### 検出・更新
+
+Claude Code は **v2.1.261**（2026-09-04）、Codex CLI は安定版 **0.153.4**（2026-09-04）へ更新。追跡中 49 URL のハッシュ比較で 30 件の変更を検出したが、GitHub / skills.sh / agentskills.io 等の HTML ページは動的要素の差分が大半で、実質的な中身は Claude Code v2.1.261 と Codex 0.153.3 / 0.153.4、およびリファレンス側の挙動変更 3 件に集中している。スキルエコシステム巡回（Phase 3.5）は前回巡回が 2026-09-01 で 7 日以内のためスキップ。
+
+**1) Claude Code v2.1.261 — 出力インライン上限の設定化とスキルの棚卸し導線**
+
+- **`bashOutputMaxChars` / `taskOutputMaxChars` 追加**: これまで Bash 成功時の出力は約 30,000 文字を超えるとファイルパス + プレビューに退避され、`BASH_MAX_OUTPUT_LENGTH` では読み戻し量しか変えられなかった。新設定は**インライン上限そのものを最大 128,000 文字まで引き上げ**、設定すると `BASH_MAX_OUTPUT_LENGTH` は無視される。テストログ・ビルドログを毎回ファイル経由で読み直させていたハーネスは、往復を 1 回減らせる。副作用としてコンテキスト消費は直に増えるため、上げるなら用途を絞る
+- **`/skill-doctor` 追加**: スキル単位のコンテキストコストと呼び出し回数を出し、**一度も呼ばれていないスキル**を名指しする。スキル一覧のコンテキストバジェット（specs/claude/skills-and-commands.md §7）に対して、これまで `/doctor` の推定値しかなかった判断材料が実測ベースになる。v2.1.252 以降＋feature flag 取得が必要で、Remote Control 経由では使えない
+- **`--append-subagent-system-prompt-file` 追加**: サブエージェント向け追記プロンプトをファイルから読む。コマンドラインに載らない長文の共通ルールを `-p` のバッチ実行に流し込める
+- **組織ポリシーの読み込み状況が可視化**: `/status` と `claude doctor` に `Organization policy` 行。プロキシがエンドポイントを通していない等、**managed 設定が届かなかった理由**が出るようになった
+
+**2) リファレンス側の挙動変更（changelog に載らない 3 件）**
+
+- **`keybindingFlavor` が非推奨化**: 「効果なし」と明記され、単語系の編集ショートカットは**常に readline 流儀**になった。`Ctrl+W` は直前の空白まで削除（パスや `--flag=value` を一括削除）、`Alt+D` は単語末まで削除、単語境界は英数字の連なりで `_` `.` `/` が区切り。設定で `"classic"` に戻していたハーネスは、その指定が無効になった点を前提に置き直す必要がある
+- **strict sandbox mode の適用範囲が縮小（v2.1.260 以降）**: `sandbox.allowUnsandboxedCommands: false` は **Claude が実行するコマンド**にのみ効き、ユーザーが `!` シェルモードで自分で打ったコマンドは既定でサンドボックス外で動く。シェルモードも covered なのは (a) バックグラウンドセッション、(b) `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB` を設定した Linux セッション の 2 ケースのみ。**「strict sandbox にしておけばそのセッションの全コマンドが隔離される」という前提は成り立たない**
+- **Read / Edit の deny ルールが Bash のリダイレクト先にも適用**: `> file` / `< file` の対象パスも deny ルールの判定に入るようになった。任意のサブプロセスには依然として効かないため、OS レベルの強制はサンドボックス側で組む
+
+その他: ネストされた `.claude/skills/` は `/add-dir <サブディレクトリ>` で先読みできる（v2.1.257 以降）。リモート MCP サーバーを削除すると保存済み OAuth トークンとクライアント登録も削除される。`--add-dir` は `\\server\share` 等のネットワークパスを追加できない。クラウド環境の許可リストから `*.frame.claudeusercontent.com` を外してもアーティファクトは読める（他組織の公開アーティファクトを開く場合とローカル CLI / セルフホストランナーの設定時のみ必要）。
+
+**3) Codex CLI 0.153.3 / 0.153.4 — GPT-6-Astra がバンドル既定モデルに**
+
+- 0.153.1 の時点では「既定モデルを変えず、モデルピッカーにも出さないまま API 経由で設定できる」だったが、**0.153.4 で方針転換**し、Astra がモデルピッカーに露出し、**`model` を明示していない場合のバンドル既定モデル**になった。0.153.3 では Amazon Bedrock カタログ（Mantle / Runtime の global・US ルート）にも追加されている
+- **ハーネス上の含意**: `config.toml` に `model` を書いていない Codex プロジェクトは、CLI を更新するだけで使用モデルが変わる。モデルを固定したいハーネスは `model` の明示を必須にする。前回巡回で「既定の挙動には影響しない」と記録した位置づけは**取り消し**
+
+### 更新ファイル
+
+- `specs/claude/changelog.md` — v2.1.261 を追加
+- `specs/claude/configuration.md` — `bashOutputMaxChars` / `taskOutputMaxChars` / `sandbox.allowUnsandboxedCommands` / `sandbox.excludedCommands` を追加、`keybindingFlavor` を非推奨として書き換え
+- `specs/claude/skills-and-commands.md` — `/skill-doctor` を組み込みコマンドと §7 の診断・対処表に追加、ネストスキルの `/add-dir` 先読み、`--append-subagent-system-prompt(-file)` を追加
+- `specs/claude/tools.md` — Bash 出力上限に `bashOutputMaxChars` / `taskOutputMaxChars`、deny ルールのリダイレクト適用を追記
+- `specs/claude/mcp.md` — サーバー削除時の OAuth トークン・クライアント登録削除を追記
+- `specs/codex/changelog.md` — 0.153.3 / 0.153.4 を追加
+- `specs/codex/configuration.md` — `model` の既定を 0.153.4 のバンドル既定変更に合わせて書き換え
+- `kb/update-history.md` — 本エントリ
+
 ## 2026-09-05 — 公式ドキュメント巡回
 
 ### 検出・更新

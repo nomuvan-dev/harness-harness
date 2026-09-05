@@ -243,7 +243,9 @@ managed 階層は単一ではなく、上から **server-managed settings → MD
 | `parentSettingsBehavior` | （Managed のみ、admin tier）SDK `managedSettings`（parent tier）をポリシーマージに含めるか（`first-wins` / `merge`）。v2.1.133 |
 | `allowAllClaudeAiMcps` | （Managed のみ、Enterprise）`managed-mcp.json` と並んで claude.ai クラウド MCP コネクタを一括ロード（v2.1.149） |
 | `pluginSuggestionMarketplaces` | （Managed のみ）コンテキストアウェア tips 経由で suggest 対象とする組織マーケットプレースを allowlist 化（v2.1.152） |
-| `keybindingFlavor` | プロンプト入力のキーバインド流儀。`"readline"` で Ctrl+W が Bash 同様に「直前の空白まで削除」になる。既定は `"classic"`（従来動作）。v2.1.238 |
+| `keybindingFlavor` | **非推奨（2026-09-06 時点のリファレンスで「効果なし」と明記）**。単語系の編集ショートカットは常に readline 流儀で動作するようになった: `Ctrl+W` は「直前の空白まで削除」（パスや `--flag=value` を一括削除）、`Alt+F` は現在の単語末（単語間なら次の単語末）へ移動、`Alt+D` は単語末まで削除。単語だけを消したい場合は macOS `Option+Delete` / Windows `Ctrl+Backspace`。単語境界は英数字の連なりで、`_` `.` `/` 等の句読点が区切りとして扱われる。v2.1.238 で追加、その後既定挙動へ統合 |
+| `bashOutputMaxChars` | Bash コマンド**成功時**の出力を Claude にインラインで渡す上限。**最大 128,000 文字**。インライン上限と読み戻しウィンドウを同時に設定し、**設定すると `BASH_MAX_OUTPUT_LENGTH` は無視される**。v2.1.261 |
+| `taskOutputMaxChars` | **バックグラウンドタスク**の出力を Claude にインラインで渡す上限。**最大 128,000 文字**。v2.1.261 |
 | `<marketplace>.headersHelper` | url マーケットプレース定義またはカタログエントリに指定すると、カタログ取得・同一オリジンのアーカイブ取得用 HTTP ヘッダ（短命トークン等）をコマンドで動的生成する。カタログエントリ側の `headersHelper` は当該プラグインの install / update 時のみ実行され、実行前にコマンド内容が表示され `[y/N]` 確認が入る（`-y` で省略）。v2.1.238 |
 | `<marketplace>.skipLfs` | プラグインマーケットプレース定義（`github` / `git` ソース）に `skipLfs: true` を指定すると Git LFS ダウンロードをスキップ（v2.1.153） |
 | `archive` プラグインソース | HTTPS 経由の zip からプラグインをインストールするソースタイプ（v2.1.224）。任意で SHA-256 ハッシュピン止めによる完全性検証に対応。`owner/*` 形式のオーナーワイルドカードをマーケットプレース managed settings に指定可（v2.1.223） |
@@ -263,6 +265,8 @@ managed 階層は単一ではなく、上から **server-managed settings → MD
 | `vimInsertModeRemaps` | vim モードのインサートモードで `jj` → Escape のような 2 キーシーケンスをマップ（v2.1.208） |
 | `sandbox.filesystem.disabled` | ファイルシステム分離のみスキップし、ネットワーク egress 制御は維持（v2.1.216） |
 | `sandbox.filesystem.denyRead` | 読み取り拒否パス（ホームディレクトリやマウントボリュームを丸ごと塞ぐ用途なら、パスルールを書く代わりに `permissions.blockReadsOutsideWorkingDirectories: true` が使える）。ワイルドカードは全プラットフォームで有効（Linux/WSL2 では実パスに展開）。**v2.1.236（macOS）**: `**/.env` のようなワイルドカード read-deny が許可済み read 領域の内部でも優先され、マッチしたディレクトリ配下も対象に含まれ、拒否対象ファイルのリネームによる回避もできなくなった |
+| `sandbox.allowUnsandboxedCommands` | `false` にすると `dangerouslyDisableSandbox` パラメータが無視され、**Claude が実行する**コマンドはすべてサンドボックス内で走るか `sandbox.excludedCommands` に列挙されている必要がある（サンドボックスで失敗したコマンドをサンドボックス外で再試行できなくなる）。`/sandbox` の **Overrides** タブでは **Strict sandbox mode** として表示される。managed settings で厳格サンドボックスを強制する用途。**v2.1.260 で適用範囲が変更**され、ユーザーが `!` シェルモードで自分で打ったコマンドは既定でサンドボックス外で動くようになった（v2.1.260 より前は全セッションでシェルモードもサンドボックス化されていた）。シェルモードもサンドボックス化されるのは **(a) バックグラウンドセッション**、**(b) `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB` を設定した Linux セッション** の 2 ケースのみ |
+| `sandbox.excludedCommands` | サンドボックス外で実行するコマンドの列挙。**既定は未設定＝除外なし**。`pbcopy` / `xclip` / `wl-copy` はサンドボックス内からシステムクリップボードに届かないことがあるため、クリップボードに渡したい場合は `/copy`（Claude Code プロセス側から書き込む）を使うか、これらを本キーに追加する |
 | `crossSessionInbound` | セッション間メッセージ（`SendMessage`）の受信を制御（v2.1.224）。`accept`（配送） / `hold`（通知のみ・未配送、後で `accept` が適用されれば解放） / `refuse`（黙って破棄）。`/config` の「Messages from your other sessions」行からも設定可（v2.1.232、書き込み先は user 設定。`/config crossSessionInbound=value` ショートハンドは拒否される）。**未設定時は送受信両セッションの権限モードクラスから自動判定**（bypassPermissions 系 vs プロンプト系。詳細は agent-teams.md 参照）。**v2.1.248**: 認識できない値を設定すると警告が出る。user / project / local / `--settings` にある間は上位ソースが `accept` でも受信を `hold` し（他ソースの `refuse` は引き続き有効）、managed 設定にある場合は最も厳しい `refuse` として扱われる（v2.1.248 より前は黙って無視） |
 | `dialogExpiry` | セッション間メッセージのダイアログ有効期限を設定（v2.1.224）。v2.1.232 で `/config` に「Dialog expiry」「Messages from your other sessions」の行が追加され GUI から設定可能に |
 | `extraKnownMarketplaces` | 既知プラグインマーケットプレースの追加登録。v2.1.232 で `additionalMarketplaces` が別名として受理される |
