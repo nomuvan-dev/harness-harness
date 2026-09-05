@@ -3,7 +3,7 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-09-05（v2.1.260 を追加。`/diff` の diff パネル、`permissions.blockReadsOutsideWorkingDirectories` の全権限モード化、v2.1.259 の `Read()` deny ルール Bash 引数適用の巻き戻しが主な内容）
+最終更新: 2026-09-06（v2.1.261 を追加。`bashOutputMaxChars` / `taskOutputMaxChars` による出力インライン上限の設定化、`--append-subagent-system-prompt-file`、`/skill-doctor`、組織ポリシー読み込み状況の可視化が主な内容。あわせて `keybindingFlavor` の非推奨化・strict sandbox のシェルモード適用範囲変更をリファレンス側で確認）
 
 ---
 
@@ -20,6 +20,21 @@
 - **Fable 5.1 の advisor 制約**: Fable 5.1 メインは Fable 5.1 のみを advisor として受理する（Fable 5 advisor は拒否される）。Fable 5 メインは Fable 5.1 または Fable 5 を受理
 - 安全性分類器によるフォールバックは Fable 5.1 も Fable 5 と同じ（生物学は Opus 5、サイバーセキュリティは Opus 4.8 へ再実行）
 - 1M コンテキスト・常時 extended thinking（thinking 無効化不可）も Fable 5 と同じ
+
+---
+
+## v2.1.261 (2026-09-04)
+
+- **`bashOutputMaxChars` / `taskOutputMaxChars` 設定追加**: Bash コマンド成功時・バックグラウンドタスクの出力を、ファイル退避せずインラインで Claude に渡す上限を**最大 128,000 文字**まで引き上げられる。`bashOutputMaxChars` はインライン上限と読み戻しウィンドウを同時に設定し、**設定すると `BASH_MAX_OUTPUT_LENGTH` は無視される**（従来の環境変数は読み戻し量のみを変え、インライン上限（約 30,000 文字）は変えられなかった）。テストログやビルドログをファイル経由にせず直接読ませたいハーネスで有効
+- **`--append-subagent-system-prompt-file` 追加**: サブエージェントのシステムプロンプト追記テキストを**ファイルから読む**フラグ。コマンドラインに載らない長文用。`--append-subagent-system-prompt` との併用は不可。`-p` の非対話モードのみ有効
+- **`/skill-doctor` 追加**: 読み込まれているスキルのうち**使われていないもの**と、それぞれのコンテキストコスト・呼び出し頻度を表示する。対話セッションでは `/plugin` マネージャの **Stats** タブに開き、`-p` の非対話モードではテキスト出力。バンドルスキルとエンタープライズスキルは対象外。最近使っていないプラグインも一覧化する。v2.1.252 以降＋feature flag 取得が必要で、Remote Control 経由では利用不可（`Skill usage reports are not available on this connection.`）
+- **組織ポリシーの読み込み状況を可視化**: `/status` と `claude doctor` に `Organization policy` 行を追加。プロキシがエンドポイントを通していない等、**組織ポリシーを読み込めなかった理由**を表示する
+- 修正: 高速入力・キーリピート時に文字が入れ替わる／落ちる問題
+- 修正: セッション再開時に並列ツール呼び出し周辺のフック出力やコンテキストが失われ、再開後のリクエストが変わってしまう問題
+- 修正: `claude -p --resume <file>` がトランスクリプト内の不正なセッション ID を引き継ぐ問題（新しいセッション ID で再開するようになった）
+- 修正: バックグラウンドエージェントを再開できないとき、ウェイクアップがタイトループで再試行され CPU を使い続ける問題
+- 修正: 新しいバージョン向けの feature flag が、同一マシン上の古い Claude Code に適用されることがある問題
+- \[VSCode] モデルピッカーを**全モデルのフラットな一覧**に変更（旧表記のモデル行は末尾に残す）。その他 VSCode 拡張の修正多数
 
 ---
 

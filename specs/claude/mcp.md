@@ -123,6 +123,7 @@ v2.1.154: `claude mcp list` / `get` の出力がパイプされた場合、未�
 **MCP 設定の警告（4 種）**:
 
 - **前後の空白**: `command` / `url` / `args` 各要素 / `env`・`headers` の値とキー名に前後の空白があると警告（`Leading or trailing whitespace in: headers.Authorization` のように値は伏せてフィールド名だけ表示）。Claude Code はトリムせずそのまま使うので設定側を直す
+- **サーバー削除時の OAuth 後始末**: リモートサーバーを削除すると、Claude Code はそのサーバー向けに保存していた **OAuth トークンとクライアント登録も削除する**（2026-09-06 時点のリファレンスで明記）。再追加時は再サインインが必要
 - **複数スコープでの同名サーバー**: 異なるエンドポイントで同じサーバー名を複数スコープに定義すると警告。OAuth サインインはエンドポイント単位で保存されるため、別プロジェクトでは再サインインが必要になる。`claude mcp remove <name> --scope <scope>` で整理する。警告中のエンドポイントは `${VAR}` を展開せずそのまま引用される
 - **予約名**: `workspace` / `claude-in-chrome` / `computer-use` / `Claude Preview` / `Claude Browser` は組み込みサーバー用に予約済み。定義するとロード時にスキップされリネームを促す警告。`claude mcp add` はエラーで拒否（`Claude Browser` の予約は v2.1.205 以降）
 - **未設定の環境変数**: `${VAR}` 参照が未設定かつ `:-default` も無い場合、変数名を挙げて警告した上で `${VAR}` のテキストのまま**サーバーはロードされる**。変数を設定するか `${VAR:-default}` を書く
