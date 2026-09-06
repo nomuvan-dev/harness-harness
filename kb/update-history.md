@@ -1,5 +1,37 @@
 # harness-harness 更新履歴
 
+## 2026-09-07 — 公式ドキュメント巡回
+
+### 検出・更新
+
+Claude Code は **v2.1.263**（2026-09-06）へ更新。Codex CLI は安定版 **0.153.4**（2026-09-04）、プレリリース **0.154.0-alpha.3** のままで新規リリースなし。追跡中 49 URL のうち Phase 3.5 対象（スキルエコシステム系 7 URL）を除く 42 URL のハッシュを比較し、9 件の変更を検出したが、実質的な仕様変更は **Claude Code v2.1.263 の 1 件のみ**。
+
+**1) Claude Code v2.1.263 — バグ修正のみ**
+
+公式 changelog の記載は「Bug fixes and reliability improvements」の 1 行だけで、新機能・設定追加・非推奨化はない。ハーネス側で対応が必要な変更なし。なお **v2.1.262 は公開されていない**（2.1.261 → 2.1.263）。`specs/claude/changelog.md` に該当エントリを追加した。
+
+**2) Codex CLI — 変更なし**
+
+GitHub Releases API のハッシュは変化したが、これはダウンロード数等のメタデータ差分で、タグは 0.153.4 / 0.154.0-alpha.3 が最新のまま。`developers.openai.com/codex/changelog` に掲載されているバージョンも 0.153.4 が先頭で前回巡回時と同一。specs/codex/ の更新は不要。
+
+**3) ハッシュは変化したが実質変更なしだったページ**
+
+- `learn.chatgpt.com` の hooks / app-server / build-plugins: HTML から本文を抽出して比較したところ、差分はサイト共通ナビゲーションとブログ記事一覧（「Architectural visualization with Astra」等の新着記事、API 側ナビへの Mid-turn steering / Async tool calling 追加）だけで、Codex CLI の hooks 仕様本文は同一
+- `code.claude.com/docs/en/commands`（HTML 版）: キャッシュしていた HTML スナップショットが古かっただけで、同ページの `.md` 版はハッシュ一致。`/skill-doctor` と `/add-dir` のネットワークパス制限はいずれも前回巡回で specs に反映済み
+- `github.com/openai/codex-plugin-cc`: GitHub の動的要素の差分のみ
+
+**4) 新規ドキュメントページの有無**
+
+`llms.txt` はハッシュ一致で、掲載 202 URL に新規ページなし。`whats-new/` の最新は 2026-w34 のままで w35 以降は未公開。
+
+**5) Phase 3.5（スキルエコシステム巡回）**
+
+`kb/skills/_index.md` の `last_patrol` が 2026-09-01 で 7 日以内のためスキップ。次回は 2026-09-08 以降の巡回で実施する。
+
+### 更新ファイル
+
+- `specs/claude/changelog.md` — v2.1.263 を追加、最終更新行を更新
+
 ## 2026-09-06 — 公式ドキュメント巡回
 
 ### 検出・更新
