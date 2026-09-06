@@ -3,7 +3,7 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-09-06（v2.1.261 を追加。`bashOutputMaxChars` / `taskOutputMaxChars` による出力インライン上限の設定化、`--append-subagent-system-prompt-file`、`/skill-doctor`、組織ポリシー読み込み状況の可視化が主な内容。あわせて `keybindingFlavor` の非推奨化・strict sandbox のシェルモード適用範囲変更をリファレンス側で確認）
+最終更新: 2026-09-07（**v2.1.263**（2026-09-06）を追加。公式 changelog の記載は「バグ修正・信頼性改善」のみで、新機能・仕様変更はなし。v2.1.262 は公開されていない。前回分は v2.1.261 で、`bashOutputMaxChars` / `taskOutputMaxChars` による出力インライン上限の設定化、`--append-subagent-system-prompt-file`、`/skill-doctor`、組織ポリシー読み込み状況の可視化が主な内容。あわせて `keybindingFlavor` の非推奨化・strict sandbox のシェルモード適用範囲変更をリファレンス側で確認）
 
 ---
 
@@ -20,6 +20,13 @@
 - **Fable 5.1 の advisor 制約**: Fable 5.1 メインは Fable 5.1 のみを advisor として受理する（Fable 5 advisor は拒否される）。Fable 5 メインは Fable 5.1 または Fable 5 を受理
 - 安全性分類器によるフォールバックは Fable 5.1 も Fable 5 と同じ（生物学は Opus 5、サイバーセキュリティは Opus 4.8 へ再実行）
 - 1M コンテキスト・常時 extended thinking（thinking 無効化不可）も Fable 5 と同じ
+
+---
+
+## v2.1.263 (2026-09-06)
+
+- バグ修正・信頼性改善のみ（公式 changelog に個別項目の記載なし）。ハーネス側で対応が必要な仕様変更はない
+- 注: v2.1.262 は公開されていない（2.1.261 → 2.1.263）
 
 ---
 
