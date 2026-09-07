@@ -1,5 +1,52 @@
 # harness-harness 更新履歴
 
+## 2026-09-08 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code / Codex CLI ともに仕様変更ゼロ。今回の実質的な更新は Phase 3.5（スキルエコシステム）のみ。**
+
+**1) Claude Code — 変更なし**
+
+追跡中の Claude Code ドキュメント（llms.txt、changelog、settings、hooks、skills、mcp、agent-teams、best-practices ほか）の MD5 が**全件で前回巡回と一致**。npm レジストリ側も `latest` = **2.1.263**（2026-09-06 公開）で、前回巡回で反映済みのバージョンから進んでいない。`specs/claude/` の更新は不要。
+
+**2) Codex CLI — 変更なし**
+
+`learn.chatgpt.com/docs/changelog`（`developers.openai.com/codex/changelog` からの 308 リダイレクト先）の MD5 が前回と一致。GitHub Releases も安定版 **0.153.4**（2026-09-04）、プレリリース **0.154.0-alpha.3**（2026-09-04）が最新のままで、新規タグなし。`specs/codex/` の更新は不要。
+
+**3) Phase 3.5 スキルエコシステム — 実質的な変更あり（前回巡回 2026-09-01 から 7 日経過のため実施）**
+
+- **anthropics/skills**: 172.8K → **175.0K stars**。最終 push が 2026-08-21 → **2026-09-03** に更新。`skills/` 配下は **19 スキルで増減なし**。前回巡回以降のコミットは 2 件:
+  - #1704（2026-09-01）claude-api スキルに **Claude Fable 5.1 / Mythos 5.1、Managed Agents の更新、cost-optimize** を反映
+  - #1713（2026-09-03）frontend-design スキルを **「汎用的なデザイン既定値に流れない」方向へ改訂**
+- **skills.sh**: find-skills **3.3M**（トップ継続）。frontend-design 838.9K → **863.4K**（5 位）、agent-browser 760.2K → **804.0K**（7 位）。top10 に **vercel-react-best-practices**（695.3K、9 位）と **lark-doc**（open.feishu.cn、666.3K、10 位）が新規ランクイン。ベンダー公式クラスタは open.feishu.cn 15.3M 据え置き、microsoft/azure-skills 7.8M → **7.4M**（微減）、**larksuite/cli 6.0M を新規確認**。
+- **agentskills.io**: 仕様変更なし。Client Showcase の掲載プラットフォームを実カウントし **46 で据え置き**を確認。
+- **claude.com/plugins**: Frontend Design 1.134M / Superpowers 1.009M で首位・2 位とも変化なし。
+- **openai/skills**（deprecated）/ **openai/plugins**（archive）: 最終 push 2026-07-14 のまま。**openai/codex-plugin-cc** は 32.6K → **32.9K stars** で現役維持。
+
+### Tier 判定の更新
+
+**discernment-nudge の Tier A 昇格を見送り、Tier B 据え置きとした。** 2026-08-17 の追加時は「ルーブリック 7 点相当だが採用シグナル未確定」として次回巡回での再評価を保留していたが、今回 skills.sh で実測したところ **4.0K installs** にとどまり、同じ anthropics/skills 内の frontend-design（863.4K）・skill-creator（374.8K）と 2 桁違いだった。「採用・評判シグナル」を 0 点として合計 5 点＝Tier B。内容自体は診断系ハーネスと相性が良いため削除はせず追跡を継続する。
+
+### 巡回で得た知見
+
+anthropics/skills の **claude-api スキルが、Anthropic API 側の「学習時点の知識で書くと壊れる箇所」の一次情報源**として機能していることを確認した。ハーネス生成時にモデルIDや API パラメータを書き込む場合は記憶に頼らず同スキルの `shared/models.md` を参照する運用とし、`kb/skills/_index.md` に注意書きを追加した。特に注意が必要なのは以下:
+
+- `thinking.budget_tokens` は **Fable 5/5.1・Sonnet 5・Opus 5/4.8/4.7 で 400 エラー**（`{type: "adaptive"}` を使う）
+- **Files API / Skills は beta 卒業**（`client.files.*` / `client.skills.*`、beta ヘッダ不要）
+- **Claude Mythos 5.1**（`claude-mythos-5-1`）は Fable 5.1 と同一モデルの Project Glasswing 限定提供枠
+
+ただしこれは **Anthropic API の話であり Claude Code CLI の仕様ではない**ため、`specs/claude/` には取り込まず claude-api スキルへのポインタに留めた（段階的開示）。
+
+### 更新ファイル
+
+- `kb/skills/_index.md` — last_patrol 更新、anthropics/skills・skills.sh・agentskills.io・codex-plugin-cc の各行を最新化、2026-09-08 の注意書きを追加
+- `kb/skills/recommended.md` — last_checked 更新、frontend-design / find-skills / agent-browser / codex-plugin-cc / microsoft/azure-skills / academy-guide の数値と注記を更新、discernment-nudge の Tier 判定を確定
+- `kb/update-history.md` — 本エントリ
+- `specs/` — **更新なし**（Claude Code・Codex ともに仕様変更なし）
+
+---
+
 ## 2026-09-07 — 公式ドキュメント巡回
 
 ### 検出・更新
