@@ -1,6 +1,6 @@
 ---
 title: 推薦スキル一覧
-last_checked: "2026-09-01"
+last_checked: "2026-09-08"
 tier_a_count: 11
 tier_b_count: 10
 policy: 特定分野に偏らず、多様な分野からバランスよく推薦する
@@ -17,14 +17,14 @@ harness-harness各機能で活用可能なスキル。分野の偏りを避け�
 | **skill-creator** | メタ/全般 | anthropics/skills | create-harness, 全般 | スキル作成・改善・評価の起点 |
 | **systematic-debugging** | デバッグ | obra/superpowers | diagnose-harness | 仮説→証拠→根本原因の体系的デバッグ |
 | **test-driven-development** | テスト | コミュニティ上位 | create-harness, diagnose-harness | Red-Green-Refactorサイクルの強制 |
-| **frontend-design** | UI/UX | anthropics/skills (claude.com/plugins 1.134M installs、首位) | create-harness | 50+視覚スタイル、本番品質UI生成 |
+| **frontend-design** | UI/UX | anthropics/skills (claude.com/plugins 1.134M installs、首位 / skills.sh 863.4K で 5 位) | create-harness | 50+視覚スタイル、本番品質UI生成。**2026-09-03 改訂（#1713）で「汎用的なデザイン既定値に流れない」方向へ強化**——UI 系ハーネスに組み込む際は改訂後版を取得すること |
 | **security-scan** | セキュリティ | コミュニティ | diagnose-harness | OWASP Top10ベースの脆弱性スキャン |
 | **pdf/pptx/xlsx/docx** | ドキュメント | anthropics/skills (公式) | 全般 | Office系ドキュメント生成・解析 |
 | **dispatching-parallel-agents** | エージェント協調 | obra/superpowers | research-kb, create-harness | 並列調査・クロスレビューの設計パターン |
 | **using-git-worktrees** | Git運用 | obra/superpowers | 全般 | worktree日常運用のベストプラクティス |
 | **postgres-best-practices** | データベース | コミュニティ | create-harness | インデックス、クエリ最適化、接続プール |
-| **find-skills** | ディスカバリー | vercel-labs (3.1M installs、skills.sh トップ) | create-harness, patrol-docs | スキル検索・発見ユーティリティ |
-| **codex-plugin-cc** | エージェント間連携 | [openai/codex-plugin-cc](https://github.com/openai/codex-plugin-cc)（OpenAI 公式、32.2K stars） | 全般（Claude⇔Codex クロスレビュー） | Claude Code から Codex を呼ぶ公式プラグイン。`/codex:review`・`/codex:adversarial-review`・`/codex:rescue`・`/codex:transfer`・`/codex:status`・`/codex:result`・`/codex:cancel` と `codex:codex-rescue` サブエージェント。2026-08-24 の Codex 公式 changelog が `codex mcp-server` 非推奨の移行先として明示 |
+| **find-skills** | ディスカバリー | vercel-labs (**3.3M** installs、skills.sh トップ継続) | create-harness, patrol-docs | スキル検索・発見ユーティリティ |
+| **codex-plugin-cc** | エージェント間連携 | [openai/codex-plugin-cc](https://github.com/openai/codex-plugin-cc)（OpenAI 公式、**32.9K stars**） | 全般（Claude⇔Codex クロスレビュー） | Claude Code から Codex を呼ぶ公式プラグイン。`/codex:review`・`/codex:adversarial-review`・`/codex:rescue`・`/codex:transfer`・`/codex:status`・`/codex:result`・`/codex:cancel` と `codex:codex-rescue` サブエージェント。2026-08-24 の Codex 公式 changelog が `codex mcp-server` 非推奨の移行先として明示 |
 
 ## Tier B: ウォッチリスト（条件付き推薦）
 
@@ -36,10 +36,10 @@ harness-harness各機能で活用可能なスキル。分野の偏りを避け�
 | **landing-page-guide** | マーケティング | コミュニティ | 高CVランディングページ、CRO原則 | Webマーケティング系 |
 | **deploy-checklist** | DevOps | コミュニティ | デプロイ前検証（環境変数、ロールバック計画） | 本番デプロイがあるプロジェクト |
 | **brainstorming** | 企画/設計 | コミュニティ上位 | 構造化アイデーション、制約・エッジケース洗い出し | 設計フェーズ重視 |
-| **agent-browser** | ブラウザ自動化 | vercel-labs/agent-browser (760.2K installs、skills.sh top10) | エージェントからのブラウザ操作 CLI（開く・クリック・入力・スクリーンショット） | E2E検証・Web操作を伴うプロジェクト |
-| **discernment-nudge** | 回答品質/検証 | anthropics/skills（2026-08-17 追加） | 実行可能な回答・ドラフト・見積り・分析の直後に、根拠確認/前提の吟味/欠落文脈を突く短いフォローアップ質問を2〜3個付ける（会話あたり1回まで） | 診断・提案系ハーネス（diagnose-harness 等）でユーザーが結果を鵜呑みにするリスクを下げたい場合。**新規につき採用シグナル未確定**——ルーブリックでは7点相当だが、次回巡回で実績を見て Tier A 昇格を再評価 |
-| **microsoft/azure-skills** | クラウド基盤 | microsoft/azure-skills（skills.sh、14 スキル合計 7.8M installs。`microsoft-foundry` 562.2K が最上位） | Azure 各サービス（Foundry / messaging ほか）のベストプラクティスをスキル化したベンダー公式クラスタ | **2026-09-01 巡回で新規追跡**。分野カバレッジで空白だった「クラウド基盤」を埋める候補。ベンダー固有色が強く harness-harness 本体への寄与は限定的なため、Azure を使うプロジェクトのハーネス作成時にのみ提案する。個別スキルの精査は未実施 |
-| **academy-guide** | 教育/オンボーディング | anthropics/skills（2026-08-17 追加、2026-08-18 に `claude-academy-guide` からリネーム） | Claude 製品の使い方を尋ねられた際に Claude Academy（academy.claude.com）の該当コース/チュートリアルを推薦 | Claude 製品の社内展開・教育コンテンツを扱うプロジェクト。ハーネス構築そのものへの寄与は小さいため Tier B 据え置き |
+| **agent-browser** | ブラウザ自動化 | vercel-labs/agent-browser (**804.0K** installs、skills.sh 7 位。前回比 +43.8K で伸長継続) | エージェントからのブラウザ操作 CLI（開く・クリック・入力・スクリーンショット） | E2E検証・Web操作を伴うプロジェクト |
+| **discernment-nudge** | 回答品質/検証 | anthropics/skills（2026-08-17 追加） | 実行可能な回答・ドラフト・見積り・分析の直後に、根拠確認/前提の吟味/欠落文脈を突く短いフォローアップ質問を2〜3個付ける（会話あたり1回まで） | 診断・提案系ハーネス（diagnose-harness 等）でユーザーが結果を鵜呑みにするリスクを下げたい場合。**2026-09-08 巡回で採用シグナルを実測: 4.0K installs（anthropics/skills 内で最下位級。frontend-design 863.4K・skill-creator 374.8K と 2 桁違い）**。ルーブリックの「採用・評判シグナル」は 0 点相当で合計 5 点となり、**Tier A 昇格は見送り・Tier B 据え置き**とする。内容自体は診断系ハーネスと相性が良いため削除はせず、次回以降も installs を追跡する |
+| **microsoft/azure-skills** | クラウド基盤 | microsoft/azure-skills（skills.sh、14 スキル合計 **7.4M** installs。前回 7.8M から微減） | Azure 各サービス（Foundry / messaging ほか）のベストプラクティスをスキル化したベンダー公式クラスタ | **2026-09-01 巡回で新規追跡、2026-09-08 に合計 installs 微減を確認**。分野カバレッジで空白だった「クラウド基盤」を埋める候補。ベンダー固有色が強く harness-harness 本体への寄与は限定的なため、Azure を使うプロジェクトのハーネス作成時にのみ提案する。個別スキルの精査は未実施 |
+| **academy-guide** | 教育/オンボーディング | anthropics/skills（2026-08-17 追加、2026-08-18 に `claude-academy-guide` からリネーム。**3.7K installs**） | Claude 製品の使い方を尋ねられた際に Claude Academy（academy.claude.com）の該当コース/チュートリアルを推薦 | Claude 製品の社内展開・教育コンテンツを扱うプロジェクト。ハーネス構築そのものへの寄与は小さいため Tier B 据え置き |
 
 ## 分野カバレッジ
 
