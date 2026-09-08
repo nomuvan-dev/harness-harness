@@ -1,5 +1,37 @@
 # harness-harness 更新履歴
 
+## 2026-09-09 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**新バージョンなし（Claude Code v2.1.263 / Codex 0.153.4 据え置き）。公式リファレンス側の記述変更を 3 点反映した。**
+
+**1) Claude Code — バージョンは据え置き、リファレンスに実質変更あり**
+
+npm `latest` = **2.1.263**（2026-09-06）、公式 changelog も MD5 一致で追記なし。一方でドキュメント本文には以下の実質的な変更があった（v2.1.261 で入った `/skill-doctor`・`bashOutputMaxChars` / `taskOutputMaxChars`・`--append-subagent-system-prompt-file`・組織ポリシー可視化・`keybindingFlavor` 非推奨・strict sandbox のシェルモード適用範囲変更は前回巡回で反映済みのため差分から除外）。
+
+- **`TASK_MAX_OUTPUT_LENGTH` の意味が変わった**: 従来の「サブエージェント出力の切り詰め上限」から、「**バックグラウンドタスク**の出力のうち `TaskOutput` ツールが保持する文字数」（既定 32,000 / 最大 160,000、長い場合は末尾側が残る）へ。**`taskOutputMaxChars` 設定を入れるとこの変数は無視される**。→ `specs/claude/configuration.md` の環境変数表に追加
+- **`/model` ピッカーのピンモデル表示名の既定が変わった**: `ANTHROPIC_DEFAULT_{OPUS,SONNET,HAIKU,FABLE}_MODEL_NAME` / `ANTHROPIC_CUSTOM_MODEL_OPTION_NAME` 未設定時、Claude Code が ID を認識できれば**モデル名**（例 `us.anthropic.claude-sonnet-4-5-20250929-v1:0` → `Sonnet 4.5`）を表示するようになった（従来は常に ID）。Foundry のデプロイ名や推論プロファイル ARN は通常認識されない。`_DESCRIPTION` 未設定時は `Custom Opus model` 等で始まる既定文言で、名前表示の行では説明にピン留め ID が入る。→ `specs/claude/configuration.md`
+- **クラウド環境の許可リストで `*.frame.claudeusercontent.com` が原則不要に**: Artifacts の内容は Anthropic への接続経由で読むため。許可リストに要るのは (a) 他組織の公開 artifact を開く場合、(b) ローカル CLI / セルフホスト runner の許可リストの場合の 2 ケースのみ。→ `specs/claude/configuration.md`
+- そのほか `BASH_MAX_OUTPUT_LENGTH` が `bashOutputMaxChars` に無視される旨の明記、`settings.md` / `settings-reference.md` のページ名変更（「Settings files and precedence」「All settings」）、`sandboxing` の `pbcopy` / `xclip` トラブルシュート追記など、既に specs に取り込み済み or 表記のみの変更を確認
+
+**2) Codex CLI — 変更なし**
+
+公式 changelog（`learn.chatgpt.com/docs/changelog`）本文・hooks ドキュメントともにテキスト差分ゼロ。安定版は **0.153.4**（2026-09-04）で据え置き。GitHub リリースタグは 0.154.0-alpha.6（2026-09-07）/ alpha.7（2026-09-08）まで進んでいるが、いずれも alpha のため specs には反映しない。
+
+**3) スキルエコシステム（Phase 3.5）— スキップ**
+
+`kb/skills/_index.md` の `last_patrol` が 2026-09-08 で 7 日以内のためスキップ。
+
+### 更新ファイル
+
+- `specs/claude/configuration.md` — `TASK_MAX_OUTPUT_LENGTH` 追加、ピンモデル表示名の規則追加、クラウド環境の許可リストと Artifacts の節を追加
+- `specs/claude/changelog.md` — 最終更新行を 2026-09-09 に更新（新バージョンなし、リファレンス側の変更を要約）
+- `specs/codex/changelog.md` — 最終更新行を 2026-09-09 に更新（安定版据え置き、alpha 進行を記録）
+- `kb/update-history.md` — 本エントリ
+
+---
+
 ## 2026-09-08 — 公式ドキュメント巡回
 
 ### 検出・更新
