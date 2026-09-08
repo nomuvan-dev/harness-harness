@@ -373,6 +373,12 @@ Anthropic ホスト型のクラウド環境（Claude Code on the web）に **API
 
 > ハーネス設計上の注意: 「クラウド環境には専用のシークレットストアが無い」という従来の前提が変わったが、**適用範囲は Pro / Max に限られる**（Team / Enterprise は 2026-09-05 時点で従来どおり環境変数のみ）。また**鍵をコマンドラインやスクリプトで参照する用途には使えない**（Claude に値は渡らず、proxy が付与するだけ）。`curl` 等で当該ホストを叩く形のハーネスに限って有効。
 
+#### クラウド環境のネットワーク許可リストと Artifacts（2026-09-09 時点で記述変更）
+
+- **`*.frame.claudeusercontent.com` は原則不要になった**。組織が [Artifacts](https://code.claude.com/docs/en/artifacts) を使っていても、クラウド環境のセッションは Anthropic への接続経由で artifact の内容を読むため、許可リストに当該ホストが無くても読める（従来は「入れないと読めない」と明記されていた）
+- 引き続き許可リストに入れるべきケースは 2 つ: **(a) その環境のセッションが他組織の公開 artifact を開く**（この場合はホストから直接取得する）、**(b) ローカル CLI / セルフホスト runner の許可リストを設定している**
+- セットアップスクリプトと `SessionStart` フックの実行順（セットアップスクリプト → Claude Code 起動 → SessionStart）は従来どおりだが、設定場所・実行タイミング・実行環境を比較する表形式の記述に変わった
+
 ### 2.4 `~/.claude.json` のグローバル設定
 
 `settings.json` ではなく `~/.claude.json` に格納される設定:
@@ -547,6 +553,7 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 | `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB` | `1` でサブプロセス環境（Bash ツール・hooks・MCP stdio サーバー）から認証情報を除去（v2.1.83）。除去対象は Anthropic / クラウドプロバイダの認証情報に限らず、**Claude Code が認証情報と認識する任意の変数と、パッケージレジストリ URL に埋め込まれた認証情報**まで広がる（2026-09-02 の改訂で明文化）。**hooks プロセスも対象**で、常に除去される `OTEL_*` エクスポータ変数に加えて、本変数が `1` のときは除去対象の変数が hook からも見えなくなる |
 | `CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK` | 非ストリーミングフォールバック無効化（v2.1.83） |
 | `CLAUDE_STREAM_IDLE_TIMEOUT_MS` | ストリーミングアイドルウォッチドッグ閾値（デフォルト90秒）（v2.1.84） |
+| `ANTHROPIC_DEFAULT_{OPUS,SONNET,HAIKU,FABLE}_MODEL_NAME` / `_DESCRIPTION` | `/model` ピッカーでのピンモデルの表示名・説明。**2026-09-09 時点のリファレンスで既定値の規則が変更**され、未設定時は「Claude Code がそのモデル ID を認識できれば**モデル名**（例: `us.anthropic.claude-sonnet-4-5-20250929-v1:0` → `Sonnet 4.5`）、認識できなければ ID そのもの」を表示する（従来は常に ID）。認識対象は Anthropic API 形式・プロバイダ/ゲートウェイ形式の ID（`[1m]` 付きも可）と、`modelOverrides` でその文字列にマップしたモデル。Microsoft Foundry のデプロイ名やアプリケーション推論プロファイル ARN は通常認識されない。説明は未設定時 `Custom Opus model` 等で始まる既定文言になり、名前が出ている行では説明側にピン留め ID が含まれる。`ANTHROPIC_CUSTOM_MODEL_OPTION_NAME` も同じ規則 |
 | `ANTHROPIC_DEFAULT_{OPUS,SONNET,HAIKU}_MODEL_SUPPORTS` | ピンモデルのeffort/thinking検出オーバーライド（v2.1.84） |
 | `CLAUDE_CODE_MCP_SERVER_NAME` | MCP `headersHelper` スクリプトに渡されるサーバー名（v2.1.85） |
 | `CLAUDE_CODE_MCP_SERVER_URL` | MCP `headersHelper` スクリプトに渡されるサーバーURL（v2.1.85） |
@@ -619,6 +626,7 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 | `CLAUDE_CODE_ENABLE_TODO_TOOLS` | `1` で Todo / タスク追跡ツール（`TaskCreate` / `TaskGet` / `TaskUpdate` / `TaskList` / `TodoWrite`）を復活させる。**v2.1.233 で Opus 4.8 / Sonnet 5 / Fable 5 / Mythos 5 以降のモデルでは既定で提供されなくなった**ため、これらに依存するハーネスは明示設定が必要 |
 | `CLAUDE_CODE_AUTO_BACKGROUND_WORKER_CHECKIN_SECONDS` | `CLAUDE_AUTO_BACKGROUND_TASKS` 有効時に、実行中のバックグラウンドサブエージェントを確認するよう Claude へ促すリマインダーの間隔（秒）。**`1`〜`86400` の素の整数のみ受理**し、それ以外の値・表記は未設定として読まれる。未設定時はリマインダーなし（v2.1.248 以降） |
 | `CLAUDE_CODE_SUBAGENT_MODEL_FORCE` | `1` で `CLAUDE_CODE_SUBAGENT_MODEL`（未設定ならメインの会話モデル）を、エージェント定義や呼び出し時のモデル指定を**無視して**全サブエージェント・チームメイト・ワークフローエージェントに強制適用する。組み込みの Explore / Plan の `model` フィールドも無視される。**ただし本変数のみを設定し `CLAUDE_CODE_SUBAGENT_MODEL` を設定しない場合、Explore は「Claude API では Opus 上限」を維持する**（両方設定したときのみ上限も上書きされる）。除外されるのは fork と `model: inherit` のサブエージェント実行スキルで、これらは常にメイン会話のモデルで動く。v2.1.257 以降 |
+| `TASK_MAX_OUTPUT_LENGTH` | **バックグラウンドタスク**の出力のうち `TaskOutput` ツールが保持する文字数（既定 32,000、最大 160,000）。完了済みタスクの出力が長い場合は**末尾（直近）側**が残る。**`taskOutputMaxChars` 設定を入れるとこの変数は無視される**（2026-09-09 時点のリファレンスで、旧記載の「サブエージェント出力の切り詰め上限」からバックグラウンドタスク向けの説明に変更） |
 | `CLAUDE_CODE_DISABLE_CFC_PROMPT` | `1` で Claude in Chrome のブラウザツールは使えるまま、システムプロンプトの Chrome セクションと `/claude-in-chrome` バンドルスキルを省略する。Claude Code を埋め込むホスト向け |
 | `BETA_TRACING_ENDPOINT` | [詳細ベータトレーシング](https://code.claude.com/docs/en/monitoring-usage#traces-beta)の OTLP エンドポイント。`ENABLE_BETA_TRACING_DETAILED=1` と併用するとログ・トレースが構成済みエクスポータではなくこちらへ送られる。シェル・user 設定・managed 設定でのみ設定可（project / local 設定では無視） |
 | `ENABLE_BETA_TRACING_DETAILED` | `1` かつ `BETA_TRACING_ENDPOINT` 設定時に詳細ベータトレーシングを有効化。内容を含むスパン属性と `claude_code.hook` スパンが追加される。インタラクティブ CLI セッションでは組織がベータの許可リストに入っている必要がある。project / local 設定では無視 |

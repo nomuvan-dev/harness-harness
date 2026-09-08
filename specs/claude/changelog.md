@@ -3,7 +3,7 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-09-07（**v2.1.263**（2026-09-06）を追加。公式 changelog の記載は「バグ修正・信頼性改善」のみで、新機能・仕様変更はなし。v2.1.262 は公開されていない。前回分は v2.1.261 で、`bashOutputMaxChars` / `taskOutputMaxChars` による出力インライン上限の設定化、`--append-subagent-system-prompt-file`、`/skill-doctor`、組織ポリシー読み込み状況の可視化が主な内容。あわせて `keybindingFlavor` の非推奨化・strict sandbox のシェルモード適用範囲変更をリファレンス側で確認）
+最終更新: 2026-09-09（**新バージョンなし**。npm latest は引き続き **v2.1.263**（2026-09-06）で、公式 changelog にも追記なし。リファレンス側のみ更新があり、`TASK_MAX_OUTPUT_LENGTH` の説明がバックグラウンドタスク出力（`TaskOutput` ツールが保持する文字数）へ変更され `taskOutputMaxChars` 設定に優先される旨が明記、`/model` ピッカーのピンモデル表示名が「ID を認識できればモデル名」に変更、クラウド環境の許可リストで `*.frame.claudeusercontent.com` が原則不要化。前回分は v2.1.261 で、`bashOutputMaxChars` / `taskOutputMaxChars`、`--append-subagent-system-prompt-file`、`/skill-doctor`、組織ポリシー読み込み状況の可視化が主な内容）
 
 ---
 
