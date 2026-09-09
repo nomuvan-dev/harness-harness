@@ -207,6 +207,8 @@ v2.1.154: `claude mcp list` / `get` の出力がパイプされた場合、未�
 
 - **再接続・リトライの整理（ドキュメント改訂）**:
   - **セッション中に切断したリモートサーバー**: 指数バックオフで最大 5 回再接続（初回 1 秒、以降倍増）。対話セッションでは `/mcp` に pending 表示、5 回失敗で failed（再認証が必要な場合は「要認証」）となり `/mcp` から手動再試行できる。`claude -p` / Agent SDK でも同じスケジュールで再接続するが `/mcp` パネルは無い
+  - **`type: "http"` のレガシー HTTP+SSE フォールバック（v2.1.265）**: `http` として設定したサーバーがレガシーな HTTP+SSE トランスポートしか話さない場合、MCP 仕様どおり SSE へフォールバックするようになった（v2.1.265 より前は一切接続できなかった）
+  - **claude.ai コネクタ一覧の取得リトライ（v2.1.265）**: セッション開始時に一時的なネットワーク障害でコネクタ一覧が読めなかった場合、バックグラウンドで最大 3 回リトライし、成功した時点でコネクタが現れる。それでも現れない場合は Claude Code を再起動する
   - **初回接続の失敗**: HTTP / SSE サーバーが transient エラー（5xx・connection refused・タイムアウト）で初回接続に失敗した場合は最大 3 回リトライ。起動時とセッション途中の追加（クラウドセッションが構成から追加するサーバー、Agent SDK の `setMcpServers()` を含む）に適用。**WebSocket サーバーの初回接続**と**認証エラー / not-found** はリトライしない
   - **discovery リクエストの失敗**: 接続成功後の `tools/list` / `prompts/list` / `resources/list` は transient なネットワーク／サーバーエラーで最大 3 回・短いバックオフでリトライ。認証エラー・4xx・リクエストタイムアウトはリトライしない
   - **Claude への通知**: tool search が有効（既定）なら、接続に失敗したサーバー名と接続エラーが Claude に伝えられ（該当ツールが見つからない `ToolSearch` 結果にも含まれる）、Claude が応答内で接続失敗を報告する。tool search 無しの構成では Claude に伝わらない
@@ -262,7 +264,7 @@ Claude API はリクエスト中の全ツールの入力スキーマを検査し
 - `allowManagedMcpServersOnly`: Managed 設定のみから許可リストを適用
 - `allowedMcpServers`: 許可するMCPサーバーのホワイトリスト。**v2.1.259 以降はユーザーが追加したサーバーのみが対象**（`managed-mcp.json` / `managedMcpServers` 由来のサーバーには効かない。アップグレード後、従来 allowlist で落としていた managed サーバーがロードされる点に注意）
 - `deniedMcpServers`: 拒否するMCPサーバーのブラックリスト（許可リストより優先）。managed 由来のサーバーを止めるにはこちらを使う
-- `managedMcpServers`（**v2.1.259**、managed 設定内）: 組織が HTTP / SSE の MCP サーバーを全ユーザーへ配布する新キー。エントリ形式は `.mcp.json` と同じだが `command` 形式（ローカルコマンド起動）はスキップされる。`managed-mcp.json` をファイルとして配布する代わりに managed settings 経由で配れる
+- `managedMcpServers`（**v2.1.259**、managed 設定内）: 組織が HTTP / SSE の MCP サーバーを全ユーザーへ配布する新キー。エントリ形式は `.mcp.json` と同じだが `command` 形式（ローカルコマンド起動）はスキップされる。`managed-mcp.json` をファイルとして配布する代わりに managed settings 経由で配れる。**2026-09-10 時点で公式リファレンスに正式収載**。ユーザーが自分で追加したサーバーは残り、組織提供分は編集・削除できない。優先度は `.mcp.json` / `~/.claude.json` / プラグイン等の全ソースより上で、同名が重複した場合は組織の定義が使われる。managed ソースが複数ある場合はサーバー名を合成し、同名は上位ソースのエントリ全体が採用される。`disabledMcpServers` に名前を書けばユーザー側でオプトアウトできる
 
 `managed-mcp.json` の配置先:
 - macOS: `/Library/Application Support/ClaudeCode/`
