@@ -1,5 +1,51 @@
 # harness-harness 更新履歴
 
+## 2026-09-10 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code v2.1.265 / v2.1.266（ともに 2026-09-08）を反映。Codex は 0.153.4 据え置きで変更なし。スキルエコシステム巡回（Phase 3.5）は前回 2026-09-08 のため 7 日ルールでスキップ。**
+
+**1) Claude Code — v2.1.265（大型リリース）**
+
+ハーネス観点で影響の大きいもの:
+
+- **非対話セッション（`-p` + stream-json 入力 / Agent SDK / クラウドセッション）で、ユーザーメッセージごとにシェルの作業ディレクトリがリセットされる問題を修正**。`cd` がターンを跨いで永続化する
+- **サブエージェント／エージェントチームのプロンプトキャッシュ再利用が壊れていた 2 件を修正**（フォアグラウンド起動サブエージェント再開時のツール一覧・システムプロンプト接頭辞の変化、および `SubagentStart` フックのコンテキストとプリロードスキルが 2 ターン目以降に接頭辞外へ移動する問題）。サブエージェント多用ハーネスのコスト・レイテンシに直結
+- **`--plugin-dir` が「プラグイン群を入れたフォルダ」を受け付けるように**（実行中の子フォルダ追加・削除も反映）
+- **ツール結果のディスク退避に 1GB 上限**、切り詰め時はプレビューに表示
+- **`type: "http"` の MCP サーバーがレガシー HTTP+SSE しか話さない場合に SSE へフォールバック**するようになった
+- `context: fork` のフォークスキルが stream-json に progress を流していなかった問題を修正、`/workflows` のエージェント詳細強化、ワークフロー再開のジャーナル欠損時の明確なエラー化
+- 2 キーショートカットの猶予が 1 秒 → 3 秒（tmux 環境で取りこぼしていた問題）
+- managed 設定 `forceLoginGatewayUrl` は起動時点から gateway セッション扱いに変更
+
+**2) Claude Code — v2.1.266（ホットフィックス）**
+
+v2.1.265 の回帰を修正。未文書の環境変数 `CLAUDE_CODE_USE_GATEWAY` が単体で Cloud gateway サインインを強制するようになり、API キー / `apiKeyHelper` / 独自認証ヘッダ併用の構成が全リクエスト失敗していた。`ANTHROPIC_BASE_URL` + `ANTHROPIC_AUTH_TOKEN` 両方がない限り無視される従来挙動へ戻された。
+
+**3) 公式リファレンス側の変更（changelog に載らないもの）**
+
+- **skills ページの再構成**: 配置場所の表に Nested / Additional directory / claude.ai アカウントが明示。`synced` が予約フォルダ名であること、symlink は 1 回だけロードされること、スキルフォルダのプラグイン化を整理。同名スキルの解決も表形式に
+- **バンドルスキル `build-eval` / `hillclimb` を追加**（v2.1.259 以降）
+- **`/code-review` が GitLab のマージリクエストにも投稿可能**（v2.1.257 以降）
+- **キーバインドコンテキスト `EffortSlider` / `Agents` を追加**（v2.1.257 以降）。エージェントビュー表示中は `Agents` バインドが `Chat` / `Global` に優先し、`Ctrl+S` は `chat:stash` ではなくグルーピング切替になる
+- **`managedMcpServers` が公式リファレンスに正式収載**（従来は changelog のみ）。優先度・managed ソース間の合成規則・allowlist 免除が明文化
+- **`outputStyle` の切り替えが v2.1.251 以降セッション中に効く**（次のメッセージから適用。従来は `/clear` か再起動が必要）
+- **`CLAUDE_SUBAGENT_BG_SHELL_MAX_MS` は v2.1.260 で削除され no-op**
+- **`fable` エイリアスは Claude apps gateway セッションでは Fable 5 に解決**（他プロバイダは Fable 5.1）。Fable 5.1 の要求バージョンは v2.1.255 → **v2.1.257** に訂正されている
+
+**4) Codex CLI — 変更なし**
+
+npm `latest` = **0.153.4**（2026-09-04）で据え置き。公式 changelog にも新規安定版の追記なし。GitHub のリリースタグは 0.154.0-alpha.6〜alpha.11（2026-09-07〜09-09）まで進行中だがすべて prerelease。
+
+### 更新ファイル
+
+- `specs/claude/changelog.md` — v2.1.265 / v2.1.266 を追加、冒頭サマリ更新
+- `specs/claude/skills-and-commands.md` — 配置場所表の再構成、同名解決表、`build-eval` / `hillclimb`、`/code-review` の GitLab 対応、`EffortSlider` / `Agents` キーバインドコンテキスト、`--plugin-dir` のフォルダ指定
+- `specs/claude/configuration.md` — `outputStyle` のセッション中反映、`managedMcpServers` の正式収載、`CLAUDE_SUBAGENT_BG_SHELL_MAX_MS` の削除、`fable` エイリアスのゲートウェイ差
+- `specs/claude/mcp.md` — `managedMcpServers` の優先度・合成規則、HTTP→SSE フォールバック、コネクタ一覧の取得リトライ
+- `kb/update-history.md` — 本記録
+
 ## 2026-09-09 — 公式ドキュメント巡回
 
 ### 検出・更新

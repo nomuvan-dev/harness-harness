@@ -14,19 +14,38 @@ Skills は Claude の能力を拡張する仕組み。`SKILL.md` ファイルに
 
 ### 1.1 配置場所
 
-| スコープ | パス | 適用範囲 |
+> **2026-09-10 時点で公式 skills ページが再構成された**。配置場所の表に「Nested」「Additional directory」「claude.ai アカウント」が明示され、名前衝突の解決も表形式に整理された。
+
+| スコープ | パス | ロードされる範囲 |
 |:--|:--|:--|
-| Enterprise | Managed settings 経由 | 組織内全ユーザー |
-| Personal | `~/.claude/skills/<skill-name>/SKILL.md` | 全プロジェクト |
-| Project | `.claude/skills/<skill-name>/SKILL.md` | 当該プロジェクトのみ |
-| Plugin | `<plugin>/skills/<skill-name>/SKILL.md` | プラグイン有効時 |
+| Enterprise | [Managed settings ディレクトリ](https://code.claude.com/docs/en/managed-settings#delivery-mechanisms)内の `.claude/skills/<skill-name>/SKILL.md` | 組織が配布した全マシン |
+| Personal | `~/.claude/skills/<skill-name>/SKILL.md` | そのマシンの全プロジェクト。**Cowork / クラウドセッションでは読まれない**（デスクトップのスケジュールタスクはローカル実行なので読まれる） |
+| Project | `.claude/skills/<skill-name>/SKILL.md` | 当該リポジトリのセッション。コミットすればチーム全員に配れる |
+| Nested | `<subdir>/.claude/skills/<skill-name>/SKILL.md` | `<subdir>` 以下で開始したセッション。上位で開始した場合は Claude がそのディレクトリのファイルを触った時点でロードされる |
+| Additional directory | `--add-dir` で渡したディレクトリ内の `.claude/skills/<skill-name>/SKILL.md` | そのセッションのみ |
+| Plugin | `<plugin>/skills/<skill-name>/SKILL.md` | プラグイン有効時。`/plugin-name:skill-name` として露出 |
 | Plugin (単一スキル) | `<plugin>/SKILL.md` （`skills/` サブディレクトリなし） | プラグイン全体が単一スキルとしてサーフェスされる（v2.1.142） |
+| claude.ai アカウント | claude.ai 設定で有効化したスキル | Cowork / クラウドセッション（ローカルセッションへの同期は後述） |
+
+スキルフォルダの追加ルール:
+
+- **symlink 可**: Enterprise / Personal / Project の `<skill-name>` エントリはディスク上の別ディレクトリへの symlink でよい。Claude Code はリンク先の `SKILL.md` を読み、複数の場所が同じ先を指していても**スキルは 1 回だけ**ロードされる（プラグインスキルの symlink 扱いは別ルール）
+- **`synced` は予約名**: 大文字小文字を問わず `synced` という名前のスキルフォルダは作らないこと。`~/.claude/skills/synced/` は claude.ai から同期したスキル用に使われ、同名で自作したスキルは Enterprise / Personal / Project のいずれでもスキップされる
+- **`.claude/commands/`**: 旧形式だが引き続き動作する。`name` と `paths` を除き同じフロントマターに対応し、ファイル名で呼び出す。**新規はスキル推奨**（スキルは補助ファイルを持てる）
+- **スキルフォルダをプラグイン化**: `.claude-plugin/plugin.json` を置くと `<name>@skills-dir` というプラグインとしてロードされ、agents / hooks / MCP サーバーを同梱できる（プロジェクトの `.claude/skills/` ではワークスペース信頼ダイアログの承認が必要）
 
 > **プラグインスキルの frontmatter `name`**: `name` はコマンド名の**最終セグメント**（ディレクトリ名）を置き換える。`my-plugin/skills/review/SKILL.md` に `name: fancy` を書くと `/my-plugin:fancy` になり、他が使っていなければ素の `/fancy` でも呼べる。`name` が既にプラグイン接頭辞を含む場合（`name: my-plugin:fancy`）、**v2.1.246 以降は接頭辞を重ねない**（v2.1.216〜v2.1.245 は二重化していた）。v2.1.216 より前は `name` がコマンド名全体を置き換えていた。
 
-名前が重複する場合の優先度: Enterprise > Personal > Project。Plugin スキルは `plugin-name:skill-name` 名前空間で衝突しない。
+**同名スキルの解決**（2026-09-10 の公式改訂で表形式に整理）:
 
-`.claude/commands/` も引き続き動作する。同名の場合は Skills が優先。
+| 同名が存在する組み合わせ | どれが動くか |
+|:--|:--|
+| Enterprise / Personal / Project のうち 2 つ | Enterprise > Personal > Project。`~/.claude/skills/` とプロジェクトの両方に `deploy` があれば `/deploy` は Personal のもの |
+| 上記いずれか + バンドルスキル | 自作スキルがバンドルコマンドを置き換える。ただし**エイリアスは置き換えない**（プロジェクトの `code-review` は `/code-review` を置き換えるが、バンドルのエイリアス `/review` は自作スキルを呼ばない） |
+| スキル + `.claude/commands/` のファイル | スキルが優先 |
+| プロジェクトルートのスキル + Nested スキル | 両方ロードされる（後述の修飾名） |
+| プラグインスキル + 上記いずれか | 両方ロードされる（`/plugin-name:skill-name` で名前空間が分かれるため） |
+| 上記いずれか + claude.ai 同期スキル | 同期スキル以外が優先 |
 
 #### サブディレクトリの自動検出
 
@@ -178,12 +197,14 @@ Claude Code に同梱されるスキル:
 | `/claude-api` | Claude API リファレンス素材の読み込み（Python/TS/Java等） |
 | `/debug [description]` | セッションデバッグログの解析 |
 | `/loop [interval] <prompt>` (`/proactive`) | プロンプトを定期的に繰り返し実行（v2.1.105 で `/proactive` エイリアス追加） |
-| `/code-review [effort] [--fix]` | 変更ファイルのコード品質レビューと修正（3エージェント並列）。`/code-review high` のように effort level を指定可能。v2.1.147 で `/simplify` からリネーム。v2.1.152 で `--fix` フラグ追加（レビュー結果をワーキングツリーに直接適用）。v2.1.215 で Claude による自動起動が廃止され、ユーザーの明示的な呼び出しのみに |
+| `/code-review [effort] [--fix]` | 変更ファイルのコード品質レビューと修正（3エージェント並列）。`/code-review high` のように effort level を指定可能。v2.1.147 で `/simplify` からリネーム。v2.1.152 で `--fix` フラグ追加（レビュー結果をワーキングツリーに直接適用）。v2.1.215 で Claude による自動起動が廃止され、ユーザーの明示的な呼び出しのみに。**GitHub PR に加えて GitLab のマージリクエストにも投稿可能（v2.1.257 以降）**。`--post` で投稿を事前選択（`--post` は v2.1.227 以降） |
 | `/verify` | コード変更が実際に意図通り動くかをエンドツーエンドで検証（テストや型チェックだけでなく対象フローを実際に動かす）。v2.1.215 で Claude による自動起動が廃止され、ユーザーの明示的な呼び出しのみに |
 | `/simplify` | v2.1.152 で `/code-review --fix` のエイリアスとして復活。v2.1.154 でクリーンアップ専用レビュー（reuse / simplification / efficiency / altitude）に変更され、`/code-review --fix` のバグハンティングは行わなくなった |
 | `/workflows` | Dynamic workflows の実行状況表示（v2.1.154）。Claude にワークフロー作成を依頼するとバックグラウンドで数十〜数百のエージェントを跨いだ作業をオーケストレーション。v2.1.160 でトリガーキーワードが `workflow` → `ultracode` にリネーム |
 | `/less-permission-prompts` | 読み取り専用 bash/MCP 呼び出しを検出し許可リスト追加を提案（v2.1.111） |
 | `/team-onboarding` | 新メンバー向けのプロジェクトオンボーディング資料生成（v2.1.101） |
+| `/build-eval` | Claude を使ったアプリ向けの eval セットを構築する（**v2.1.259 以降**） |
+| `/hillclimb` | 既存の eval に対してアプリを反復的に改善する（**v2.1.259 以降**） |
 | `/ultrareview` | クラウドベースの包括的コードレビュー。並列チェック・diffstat 表示（v2.1.111、v2.1.113 で改善）。CLI でも `claude ultrareview [target]` 非インタラクティブサブコマンドで CI/スクリプトから実行可能（`--json` 対応、終了コード 0/1、v2.1.120） |
 
 ---
@@ -315,7 +336,7 @@ MCPサーバーが公開するプロンプトは `/mcp__<server>__<prompt>` 形�
 | `/fewer-permission-prompts` | **バンドルスキル**。トランスクリプトから頻出の読み取り専用 Bash / MCP 呼び出しを抽出し、プロジェクト `.claude/settings.json` に優先度付き allowlist を追加 |
 | `/import [codex\|gemini] [--dry-run] [--yes]` | 他のコーディングエージェント（OpenAI Codex / Google Gemini CLI）の設定（指示ファイル・MCP サーバー・コマンド・サブエージェント・スキル）を Claude Code に取り込む |
 | `/statusline` | ステータスラインの設定。引数なしでシェルプロンプトから自動構成 |
-| `/keybindings` | キーボードショートカット設定ファイル（`~/.claude/keybindings.json`）を開く。キー名は**大文字小文字を区別しない**（`K` は `k` と同一。Shift 併用は `shift+k` と明記する必要がある）。`wheelup` / `wheeldown` がマウスホイールイベントとして指定でき、既定で `scroll:lineUp` / `scroll:lineDown` にバインドされている。未知のアクション名を指定したバインドは v2.1.246 からスキップされ（既定バインドが維持され `--debug` で警告）、以前はそのキーが無効化されていた。v2.1.247 で `chat:queueSubmit`（既定 `Ctrl+X Enter`。作業中でも割り込まずキューに積む送信。オートコンプリート表示中でも送信される）と `select:pageUp` / `select:pageDown` / `select:first` / `select:last`（PageUp / PageDown / Home / End。適用は `/skills` メニュー。`/model` 等では既定の PageUp / PageDown が使われ Home / End は無視）を追加。キー名に `pageup` / `pagedown` / `home` / `end` が使えるようになった。`ctrl+x` を単独キーとして奪うには `ctrl+x ctrl+k` / `ctrl+x ctrl+e` / `ctrl+x enter`（Chat）と `ctrl+x ctrl+b`（Task）を全て `null` にする。再バインド不可: `Ctrl+C` / `Ctrl+D` / `Ctrl+M`（Enter として届く）/ `Ctrl+[`（Escape として届く）/ `Ctrl+I`（Tab として届く）/ `Ctrl+H`（ASCII backspace）/ Caps Lock。非 Latin レイアウト（キリル等）では Kitty キーボードプロトコル対応端末なら US 配列の物理位置でマッチし、AZERTY 等の Latin 系再配置レイアウトでは「そのキーが打つ文字」でマッチする（v2.1.247 以前は Kitty プロトコル端末の非 Latin レイアウトで Ctrl ショートカットが発火しなかった） |
+| `/keybindings` | キーボードショートカット設定ファイル（`~/.claude/keybindings.json`）を開く。キー名は**大文字小文字を区別しない**（`K` は `k` と同一。Shift 併用は `shift+k` と明記する必要がある）。`wheelup` / `wheeldown` がマウスホイールイベントとして指定でき、既定で `scroll:lineUp` / `scroll:lineDown` にバインドされている。未知のアクション名を指定したバインドは v2.1.246 からスキップされ（既定バインドが維持され `--debug` で警告）、以前はそのキーが無効化されていた。v2.1.247 で `chat:queueSubmit`（既定 `Ctrl+X Enter`。作業中でも割り込まずキューに積む送信。オートコンプリート表示中でも送信される）と `select:pageUp` / `select:pageDown` / `select:first` / `select:last`（PageUp / PageDown / Home / End。適用は `/skills` メニュー。`/model` 等では既定の PageUp / PageDown が使われ Home / End は無視）を追加。キー名に `pageup` / `pagedown` / `home` / `end` が使えるようになった。`ctrl+x` を単独キーとして奪うには `ctrl+x ctrl+k` / `ctrl+x ctrl+e` / `ctrl+x enter`（Chat）と `ctrl+x ctrl+b`（Task）を全て `null` にする。再バインド不可: `Ctrl+C` / `Ctrl+D` / `Ctrl+M`（Enter として届く）/ `Ctrl+[`（Escape として届く）/ `Ctrl+I`（Tab として届く）/ `Ctrl+H`（ASCII backspace）/ Caps Lock。非 Latin レイアウト（キリル等）では Kitty キーボードプロトコル対応端末なら US 配列の物理位置でマッチし、AZERTY 等の Latin 系再配置レイアウトでは「そのキーが打つ文字」でマッチする（v2.1.247 以前は Kitty プロトコル端末の非 Latin レイアウトで Ctrl ショートカットが発火しなかった）。**2026-09-10 時点のリファレンスで 2 つのコンテキストが追加**: `EffortSlider`（`/effort` を引数なしで実行したときのスライダ。`effortSlider:thisSessionOnly`、既定 `s` = 選択中の effort をそのセッションのみに適用。要 v2.1.257 以降。スライダの Left / Right / Enter / Escape は再バインド不可）と `Agents`（`claude agents` のエージェントビュー。`agents:switchView` 既定 `Ctrl+S` = セッションのグルーピングを state / directory で切替、`agents:togglePin` 既定 `Ctrl+T` = 選択セッションのピン留め。要 v2.1.257 以降。**エージェントビュー表示中は `Agents` のバインドが `Chat` / `Global` の同一キーより優先**され、例えば `Ctrl+S` は `chat:stash` ではなくグルーピング切替になる。またエージェントビューでは単打のみ発火するため、`chat:externalEditor` の `Ctrl+X Ctrl+E` チョードは効かず `Ctrl+G` を使う） |
 | `/theme` | カラーテーマ変更（`auto`・light/dark・色覚多様性対応（daltonized）・ANSI テーマ等） |
 | `/scroll-speed` | マウスホイールのスクロール速度をインタラクティブ調整（フルスクリーン描画時） |
 | `/terminal-setup` | Shift+Enter 等の端末キーバインド設定（VS Code / Cursor / Alacritty / Zed 等、必要な端末でのみ表示） |
@@ -687,7 +708,7 @@ claude -p --bare "質問"
 | `--settings` | 設定ファイルの明示的指定 |
 | `--mcp-config` | MCP設定ファイルの指定 |
 | `--agents` | エージェント定義ディレクトリの指定 |
-| `--plugin-dir` | プラグインディレクトリの指定 |
+| `--plugin-dir` | プラグインディレクトリの指定。**v2.1.265 以降は「プラグイン群を入れた親フォルダ」も指定でき**、マニフェストを持つ子フォルダがそれぞれロードされる（実行中の子フォルダ追加・削除も拾われる） |
 | `--plugin-url <url>` | URL から `.zip` プラグインアーカイブを取得して当該セッションに読み込む（v2.1.129） |
 
 ### 6.3 出力フォーマット
