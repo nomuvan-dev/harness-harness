@@ -1,5 +1,56 @@
 # harness-harness 更新履歴
 
+## 2026-09-11 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code v2.1.267（2026-09-09）と Codex CLI 0.154.0（2026-09-09、新しい安定版）を反映。スキルエコシステム巡回（Phase 3.5）は前回 2026-09-08 のため 7 日ルールでスキップ。**
+
+**1) Claude Code — v2.1.267**
+
+ハーネス観点で影響の大きいもの:
+
+- **`maxEffortLevel` 設定を新設**。トップレベル、または `modelSettings` のモデル別エントリに置ける effort の上限。`/effort`・`/model`・`--effort`・`CLAUDE_CODE_EFFORT_LEVEL`・モデル既定値のすべてに優先してキャップする。**クライアント側適用なので Bedrock / Google Cloud's Agent Platform / Microsoft Foundry でも効く**。複数スコープでは最も低いキャップが勝ち、緩める方向には働かない。`ultracode: true` でも `xhigh` 未満のキャップがあれば ultracode は無効化される
+- **サブエージェント frontmatter の `permissionMode: bypassPermissions` は、メイン会話が bypass でない限り無視されるようになった**（安全側への変更）。`permissionMode: bypassPermissions` を宣言していたサブエージェント定義は通常の権限プロンプトを受けるようになるため、自律実行はメイン会話側のモードで担保する設計に切り替える必要がある
+- **`effort:` frontmatter が、既定 effort 固定モデル（Fable 5 / Opus 4.8 / Opus 4.7）でも適用されるようになった**。スキル／サブエージェントで effort を宣言しているハーネスはこれらのモデルで挙動が変わる
+- **`--system-prompt-snapshot off` を追加**。会話初回に記録したシステムプロンプトを再利用せず毎リクエスト再構築する。`--append-system-prompt` の文言を `--continue` で回しながら調整する用途
+- **`StopFailure` フックの error type に `cloud_credential_error` を追加**（従来は `server_error` / `unknown` に丸められていた）
+- **`allowedChannelPlugins` が `"plugin@marketplace"` 文字列形式に対応**。ただし v2.1.266 以前は文字列混在で値ごと拒否するため、旧バージョン混在環境ではオブジェクト形式を使う
+- **managed の `allowedHttpHookUrls` / `httpHookAllowedEnvVars` / `allowedChannelPlugins` が不正値のとき、キーごと破棄（＝全許可）ではなく空の許可リストとして強制**されるようになった（fail-closed 化）
+- プロンプトキャッシュ再利用の破れを多数修正（MCP/プラグインツールの途中追加、`/model` 切替時の全ツール定義再送、resume 時のツール一覧・説明再描画、print モード会話の対話 resume など）
+
+**2) Claude Code — リファレンス側の明文化（v2.1.267 以外のバージョン由来を含む）**
+
+- hooks: 共通入力に `scratchpad_dir`（v2.1.257 以降、無い場合はキーごと不在）。`SubagentStart` は**resume 時とエージェントチームのチームメイトが新メッセージを処理するたびにも発火**。`/clear` 時の `SessionStart` はバックグラウンド実行で、実行中に再度 `/clear` / `/resume` するとキャンセル・出力破棄。`additionalContext` が 10,000 文字超ならファイル退避 + プレビュー。agent ハンドラは既定タイムアウト 60 秒で `continueOnBlock` を持たない
+- settings: セッション途中で新規作成した設定ファイルも、フォルダがセッション開始時に存在していればロードされる（プロジェクトの `.claude/` はフォルダごと作成しても可）。`managedSourcesBehavior` に「値を丸ごと採用」種別（`sandbox.credentials.awsPairs` / `sandbox.ripgrep`、v2.1.257 以降）。`forceLoginGatewayUrl` と `forceLoginMethod: "gateway"` はマシン上の managed ソースからのみ読まれる
+- skills: **deny ルールはエイリアス・非修飾名にもマッチする**（v2.1.260 以降。`Skill(review)` が `/code-review` を、`Skill(deploy)` が `apps/web:deploy` をブロック）。**allow ルールは逆でスキル自身の名前にしかマッチしない**。`skillOverrides` は managed / `--settings` でのみエイリアスキーが背後のスキルに適用され、制限を強める方向にしか働かない
+- MCP: **v2.1.265 以降は SSE 専用エンドポイントも `--transport http` で追加できる**（HTTP を試して受け付けなければ SSE へ自動切替）
+- CLI: `claude rm --discard-unpushed`（v2.1.260 以降）、`claude ultrareview --timeout` の**既定が 45 分**（従来記載の 30 分から改訂）、`/advisor` が非対話・Remote Control でも動作（v2.1.260 以降）
+- env: `CLAUDE_CODE_NONBLOCKING_STDOUT`（v2.1.261 以降）、`CLAUDE_JOB_DIR`（バックグラウンドセッションに自動設定）
+- tools: Bash の `cd` 持ち越しは**ユーザーの後続メッセージにも及ぶ**（サブエージェントは持ち越さない）。Glob / Grep は**権限判定が存在確認より前**で、権限プロンプトはパス存在の証拠にならない。Workflow の `schema` 検証（自己矛盾は起動前にエラー、5 回で失敗、`MAX_STRUCTURED_OUTPUT_RETRIES`）、Auto Mode の分類器による `agent()` ブロック、停止ラン再起動の二重実行防止、クラウドセッションでの結果保存と `nothing to resume`
+
+**3) Codex CLI — 0.154.0（新しい安定版）**
+
+- **実験的な worktree サポート**: 新規／フォークセッション用の隔離チェックアウト。harness-harness の worktree 運用と直接噛み合うが、実験的扱いのため**当面は外側運用（`git worktree add` → `codex exec --cd`）を既定のまま**とし、検証後に採否を判断する
+- **作業継続中のインライン回答**（選択肢＋自由入力）
+- **Windows のバックグラウンド Codex サーバー共有**とデーモンライフサイクル制御コマンド
+- **起動時に信頼確立前のワークスペース制御ヘルパーを実行しないよう修正**（セキュリティ）。信頼していないリポジトリを扱うなら 0.154.0 以降を使う
+- Vim の `R` 置換モード、`/copy` の書式保持・ステータス出力コピー
+
+### 更新ファイル
+
+- `specs/claude/changelog.md` — v2.1.267 追加、最終更新見出し更新
+- `specs/claude/configuration.md` — `maxEffortLevel` 新設、`modelSettings` / `allowedChannelPlugins` / `skillOverrides` / `managedSourcesBehavior` 更新、設定ファイルのホットリロード節を追加、環境変数 2 件追加
+- `specs/claude/hooks.md` — `cloud_credential_error`、`scratchpad_dir`、`SubagentStart` 発火条件、`/clear` 時の `SessionStart`、`additionalContext` の複数フック・長大値、agent ハンドラ
+- `specs/claude/skills-and-commands.md` — スキル deny/allow のエイリアス挙動、`effort` / `model` frontmatter、サブエージェント `permissionMode` の解決規則、`--system-prompt-snapshot` と resume 時のシステムプロンプト、`/advisor` / `claude ultrareview`
+- `specs/claude/mcp.md` — HTTP→SSE 自動フォールバック
+- `specs/claude/agent-teams.md` — `CLAUDE_CODE_SUBAGENT_MODEL_FORCE` の優先順位明文化
+- `specs/claude/tools.md` — Bash `cd` 持ち越し、Glob / Grep の権限判定順、Workflow の schema 検証・再開規則
+- `specs/codex/changelog.md` — 0.154.0 追加、最終更新見出し更新
+- `specs/codex/configuration.md` — 「8. 実験的機能」節を新設（worktree / Windows バックグラウンドサーバー / 起動時ヘルパー修正）
+- `specs/codex/commands.md` — `/copy` の 0.154.0 改善
+- `mapping/claude-to-codex.md` — ワークツリー隔離の対応状況を「対応なし」→「実験的サポートあり（0.154.0〜）」に更新
+
 ## 2026-09-10 — 公式ドキュメント巡回
 
 ### 検出・更新

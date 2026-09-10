@@ -1,6 +1,6 @@
 # Claude Code Hooks 仕様書
 
-最終更新: 2026-09-03（巡回更新）
+最終更新: 2026-09-11（巡回更新）
 
 公式ドキュメント: https://code.claude.com/docs/en/hooks
 
@@ -29,7 +29,7 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 | `PostToolUseFailure` | ツール失敗後 | No | ツール名 |
 | `PostToolBatch` | 並列ツール呼び出しのバッチ全体が解決した後、次のモデル呼び出し前 | Yes | matcher非サポート（全バッチで発火） |
 | `Stop` | Claude の応答完了時 | Yes | - |
-| `StopFailure` | APIエラー発生時 | No | `rate_limit`, `overloaded`, `authentication_failed`, `oauth_org_not_allowed`, `account_on_hold`, `billing_error`, `invalid_request`, `model_not_found`, `server_error`, `max_output_tokens`, `unknown`（`account_on_hold` は 2026-09-02 の公式ドキュメント改訂で追加） |
+| `StopFailure` | APIエラー発生時 | No | `rate_limit`, `overloaded`, `authentication_failed`, `oauth_org_not_allowed`, `account_on_hold`, `billing_error`, `invalid_request`, `model_not_found`, `server_error`, `cloud_credential_error`, `max_output_tokens`, `unknown`（`account_on_hold` は 2026-09-02 の公式ドキュメント改訂で追加） |
 | `PermissionDenied` | Auto Mode分類器が拒否した後 | No | ツール名 |
 | `SessionEnd` | セッション終了時 | No | `clear`, `resume`, `logout`, `prompt_input_exit`, `other`（**v2.1.234 で `bypass_permissions_disabled` を廃止**。Claude Code は送出しなくなったため matcher から削除すること） |
 
@@ -37,7 +37,7 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 
 | イベント | 発火タイミング | ブロック可能 | matcher対象 |
 |:--|:--|:--|:--|
-| `SubagentStart` | サブエージェント起動時 | No | エージェントタイプ名 |
+| `SubagentStart` | サブエージェント起動時。**加えて Claude がサブエージェントを resume したとき、およびインプロセスのエージェントチームのチームメイトが新しいメッセージを処理するたびにも発火する**（公式ドキュメント明文化） | No | エージェントタイプ名 |
 | `SubagentStop` | サブエージェント完了時 | Yes | エージェントタイプ名 |
 | `TeammateIdle` | チームメイトがアイドル状態になる直前 | Yes | matcherなし |
 | `TaskCompleted` | タスク完了マーク時 | Yes | matcherなし |
@@ -261,6 +261,8 @@ Claude モデルにプロンプトを送信して評価。
 }
 ```
 
+設定フィールドは prompt ハンドラと同じだが、**agent ハンドラは既定タイムアウトが 60 秒と長く、`continueOnBlock` を持たない**。`$ARGUMENTS` はフック入力 JSON のプレースホルダ。
+
 ### 3.5 MCP Tool ハンドラ（v2.1.118+）
 
 MCP サーバーのツールを直接呼び出す。シェル経由のラッパースクリプトなしに MCP ツールを発火可能。
@@ -364,9 +366,12 @@ MCPツールは `mcp__<server>__<tool>` パターンに従う:
   "transcript_path": "/path/to/transcript.jsonl",
   "cwd": "/current/working/directory",
   "permission_mode": "default",
-  "hook_event_name": "EventName"
+  "hook_event_name": "EventName",
+  "scratchpad_dir": "/tmp/claude-1000/-home-user-my-project/abc123/scratchpad"
 }
 ```
+
+- `scratchpad_dir`: セッションのスクラッチパッドディレクトリ（Claude が一時作業ファイルを置く場所）へのパス。**v2.1.257 以降**。セッションがスクラッチパッドを持たない場合や temp ディレクトリが使えない場合は**キー自体が存在しない**
 
 サブエージェント内では追加:
 
@@ -408,7 +413,7 @@ v2.1.133 以降、すべてのイベントの入力 JSON に effort level も含
 | `PostToolBatch` | `tool_calls`（各要素は `tool_name`, `tool_input`, `tool_use_id`, `tool_response`）。`tool_response` は `PostToolUse` と形が異なりモデルが見る `tool_result` のシリアライズ |
 | `PermissionDenied` | `tool_name`, `tool_input`, `tool_use_id`, `reason` |
 | `Stop` | `stop_hook_active`, `last_assistant_message`, `background_tasks`, `session_crons`（v2.1.145+） |
-| `StopFailure` | `error`（`rate_limit` / `overloaded` / `authentication_failed` / `oauth_org_not_allowed` / `account_on_hold` / `billing_error` / `invalid_request` / `model_not_found` / `server_error` / `max_output_tokens` / `unknown`）, `error_details`, `last_assistant_message` |
+| `StopFailure` | `error`（`rate_limit` / `overloaded` / `authentication_failed` / `oauth_org_not_allowed` / `account_on_hold` / `billing_error` / `invalid_request` / `model_not_found` / `server_error` / `cloud_credential_error` / `max_output_tokens` / `unknown`）, `error_details`, `last_assistant_message` |
 | `Notification` | `message`, `title`, `notification_type` |
 | `SubagentStart` | `agent_id`, `agent_type` |
 | `SubagentStop` | `stop_hook_active`, `agent_id`, `agent_type`, `agent_transcript_path`, `last_assistant_message`, `background_tasks`, `session_crons`（v2.1.145+） |
@@ -535,6 +540,8 @@ v2.1.133 以降、すべてのイベントの入力 JSON に effort level も含
 
 #### SessionStart
 
+> **`/clear` 時はバックグラウンド実行**（公式ドキュメント明文化）: インタラクティブセッションで `/clear` を実行すると、マッチする `SessionStart` フックはバックグラウンドで走り、プロンプトはすぐに入力を受け付ける。Claude の最初の応答はフック完了を待つのでコンテキストは届く。ただしフック実行中に再度 `/clear` したり `/resume` 等で別の会話に切り替えたりすると、**Claude Code はフックをキャンセルし出力を破棄する**。
+
 環境変数の永続化に `CLAUDE_ENV_FILE` を使用:
 
 ```bash
@@ -613,6 +620,10 @@ echo "$WORKTREE_PATH"
 | フィールド | 説明 |
 |:--|:--|
 | `hookSpecificOutput.additionalContext` | 次のモデル呼び出し前に 1 度だけ注入されるコンテキスト文字列 |
+
+> **複数フックと長大な値の扱い**: 同一イベントで複数のフックが `additionalContext` を返した場合、Claude はそのすべてを受け取る。**1 つの値が 10,000 文字を超えると、Claude Code は全文をセッションディレクトリのファイルに書き出し、Claude にはファイルパスと短いプレビューを渡す**。
+
+> **`SubagentStart` の再発火時の注入**: 同一サブエージェントに対してフックが再び走った場合、Claude Code は**そのサブエージェントのコンテキストに前回分のコピーがまだ残っていないときだけ**返却コンテキストを注入する。起動時に注入したコピーはそのまま残り、サブエージェントの[プロンプトキャッシュ](https://code.claude.com/docs/en/prompt-caching#subagents-and-the-cache)を壊さない。auto-compaction がそのコピーを破棄した後は、次回実行分のコンテキストが改めて注入される。
 
 `decision: "block"` または `continue: false` で次のモデル呼び出し前にエージェントループを停止できる（メッセージは `reason` / `stopReason`、または終了コード 2 の stderr から）。トランスクリプトには警告として残り会話にも残るため、会話継続時に Claude から見える。
 

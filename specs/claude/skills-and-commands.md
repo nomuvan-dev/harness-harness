@@ -1,6 +1,6 @@
 # Claude Code Skills & コマンド仕様書
 
-最終更新: 2026-08-30（巡回更新）
+最終更新: 2026-09-11（巡回更新）
 
 公式ドキュメント: https://code.claude.com/docs/en/skills / https://code.claude.com/docs/en/commands / https://code.claude.com/docs/en/sub-agents / https://code.claude.com/docs/en/scheduled-tasks / https://code.claude.com/docs/en/web-scheduled-tasks / https://code.claude.com/docs/en/discover-plugins
 
@@ -101,8 +101,8 @@ my-skill/
 | `user-invocable` | No | `false` で `/` メニューから非表示。バックグラウンド知識用 |
 | `allowed-tools` | No | スキル有効時に許可なしで使えるツール |
 | `disallowed-tools` | No | スキル有効時にモデルから取り除くツール（v2.1.152）。スラッシュコマンドのフロントマターでも有効 |
-| `model` | No | スキル有効時のモデル指定 |
-| `effort` | No | エフォートレベル (`low` / `medium` / `high` / `max`（Opus 4.6のみ）) |
+| `model` | No | スキル有効時のモデル指定。上書きは当該ターンの残りにのみ適用され設定には保存されない（次のプロンプトでセッションのモデルに戻る）。`/model` と同じ値、または `inherit`。組織の `availableModels` 許可リストで除外された値は使われずセッションは現行モデルを維持する。**Auto Mode、および plan モードで分類器がコマンドをレビューする間は、auto mode が非対応のモデルも同様に使われない**（公式ドキュメント明文化）。`context: fork` と併用した場合はフォークされたサブエージェントのモデルを指す |
+| `effort` | No | エフォートレベル (`low` / `medium` / `high` / `xhigh` / `max`。対応レベルはモデル依存)。セッションの effort を上書きする。**v2.1.267 以降は Fable 5 / Opus 4.8 / Opus 4.7 のように既定 effort が固定されているモデルでも frontmatter の effort が適用される**（それ以前は固定が優先され frontmatter は無視されていた）。`maxEffortLevel` のキャップは引き続き適用される |
 | `context` | No | `fork` でフォークサブエージェントコンテキストで実行。v2.1.218 から fork スキルは既定でバックグラウンド実行 |
 | `agent` | No | `context: fork` 時のサブエージェントタイプ指定 |
 | `background` | No | `context: fork` スキルのバックグラウンド実行を `false` でオプトアウト（v2.1.218） |
@@ -187,6 +187,10 @@ allowed-tools: Read, Grep, Glob
 - **個別許可/拒否**: `Skill(commit)` / `Skill(deploy *)`
 - **個別非表示**: `disable-model-invocation: true`
 
+> **deny ルールはエイリアス・非修飾名にもマッチする（v2.1.260 以降）**: `deny` ルールがスキル自身の名前ではなくエイリアスや非修飾名を指していても Claude Code はブロックする。`Skill(review)` はバンドルスキル `/code-review` をそのエイリアス `/review` 経由でブロックし、`Skill(deploy)` は `apps/web:deploy` として列挙される[ネストスキル](https://code.claude.com/docs/en/skills#where-skills-live)を非修飾名経由でブロックする。v2.1.260 より前は、修飾名で列挙されたネストスキルを非修飾名だけの deny ルールではブロックできなかった。
+>
+> **`allow` ルールは逆で、スキル自身の名前と Claude の呼び出しに現れた名前にしかマッチしない**。エイリアス経由の許可はできない。
+
 ### 1.10 バンドルスキル
 
 Claude Code に同梱されるスキル:
@@ -205,7 +209,7 @@ Claude Code に同梱されるスキル:
 | `/team-onboarding` | 新メンバー向けのプロジェクトオンボーディング資料生成（v2.1.101） |
 | `/build-eval` | Claude を使ったアプリ向けの eval セットを構築する（**v2.1.259 以降**） |
 | `/hillclimb` | 既存の eval に対してアプリを反復的に改善する（**v2.1.259 以降**） |
-| `/ultrareview` | クラウドベースの包括的コードレビュー。並列チェック・diffstat 表示（v2.1.111、v2.1.113 で改善）。CLI でも `claude ultrareview [target]` 非インタラクティブサブコマンドで CI/スクリプトから実行可能（`--json` 対応、終了コード 0/1、v2.1.120） |
+| `/ultrareview` | クラウドベースの包括的コードレビュー。並列チェック・diffstat 表示（v2.1.111、v2.1.113 で改善）。CLI でも `claude ultrareview [target]` 非インタラクティブサブコマンドで CI/スクリプトから実行可能（`--json` 対応、終了コード 0/1、v2.1.120）。`--timeout <分>` で既定値を上書きできる。**既定タイムアウトは 45 分**（公式ドキュメント上、従来記載の 30 分から改訂）。`github.com` の PR をターゲットにした場合は `--post` で結果を PR に単一のプレーンコメントとして自分の GitHub アカウントから投稿できる（既定は `--no-post`。`--post` / `--no-post` は v2.1.227 以降） |
 
 ---
 
@@ -325,7 +329,7 @@ MCPサーバーが公開するプロンプトは `/mcp__<server>__<prompt>` 形�
 | `/stop` | バックグラウンドセッションを停止（アタッチ中のみ表示）。トランスクリプトと worktree は保持。停止せずデタッチするには `/exit` |
 | `/artifacts` | 自分が所有する、または共有された Artifact 一覧を表示し、セッションへの添付・ブラウザで開く・リンクのコピーを行う。Artifact が利用可能な環境でのみ使用可（v2.1.208 以降。`Enter` での添付は v2.1.216 以降） |
 | `/auto-mode-setup` | プロジェクトと直近セッションから `autoMode.environment` エントリのドラフトを生成し、レビューしてユーザー設定へ保存する。Pro / Max / Team プランかつ v2.1.228 以降（ネイティブ Windows は v2.1.233 以降） |
-| `/advisor [model\|off]` | Advisor ツール（タスク中の要所で第2のモデルに助言を求める）の有効化 / 無効化。`fable` / `opus` / `sonnet` / 完全なモデル ID を受け付ける |
+| `/advisor [model\|off]` | Advisor ツール（タスク中の要所で第2のモデルに助言を求める）の有効化 / 無効化。`fable` / `opus` / `sonnet` / 完全なモデル ID を受け付ける。引数なしではピッカーが開く。**v2.1.260 以降はターミナルのピッカーが無い環境でも動作する** — `-p` の非対話モード、Agent SDK、デスクトップアプリ、Remote Control 経由。これらの環境では引数なしの `/advisor` が現在の advisor とエイリアス一覧をテキストで表示し、`/advisor <model>` で設定、`/advisor off` で無効化する。Remote Control クライアントやリモートワーカーに接続したセッションでの選択は**そのセッション限定**で `advisorModel` 設定は書き換えない |
 | `/autocompact [auto\|<tokens>]` | 自動コンパクション発動のコンテキスト使用量を設定（例 `500k`、`auto` でモデル既定に戻す） |
 | `/deep-research <question>` | **バンドルワークフロー**。Web 検索を fan-out し、ソースを取得・相互検証して引用付きレポートを合成 |
 | `/run` | **バンドルスキル**。テストだけでなく実アプリを起動・操作して変更の動作を確認 |
@@ -608,7 +612,15 @@ model: sonnet
 | `tools` | No | 許可ツール。省略時は全ツール継承 |
 | `disallowedTools` | No | 拒否ツール |
 | `model` | No | `sonnet` / `opus` / `haiku` / `fable` / `inherit` / フルモデルID（`claude-opus-5` 等）。**省略時は下記のサブエージェントモデル優先順位に従う**（v2.1.251 以前は `inherit` が既定扱い） |
-| `permissionMode` | No | `default` / `acceptEdits` / `dontAsk` / `bypassPermissions` / `plan` |
+| `permissionMode` | No | `default` / `acceptEdits` / `dontAsk` / `bypassPermissions` / `plan`（`manual` は `default` のエイリアス）。**メイン会話の権限モードによって、この指定が使われるかどうかが決まる**（下記） |
+
+> **サブエージェントの `permissionMode` の解決（v2.1.267 で挙動変更）**
+>
+> - メイン会話が `bypassPermissions` / `acceptEdits` / **Auto Mode** のとき: サブエージェントも同じモードで走り、**frontmatter の `permissionMode` は無視される**。Auto Mode ではメイン会話の block / allow ルールで分類器がサブエージェントのツール呼び出しを評価する
+> - メイン会話が `default` / `dontAsk` / `plan` のとき: frontmatter で指定したモードで走る。**ただし `bypassPermissions` は例外で、v2.1.267 以降はメイン会話のモードが使われる**（サブエージェントが単独で権限プロンプトを飛ばすことはできなくなった）
+> - `permissions.disableBypassPermissionsMode` で bypass が無効化されている場合も frontmatter の `bypassPermissions` は無視され、親セッションのモードで走る（v2.1.223 以降）
+>
+> **ハーネス影響**: `permissionMode: bypassPermissions` を宣言していたサブエージェント定義は、v2.1.267 以降は通常の権限プロンプトを受けるようになる。自律実行を前提にした定義は、メイン会話側のモード（`--dangerously-skip-permissions` や Auto Mode）で担保する設計に切り替える。
 | `maxTurns` | No | 最大エージェンティックターン数。**上限に達した場合、Claude Code は出力を「部分的（partial）」とマークして返し、Claude は[サブエージェントの resume](https://code.claude.com/docs/en/sub-agents#resume-subagents) で継続できる**（partial マークは v2.1.246 以降。エージェントIDを返すサブエージェントでは「メッセージを送れば続きから再開できる」旨も結果に付く） |
 | `skills` | No | 起動時にプリロードするスキル |
 | `mcpServers` | No | スコープされたMCPサーバー |
@@ -710,6 +722,9 @@ claude -p --bare "質問"
 | `--agents` | エージェント定義ディレクトリの指定 |
 | `--plugin-dir` | プラグインディレクトリの指定。**v2.1.265 以降は「プラグイン群を入れた親フォルダ」も指定でき**、マニフェストを持つ子フォルダがそれぞれロードされる（実行中の子フォルダ追加・削除も拾われる） |
 | `--plugin-url <url>` | URL から `.zip` プラグインアーカイブを取得して当該セッションに読み込む（v2.1.129） |
+| `--system-prompt-snapshot <on\|off>` | **v2.1.257 以降**。`off` で、会話の初回リクエスト時に記録したシステムプロンプトを再利用せず**毎リクエスト再構築する**。既定は `on` |
+
+> **resume した会話でのシステムプロンプトフラグ（v2.1.265 で挙動整理）**: Claude Code は既定で、会話の初回リクエスト時にシステムプロンプトフラグのテキストを適用したシステムプロンプトを一度だけ構築してセッションに記録する。compact されるまで、以降の全リクエスト（`--resume` / `--continue` で戻った後を含む）はその記録済みプロンプトを使う。**後の起動で別のフラグテキストを渡しても、compact されるか新しい会話を始めるまで反映されない**。この記録は[機能フラグを取得するセッション](https://code.claude.com/docs/en/env-vars#features-that-need-feature-flag-fetching)でのみ働き、Bedrock / Google Cloud's Agent Platform / Microsoft Foundry などフラグを取得しないセッションでは毎リクエスト再構築されるため `--system-prompt-snapshot` も効かない。`--bare` / `CLAUDE_CODE_SIMPLE=1` の bare モードでは `--system-prompt-snapshot on` を明示しない限り記録はオフ。**v2.1.265 より前は、システムプロンプトフラグを渡すこと自体が記録をオフにしていた**（`--system-prompt-snapshot on` を渡した場合を除く）。プロンプト文言を `--continue` で回しながら調整するときは `off` を使う
 
 ### 6.3 出力フォーマット
 

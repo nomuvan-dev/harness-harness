@@ -1,6 +1,6 @@
 # Claude Code MCP 仕様書
 
-最終更新: 2026-07-13（巡回更新）
+最終更新: 2026-09-11（巡回更新）
 
 公式ドキュメント: https://code.claude.com/docs/en/mcp
 
@@ -51,6 +51,8 @@ claude mcp add --transport http secure-api https://api.example.com/mcp \
 ```
 
 #### SSE サーバー（非推奨）
+
+> **v2.1.265 以降は `--transport http` のままで良い**: SSE エンドポイントしか公開していないサービスも、HTTP サーバーと同じ `claude mcp add --transport http <name> <url>` で追加できる。Claude Code はまず HTTP トランスポートを試し、サーバーが受け付けない場合に SSE へ自動的に切り替える。**旧バージョン、または直接 SSE で接続したい場合のみ `--transport sse` を使う**。
 
 ```bash
 claude mcp add --transport sse asana https://mcp.asana.com/sse
