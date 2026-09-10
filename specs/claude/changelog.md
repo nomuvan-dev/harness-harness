@@ -3,7 +3,54 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-09-10（**v2.1.265 / v2.1.266**（ともに 2026-09-08）を反映。npm latest は **v2.1.266**。v2.1.265 は大型リリースで、非対話セッションで `cd` がターン跨ぎに永続化、`--plugin-dir` のフォルダ指定対応、ツール結果のディスク退避に 1GB 上限、サブエージェント／エージェントチームのプロンプトキャッシュ再利用が壊れていた問題の修正、`http` MCP サーバーのレガシー HTTP+SSE フォールバックが主な内容。v2.1.266 は v2.1.265 の LLM ゲートウェイ回帰のホットフィックス。リファレンス側では skills ページが再構成され、`keybindingFlavor` の非推奨化・`EffortSlider` / `Agents` キーバインドコンテキスト・バンドルスキル `build-eval` / `hillclimb` などが明文化された）
+最終更新: 2026-09-11（**v2.1.267**（2026-09-09）を反映。npm latest は **v2.1.267**。組織／個人の双方で使える **`maxEffortLevel`（effort 上限設定）** が追加され、全プロバイダ（Bedrock / Google Cloud Agent Platform / Foundry 含む）でクライアント側からキャップできるようになった。**サブエージェントの `permissionMode: bypassPermissions` は親会話が bypass でない限り無視される**という安全側の挙動変更、**`effort:` frontmatter が既定 effort 固定モデル（Fable 5 / Opus 4.8 / 4.7）でも効く**ようになった点がハーネス影響大。加えてプロンプトキャッシュ再利用の破れを大量に修正している。リファレンス側では `--system-prompt-snapshot`、hooks の `scratchpad_dir`、`--plugin-dir` のプラグインフォルダ指定、MCP の HTTP→SSE 自動フォールバックなどが明文化された）
+
+---
+
+## v2.1.267 (2026-09-09)
+
+ハーネス観点で影響の大きい変更を抜粋。
+
+**effort 制御（新設定 `maxEffortLevel`）**
+
+- **`maxEffortLevel` 設定を追加**。トップレベル、または `modelSettings` のモデル別エントリに置ける。`/effort`・`/model` ピッカー・`--effort`・`CLAUDE_CODE_EFFORT_LEVEL`・モデル既定値のいずれで指定された値も、上限を超えるとキャップ値で実行される。**Claude Code がリクエスト前にクライアント側で適用するため、Bedrock / Google Cloud's Agent Platform / Microsoft Foundry でも効く**
+  - 値は `"low" | "medium" | "high" | "xhigh" | "max"`（`"max"` は実質キャップなし）。既定は未設定
+  - スコープは Any file。**複数スコープが設定した場合は最も低いキャップが勝つ**ため、下位スコープから上限を緩めることはできない（ユーザー側で厳しくすることは可能）
+  - モデル別に外したい場合は `modelSettings.<model>.maxEffortLevel` に `"max"` を置く。ただし他ソースのキャップは引き続き適用される
+  - Enterprise の組織 effort 制限と併用した場合は**低いほうが適用**される
+  - `ultracode: true` でも、`xhigh` 未満のキャップがあるとセッションはキャップ値で走り **ultracode は無効化される**（Claude が自発的にワークフローを計画しなくなり、`/effort` に `ultracode` が出なくなる）
+- **`effort:` frontmatter が、既定 effort が固定されているモデル（Fable 5 / Opus 4.8 / Opus 4.7）でも適用されるようになった**。v2.1.267 より前は固定が優先され frontmatter の effort は無視されていた。**スキル／サブエージェントで effort を宣言しているハーネスは、これらのモデルで挙動が変わる**
+
+**サブエージェント／エージェントチーム**
+
+- **サブエージェント frontmatter の `permissionMode: bypassPermissions` は、親会話が bypass でない限り無視され、親会話のモードが使われるようになった**（安全側への変更）。親会話が `bypassPermissions` / `acceptEdits` / auto mode のときはサブエージェントもそのモードで走り、frontmatter の `permissionMode` は無視される。親が `default` / `dontAsk` / `plan` のときのみ frontmatter のモードが効く（`bypassPermissions` を除く）
+- Workflow の `agent()` 呼び出しが、大きな output schema を持つ場合に auto mode で安全性分類器にかからず拒否されていた問題を修正
+
+**システムプロンプト／プロンプトキャッシュ**
+
+- **`--system-prompt-snapshot off` を追加**。会話の初回リクエストで記録したシステムプロンプトを再利用せず、毎リクエスト再構築する。`--append-system-prompt` の文言を `--continue` で回しながら調整するときに使う
+- サブエージェント、および `--system-prompt` / `--append-system-prompt` 付きで開始したセッションが、システムプロンプトとツール定義を毎回再描画せず一度だけ記録するようになり、プロンプトキャッシュが安定化
+- 会話途中でのツール一覧書き換えによるキャッシュミス・思考破棄を多数修正: MCP サーバー再送／組み込みツール再描画、MCP 切断やアップグレードによるツール消失、フォーク由来のバックグラウンドワーカーが `EnterWorktree` を会話のツールブロックに追加する問題、ToolSearch 非対応セッションへの MCP/プラグインツール追加（対応モデルでは deferred 定義として渡すよう変更）、`/model` でのモデル切替時の全ツール定義再送（commit/PR 帰属テキストは会話ノートとして届くよう変更）
+- resume 時のツールセット／ツール説明／MCP アナウンス再描画に起因するキャッシュミスを修正。print モード（`-p`）の会話を対話的に resume したときのシステムプロンプト接頭辞変化も修正
+
+**Hooks／設定**
+
+- **`StopFailure` フックの error type に `cloud_credential_error` を追加**。v2.1.267 が、資格情報ロード失敗をこの値で報告する最初のバージョン（従来は `server_error` / `unknown` に丸められていた）
+- **`allowedChannelPlugins` が `"plugin@marketplace"` の文字列形式を受け付けるようになった**（例: `"telegram@claude-plugins-official"`）。**旧バージョンは文字列が混ざると `allowedChannelPlugins` の値ごと拒否する**ため、混在環境では注意
+- **managed settings の `allowedHttpHookUrls` / `httpHookAllowedEnvVars` / `allowedChannelPlugins` が不正値のときの挙動を修正**。従来はキーごと破棄（＝全許可）だったが、**空の許可リストとして強制**するようになった。個別エントリのみ不正なら該当エントリだけを除去して残りを強制する
+
+**その他の修正**
+
+- 管理設定でサンドボックスを要求する組織で、クラウドの Cowork スケジュールタスクが起動時に失敗する問題を修正
+- `-p --resume` で `/compact` 等のスラッシュコマンドを実行した後の resume に、余計な "Continue from where you left off." ターンが挿入される問題を修正
+- 5MB を超える大きなセッションの resume で、並列ツール呼び出しとその hook 出力が落ちる問題を修正
+- managed の `allowedHttpHookUrls` / `httpHookAllowedEnvVars` / `allowedChannelPlugins` が読めないときに「全許可」ではなく「全拒否」になるよう修正
+- マーケットプレイスのエントリパスにバックスラッシュを含めることで macOS / Linux の封じ込めチェックを回避できる問題を修正
+- Bedrock / Google Cloud の資格情報期限切れが、10回リトライした末に汎用エラーを出してから再認証エラーになる問題を修正
+- `claude remote-control` がサーバー資格情報の期限切れ（開始から約30日）で終了し、接続中の全セッションを落とす問題を修正（再登録して継続するようになった）
+- Artifact の公開がアップロード途中の接続断で切れた場合に1回リトライするようになった。UTF-8 不正／U+FFFD を含むページファイルのエラーメッセージが行・列を示すようになった
+- Bash ツールの description ガイダンスを改善し、コマンドをそのまま反復するのではなく平易な言葉で説明するようになった
+- サンドボックス内で `pbcopy` 等のクリップボードコマンドが失敗した際、`/copy` を提案するようガイダンスを改善
 
 ---
 
