@@ -3,7 +3,79 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-09-11（**v2.1.267**（2026-09-09）を反映。npm latest は **v2.1.267**。組織／個人の双方で使える **`maxEffortLevel`（effort 上限設定）** が追加され、全プロバイダ（Bedrock / Google Cloud Agent Platform / Foundry 含む）でクライアント側からキャップできるようになった。**サブエージェントの `permissionMode: bypassPermissions` は親会話が bypass でない限り無視される**という安全側の挙動変更、**`effort:` frontmatter が既定 effort 固定モデル（Fable 5 / Opus 4.8 / 4.7）でも効く**ようになった点がハーネス影響大。加えてプロンプトキャッシュ再利用の破れを大量に修正している。リファレンス側では `--system-prompt-snapshot`、hooks の `scratchpad_dir`、`--plugin-dir` のプラグインフォルダ指定、MCP の HTTP→SSE 自動フォールバックなどが明文化された）
+最終更新: 2026-09-13（**v2.1.268**（2026-09-10）と **v2.1.269**（2026-09-11）を反映。ハーネス観点の目玉は **`claude plugin eval`（プラグインのeval実行基盤、新ドキュメントページ plugin-evals 追加）**、**タスク追跡ツールの既定提供が「Claude 3.x / Opus 4〜4.7 / Sonnet 4〜4.6 / Haiku 4.5 のみ」に反転**（未知のモデルIDでは出なくなった）、**macOS/Linux/WSL で Glob / Grep ツールが既定セットから外れ Bash の `bfs`/`ugrep` 探索に置き換わった**点、**WebFetch に既定5分のダウンロード期限**が付いた点。symlink 経由パスの deny ルール不適用や `tee` の書き込み先チェック漏れなどセキュリティ関連修正も多い）
+
+---
+
+## v2.1.269 (2026-09-11)
+
+ハーネス観点で影響の大きい変更を抜粋。
+
+**プラグインeval（新機能）**
+
+- **`claude plugin eval` を追加**: プラグインのevalスイートを実行し、スコア付きの再現可能な結果（JSON + HTMLレポート）を得られる。プロンプトごとにプラグインあり／なしの隔離セッションを複数回走らせ、定義したグレーダー（または自動生成グレーダー）で採点し、閾値未満なら非ゼロ終了するため **CIゲートに使える**。新ドキュメントページ [plugin-evals](https://code.claude.com/docs/en/plugin-evals) が追加された。スキルのdescription調整には `tool_used: Skill` グレーダーで発火率を測るパターンが紹介されている
+
+**新しい環境変数・設定**
+
+- `CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS`（1–256）: Workflowツールの実行あたり並列エージェント上限を引き上げられる
+- `OTEL_METRICS_INCLUDE_REPOSITORY=true`: OpenTelemetryのメトリクス・イベントに `vcs.*` リポジトリ属性を付与
+- `CLAUDE_CODE_GATEWAY_MODEL_DISCOVERY_TIMEOUT_MS`: LLMゲートウェイの `/v1/models` 発見タイムアウト延長（既定3秒）
+- `bashEditDiffEnabled` 設定: Bashコマンドがファイル編集した場合にBashツール結果へ差分を付ける
+- `/output-style [name]` で出力スタイルの一覧・切替が可能に（Remote Control・クラウド・ヘッドレスでも）
+
+**Hooks／権限**
+
+- **`!` で始まる deny / ask 権限ルールの否定が、書かれた設定ソースを越えて適用されていた問題を修正**。否定ルールは自ソース内でのみ効き、裸の `!` は無視されるようになった
+- **`Edit()` deny ルールと書き込みパスチェックが Bash の `tee` の書き込み先に適用されていなかった問題を修正**。`Bash(tee:*)` allow ルールが作業ディレクトリ外への書き込みをカバーしなくなった
+- `--output-format stream-json` の `permission_denials` が、パススコープdenyルールでブロックされた Read / Edit / Write を含むようになった
+- PostToolBatch向けリマインダーの再描画抑止などツール多用ターンの応答性改善
+
+**その他**
+
+- compaction後にClaudeへ伝えるgit statusが「セッション開始時点」ではなく現在の状態になるよう修正
+- 出力トークン上限で切れて自動再開したターンの次で、プロンプトキャッシュが部分無効化される問題を修正
+- タスク追跡ツール（TaskCreate等・TodoWrite）の提供対象が明文化: **Claude 3.x / Opus 4.0–4.7 / Sonnet 4.0–4.6 / Haiku 4.5 のみ既定提供**。それ以外（未知のモデルID含む）は `CLAUDE_CODE_ENABLE_TODO_TOOLS=1` でオプトイン
+- クラウドセッションのスキル同期名が `anthropic-skills:<name>` に（Claude Desktopと一致。衝突がなければ裸の名前も可）
+- `/ultrareview --post` が2つ目のクラウドセッションを起動せず、結果到着時に直接PRコメントを投稿するように変更
+- plugin LSPサーバーが `shutdown` 失敗時にも `exit` を送りセッション終了時に残留しない修正（rust-analyzer等）
+- 帰属（attribution）リマインダーが CLAUDE.md やメモリの「帰属行を付けない」ルールを上書きしていた問題を修正（managed settings の指定は引き続き優先）
+
+---
+
+## v2.1.268 (2026-09-10)
+
+ハーネス観点で影響の大きい変更を抜粋。
+
+**ツールセットの既定変更（影響大）**
+
+- **タスク追跡ツール（TaskCreate/Get/Update/List、TodoWrite）の提供条件が反転**: 従来は「新しいモデルで除外」だったが、**Claude 3.x / Opus 4.0–4.7 / Sonnet 4.0–4.6 / Haiku 4.5 でのみ既定提供**になった。LLMゲートウェイ経由のカスタムモデル名など**未知のモデルIDでは提供されない**。他モデルで使うには `CLAUDE_CODE_ENABLE_TODO_TOOLS=1`
+- **WebFetch に既定5分（300秒）のダウンロード期限を追加**。応答を閉じないサーバーで無限に待つ問題の修正。`CLAUDE_CODE_WEBFETCH_DEADLINE_MS` で変更、`0` で無効化
+
+**セキュリティ関連の修正**
+
+- **symlinkされたディレクトリ（macOSの `/etc` `/tmp` `/var`、Linuxの `/bin`）への deny / ask ルールが実パス指定時に適用されない問題、および Bash コマンドが symlink パス表記の deny ルールを無視する問題を修正**
+- `env -C` / `eval` など権限チェッカーが解析できないコマンドが同一行にあると Read / Edit の deny ルールが適用されないケースを修正
+- plugin / marketplace エラーが git ソースURLのトークン・パスワードを表示する問題、`/mcp`・`claude mcp list` 等が `${VAR}` から解決したシークレットを表示する問題を修正
+- respawn されたインプロセスのチームメイトが、未信頼フォルダの同名エージェントファイルからツールやシステムプロンプトを拾う問題を修正
+- Bashサンドボックスの説明文が封じ込めを過大に述べていた問題を修正
+
+**運用・パフォーマンス**
+
+- **`--continue` / `--resume` の改善**: SessionStart フックを待たずに会話が即表示、初回メッセージでトランスクリプト全体を再読しない
+- 長時間アイドルセッションのビジーループによるCPU張り付きを修正
+- `.claude/workflows/` があるプロジェクトの起動時間改善（一覧時に各スクリプトをパースしない）
+- **`/plugin` でのインストール・有効化・無効化がメニューを閉じた時点で反映**されるようになり、`/reload-plugins` が不要に
+- auto モードの拒否メッセージが、ブロックしたルール名を明示し、安全な代替手段を試すようClaudeに伝えるようになった
+- SDKセッションの `excludeDynamicSections` 使用時にプロンプトキャッシュと拡張思考がセッション途中で壊れる問題を修正
+
+**CLI／設定**
+
+- `claude auth status --json` に `configDirectory` を追加。`claude plugin install/uninstall/update/enable/disable` に `--json` を追加
+- `claude self-hosted-runner --remove-session-state`: セッション終了時にセッション別ディレクトリを削除
+- Claude apps gateway: `gateway.yaml` の `pricing:` がクライアントの `/cost`・テレメトリに反映、`gatewayInternalNetworks` managed setting 追加、`allow_cidrs` 空の起動警告
+- サードパーティ互換エンドポイント（`ANTHROPIC_BASE_URL`）で v2.1.265 以降全ターンHTTP 400になる問題（Artifactツールのregex起因）を修正
+- Bedrock / Vertex / Foundry のシステムプロンプトが環境・モデル・設定詳細を添付として渡すようになり、ツール一覧も会話中バイト安定に（ファーストパーティと一致）
+- 非対話モードで `PermissionRequest` フックが発火しない問題を修正
 
 ---
 

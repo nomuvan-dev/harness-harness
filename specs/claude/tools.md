@@ -36,8 +36,8 @@ Claude Code の組み込みツール一覧。**ここに書かれたツール名
 | `Write` | Yes | ファイル新規作成・全上書き（追記・マージはしない） |
 | `Read` | No | ファイル読み取り |
 | `NotebookEdit` | Yes | Jupyter ノートブックのセル編集 |
-| `Glob` | No | ファイル名パターン検索 |
-| `Grep` | No | ファイル内容検索（ripgrep ベース） |
+| `Glob` | No | ファイル名パターン検索。**v2.1.268 以降 macOS / Linux / WSL では既定セットに含まれない**（§3.4 参照） |
+| `Grep` | No | ファイル内容検索（ripgrep ベース）。**v2.1.268 以降 macOS / Linux / WSL では既定セットに含まれない**（§3.4 参照） |
 | `LSP` | No | 言語サーバー経由のコードインテリジェンス（定義ジャンプ・参照検索・型エラー報告等） |
 | `Monitor` | Yes | バックグラウンドでコマンドを走らせ出力行ごとに Claude へ返す。WebSocket を開いて各メッセージをイベント扱いすることも可能 |
 | `EnterPlanMode` | No | プランモードへ移行 |
@@ -78,7 +78,7 @@ Claude Code の組み込みツール一覧。**ここに書かれたツール名
 - タイムアウト: `BASH_DEFAULT_TIMEOUT_MS`（既定 2 分）と `BASH_MAX_TIMEOUT_MS`（既定 10 分の上限）。**per-command のタイムアウトは Claude が `timeout` 引数で指定する**ものでユーザーが個別設定するものではない
 - 出力: 実行中は作業ファイルへストリーム。**5 GB 超で kill**。成功時はおよそ 30,000 文字までインライン、超過分はセッションディレクトリのファイルパス（64 MiB で切り詰め）+ 冒頭プレビュー。失敗時はおよそ 10,000 文字までインライン。`BASH_MAX_OUTPUT_LENGTH` で読み戻し量を変更可（既定 30,000、上限 150,000）。**v2.1.261 以降は `bashOutputMaxChars` 設定（最大 128,000 文字）でインライン上限そのものを引き上げられる**（インライン上限と読み戻しウィンドウを同時に設定し、設定すると `BASH_MAX_OUTPUT_LENGTH` は無視される）。バックグラウンドタスクの出力は `taskOutputMaxChars`（同じく最大 128,000 文字）で設定する
 - **終了コード 1 が「正常な否定」として扱われるコマンド**: `grep`, `rg`, `egrep`, `fgrep`, `find`, `diff`, `test`, `[`, `git diff`, `git grep`
-- バックグラウンド化: `run_in_background: true`。タイムアウトに達したコマンドも自動でバックグラウンドへ移される。ただし **`sleep` 始まり / `git` を含む / 完全にパースできない複合コマンド**の 3 種は自動バックグラウンド化されず停止される。パースできない複合コマンドには**パラメータ展開（`${VAR}`）を含むもの**が該当し、末尾が `; exit "${PIPESTATUS[0]}"` のようなコマンドは残りがパースできてもタイムアウトで停止する
+- バックグラウンド化: `run_in_background: true`。タイムアウトに達したコマンドも自動でバックグラウンドへ移される。ただし **`sleep` 始まりのコマンド**は自動バックグラウンド化されず停止される（2026-09-13 時点のリファレンス改訂で、以前記載されていた「`git` を含む」「完全にパースできない複合コマンド」の除外条件は削除され、`sleep` のみになった）
 - Linux / WSL では `CLAUDE_CODE_TOOL_MEMORY_LIMIT`（例 `4G`）で Bash / PowerShell、および **v2.1.246 以降は Monitor** ツールコマンド全体のメモリ上限を cgroup で設定できる。**セッション内の全コマンド合算**で、値変更の反映には再起動が必要（v2.1.246 より前は Monitor は上限外）
 - v2.1.246 以降、`CLAUDE_CODE_TOOL_MEMORY_CGROUP_EXCLUDE` で Claude Code が起動する他種別のプロセス（`mcp` / `lsp` / `hooks` / `plugin` / `helper` / `agent`）も同じ上限の対象にできる。列挙した種別が**除外**され、それ以外は上限対象。`none` で全種別対象、`all-new` で Bash / PowerShell / Monitor のみ対象。未設定時の対象集合はサーバー配信の構成に従って変動する。権限ゲート系フック（およびそれが呼ぶ MCP サーバー）は常に除外される
 
@@ -100,6 +100,11 @@ Claude Code の組み込みツール一覧。**ここに書かれたツール名
 
 ### 3.4 Glob / Grep
 
+- **v2.1.268 以降、macOS / Linux / WSL では Glob / Grep は既定ツールセットに含まれない**（Windows では従来どおり既定提供）。Claude は代わりに Bash ツールの `find` / `grep` で探索し、Claude のシェル内ではこの2コマンドは組み込みの **`bfs` / `ugrep`** として実行される。これらの探索もフック・権限ルールの対象になる
+- macOS / Linux / WSL で Glob / Grep が復活する条件:
+  - 起動時に `--tools` / `--allowedTools`（または Agent SDK の同等オプション）で `Glob` / `Grep` を指名する。`--allowedTools` はどちらか一方の指名で**両方**戻る。**設定ファイルの allow ルールにはこの効果はない**
+  - deny ルール / `--disallowedTools` / `--restricted` でセッションから `Bash` が除去されている
+  - サブエージェントが `tools` フィールドに `Glob` / `Grep` を列挙し `Bash` を持たない（そのサブエージェントのみ。`--agent` でメインセッションとして走る場合はセッション全体）
 - Glob は更新時刻順、**100 件で打ち切り**（切り詰めフラグが Claude に見える）。**既定で `.gitignore` を尊重しない**（`CLAUDE_CODE_GLOB_RESPECT_GITIGNORE` 系で変更）
 - Grep は ripgrep ベースで **POSIX grep ではなく ripgrep の正規表現構文**。`.gitignore` を尊重する（gitignore されたファイルはパスを直接指定すれば読める）
 - 出力モード: `files_with_matches`（既定） / `content` / `count`
@@ -111,6 +116,7 @@ Claude Code の組み込みツール一覧。**ここに書かれたツール名
 - WebFetch は取得したページを小型・高速モデルで抽出プロンプトに対して処理する。**設計上ロッシー**——「ページに書かれていない」という結果は「プロンプトが聞かなかっただけ」の可能性がある
 - HTTP は HTTPS に自動昇格。**別ホストへのリダイレクトは追わず**、元 URL とリダイレクト先を返すので Claude が 2 回目の呼び出しをする
 - レスポンスは既定 15 分キャッシュ（v2.1.233 以降 `CLAUDE_CODE_WEBFETCH_CACHE_TTL_MS` で変更可）
+- **v2.1.268 以降、ダウンロードに既定 5 分（300 秒）の期限**がある（リダイレクト追跡込み）。期限内に完了しないと deadline エラーで失敗する。`CLAUDE_CODE_WEBFETCH_DEADLINE_MS` で変更、`0` で無効化（数字のみ受け付け、それ以外の表記は既定値のまま）
 - Manual（`default`）/ `acceptEdits` モードでは取得前にプロンプトが出るが、権限ルールが既に allow / deny しているドメインと**組み込みの事前承認ドキュメントドメイン集合**はプロンプトなしで処理される。明示的な `WebFetch(domain:...)` ルール（deny / ask / allow）は事前承認集合より優先する。ルールが何を許可していても、取得は先に **WebFetch ドメイン安全性チェック**を通る
 - プロンプトの選択肢は 3 つ: **Yes**（今回限り。同一ドメインでも次回また聞かれる）/ **Yes, and don't ask again for `<domain>`**（そのリポジトリの `.claude/settings.local.json` に `WebFetch(domain:...)` allow ルールを保存。`allowManagedPermissionRulesOnly` が有効な組織ではこの選択肢は非表示）/ **No, and tell Claude what to do differently**
 - 事前に許可するには allow ルール `WebFetch(domain:example.com)`。`WebFetch(domain:*)` で全ドメイン許可。`auto` / `bypassPermissions` モードはプロンプトをスキップするが、明示的な `ask` ルールに合致するドメインは例外
@@ -123,6 +129,7 @@ Claude Code の組み込みツール一覧。**ここに書かれたツール名
 ### 3.6 Agent（サブエージェント）
 
 - `tools` / `disallowedTools` の解決順: 両方未設定 → サブエージェントに提供されうる全ツールを継承 / `tools` のみ → 列挙されたものだけ / `disallowedTools` のみ → 親のツールから除外 / **両方設定 → `disallowedTools` が優先**
+- **`disallowedTools` に specifier 付きエントリ（例 `Bash(git push *)`）を書いても、マッチするコマンドだけでなくツール全体が除去される**（2026-09-13 リファレンス改訂で明文化）。Bash を残して特定コマンドだけ塞ぎたい場合は settings の `permissions.deny` に Bash deny ルールを書く（メイン会話とサブエージェント双方に適用される）
 - いずれの場合も「サブエージェントに提供されうるツール」の範囲に制限される。`tools` に書いても提供対象外のツールは付与されない
 - **Agent 呼び出し自体は権限プロンプトを出さない**。サブエージェント側の個々のツール呼び出しが権限ルールで判定される
 - v2.1.186 以降、バックグラウンドサブエージェントの権限プロンプトもメインセッションに出る。どのサブエージェントの要求かが表示され、Esc はそのツール呼び出しだけを拒否する（サブエージェントは止まらない）
@@ -138,8 +145,13 @@ Claude Code の組み込みツール一覧。**ここに書かれたツール名
 
 ## 4. Task 系ツールの提供条件
 
-v2.1.233 以降、**Opus 4.8 / Sonnet 5 / Fable 5 / Mythos 5 およびそれ以降の同系統モデル**では
-`TodoWrite`, `TaskCreate`, `TaskGet`, `TaskUpdate`, `TaskList` が**既定で提供されない**。
+**v2.1.268 で提供条件が「除外リスト」から「提供リスト」に反転した**:
+`TodoWrite`, `TaskCreate`, `TaskGet`, `TaskUpdate`, `TaskList` は
+**Claude 3.x / Opus 4.0–4.7 / Sonnet 4.0–4.6 / Haiku 4.5 でのみ既定提供**される。
+それ以外のモデル——Opus 4.8 / Sonnet 5 / Fable 5 / Mythos 5 系に加え、
+**LLM ゲートウェイ経由のカスタムモデル名など Claude Code が認識しないモデル ID も含む**——では
+オプトインしない限り提供されない
+（v2.1.233〜2.1.267 は「Opus 4.8 / Sonnet 5 / Fable 5 / Mythos 5 以降で除外」という除外リスト方式だった）。
 
 オプトイン方法:
 
