@@ -1,5 +1,45 @@
 # harness-harness 更新履歴
 
+## 2026-09-13 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code v2.1.268（2026-09-10）／v2.1.269（2026-09-11）を反映。Codex CLI は安定版 0.154.0 のまま（0.155.0 は alpha 進行中）で更新なし。スキルエコシステム巡回（Phase 3.5）は前回 2026-09-08 のため 7 日ルールでスキップ。**
+
+**1) Claude Code — v2.1.268 / v2.1.269**
+
+ハーネス観点で影響の大きいもの:
+
+- **`claude plugin eval` 新設（v2.1.269）**: プラグインのeval スイートをプラグインあり／なしの隔離セッションで複数回実行し、グレーダーで採点、閾値未満で非ゼロ終了（CIゲート可）。新ドキュメントページ plugin-evals 追加。スキル description の発火率測定（`tool_used: Skill` グレーダー）はハーネス品質保証に直結
+- **タスク追跡ツールの既定提供が「提供リスト」方式に反転（v2.1.268）**: Claude 3.x / Opus 4.0–4.7 / Sonnet 4.0–4.6 / Haiku 4.5 のみ既定提供。**LLMゲートウェイ経由のカスタムモデル名など未知のモデルIDも非提供**になった点が要注意
+- **macOS / Linux / WSL で Glob / Grep が既定ツールセットから外れた（v2.1.268）**: Bash の `find` / `grep`（実体は組み込み `bfs` / `ugrep`）で代替。`--tools` / `--allowedTools` での指名、Bash 除去、サブエージェントの `tools` 列挙で復活
+- **WebFetch に既定5分のダウンロード期限（v2.1.268）**: `CLAUDE_CODE_WEBFETCH_DEADLINE_MS` で変更・無効化
+- **セキュリティ修正多数（v2.1.268）**: symlink ディレクトリの deny ルール不適用、`tee` の書き込み先チェック漏れ（`Bash(tee:*)` allow が作業ディレクトリ外をカバーしなくなった）、`${VAR}` 解決シークレットの表示、未信頼フォルダのエージェントファイル読み込み
+- **`!` 否定権限ルールが設定ソースを越えて適用されていた問題を修正（v2.1.269）**
+- **hooks リファレンス改訂**: `WorktreeRemove` が非ゼロ終了コードで削除をブロック可能に（従来は決定制御なし）、`mcp_tool` フックの SessionStart／Setup での発火タイミング制約を明文化、`PermissionDenied` の `reason` がマッチしたルール名を角括弧で示す形式に、CwdChanged が `CLAUDE_ENV_FILE` の変数をクリアする挙動を明文化
+- **プラグイン変更の即時反映（v2.1.268）**: `/plugin` の操作がメニューを閉じた時点で反映、`/reload-plugins` は原則不要に
+- **`.claude/commands/` サブディレクトリの命名規則明文化**: `commands/frontend/component.md` → `/frontend:component`
+- **`context: fork` の注意書き追加**: 会話フォークではなく履歴なしのサブエージェント起動である旨が公式に明記
+- **agent teams**: fork / `isolation` 指定はチームメイト化されない例外の明文化、`dontAsk` モードは非継承、参照可能スコープは project / user / managed
+- 新設定・環境変数: `copyOnSelect`、`bashEditDiffEnabled`、`CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS`、`OTEL_METRICS_INCLUDE_REPOSITORY`、`CLAUDE_CODE_GATEWAY_MODEL_DISCOVERY_TIMEOUT_MS`、`CLAUDE_CODE_BG_TASKS_REPORT_RUNNING`
+- Bash 自動バックグラウンド化の除外条件が「`sleep` 始まりのみ」に簡素化（`git` 含有・パース不能複合コマンドの除外記載が削除）
+
+**2) Codex CLI — 更新なし**
+
+GitHub リリースは 0.155.0-alpha.3.x まで進行中だが安定版は 0.154.0 のまま。specs/codex/ は現状維持。
+
+### 更新ファイル
+
+- `specs/claude/changelog.md` — v2.1.268 / v2.1.269 追加
+- `specs/claude/tools.md` — Glob/Grep 既定除外、Task系ツール提供条件反転、WebFetch期限、自動バックグラウンド化条件、`disallowedTools` specifier挙動
+- `specs/claude/hooks.md` — WorktreeRemove ブロック可能化、mcp_tool 発火制約、PermissionDenied reason 形式、CwdChanged の env クリア
+- `specs/claude/configuration.md` — 新設定・環境変数6件、`CLAUDE_CODE_ENABLE_TODO_TOOLS` 説明更新、maxEffortLevel の frontmatter 適用
+- `specs/claude/skills-and-commands.md` — plugin eval 新セクション、プラグイン即時反映、commands サブディレクトリ命名、context: fork 注意書き
+- `specs/claude/agent-teams.md` — チームメイト化の例外、dontAsk 非継承、参照スコープ
+- `specs/claude/mcp.md` — クライアントシークレット設定タイミング、シークレット表示抑止
+
+---
+
 ## 2026-09-11 — 公式ドキュメント巡回
 
 ### 検出・更新

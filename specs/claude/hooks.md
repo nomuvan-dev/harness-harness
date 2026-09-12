@@ -50,7 +50,7 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 | `MessageDisplay` | アシスタントメッセージ表示時 | No（transform/hide可） | - | アシスタントメッセージのテキストを変換または非表示にできる（v2.1.152） |
 | `ConfigChange` | 設定ファイル変更時 | Yes | `user_settings`, `project_settings`, `local_settings`, `policy_settings`, `skills` |
 | `InstructionsLoaded` | CLAUDE.md/rules読み込み時 | No | `session_start`, `nested_traversal`, `path_glob_match`, `include`, `compact` |
-| `CwdChanged` | ワーキングディレクトリ変更時 | No | matcher非サポート（全変更で発火） |
+| `CwdChanged` | **メイン会話のシェルコマンド**がワーキングディレクトリを変更したとき | No | matcher非サポート（毎回発火）。`CLAUDE_ENV_FILE` に書いた変数は**次の CwdChanged イベントでクリアされる**（FileChanged で書いた変数も同様。2026-09-13 リファレンス改訂で明文化） |
 | `DirectoryAdded` | `/add-dir` または SDK `register_repo_root` でセッション途中に作業ディレクトリが登録された後 | No | -（v2.1.219） |
 | `FileChanged` | 監視対象ファイルのディスク変更時 | No | ファイル名（basename）例: `.envrc`, `.env` |
 | `TaskCreated` | `TaskCreate` ツールでタスク作成時 | Yes | matcherなし |
@@ -63,7 +63,7 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 | イベント | 発火タイミング | ブロック可能 | matcher対象 |
 |:--|:--|:--|:--|
 | `WorktreeCreate` | ワークツリー作成時 | Yes | - |
-| `WorktreeRemove` | ワークツリー削除時 | No | - |
+| `WorktreeRemove` | ワークツリー削除時 | **Yes（2026-09-13 リファレンス改訂）**: 非ゼロ終了コードで、削除後もディレクトリが残っている場合に削除を失敗させられる。worktree はディスクに残り、コマンドと stderr はデバッグログへ。バックグラウンドセッション削除中ならセッションも残り、agent view の拒否メッセージにフックの終了状態と stderr 冒頭が表示される。JSON 出力は破棄される（従来は「決定制御なし・失敗はデバッグログのみ」だった） | - |
 | `PreCompact` | コンパクション前 | No | `manual`, `auto`（入力の `custom_instructions` は `manual` で `/compact` に引数が渡された場合のみ文字列。引数なし・`auto` では `null`。従来は空文字列と記載されていた） |
 | `PostCompact` | コンパクション後 | No | `manual`, `auto` |
 
@@ -276,6 +276,13 @@ MCP サーバーのツールを直接呼び出す。シェル経由のラッパ�
 }
 ```
 
+**発火タイミングの制約（2026-09-13 リファレンス改訂で明文化）**: `mcp_tool` フックはセッションの MCP サーバーがフックから利用可能になった後にのみ実行される。
+
+- **起動時の `SessionStart`**（`--continue` / `--resume` 含む）はサーバー利用可能前に発火するため、`mcp_tool` フックは**スキップ**される（デバッグログに `mcp_tool hooks are not available for the 'SessionStart' hook event (no MCP client context)` が記録される）
+- **`/clear` やコンパクション後の `SessionStart`** はサーバーが既に利用可能なので実行される
+- **`Setup` は常にサーバー利用可能前**なので、`Setup` の `mcp_tool` フックは毎回スキップされる
+- 初回ターンから必要な処理は `type: "command"` フックで行うこと
+
 ---
 
 ## 4. 設定方法
@@ -411,7 +418,7 @@ v2.1.133 以降、すべてのイベントの入力 JSON に effort level も含
 | `PostToolUse` | `tool_name`, `tool_input`, `tool_response`, `tool_use_id`, `duration_ms`（v2.1.119+。権限プロンプトと PreToolUse 時間を除いたツール実行時間） |
 | `PostToolUseFailure` | `tool_name`, `tool_input`, `tool_use_id`, `error`, `is_interrupt`, `duration_ms`（v2.1.119+） |
 | `PostToolBatch` | `tool_calls`（各要素は `tool_name`, `tool_input`, `tool_use_id`, `tool_response`）。`tool_response` は `PostToolUse` と形が異なりモデルが見る `tool_result` のシリアライズ |
-| `PermissionDenied` | `tool_name`, `tool_input`, `tool_use_id`, `reason` |
+| `PermissionDenied` | `tool_name`, `tool_input`, `tool_use_id`, `reason`。`reason` の形式が改訂され、**分類器の判定はマッチしたルール名を角括弧で示す**（例 `[Data Exfiltration]`、`[Irreversible Local Destruction]`）。従来の固定文言 `Blocked by classifier` ではなくなった。no-verdict 拒否は従来どおり `Auto mode could not evaluate this action and is blocking it for safety` で始まる |
 | `Stop` | `stop_hook_active`, `last_assistant_message`, `background_tasks`, `session_crons`（v2.1.145+） |
 | `StopFailure` | `error`（`rate_limit` / `overloaded` / `authentication_failed` / `oauth_org_not_allowed` / `account_on_hold` / `billing_error` / `invalid_request` / `model_not_found` / `server_error` / `cloud_credential_error` / `max_output_tokens` / `unknown`）, `error_details`, `last_assistant_message` |
 | `Notification` | `message`, `title`, `notification_type` |

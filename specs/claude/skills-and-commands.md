@@ -31,7 +31,7 @@ Skills は Claude の能力を拡張する仕組み。`SKILL.md` ファイルに
 
 - **symlink 可**: Enterprise / Personal / Project の `<skill-name>` エントリはディスク上の別ディレクトリへの symlink でよい。Claude Code はリンク先の `SKILL.md` を読み、複数の場所が同じ先を指していても**スキルは 1 回だけ**ロードされる（プラグインスキルの symlink 扱いは別ルール）
 - **`synced` は予約名**: 大文字小文字を問わず `synced` という名前のスキルフォルダは作らないこと。`~/.claude/skills/synced/` は claude.ai から同期したスキル用に使われ、同名で自作したスキルは Enterprise / Personal / Project のいずれでもスキップされる
-- **`.claude/commands/`**: 旧形式だが引き続き動作する。`name` と `paths` を除き同じフロントマターに対応し、ファイル名で呼び出す。**新規はスキル推奨**（スキルは補助ファイルを持てる）
+- **`.claude/commands/`**: 旧形式だが引き続き動作する。`name` と `paths` を除き同じフロントマターに対応し、ファイル名で呼び出す。**サブディレクトリに置いたファイルは `commands/` からの相対パスの `/` を `:` に置き換えた名前になる**（例: `.claude/commands/frontend/component.md` → `/frontend:component`。2026-09-13 リファレンス改訂で命名表に明記）。**新規はスキル推奨**（スキルは補助ファイルを持てる）
 - **スキルフォルダをプラグイン化**: `.claude-plugin/plugin.json` を置くと `<name>@skills-dir` というプラグインとしてロードされ、agents / hooks / MCP サーバーを同梱できる（プロジェクトの `.claude/skills/` ではワークスペース信頼ダイアログの承認が必要）
 
 > **プラグインスキルの frontmatter `name`**: `name` はコマンド名の**最終セグメント**（ディレクトリ名）を置き換える。`my-plugin/skills/review/SKILL.md` に `name: fancy` を書くと `/my-plugin:fancy` になり、他が使っていなければ素の `/fancy` でも呼べる。`name` が既にプラグイン接頭辞を含む場合（`name: my-plugin:fancy`）、**v2.1.246 以降は接頭辞を重ねない**（v2.1.216〜v2.1.245 は二重化していた）。v2.1.216 より前は `name` がコマンド名全体を置き換えていた。
@@ -169,6 +169,8 @@ $ARGUMENTS を徹底的に調査してください。
 `agent` フィールドで実行環境を指定: `Explore` / `Plan` / `general-purpose` / カスタムサブエージェント名。
 
 v2.1.218 から `context: fork` のスキルは既定でバックグラウンド実行される。フォアグラウンドで実行したい場合はフロントマターに `background: false` を指定する。
+
+> **注意（2026-09-13 リファレンス改訂で明文化）**: 名前に反して `context: fork` は「現在の会話のフォーク」（サブエージェントの fork 機能。会話履歴をすべて引き継ぐ）では**ない**。`agent` で指定したタイプの新規サブエージェントにスキル本文をプロンプトとして渡すだけで、会話履歴は見えない。タスクが会話履歴に依存する場合は `context: fork` ではなく会話のフォークを使う。
 
 > フロントマターの真偽値は v2.1.218 から `true`/`false` に加え `yes`/`no`/`on`/`off`/`1`/`0`（大文字小文字不問）も受理される（スキル・プラグイン共通）。
 
@@ -479,6 +481,22 @@ claude plugin init my-plugin    # .claude/skills/my-plugin/ を生成
 ### 4.6 自動更新
 
 公式マーケットプレースはデフォルトで自動更新有効。`DISABLE_AUTOUPDATER=1` で全無効化。`FORCE_AUTOUPDATE_PLUGINS=1` でプラグインのみ自動更新維持。
+
+### 4.6.1 プラグイン eval（`claude plugin eval`、v2.1.269+）
+
+公式ドキュメント: https://code.claude.com/docs/en/plugin-evals （2026-09-11 新設ページ）
+
+プラグインのeval スイートを Claude Code に対して実行し、スコア付きの再現可能な結果を得る CLI コマンド。
+
+- 各テストプロンプトを**プラグインあり／なしの隔離セッションで複数回**実行し、定義したグレーダー（または自動生成グレーダー）で採点。ベースライン比較で「プラグインが何を変えたか」を測る
+- 出力は JSON + HTML レポート。**スコアが閾値未満なら非ゼロ終了するため CI ゲートに使える**
+- スキルの description 調整には `tool_used: Skill` グレーダーで**発火率**を測るパターンが紹介されている（description 変更のたびに実行して回帰検出）
+- `--plugin-dir` での動作確認が「動くか」を見るのに対し、eval は「Claude が実際にどれだけ使い、正しい結果を出すか」を測る位置づけ
+- harness-harness 的には、ハーネスに含めるプラグイン／スキルの品質保証と新モデル移行時の回帰検出に直結する機能
+
+### 4.6.2 プラグイン変更の即時反映（v2.1.268+）
+
+`/plugin` メニューでのインストール・有効化・無効化は**メニューを閉じた時点で反映**され、`/reload-plugins` は原則不要になった。インストールサマリーが `Run /reload-plugins to activate.` と報告するケースでも Claude Code が自動でリロードを実行する（リロードが「次のメッセージで会話を再読する」と警告した場合のみ `/reload-plugins --force` を手動実行）。VS Code の Manage plugins ダイアログも開いているセッションに再起動なしで適用される。
 
 ### 4.7 security-guidance プラグイン（公式 / 2026-w22 featured）
 
