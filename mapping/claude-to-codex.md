@@ -187,7 +187,7 @@ Claude Code の JSON 構造（イベント → matcher グループ → ハン�
 {
   "hooks": {
     "PreToolUse": [
-      { "matcher": "shell", "hooks": [{ "type": "command", "command": "python3 guard.py" }] }
+      { "matcher": "Bash", "hooks": [{ "type": "command", "command": "python3 guard.py" }] }
     ]
   }
 }
@@ -197,7 +197,7 @@ Claude Code の JSON 構造（イベント → matcher グループ → ハン�
 
 ```toml
 [[hooks.PreToolUse]]
-matcher = "shell"
+matcher = "Bash"
 
   [[hooks.PreToolUse.hooks]]
   type = "command"
@@ -207,7 +207,8 @@ matcher = "shell"
 
 変換時の主な注意点:
 
-- **matcher のツール名を変換する**: Claude の `Bash` / `Edit` / `Write` などは Codex のツール名に読み替える必要がある
+- **matcher のツール名は主要どころがそのまま通る**: Codex はシェルコマンドを `Bash` でマッチし、`apply_patch` 経由のファイル編集は `apply_patch` / `Edit` / `Write` のいずれでもマッチする（フック入力の `tool_name` は `"apply_patch"`）。MCP ツールは `mcp__<server>__<tool>` 形式で共通。**Claude の主要 matcher（`Bash` / `Edit` / `Write`）は無変換で持ち込める**。ホスト側ツール（`WebSearch` 等）は Codex ではフック対象外
+- **プラグインフックの環境変数互換**: Codex はプラグインフックに `PLUGIN_ROOT` / `PLUGIN_DATA` に加えて **`CLAUDE_PLUGIN_ROOT` / `CLAUDE_PLUGIN_DATA` も設定する**ため、`${CLAUDE_PLUGIN_ROOT}` 参照のフックスクリプトはそのまま動く余地がある
 - **Windows 分岐**: Codex は `commandWindows`（`command_windows`）でプラットフォーム別コマンドを指定できる。Claude にはこの機構がないため、逆変換ではラッパースクリプトに寄せる
 - **タイムアウト既定値**: Codex は 600 秒、`SessionEnd` は 1 秒、`Interrupt` は 1 秒（上限 3 秒）
 - **Managed 制約**: Codex は `requirements.toml` の `allow_managed_hooks_only = true` が Claude の `allowManagedHooksOnly` に対応する（`config.toml` に書いても効かない点に注意）
@@ -236,7 +237,7 @@ matcher = "shell"
 | `allowManagedMcpServersOnly` | **対応なし** | Codex に Managed MCP 概念なし |
 | Managed MCP (`managed-mcp.json`) | **対応なし** | 代替: `/etc/codex/config.toml` のシステム設定 |
 | MCPチャンネル（プッシュメッセージ） | **対応なし** | Codex はプッシュ通知非対応 |
-| プラグイン提供 MCP | **対応なし** | Codex にプラグインシステムなし |
+| プラグイン提供 MCP | プラグインに MCP サーバーを同梱可 | Codex のプラグインは skill / MCP サーバー / 両方を含められる（specs/codex/configuration.md §6.9 参照） |
 
 ### 7.1 MCP 設定変換例
 

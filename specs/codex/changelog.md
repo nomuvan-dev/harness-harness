@@ -4,7 +4,26 @@
 公式: https://learn.chatgpt.com/docs/changelog
 （2026-08-15 時点で `https://developers.openai.com/codex/changelog` は上記へ 308 恒久リダイレクト）
 
-最終更新: 2026-09-11（安定版 **0.154.0**（2026-09-09）がリリースされた。ハーネス観点では **実験的な worktree サポート**（新規／フォークセッション用の隔離チェックアウト）、**作業を止めずにインライン回答**、**Windows のバックグラウンド Codex サーバー共有＋デーモン制御コマンド**が主な追加。**起動時に信頼確立前のワークスペース制御ヘルパーを実行しない**修正はセキュリティ上重要。GitHub リリースタグは 0.155.0-alpha.1（2026-09-10）まで進行中）
+最終更新: 2026-09-14（**Python SDK 0.154.0**（2026-09-10）を反映: `max` / `ultra` の reasoning-effort 値、`ExternalMessage`（ツール級権限で外部コンテンツをターンに注入。ユーザー認可は付与しない）、resume/fork の `include_turns`・単発ターンの `turn_service_tier` が追加され、`HookMetadata` のアクセスが `.root` 経由に変わる破壊的変更あり。CLI 安定版は **0.154.0**（2026-09-09）のまま。GitHub リリースタグは 0.155.0-alpha.3.10（2026-09-11）まで進行中）
+
+---
+
+## Python SDK 0.154.0 (2026-09-10)
+
+`pip install --upgrade openai-codex==0.154.0`（Python 3.10+、対応ランタイム `openai-codex-cli-bin==0.154.0` 同梱）。
+
+**新機能**
+
+- **reasoning-effort に `max` / `ultra` を追加**（#39662）
+- **`ExternalMessage`**: 同期・非同期の `run()` / `turn()` に外部コンテンツを渡せる。外部コンテンツは**ツール級の権限**でターンを開始または進行中のターンに合流できるが、**ユーザー認可は付与しない**。コンシューマーは独立したイベントストリームを受け取る（#44086）
+- resume / fork の **`include_turns`**、新規開始ターン単発の **`turn_service_tier`**、source メタデータを追加。履歴選択は返却されるレスポンスを変えるだけでモデルのコンテキストは変えない。省略時は既存デフォルト維持（#44084）
+
+**破壊的変更（アップグレード時の移行ポイント）**
+
+- **`HookMetadata` がハンドラを `.root` でラップ**: `hook.command` → `hook.root.command` に置き換え、handler 固有フィールドを読む前に `hook.root.handler_type` を確認する
+- 一部の未知通知に型付きペイロードが付いた。`.params` ではなく名前付きフィールドを読む（未知・不正ペイロードは従来通り `UnknownNotification`）
+- 手動構築・途中参加のターンハンドルは**アタッチ時点以降のイベントのみ**受け取る（過去分は再生されない）。完了後のアタッチは `TransportClosedError` になりうる。保存済み履歴は `thread.read(include_turns=True)` を使う
+- カスタム `codex_bin` で `ExternalMessage` や新しい履歴／ターン単位オプションを使うには CLI 0.151.0 以上が必要
 
 ---
 

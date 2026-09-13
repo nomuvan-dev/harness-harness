@@ -507,28 +507,30 @@ ChatGPT Work モードでは `@plugin-creator`、Codex では `$plugin-creator` 
 
 MCP サーバーを含む場合は、先にサーバーを構築・テストし、登録済みの接続情報を `@plugin-creator` に渡す。
 
-#### 手動で作る最小構成
+#### 手動で作る最小構成（portable Agent Plugins 形式）
+
+> 2026-09 に公式の手動作成例が **portable Agent Plugins パッケージ**（ルート直下の `plugin.json` + agent-plugins.org スキーマ）に変わった。`@plugin-creator` が生成するのは従来どおり `.codex-plugin/plugin.json` の**互換マニフェスト**であり、この2つはレイアウトが異なる（公式ドキュメントも明示的に「scaffold differs from the portable root plugin.json format」と注記）。
 
 ```text
 meeting-follow-up/
-├── .codex-plugin/
-│   └── plugin.json
+├── plugin.json
 └── skills/
     └── meeting-follow-up/
         └── SKILL.md
 ```
 
-`.codex-plugin/plugin.json`:
+ルートの `plugin.json`:
 
 ```json
 {
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "meeting-follow-up",
   "version": "1.0.0",
-  "description": "Turn meeting notes into decisions and next steps",
-  "skills": "./skills/"
+  "description": "Turn meeting notes into decisions and next steps"
 }
 ```
 
+- portable パッケージは `skills/` 配下のスキルを**自動発見**する（`skills` フィールドの明示は不要）
 - プラグイン名は**安定した kebab-case** を使う
 - スキルの `description` は、ChatGPT / Codex がワークフロー該当を判定できる程度に具体的に書く
 - 開発中は**ローカルマーケットプレース**でテストしてから共通ディレクトリへ提出する
@@ -610,9 +612,23 @@ matcher = "shell"
 
 `matcher` は正規表現文字列。省略または `"*"` で全件マッチ。マッチ対象はイベントによって異なる:
 
-- ツール系イベント（`PreToolUse` / `PostToolUse` / `PermissionRequest`）: ツール名
+- ツール系イベント（`PreToolUse` / `PostToolUse` / `PermissionRequest`）: ツール名と**マッチャーエイリアス**
 - `PreCompact` / `PostCompact`: 発動契機（`manual` / `auto`）
 - `SessionStart`: セッションの起点（`startup` / `resume` / `clear` / `compact`）
+
+**ツール名の正規形とエイリアス（tool coverage）**:
+
+| ツール経路 | matcher の書き方 | 備考 |
+|-----------|-----------------|------|
+| シェルコマンド / unified exec (`exec_command`) | `Bash` | `write_stdin` は既存 unified-exec セッションへの transport 扱いで `PreToolUse` を再発火しない |
+| `apply_patch`（ファイル編集） | `apply_patch` / `Edit` / `Write` のいずれでも可 | フック入力の `tool_name` は常に `"apply_patch"` |
+| MCP ツール | `mcp__<server>__<tool>`（例: `mcp__filesystem__read_file`） | |
+| その他のローカル function tool | その関数ツール名（例: `update_plan`）。`spawn_agent` は `Agent` にもマッチ | |
+| ホスト側ツール（`WebSearch` 等） | **フック対象外** | ローカル function-tool のフック経路を通らない |
+
+> 一部の特殊ツール経路は既定のフック経路をオプトアウトできるため、公式はツールフックを「ガードレールであって完全な enforcement 境界ではない」と位置づけている。厳密なワイヤフォーマットは [codex-rs/hooks/schema/generated](https://github.com/openai/codex/tree/main/codex-rs/hooks/schema/generated) の生成スキーマを参照（main ブランチには未リリースのフィールドが含まれうる）。
+
+**プラグインバンドル hooks の環境変数**: プラグイン由来のフックコマンドには `PLUGIN_ROOT`（インストール済みプラグインルート）と `PLUGIN_DATA`（プラグインの書き込み可能データディレクトリ）が渡される。Claude Code のプラグインフックとの互換のため **`CLAUDE_PLUGIN_ROOT` / `CLAUDE_PLUGIN_DATA` も同時に設定される**（Claude⇔Codex でフックスクリプトを共用しやすい）。マニフェストの hooks パスはプラグインルート相対で、ルート外は不可。インストール／有効化しただけではフックは信頼されず、レビューして信頼するまでスキップされる。
 
 ### 7.4 対応イベント（0.150.0 時点で 12 種）
 
