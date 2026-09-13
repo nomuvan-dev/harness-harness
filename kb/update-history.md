@@ -1,5 +1,40 @@
 # harness-harness 更新履歴
 
+## 2026-09-14 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code v2.1.270（2026-09-12、リグレッション修正のみ）と Codex Python SDK 0.154.0（2026-09-10）を反映。CLI 安定版は 0.154.0 のまま（GitHub タグは 0.155.0-alpha.3.10 まで進行）。スキルエコシステム巡回（Phase 3.5）は前回 2026-09-08 のため 7 日ルールでスキップ。**
+
+**1) Claude Code — v2.1.270**
+
+- 2.1.269 で混入した「長時間セッションで読み取り専用 git コマンドが権限確認を求める」リグレッションの修正のみ。specs/claude/changelog.md に追記
+
+**2) Codex — Python SDK 0.154.0（2026-09-10）**
+
+- reasoning-effort に `max` / `ultra`、`ExternalMessage`（ツール級権限・ユーザー認可なしの外部コンテンツ注入）、resume/fork の `include_turns`、`turn_service_tier` を追加
+- 破壊的変更: `HookMetadata` が `.root` ラップ、通知ペイロードの型付き化、ターンハンドルのイベント受信がアタッチ時点以降のみに
+- specs/codex/changelog.md に新エントリ追加
+
+**3) Codex build-plugins ドキュメント — 手動作成例が portable Agent Plugins 形式に変更**
+
+- 手動最小構成が `.codex-plugin/plugin.json` からルート直下 `plugin.json`（`$schema: agent-plugins.org/schemas/1.0.0`、`skills/` 自動発見）に変わった。`@plugin-creator` の scaffold（`.codex-plugin/` 互換マニフェスト）とは別形式であることが明示された
+- specs/codex/configuration.md §6.9 を更新
+
+**4) Codex hooks — specs 未収載だった仕様を補完（ドキュメント自体の実質差分はなし）**
+
+- matcher のツール名正規形とエイリアス（シェル=`Bash`、`apply_patch`=`apply_patch`/`Edit`/`Write`、MCP=`mcp__<server>__<tool>`、`spawn_agent`=`Agent`、ホスト側ツールは対象外）と tool coverage 表を specs/codex/configuration.md §7 に追加
+- プラグインフックの環境変数 `PLUGIN_ROOT` / `PLUGIN_DATA` と Claude 互換の `CLAUDE_PLUGIN_ROOT` / `CLAUDE_PLUGIN_DATA` を収載
+- mapping/claude-to-codex.md の matcher 変換注記を現行仕様（主要 matcher は無変換で持ち込める）に修正。「Codex にプラグインシステムなし」という陳腐化した MCP 行も訂正
+
+### 更新ファイル
+
+- specs/claude/changelog.md
+- specs/codex/changelog.md
+- specs/codex/configuration.md
+- mapping/claude-to-codex.md
+- kb/update-history.md
+
 ## 2026-09-13 — 公式ドキュメント巡回
 
 ### 検出・更新
