@@ -1,5 +1,41 @@
 # harness-harness 更新履歴
 
+## 2026-09-15 — 公式ドキュメント巡回 + スキルエコシステム巡回
+
+### 検出・更新
+
+**Claude Code / Codex とも新バージョンなし（Claude changelog は v2.1.270 のまま、Codex は 0.155.0-alpha.4 まで進行中で安定版 0.154.0 のまま）。リファレンス側の実質差分 3 点を specs/ に反映。Phase 3.5 スキルエコシステム巡回を実施（前回 2026-09-08 から 7 日経過）。**
+
+**1) Claude Code skills リファレンス — 同期スキルの `/anthropic-skills:<name>` 名前空間を明文化**
+
+- claude.ai 同期スキルは完全名 `/anthropic-skills:<name>` と短縮名 `/<name>` の両方を持ち、短縮名が他コマンドと衝突しても完全名では常に呼べる（v2.1.269 以降。以前は短縮名のみで、衝突時は完全スキップ）
+- specs/claude/skills-and-commands.md の同名解決表と呼び出し名の項を更新
+
+**2) Claude Code advisor リファレンス — ペアリング検証が2段階に**
+
+- ペアリング表が更新され、クライアント側の「rejected」（アドバイザーを付けずに送信）に加えて **API 側で失敗する組み合わせ**（Sonnet 5 + Opus 4.6、Opus 5 + Opus 4.7/4.8、Fable 5.1 + Fable 5 など）が明記された
+- Opus 5 / Fable 5.1 の行が追加。specs/claude/configuration.md の `advisorModel` 行を更新
+
+**3) Claude Code goal リファレンス — 一時的エラー後の自動リトライ / 一時停止（v2.1.269）**
+
+- 対話セッションでは、自然解消しがちな失敗は `Goal still active` 表示で最大 3 回自動リトライ→以降一時停止。レート制限・利用上限・hook 起因の失敗は `Goal paused` で待機し、利用上限リセット待ちなら自動再開
+- `CLAUDE_CODE_GOAL_CHECKIN_MINUTES=0` は自動リトライも無効化。specs/claude/skills-and-commands.md の `/goal` 節と specs/claude/configuration.md の env 行を更新
+
+**4) Phase 3.5 — スキルエコシステム**
+
+- anthropics/skills: 176.3K stars、19 スキル増減なし。2026-09-10 push で claude-api スキルに Managed Agents `auto` permission policy / `ant beta:sessions connect` を反映
+- skills.sh: find-skills 3.4M でトップ継続。**grill-me（mattpocock/skills）が 1.1M で 2 位に浮上**。新顔に heygen-com/hyperframes（〜548K）と remotion-best-practices（524K）。クラスタは open.feishu.cn 16.5M / azure-skills 8.7M / mattpocock 合計 7.1M
+- claude.com/plugins: Frontend Design 1.134M / Superpowers 1.009M で変動なし。agentskills.io は 46 プラットフォーム据え置き
+- Tier 変更なし（新規昇格・降格に該当する動きなし）。kb/skills/_index.md と recommended.md の数値を更新
+
+### 更新ファイル
+
+- specs/claude/skills-and-commands.md
+- specs/claude/configuration.md
+- kb/skills/_index.md
+- kb/skills/recommended.md
+- kb/update-history.md
+
 ## 2026-09-14 — 公式ドキュメント巡回
 
 ### 検出・更新

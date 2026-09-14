@@ -1,6 +1,6 @@
 ---
 title: 推薦スキル一覧
-last_checked: "2026-09-08"
+last_checked: "2026-09-15"
 tier_a_count: 11
 tier_b_count: 10
 policy: 特定分野に偏らず、多様な分野からバランスよく推薦する
@@ -17,14 +17,14 @@ harness-harness各機能で活用可能なスキル。分野の偏りを避け�
 | **skill-creator** | メタ/全般 | anthropics/skills | create-harness, 全般 | スキル作成・改善・評価の起点 |
 | **systematic-debugging** | デバッグ | obra/superpowers | diagnose-harness | 仮説→証拠→根本原因の体系的デバッグ |
 | **test-driven-development** | テスト | コミュニティ上位 | create-harness, diagnose-harness | Red-Green-Refactorサイクルの強制 |
-| **frontend-design** | UI/UX | anthropics/skills (claude.com/plugins 1.134M installs、首位 / skills.sh 863.4K で 5 位) | create-harness | 50+視覚スタイル、本番品質UI生成。**2026-09-03 改訂（#1713）で「汎用的なデザイン既定値に流れない」方向へ強化**——UI 系ハーネスに組み込む際は改訂後版を取得すること |
+| **frontend-design** | UI/UX | anthropics/skills (claude.com/plugins 1.134M installs、首位 / skills.sh 885.8K で 6 位) | create-harness | 50+視覚スタイル、本番品質UI生成。**2026-09-03 改訂（#1713）で「汎用的なデザイン既定値に流れない」方向へ強化**——UI 系ハーネスに組み込む際は改訂後版を取得すること |
 | **security-scan** | セキュリティ | コミュニティ | diagnose-harness | OWASP Top10ベースの脆弱性スキャン |
 | **pdf/pptx/xlsx/docx** | ドキュメント | anthropics/skills (公式) | 全般 | Office系ドキュメント生成・解析 |
 | **dispatching-parallel-agents** | エージェント協調 | obra/superpowers | research-kb, create-harness | 並列調査・クロスレビューの設計パターン |
 | **using-git-worktrees** | Git運用 | obra/superpowers | 全般 | worktree日常運用のベストプラクティス |
 | **postgres-best-practices** | データベース | コミュニティ | create-harness | インデックス、クエリ最適化、接続プール |
-| **find-skills** | ディスカバリー | vercel-labs (**3.3M** installs、skills.sh トップ継続) | create-harness, patrol-docs | スキル検索・発見ユーティリティ |
-| **codex-plugin-cc** | エージェント間連携 | [openai/codex-plugin-cc](https://github.com/openai/codex-plugin-cc)（OpenAI 公式、**32.9K stars**） | 全般（Claude⇔Codex クロスレビュー） | Claude Code から Codex を呼ぶ公式プラグイン。`/codex:review`・`/codex:adversarial-review`・`/codex:rescue`・`/codex:transfer`・`/codex:status`・`/codex:result`・`/codex:cancel` と `codex:codex-rescue` サブエージェント。2026-08-24 の Codex 公式 changelog が `codex mcp-server` 非推奨の移行先として明示 |
+| **find-skills** | ディスカバリー | vercel-labs (**3.4M** installs、skills.sh トップ継続) | create-harness, patrol-docs | スキル検索・発見ユーティリティ |
+| **codex-plugin-cc** | エージェント間連携 | [openai/codex-plugin-cc](https://github.com/openai/codex-plugin-cc)（OpenAI 公式、**33.1K stars**） | 全般（Claude⇔Codex クロスレビュー） | Claude Code から Codex を呼ぶ公式プラグイン。`/codex:review`・`/codex:adversarial-review`・`/codex:rescue`・`/codex:transfer`・`/codex:status`・`/codex:result`・`/codex:cancel` と `codex:codex-rescue` サブエージェント。2026-08-24 の Codex 公式 changelog が `codex mcp-server` 非推奨の移行先として明示 |
 
 ## Tier B: ウォッチリスト（条件付き推薦）
 
