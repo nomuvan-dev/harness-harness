@@ -39,7 +39,7 @@ Claude Code の組み込みツール一覧。**ここに書かれたツール名
 | `Glob` | No | ファイル名パターン検索。**v2.1.268 以降 macOS / Linux / WSL では既定セットに含まれない**（§3.4 参照） |
 | `Grep` | No | ファイル内容検索（ripgrep ベース）。**v2.1.268 以降 macOS / Linux / WSL では既定セットに含まれない**（§3.4 参照） |
 | `LSP` | No | 言語サーバー経由のコードインテリジェンス（定義ジャンプ・参照検索・型エラー報告等） |
-| `Monitor` | Yes | バックグラウンドでコマンドを走らせ出力行ごとに Claude へ返す。WebSocket を開いて各メッセージをイベント扱いすることも可能 |
+| `Monitor` | Yes | バックグラウンドでコマンドを走らせ出力行ごとに Claude へ返す。WebSocket を開いて各メッセージをイベント扱いすることも可能。**v2.1.271 以降、watch には常にデッドラインがある**: 既定5分・最大30分（単発 `-p` 実行では最大10分）。期限で watch は終了し Claude に通知が1回届くので必要なら再アームする。無期限の `persistent` オプションは廃止。`timeout_ms` は WebSocket watch にも適用され、`TaskStop` で早期キャンセル可 |
 | `EnterPlanMode` | No | プランモードへ移行 |
 | `ExitPlanMode` | Yes | プランを提示して承認を求め、プランモードを抜ける |
 | `EnterWorktree` | Yes | 隔離 git worktree を作成して移動。`path` 指定で既存 worktree に入る |

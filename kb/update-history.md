@@ -1,5 +1,30 @@
 # harness-harness 更新履歴
 
+## 2026-09-16 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code v2.1.271（2026-09-14）/ v2.1.272（2026-09-15）を反映。Codex は安定版 0.154.0 のまま（0.155.0-alpha.6 まで進行中、プレリリースのみ）。Phase 3.5 スキルエコシステム巡回は前回（2026-09-15）から7日以内のためスキップ。**
+
+**v2.1.271 のハーネス観点の主要変更:**
+
+1. **サブエージェント frontmatter `omitClaudeMd`**（CLAUDE.md なしで起動するサブエージェント定義） → specs/claude/skills-and-commands.md の frontmatter 表に追加
+2. **Monitor watch の常時デッドライン化**（既定5分・最大30分、`persistent` 廃止） → specs/claude/tools.md
+3. **リモートMCPサーバーへの認証情報環境変数の展開遮断**（`${ANTHROPIC_API_KEY}` 等は空として読まれる） → specs/claude/mcp.md 環境変数展開の項に追記
+4. **SessionStart フックの起動時待機と Esc でのプロンプト取り戻し** → specs/claude/hooks.md
+5. **`modelPricing` multiplier の 1超〜10 対応（マークアップ）**、**workflowSizeGuideline medium 15→10・Pro 既定 small** → specs/claude/configuration.md
+6. auto モードの `!` インラインコマンドの権限評価変更、コマンド単位 `allowed_domains`、dynamic workflow の使用上限一時停止など → specs/claude/changelog.md に記録
+
+### 更新ファイル
+
+- specs/claude/changelog.md（v2.1.271 / v2.1.272 追加）
+- specs/claude/skills-and-commands.md（`omitClaudeMd`）
+- specs/claude/tools.md（Monitor デッドライン）
+- specs/claude/mcp.md（認証情報変数の展開遮断）
+- specs/claude/hooks.md（SessionStart 起動時待機）
+- specs/claude/configuration.md（modelPricing / workflowSizeGuideline）
+- specs/codex/changelog.md（alpha 進行の注記のみ）
+
 ## 2026-09-15 — 公式ドキュメント巡回 + スキルエコシステム巡回
 
 ### 検出・更新

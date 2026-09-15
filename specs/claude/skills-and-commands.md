@@ -656,6 +656,7 @@ model: sonnet
 | `effort` | No | エフォートレベル |
 | `isolation` | No | `worktree` で一時ワークツリーでの隔離実行 |
 | `initialPrompt` | No | 最初のターンで自動送信するプロンプト（v2.1.83） |
+| `omitClaudeMd` | No | `true` でユーザー・プロジェクト・ローカルの CLAUDE.md を読み込まずに起動（v2.1.271）。managed policy ファイルは引き続き読み込む（managed settings 由来のサブエージェント定義では policy も読まない）。委譲プロンプトだけで完結するサブエージェント向け。`--agent` / `agent` 設定でメインセッションのエージェントとして走る場合は無視される。`--agents` JSON でも指定可 |
 
 #### サブエージェントのモデル優先順位（v2.1.251〜）
 
