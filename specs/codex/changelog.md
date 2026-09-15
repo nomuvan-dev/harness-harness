@@ -4,7 +4,9 @@
 公式: https://learn.chatgpt.com/docs/changelog
 （2026-08-15 時点で `https://developers.openai.com/codex/changelog` は上記へ 308 恒久リダイレクト）
 
-最終更新: 2026-09-14（**Python SDK 0.154.0**（2026-09-10）を反映: `max` / `ultra` の reasoning-effort 値、`ExternalMessage`（ツール級権限で外部コンテンツをターンに注入。ユーザー認可は付与しない）、resume/fork の `include_turns`・単発ターンの `turn_service_tier` が追加され、`HookMetadata` のアクセスが `.root` 経由に変わる破壊的変更あり。CLI 安定版は **0.154.0**（2026-09-09）のまま。GitHub リリースタグは 0.155.0-alpha.3.10（2026-09-11）まで進行中）
+最終更新: 2026-09-14（**Python SDK 0.154.0**（2026-09-10）を反映: `max` / `ultra` の reasoning-effort 値、`ExternalMessage`（ツール級権限で外部コンテンツをターンに注入。ユーザー認可は付与しない）、resume/fork の `include_turns`・単発ターンの `turn_service_tier` が追加され、`HookMetadata` のアクセスが `.root` 経由に変わる破壊的変更あり。CLI 安定版は **0.154.0**（2026-09-09）のまま。GitHub リリースタグは 0.155.0-alpha.6（2026-09-15）まで進行中）
+
+（2026-09-16 巡回: 安定版・SDK とも新リリースなし。0.155.0-alpha.4〜6 のプレリリースのみ進行）
 
 ---
 

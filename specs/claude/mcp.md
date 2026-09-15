@@ -169,6 +169,8 @@ v2.1.154: `claude mcp list` / `get` の出力がパイプされた場合、未�
 
 展開可能な箇所: `command`, `args`, `env`, `url`, `headers`
 
+> **認証情報系変数はリモートサーバーへ展開されない（v2.1.271）**: リモートサーバーの `url` / `headers` では、`ANTHROPIC_API_KEY` / `ANTHROPIC_AUTH_TOKEN` などの Claude Code 自身の資格情報、`AWS_BEARER_TOKEN_BEDROCK` などのクラウドプロバイダ資格情報、`HTTPS_PROXY` / `NPM_TOKEN` などの環境の資格情報は**空として読まれる**（変数の設定有無にかかわらず。`:-default` フォールバックも無視）。プロジェクトの `.mcp.json` やプラグインが資格情報を任意のサーバーへ送るのを防ぐため。`Bearer ${ANTHROPIC_AUTH_TOKEN}` と書くとサーバーには `Bearer `（資格情報なし）が届き、通常 `401` で接続失敗になる。`ANTHROPIC_BASE_URL` のようなベースURLは展開される（値自体に資格情報が埋め込まれている場合を除く）。対象外の名前（`API_KEY` 等）は従来どおり展開。対象の資格情報を渡したい場合は独自名の変数にコピーして参照する。検知は `claude --debug-file` のログで `never expanded toward a remote server` を検索
+
 ```json
 {
   "mcpServers": {
