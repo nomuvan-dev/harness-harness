@@ -52,6 +52,7 @@ Claude Code の組み込みツール一覧。**ここに書かれたツール名
 | `TaskStop` | No | バックグラウンドタスクを ID で停止。v2.1.198 以降はチームメイトや名前付きバックグラウンドエージェントも受け付ける |
 | `ListAgents` | No | `SendMessage` の宛先になりうるエージェント一覧（セッション内サブエージェント、チームメイト、他のローカルセッション、Remote Control 接続中は他マシン／クラウドのセッション） |
 | `SendMessage` | No | 他エージェント（チームメイト、agent ID / 名前で再開するサブエージェント、自分の他セッション）へメッセージ送信 |
+| `SubagentHandback` | No | **v2.1.271+**。サブエージェントの最終レポートを親会話へ納品するツール。**auto モード限定**で、Agent ツールがローカル実行する非フォークのサブエージェントに提供される（`tools` から外しても `disallowedTools` に入れても付与される）。このツール経由の納品では親の `tool_response.content` はレポートではなく短い注記になる。レポート本文はフック（`PreToolUse` / `PostToolUse` を `SubagentHandback` にマッチ）の `tool_input.message` で読める。端末 CLI / IDE 拡張 / クラウドセッションで利用可 |
 | `SendUserFile` | No | セッションからユーザーへファイル送信（任意のキャプション付き）。v2.1.196 以降 `display` パラメータあり |
 | `PushNotification` | No | デスクトップ通知（Remote Control 接続時はスマートフォンへのプッシュも）を送る |
 | `ScheduleWakeup` | No | 自己ペースの `/loop` の次イテレーション時刻を 1 分〜1 時間の範囲で再スケジュール |

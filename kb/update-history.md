@@ -1,5 +1,34 @@
 # harness-harness 更新履歴
 
+## 2026-09-17 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code v2.1.273（2026-09-15）を反映。Codex は安定版 0.154.0 のまま（0.155.0-alpha.11 まで進行、プレリリースのみ）だが、GPT-5.5 の Codex からの退役アナウンス（2026-10-14）を記録。Phase 3.5 スキルエコシステム巡回は前回（2026-09-15）から7日以内のためスキップ。**
+
+**Claude Code 側の主要変更:**
+
+1. **v2.1.273**: LLM ゲートウェイ向けヒントヘッダ（`CLAUDE_CODE_GATEWAY_HINT_HEADERS=1`）、Remote Control セッションのアプリからのフォーク、Bedrock/Vertex/Foundry の auto モードがローカル分類器既定に、2.1.268 の「解析不能 Bash 行への Read/Edit deny 適用」リバート → specs/claude/changelog.md
+2. **ドキュメント改訂: Bash の `bashEditDiff`（v2.1.269+ ベータ）の詳細仕様**（記録条件・`changedFiles`/`files`/`moreFiles`/`unavailable`/`skipped`/`shared` フィールド・PostToolUse フックでの受け取り） → specs/claude/hooks.md、specs/claude/configuration.md（`bashEditDiffEnabled` 拡充＋`CLAUDE_CODE_BASH_EDIT_DIFF`）
+3. **ドキュメント改訂: `SubagentHandback` ツール（v2.1.271+）**。auto モードのローカル非フォークサブエージェントはレポートをこのツールで納品し、親の `tool_response.content` は注記のみ。本文はフックの `tool_input.message` で読む → specs/claude/tools.md、specs/claude/hooks.md
+4. **`gatewayInternalNetworks`（v2.1.268+、Managed のみ）**: 組織内部のパブリック IPv4 ブロックからの cloud gateway `/login` 許可 → specs/claude/configuration.md
+5. **SessionStart フックのバックグラウンド実行が起動時・`--continue`/`--resume` にも拡大**（セッション内 `/resume` 切り替えは逆に完了を待つ）、**SessionEnd タイムアウトの `CLAUDE_CODE_SESSIONEND_HOOKS_TIMEOUT_MS` が個別フックにも適用** → specs/claude/hooks.md
+6. **スキル注入コマンドの権限チェックが auto モードでは中断しない**（「先に実行せよ」指示付きロードに変わる） → specs/claude/skills-and-commands.md
+7. **呼称変更**: 公式ドキュメント全体で「Claude Code on the web」→「cloud sessions（クラウドセッション）」。llms.txt 新規ページは agent-sdk/configuration のみ
+
+**Codex 側:**
+
+- 安定版・SDK とも新リリースなし。**GPT-5.5 が 2026-10-14 に ChatGPT / Codex から退役、`gpt-5.6-sol` へ移行案内**（OpenAI API は対象外） → specs/codex/changelog.md
+
+### 更新ファイル
+
+- specs/claude/changelog.md（v2.1.273 追加、ヘッダー更新）
+- specs/claude/hooks.md（bashEditDiff / SubagentHandback / SessionStart / SessionEnd）
+- specs/claude/tools.md（SubagentHandback 追加）
+- specs/claude/configuration.md（bashEditDiffEnabled 拡充、gatewayInternalNetworks、CLAUDE_CODE_BASH_EDIT_DIFF）
+- specs/claude/skills-and-commands.md（注入コマンドの権限チェック注記）
+- specs/codex/changelog.md（2026-09-17 巡回ノート＋GPT-5.5 退役）
+
 ## 2026-09-16 — 公式ドキュメント巡回
 
 ### 検出・更新
