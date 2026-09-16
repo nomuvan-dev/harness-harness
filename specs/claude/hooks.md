@@ -415,8 +415,10 @@ v2.1.133 以降、すべてのイベントの入力 JSON に effort level も含
 > `PermissionRequest` は **サンドボックスコマンドのネットワークリクエスト**の権限プロンプトでは発火しない（ツール使用の権限要求のみ）。ネットワークリクエスト側のシグナルが必要な場合は `Notification` の `permission_prompt` タイプを使う（ただし約 6 秒の待機後に発火）。
 >
 > `permission_suggestions`（2026-09-05 時点の公式記述で明確化）: `PreToolUse` と同じ `tool_name` / `tool_input` を受け取るが `tool_use_id` は無い。`permission_suggestions` には Claude Code がその要求に対して提案する**権限更新（allow ルールの追加、権限モードの変更など）**が入る。**権限ダイアログの「always allow」選択肢はこの配列から作られるが、配列＝表示される選択肢そのものではない**（`allowManagedPermissionRulesOnly` などの理由で、配列に残ったまま選択肢が表示されないことがある）。フックは受け取った `permission_suggestions` の 1 つをそのまま `updatedPermissions` として出力できる。
-| `PostToolUse` | `tool_name`, `tool_input`, `tool_response`, `tool_use_id`, `duration_ms`（v2.1.119+。権限プロンプトと PreToolUse 時間を除いたツール実行時間） |
+| `PostToolUse` | `tool_name`, `tool_input`, `tool_response`, `tool_use_id`, `duration_ms`（v2.1.119+。権限プロンプトと PreToolUse 時間を除いたツール実行時間）。Bash では条件付きで `tool_response.bashEditDiff`（下記注参照） |
 | `PostToolUseFailure` | `tool_name`, `tool_input`, `tool_use_id`, `error`, `is_interrupt`, `duration_ms`（v2.1.119+） |
+| （注: Bash の `bashEditDiff`） | **v2.1.269+、パブリックベータ**。Bash コマンドが Git リポジトリ内のファイルを変更した場合、`tool_response.bashEditDiff` に変更ファイル一覧が入る。記録条件: [`bashEditDiffEnabled`](configuration.md) が `true` なら全権限モードで記録、未設定なら auto モード / `bypassPermissions` で Claude Code が Bash 経由編集を指示した場合のみ。`false` で無効化（環境変数 `CLAUDE_CODE_BASH_EDIT_DIFF` がセッション単位で優先）。フィールド: `changedFiles`（絶対パス最大200件）/ `files`（表示用 diff 最大5件、`created` / `deleted` フラグ付き）/ `moreFiles`（diff なし変更ファイル数）/ `unavailable`（diff 不完全）/ `skipped`（`git checkout` / `git stash` 等ワーキングツリーを動かす Git コマンド）/ `shared`（同一リポジトリで別の Bash 呼び出しが並走し混入の可能性あり）。gitignore 対象とサブモジュール内は載らない。**ベストエフォート**であり、レビュー対象の発見用でポリシー強制には使わないこと |
+| （注: `SubagentHandback` 経由のレポート） | **v2.1.271+**。auto モードでローカル実行される非フォークのサブエージェントは、最終レポートをテキストではなく `SubagentHandback` ツールで納品する。この場合フォアグラウンド Agent 完了時の `tool_response.content` はハンドバック済みを示す短い注記になり、`SubagentStop` の `last_assistant_message` もレポートではない。**レポート本文は `SubagentHandback` にマッチした `PreToolUse` / `PostToolUse` フックの `tool_input.message` で読む** |
 | `PostToolBatch` | `tool_calls`（各要素は `tool_name`, `tool_input`, `tool_use_id`, `tool_response`）。`tool_response` は `PostToolUse` と形が異なりモデルが見る `tool_result` のシリアライズ |
 | `PermissionDenied` | `tool_name`, `tool_input`, `tool_use_id`, `reason`。`reason` の形式が改訂され、**分類器の判定はマッチしたルール名を角括弧で示す**（例 `[Data Exfiltration]`、`[Irreversible Local Destruction]`）。従来の固定文言 `Blocked by classifier` ではなくなった。no-verdict 拒否は従来どおり `Auto mode could not evaluate this action and is blocking it for safety` で始まる |
 | `Stop` | `stop_hook_active`, `last_assistant_message`, `background_tasks`, `session_crons`（v2.1.145+） |
@@ -547,7 +549,7 @@ v2.1.133 以降、すべてのイベントの入力 JSON に effort level も含
 
 #### SessionStart
 
-> **`/clear` 時はバックグラウンド実行**（公式ドキュメント明文化）: インタラクティブセッションで `/clear` を実行すると、マッチする `SessionStart` フックはバックグラウンドで走り、プロンプトはすぐに入力を受け付ける。Claude の最初の応答はフック完了を待つのでコンテキストは届く。ただしフック実行中に再度 `/clear` したり `/resume` 等で別の会話に切り替えたりすると、**Claude Code はフックをキャンセルし出力を破棄する**。
+> **起動時・`--continue` / `--resume` 起動時・`/clear` 時はバックグラウンド実行**（2026-09-17 ドキュメント改訂）: マッチする `SessionStart` フックはバックグラウンドで走り、プロンプトはすぐに入力を受け付ける（再開した会話もフックを待たずに表示される）。Claude の最初の応答はフック完了を待つのでコンテキストは届く。**セッション内の `/resume` での会話切り替えは逆にフック完了を待つ**。バックグラウンドフック実行中に `/clear` や別会話への切り替えを行うと、そのフックの返す内容はセッションに適用されない。
 >
 > **起動時（resume 含む）も同じ待機が適用される（v2.1.271 で明文化）**: SessionStart フックの実行中に送ったプロンプトはフック完了まで Claude に届かない。待機中に `Esc` を押すとプロンプトを送信せず入力欄に取り戻せる（フックは走り続ける）。フック実行中はスピナーに経過時間付きで表示される（SessionStart / UserPromptSubmit / PreToolUse / SessionEnd 共通）。
 
@@ -654,7 +656,7 @@ echo "$WORKTREE_PATH"
 
 | フィールド | 説明 | デフォルト |
 |:--|:--|:--|
-| `timeout` | タイムアウト（秒）。**`async: true` の command フックには適用されない**（バックグラウンドに入った後は Claude Code が強制終了しない）。`asyncRewake` のフックには引き続き適用される。`UserPromptSubmit` / **`PreModelSwitch`（v2.1.251+）** では command / http / mcp_tool の既定が 30 に、`MessageDisplay` では 10 に下がる。`SessionEnd` は全フックで 1.5 秒の共通予算 | command / http / mcp_tool: 600, prompt: 30, agent: 60 |
+| `timeout` | タイムアウト（秒）。**`async: true` の command フックには適用されない**（バックグラウンドに入った後は Claude Code が強制終了しない）。`asyncRewake` のフックには引き続き適用される。`UserPromptSubmit` / **`PreModelSwitch`（v2.1.251+）** では command / http / mcp_tool の既定が 30 に、`MessageDisplay` では 10 に下がる。`SessionEnd` は全フックで 1.5 秒の共通予算（予算は settings 内の最大 per-hook `timeout` まで自動で引き上がる・上限60秒。プラグイン提供フックの `timeout` は予算を上げない。`CLAUDE_CODE_SESSIONEND_HOOKS_TIMEOUT_MS` で明示上書き可能で、**この値は `timeout` 未指定の各フックのタイムアウトにもなる**。v2.1.268 より前は予算のみ上がり個別フックは1.5秒のままだった） | command / http / mcp_tool: 600, prompt: 30, agent: 60 |
 | `async` | バックグラウンド実行（command のみ） | `false` |
 | `once` | **初回の成功実行後**にフックを取り除く。失敗・exit code 2 によるブロック・タイムアウトの場合はフックが残り、次の一致イベントで再実行される。スキル frontmatter で宣言したフックのみ有効（settings ファイルとエージェント frontmatter では無視） | `false` |
 | `statusMessage` | スピナーメッセージ | - |

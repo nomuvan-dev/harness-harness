@@ -111,7 +111,7 @@ managed 階層は単一ではなく、上から **server-managed settings → MD
 - 「ポリシーキー」とは `wslInheritsWindowsSettings` と `managedSourcesBehavior` 以外の全設定キー。この 2 つだけを含む managed ファイル / MDM ポリシーは「ポリシーを配信していない」と見なされ、次のソースへ進む
 - self-hosted 環境のランナーイメージ内 managed settings ファイルも、この規則に従って適用可否が決まる（従来記載の「server-managed settings が何も配信しない場合のみ読む」は `"first-wins"` 時の帰結）
 - **全 admin ソースを横断して読むキー**には `env` に加え、v2.1.267 で **`maxEffortLevel`（どの admin ソースであれ最も低いキャップが適用される）** が加わった。開発者が自分の設定や `--settings` でさらに低いキャップを置いた場合はそちらが適用され、**どのソースからもキャップを緩めることはできない**
-- `forceLoginGatewayUrl` と `forceLoginMethod: "gateway"` は**マシン上の managed ソースからのみ読まれ、server-managed settings に書かれていても無視される**（マシン側の値は server-managed settings が併存していても有効）
+- `forceLoginGatewayUrl`・`gatewayInternalNetworks`（v2.1.268+）と `forceLoginMethod: "gateway"` は**マシン上の managed ソースからのみ読まれ、server-managed settings に書かれていても無視される**（マシン側の値は server-managed settings が併存していても有効）
 
 #### 設定ファイルのホットリロード
 
@@ -296,7 +296,7 @@ Claude Code は設定ファイルを監視し、変更を検知するとセッ�
 | `externalEditorContext` | `Ctrl+G` で外部エディタを開く際、直前の Claude の応答を `#` コメント行としてバッファ冒頭に入れる（既定 `false`。保存時に自動除去）。`/config` の **Show last response in external editor**。スコープは `~/.claude.json`（Global config） |
 | `diffTool` | VS Code / JetBrains 接続時に `Edit` / `Write` の差分をどこに出すか。`"auto"` = IDE の diff ビューア、`"terminal"` = 端末内（既定 `"auto"`）。スコープは Global config。IDE 接続中のみ `/config` の **Diff tool** に出現 |
 | `copyOnSelect` | フルスクリーンレンダリング／agent view でマウス選択を終えた時点でクリップボードへ自動コピーする（既定 `true`）。`false` にすると選択してもクリップボードは変わらず、キーボードショートカットでコピーする。`/config` の **Copy on select**（フルスクリーン有効時のみ表示）。スコープは Global config（`~/.claude.json`）。`settings.json` に書いても無視される。2026-09-13 リファレンス収載 |
-| `bashEditDiffEnabled` | Bash コマンドがファイル編集を行った場合に、Bash ツール結果へ変更ファイルの差分を付与する。v2.1.269 で追加 |
+| `bashEditDiffEnabled` | Bash コマンドが Git リポジトリ内のファイルを変更した際の記録（端末に diff 表示＋PostToolUse フックへ `bashEditDiff` を渡す）。`true` で**全権限モード**で記録（`true` はユーザー設定 / `--settings` / managed からのみ有効。リポジトリの `.claude/settings.json` の `true` は無効だが `false` での無効化は可能）。既定は未設定＝auto / `bypassPermissions` モードで Claude Code が Bash 経由編集を指示した場合のみ記録。環境変数 `CLAUDE_CODE_BASH_EDIT_DIFF`（`0`=無効 / `1`=全モード記録）がセッション単位で優先。v2.1.269 で追加、パブリックベータ |
 | `permissionExplainerEnabled` | **v2.1.257 で削除**。Bash / PowerShell の権限プロンプトで `Ctrl+E` を押してコマンド解説を出す機能ごと廃止された（キーバインド `confirm:toggleExplanation` も同時に削除） |
 | `timeFormat` | （v2.1.257）UI 上の時刻表示形式。ターン終了時の `done 6:05 PM` やトランスクリプトビューのタイムスタンプに適用。`"auto"`（既定・ロケール準拠）/ `"12-hour"` / `"24-hour"` / `"24-hour-utc"`（UTC・`18:05Z` 形式、`timeZone` は無視）/ strftime パターン（`"%H:%M"` 等。`%` を含む値はパターン扱い、プリセット外のその他の値は `"auto"` 扱い）。`/config` の **Time format** はプリセットのみ提供、パターンは設定ファイルに直接書く。トランスクリプトビューではパターンがタイムスタンプ全体を置き換えるため日付も出したい場合は `"%Y-%m-%d %H:%M"` のように書く。スコープは Any file |
 | `timeZone` | （v2.1.257）UI 上の時刻を表示するタイムゾーン。IANA タイムゾーン名（`"UTC"` / `"Europe/Dublin"` 等）。`timeFormat` が `"24-hour-utc"` の場合は無視される。認識できない名前ならシステムのタイムゾーンにフォールバック。既定は未設定（システムのタイムゾーン）。スコープは Any file |
@@ -320,6 +320,7 @@ Claude Code は設定ファイルを監視し、変更を検知するとセッ�
 | `gcpAuthRefresh` | Google Cloud の Application Default Credentials が期限切れ・読み込み不能になった際に実行する自前のリフレッシュコマンド（`awsAuthRefresh` の GCP 版） |
 | `processWrapper` | （macOS / Linux、スコープ user / managed）Claude Code が起動するバックグラウンドプロセスの前段に企業ランチャーコマンドを挟む。ランチャーは自身のコマンドラインに Claude Code のものが追記された形で呼ばれるため、最後に exec する必要がある（[corporate-launcher](https://code.claude.com/docs/en/corporate-launcher) 参照）。v2.1.210 以降。`CLAUDE_CODE_PROCESS_WRAPPER` が優先 |
 | `forceLoginGatewayUrl` | （Managed のみ）`/login` の Cloud gateway 画面が接続するゲートウェイ URL を指定。画面には URL 入力欄が無く、未設定だと「IT 管理者に問い合わせ」と表示される。`forceLoginMethod` 未設定時はこのキー単独で Cloud gateway 画面が開く。`forceLoginMethod: "gateway"` はログイン方式ピッカーも消す。`claudeai` / `console` を指定した場合はそちらが優先されるため、両方を整合させて設定する |
+| `gatewayInternalNetworks` | （Managed のみ、v2.1.268 以降）組織が内部ネットワークとして使っているパブリック IPv4 ブロックを宣言し、そこにある [cloud gateway](https://code.claude.com/docs/en/claude-apps-gateway) への `/login` を許可する。未設定時 `/login` はプライベートアドレス上のゲートウェイのみ受け付ける。値は IPv4 CIDR 文字列の配列（最大4件、各 `/8`〜`/32`、相互非重複かつプライベート空間と非重複。直接接続のみ・マシン自身のアドレスも同ブロック内であることが必要）。ドキュメント用レンジ・VPN/NAT64 ローカルレンジ・予約空間は拒否。値が不正だと修正まで**そのマシンの新規ゲートウェイサインインを全て拒否**する（既存サインインは継続）。マシン上の managed ソースからのみ読まれ、server-managed settings や HKCU では無視（`forceLoginGatewayUrl` と同じ扱い） |
 | `managedSourcesBehavior` | （Managed のみ、v2.1.242 以降）複数の managed ソースが同一マシンに配信されたときの合成方法。`"first-wins"`（既定）は**ポリシーキーを1つでも持つ最上位のソースだけを採用**し、残りは「全 admin ソースから読むキー」を除き無視する。`"merge"` は配信された全 admin ソースを種類別に合成する: リスト（`permissions.allow`・`hooks`・`sandbox.network.allowedDomains`・`deniedMcpServers` 等）は全ソースの要素を結合、ロック（`allowManagedHooksOnly`・`permissions.disableBypassPermissionsMode`・`crossSessionInbound` 等）は最も厳しい値、制限リスト（`availableModels`・`allowedMcpServers`・`strictKnownMarketplaces`・`allowedChannelPlugins`・`fallbackModel` チェーン）はそれを設定する最上位ソースの内容を丸ごと採用、**値を丸ごと採用する種別**（`sandbox.credentials.awsPairs`・`sandbox.ripgrep`。v2.1.257 以降。下位ソースの要素・フィールドを合成せず最上位ソースの値をそのまま使う）、最上位ソース限定キー（`apiKeyHelper`・`awsAuthRefresh`・`awsCredentialExport`・`gcpAuthRefresh`・`otelHeadersHelper`・`proxyAuthHelper`・`forceLoginOrgUUID`・`forceLoginMethod`・`forceLoginGatewayUrl`・`parentSettingsBehavior`・`modelPicker`・`permissions.defaultMode`）は最上位ソースのみ、`env` は変数単位でマージ（両モード共通）、その他は最上位ソースの値。**本キー自身は「本キーかポリシーキーを持つ最上位ソース」からのみ読まれる**ため、下位ソースが自分を merge 対象に引き上げることはできず、server-managed settings が届かないマシンでは MDM プロファイル側にも書く必要がある。Windows HKCU と埋め込みホストの親設定は merge に参加しない。`managed-settings.json` は最下位の admin ソースなので、そこに `"merge"` を書いても合成相手がいない。`"merge"` は最上位より下の全ソースが管理者の統制下にある場合のみ使う（下位ソースの allow ルールが加算されるため）。`/status` の `Setting sources` 行に `(remote + file, merged)` のように表示される |
 
 > **managed 設定ソースが JSON オブジェクトとしてパースできない場合（2026-09-05 時点の公式 managed-settings ドキュメントで細分化）**: managed 設定ファイル・drop-in ファイル・MDM plist・HKLM レジストリ値のいずれかが**存在するのにパースできない**と、Claude Code は**他の admin ソースがポリシーを供給していても起動を拒否**し、原因のソース名を挙げたエラーを表示する。
@@ -556,7 +557,8 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 | `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS` | バックグラウンドタスク無効化 |
 | `CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS` | git指示無効化 |
 | `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` | 自動コンパクション閾値（%） |
-| `CLAUDE_CODE_SESSIONEND_HOOKS_TIMEOUT_MS` | SessionEndフックタイムアウト |
+| `CLAUDE_CODE_SESSIONEND_HOOKS_TIMEOUT_MS` | SessionEndフックタイムアウト（ミリ秒）。設定値は `timeout` 未指定の各フックのタイムアウトにもなる |
+| `CLAUDE_CODE_BASH_EDIT_DIFF` | Bash コマンドの変更ファイル記録（`bashEditDiff`）。`0`=無効 / `1`=全権限モードで記録。`bashEditDiffEnabled` 設定より優先。v2.1.269+ |
 | `MCP_TIMEOUT` | MCPサーバー起動タイムアウト（ms） |
 | `MAX_MCP_OUTPUT_TOKENS` | MCPツール出力トークン上限 |
 | `SLASH_COMMAND_TOOL_CHAR_BUDGET` | スキル説明の文字数バジェット |

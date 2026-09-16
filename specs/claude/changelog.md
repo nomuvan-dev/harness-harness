@@ -3,7 +3,40 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-09-16（**v2.1.271**（2026-09-14）と **v2.1.272**（2026-09-15）を反映。2.1.272 はバグ修正のみ。2.1.271 のハーネス観点の目玉は **サブエージェント frontmatter の `omitClaudeMd`**（CLAUDE.md を読ませないサブエージェント定義が可能に）、**Monitor の watch に常時デッドライン導入（`persistent` オプション廃止）**、**auto モード＋サンドボックスでのコマンド単位 `allowed_domains`**、**リモートMCPサーバーへの認証情報環境変数の展開遮断**（`${ANTHROPIC_API_KEY}` 等は空として読まれる）、**dynamic workflow の使用上限到達時の自動一時停止＋medium ガイドライン 15→10 縮小（Pro は既定 small）**。前回: **v2.1.270**（2026-09-12）を反映。2.1.269 で入った「セッションが長く走った後に読み取り専用 git コマンドが権限確認を求める」リグレッションの修正のみ。前回の主要トピック: **v2.1.268**（2026-09-10）と **v2.1.269**（2026-09-11）を反映。ハーネス観点の目玉は **`claude plugin eval`（プラグインのeval実行基盤、新ドキュメントページ plugin-evals 追加）**、**タスク追跡ツールの既定提供が「Claude 3.x / Opus 4〜4.7 / Sonnet 4〜4.6 / Haiku 4.5 のみ」に反転**（未知のモデルIDでは出なくなった）、**macOS/Linux/WSL で Glob / Grep ツールが既定セットから外れ Bash の `bfs`/`ugrep` 探索に置き換わった**点、**WebFetch に既定5分のダウンロード期限**が付いた点。symlink 経由パスの deny ルール不適用や `tee` の書き込み先チェック漏れなどセキュリティ関連修正も多い）
+最終更新: 2026-09-17（**v2.1.273**（2026-09-15）を反映。ハーネス観点の目玉は **LLM ゲートウェイ向けヒントヘッダ（`CLAUDE_CODE_GATEWAY_HINT_HEADERS=1`）**、**Remote Control セッションの Claude アプリからのフォーク**、**Bedrock / Vertex / Foundry の auto モードがローカル分類器既定に**（`CLAUDE_CODE_AUTO_MODE_SERVER=1` でサーバー側へ）、**2.1.268 の「解析不能 Bash 行への Read / Edit deny 適用」リバート**。あわせて公式ドキュメント全体で「Claude Code on the web」の呼称が「cloud sessions（クラウドセッション）」へ改称された。前回: **v2.1.271**（2026-09-14）と **v2.1.272**（2026-09-15）を反映。2.1.272 はバグ修正のみ。2.1.271 のハーネス観点の目玉は **サブエージェント frontmatter の `omitClaudeMd`**（CLAUDE.md を読ませないサブエージェント定義が可能に）、**Monitor の watch に常時デッドライン導入（`persistent` オプション廃止）**、**auto モード＋サンドボックスでのコマンド単位 `allowed_domains`**、**リモートMCPサーバーへの認証情報環境変数の展開遮断**（`${ANTHROPIC_API_KEY}` 等は空として読まれる）、**dynamic workflow の使用上限到達時の自動一時停止＋medium ガイドライン 15→10 縮小（Pro は既定 small）**。前回: **v2.1.270**（2026-09-12）を反映。2.1.269 で入った「セッションが長く走った後に読み取り専用 git コマンドが権限確認を求める」リグレッションの修正のみ。）
+
+---
+
+## v2.1.273 (2026-09-15)
+
+**新機能**
+
+- **LLM ゲートウェイ向けリクエストヘッダ追加**: `x-claude-code-request-class` / `x-claude-code-agent-type` / `x-claude-code-prev-tool-durations` / `x-claude-code-compaction` / `x-claude-code-context-compacted`。`CLAUDE_CODE_GATEWAY_HINT_HEADERS=1` でオプトイン
+- **Remote Control セッションのフォーク**: `claude --remote-control` / `/remote-control` で開始したセッションを Claude アプリからフォーク可能に。フォークはローカルマシン上のバックグラウンドセッションとして走る
+- **MCP サーバー切断通知**: セッション途中で MCP サーバーが切断し自動再接続を諦めた際に `/mcp` を案内する通知を追加
+
+**変更**
+
+- **Bedrock / Vertex / Foundry の auto モードは当面ローカル分類器が既定に**。プラットフォームのサーバー側分類器を使うには `CLAUDE_CODE_AUTO_MODE_SERVER=1`
+- `OTEL_LOG_TOOL_DETAILS=1` がコスト・トークンメトリクスにも実エージェント名／スキル名／プラグイン名／MCP サーバー名を含めるように
+- `/bug` / `/feedback` レポートは最後の API リクエストからモデル挙動関連パラメータ（model / system prompt / tools）のみを含め、リクエストメタデータや `CLAUDE_CODE_EXTRA_BODY` は送らない
+- Claude アカウントでのサインインが claude.ai プラグインへのアクセスも要求するように
+- **2.1.268 のリバート**: 権限チェッカーが解析できない Bash 行（`eval` / `env -C` 等）への Read / Edit deny ルール適用を取り消し。`time -p make build` のようなコマンドは deny ではなく再びプロンプトになる
+
+**セキュリティ・権限関連の修正**
+
+- `permissions.blockReadsOutsideWorkingDirectories` 下で解析不能な Bash コマンドがプロンプトをスキップする問題と、bypass モードでサブシェルが危険な `rm` を隠せる問題を修正
+- 同設定下で、リポジトリの settings が指すメモリディレクトリがプロンプトへの読み込み・recall・インデックス・メモリ抽出に使われないよう修正
+- MDM / `managed-settings.json` の `allowManagedMcpServersOnly` / `deniedMcpServers` / `disableClaudeAiConnectors` がサーバー管理設定併存時に無視される問題を修正
+
+**その他の注目修正**
+
+- コンテキストメーターと auto-compact が advisor ツールターンを実サイズの約2倍で数え、実ウィンドウの約半分で auto-compact が発火していた問題を修正
+- サブエージェント／バックグラウンドエージェントが「失敗」と報告され結果が届かない問題（最終ストリーム応答に usage やモデル ID が無い場合）を修正
+- `.claude/scheduled_tasks.json` を別フォルダ（新しい worktree 等）へコピーすると保存済みスケジュールタスクが誤ったセッションで走る問題を修正
+- SDK / `--output-format stream-json` で、途中でバックグラウンドへ移されたサブエージェントの残りメッセージと最終レポートが落ちる問題を修正
+- 長時間セッションの応答性改善: フック進捗とサブエージェント活動が更新のたびに会話全体を再処理しない
+- Artifact 公開が claude.ai 到達後に接続断となった場合、失敗や重複バージョン作成ではなく安全に再送されるように。Artifact DB の update で単一フィールドの削除が可能に
 
 ---
 
