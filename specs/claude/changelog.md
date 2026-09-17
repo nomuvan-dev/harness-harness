@@ -3,9 +3,48 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-09-17（**v2.1.273**（2026-09-15）を反映。ハーネス観点の目玉は **LLM ゲートウェイ向けヒントヘッダ（`CLAUDE_CODE_GATEWAY_HINT_HEADERS=1`）**、**Remote Control セッションの Claude アプリからのフォーク**、**Bedrock / Vertex / Foundry の auto モードがローカル分類器既定に**（`CLAUDE_CODE_AUTO_MODE_SERVER=1` でサーバー側へ）、**2.1.268 の「解析不能 Bash 行への Read / Edit deny 適用」リバート**。あわせて公式ドキュメント全体で「Claude Code on the web」の呼称が「cloud sessions（クラウドセッション）」へ改称された。前回: **v2.1.271**（2026-09-14）と **v2.1.272**（2026-09-15）を反映。2.1.272 はバグ修正のみ。2.1.271 のハーネス観点の目玉は **サブエージェント frontmatter の `omitClaudeMd`**（CLAUDE.md を読ませないサブエージェント定義が可能に）、**Monitor の watch に常時デッドライン導入（`persistent` オプション廃止）**、**auto モード＋サンドボックスでのコマンド単位 `allowed_domains`**、**リモートMCPサーバーへの認証情報環境変数の展開遮断**（`${ANTHROPIC_API_KEY}` 等は空として読まれる）、**dynamic workflow の使用上限到達時の自動一時停止＋medium ガイドライン 15→10 縮小（Pro は既定 small）**。前回: **v2.1.270**（2026-09-12）を反映。2.1.269 で入った「セッションが長く走った後に読み取り専用 git コマンドが権限確認を求める」リグレッションの修正のみ。）
+最終更新: 2026-09-18（**v2.1.274**（2026-09-17）を反映。ハーネス観点の目玉は **MCP v2 ランタイム＋2026-07-28 ネゴシエーションの既定が Bedrock / Vertex / Foundry・テレメトリ無効環境にも拡大**、**プラグイン/マーケットプレース clone の Git LFS 既定スキップ（`skipLfs` は無効化）**、**`CLAUDE_CODE_MCP_STARTUP_WAIT_MS`**、**`"type": "sdk"` MCP エントリの警告付きスキップ**。あわせてドキュメント改訂で **claude.ai スキル同期がサインイン済みターミナルセッションで自動化**（`CLAUDE_CODE_SYNC_SKILLS` は非対話実行での待機用に格下げ）され、**`syncClaudeAiPlugins` 設定が新設**、**複数リポジトリのクラウドセッションはリポジトリの `.claude/settings.json` の hooks / permission を読まない**ことが明文化された。前回: **v2.1.273**（2026-09-15）を反映。ハーネス観点の目玉は **LLM ゲートウェイ向けヒントヘッダ（`CLAUDE_CODE_GATEWAY_HINT_HEADERS=1`）**、**Remote Control セッションの Claude アプリからのフォーク**、**Bedrock / Vertex / Foundry の auto モードがローカル分類器既定に**（`CLAUDE_CODE_AUTO_MODE_SERVER=1` でサーバー側へ）、**2.1.268 の「解析不能 Bash 行への Read / Edit deny 適用」リバート**。あわせて公式ドキュメント全体で「Claude Code on the web」の呼称が「cloud sessions（クラウドセッション）」へ改称された。前回: **v2.1.271**（2026-09-14）と **v2.1.272**（2026-09-15）を反映。2.1.272 はバグ修正のみ。2.1.271 のハーネス観点の目玉は **サブエージェント frontmatter の `omitClaudeMd`**（CLAUDE.md を読ませないサブエージェント定義が可能に）、**Monitor の watch に常時デッドライン導入（`persistent` オプション廃止）**、**auto モード＋サンドボックスでのコマンド単位 `allowed_domains`**、**リモートMCPサーバーへの認証情報環境変数の展開遮断**（`${ANTHROPIC_API_KEY}` 等は空として読まれる）、**dynamic workflow の使用上限到達時の自動一時停止＋medium ガイドライン 15→10 縮小（Pro は既定 small）**。前回: **v2.1.270**（2026-09-12）を反映。2.1.269 で入った「セッションが長く走った後に読み取り専用 git コマンドが権限確認を求める」リグレッションの修正のみ。）
 
 ---
+
+## v2.1.274 (2026-09-17)
+
+**新機能**
+
+- **`CLAUDE_CODE_MCP_STARTUP_WAIT_MS`**: 非対話セッションの初回ターンが接続中の MCP サーバーを待つ時間を制限（`0` で待たない）
+- **メモリ逼迫の可視警告**: メモリ使用が危険水準に達すると、解放または安全な再起動の手順つきで警告を表示
+- **OTel 拡充**: `claude_code.llm_request` トレース span に `effort` 属性追加。managed settings のソースとポリシーヘルパー状態を記録する `claude_code.managed_settings_resolved` イベント新設（`OTEL_LOG_MANAGED_SETTINGS=1` で redacted 設定とダイジェストも）。`OTEL_LOG_RAW_API_BODIES=file:<dir>` に `index.jsonl` と `request_body_id` / `message.id` 属性が追加されリクエスト・レスポンス・transcript の突合が可能に
+- フルスクリーンモードで折りたたまれたチームメイト/エージェントメッセージをクリックで展開可能に
+
+**変更**
+
+- **MCP v2 ランタイムの既定拡大**: Bedrock / Vertex / Foundry・テレメトリ無効環境でも v2 MCP クライアントと direct HTTP サーバーへの MCP 2026-07-28 ネゴシエーションが既定に（他環境は既に既定）。オプトアウトは `MCP_SDK_GENERATION=v1` / `MCP_PROTOCOL_NEGOTIATION=legacy`
+- **プラグイン/マーケットプレース clone の Git LFS スキップ**: LFS ファイルはポインタのまま checkout され、必要なら checkout 内で `git lfs pull`。`skipLfs` オプションは受理されるが効果なしに（v2.1.274 より前は `skipLfs: true` 指定時のみスキップ）
+- **`"type": "sdk"` MCP エントリのスキップ**: `.mcp.json` / settings / プラグイン / エージェントファイル内の `sdk` エントリは警告付きでスキップ（インプロセスサーバーを登録できるのは SDK ホストアプリのみ）
+- **`/code-review` のリーン化**: チューニング設定を持たないモデルでは多数のレビューサブエージェントを起動せず、リーンなインラインレビュープロンプトを使用
+- **アーティファクト watch**: ローカルセッションでは他所で公開された新バージョンがターンを開始せず、後続の Artifact ツール結果で通知される
+- self-hosted runner は git ホストがアクセスチェックで拒否した読み取り専用リポジトリをスキップしてセッションを開始（従来は起動失敗）
+- 呼称変更: `/status` の GitHub 行が「Cloud sessions」に、`/web-setup` / `/ultrareview` / テレポートのメッセージが「cloud session」表記に
+
+**主要修正**
+
+- 「unexpected tool_use_id」400 エラーの無限リトライを解消: 破損 transcript は可能なら自己修復、不能なら `/rewind` ヒント付きエラーで停止
+- MCP 関連: レガシー HTTP+SSE のみ話す `http` サーバーが初回 422 / 4xx 応答で接続失敗する問題、Streamable HTTP ツール呼び出しが per-server `timeout` を無視して約5分でタイムアウトする問題、`listChanged` 未宣言サーバーの list-changed 通知でプロンプト/リソースが更新されない問題、403 insufficient_scope が「サインイン期限切れ」と誤報告される問題（不足パーミッション名と `/mcp` 再認証を案内）を修正
+- `/goal`: コンテキスト再溢れ時の「Prompt is too long」停止、`--continue` / `--resume` 時のアクティブ goal 喪失を修正
+- `claude agents` が自動更新の再起動後に `--model` / `--effort` / `--permission-mode` 等のフラグを失う問題を修正
+- 言語サーバーが数千ファイルの診断を発行した際のターン毎スローダウンを修正
+- Bedrock / Vertex / Foundry で `model: "opus"` のサブエージェントがモデルファミリを認識できない ID の場合にセッションモデルから離れる問題を修正（`ANTHROPIC_DEFAULT_OPUS_MODEL` 未設定時）
+- **権限まわりの厳格化**: 特定の特殊シェル変数をループ・代入する Bash コマンドが権限確認を求めるように。worktree 隔離セッションで特定のネストされたシェル展開を含むコマンドを拒否。multi-byte ファイルでの Edit 権限プレビューのずれも修正
+- MCP 設定の `${VAR}` プレースホルダ解決済みシークレットが接続エラーやログインツール説明に表示される問題を修正
+- バックグラウンドコマンドが軽度のメモリ圧迫でも30分アイドルで停止していたのを、危険水準時のみ停止に変更（理由は debug ログに記録）
+- Bash ツールがプラグインリロード毎にシェルプロファイルを再 source して数秒停止していたのを、プラグインの `bin/` 変更時のみに
+- headless / SDK セッションで完了したバックグラウンドタスク毎に個別のモデル呼び出しをしていたのを、キュー済み完了を1回の呼び出しにまとめるように
+
+**\[VSCode]** ウィンドウリロードで中断されたステップの継続機能（Claude Code: Continue After Reload 設定でオフ可）、Customize メニューに Memory / Instructions 項目追加、`claudeCode.lockEditorGroups` 設定追加、設定ファイル書き込み競合で `~/.claude/settings.json` が壊れる問題等を修正
+
+**\[クラウドセッション]** diff ビューに「Compare against」ブランチピッカー追加。routine は GitHub 接続喪失時に最大72時間リトライ（即オフにしない）
+
+**\[Claude Tag]** admin 設定の Add channel / Add workspace フォームに Guests 設定追加。他の Slack アプリ / bot からの @メンションに応答するように。進捗チェックリストを2,000字上限・15分間隔に抑制
 
 ## v2.1.273 (2026-09-15)
 
