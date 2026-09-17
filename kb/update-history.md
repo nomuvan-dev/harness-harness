@@ -1,5 +1,19 @@
 # harness-harness 更新履歴
 
+## 2026-09-18 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code v2.1.274（2026-09-17）を反映。あわせて公式ドキュメント改訂で claude.ai スキル同期の自動化（サインイン済みターミナルセッションでバックグラウンド同期・約10分毎の変更反映）と `syncClaudeAiPlugins` 設定の新設を反映。Codex は安定版 0.154.0 のまま（0.155.0-alpha.16 まで進行、プレリリースのみ）。Phase 3.5 スキルエコシステム巡回は前回（2026-09-15）から7日以内のためスキップ。**
+
+- `specs/claude/changelog.md` — v2.1.274 追加（MCP v2 ランタイム既定の Bedrock / Vertex / Foundry・テレメトリ無効環境への拡大、プラグイン clone の Git LFS 既定スキップ、`CLAUDE_CODE_MCP_STARTUP_WAIT_MS`、`"type": "sdk"` MCP エントリのスキップ、`/code-review` リーン化等）
+- `specs/claude/skills-and-commands.md` — claude.ai スキル自動同期の詳細（同期対象・除外セッション・`CLAUDE_CODE_SYNC_SKILLS` の位置づけ変更）を追記
+- `specs/claude/configuration.md` — `syncClaudeAiSkills` 更新、`syncClaudeAiPlugins` 新設、`skipLfs` の無効化（v2.1.274）を反映
+- `specs/claude/mcp.md` — MCP クライアントランタイム（v1/v2）の既定と `MCP_SDK_GENERATION` / `MCP_PROTOCOL_NEGOTIATION` を整理して追記
+- `specs/codex/changelog.md` — 2026-09-18 巡回記録（新リリースなし）
+
+その他の公式ドキュメント差分（cloud-environments / settings / hooks）は「複数リポジトリのクラウドセッションはリポジトリの `.claude/settings.json` の hooks / permission を読まない（プラグイン宣言のみ読む）」「プロジェクトのスレッドはプロジェクト設定の環境を使う」という明文化で、changelog の最終更新注記に集約した。
+
 ## 2026-09-17 — 公式ドキュメント巡回
 
 ### 検出・更新

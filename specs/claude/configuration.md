@@ -256,7 +256,7 @@ Claude Code は設定ファイルを監視し、変更を検知するとセッ�
 | `bashOutputMaxChars` | Bash コマンド**成功時**の出力を Claude にインラインで渡す上限。**最大 128,000 文字**。インライン上限と読み戻しウィンドウを同時に設定し、**設定すると `BASH_MAX_OUTPUT_LENGTH` は無視される**。v2.1.261 |
 | `taskOutputMaxChars` | **バックグラウンドタスク**の出力を Claude にインラインで渡す上限。**最大 128,000 文字**。v2.1.261 |
 | `<marketplace>.headersHelper` | url マーケットプレース定義またはカタログエントリに指定すると、カタログ取得・同一オリジンのアーカイブ取得用 HTTP ヘッダ（短命トークン等）をコマンドで動的生成する。カタログエントリ側の `headersHelper` は当該プラグインの install / update 時のみ実行され、実行前にコマンド内容が表示され `[y/N]` 確認が入る（`-y` で省略）。v2.1.238 |
-| `<marketplace>.skipLfs` | プラグインマーケットプレース定義（`github` / `git` ソース）に `skipLfs: true` を指定すると Git LFS ダウンロードをスキップ（v2.1.153） |
+| `<marketplace>.skipLfs` | **v2.1.274 で無効化**: `github` / `git` ソースの clone / 更新時に Git LFS コンテンツは常にダウンロードされなくなった（LFS 追跡ファイルはポインタのまま checkout され、add / update 出力に件数が表示される。必要なら checkout 内で `git lfs pull`）。`skipLfs` フィールドは受理されるが効果なし。v2.1.153〜v2.1.273 は `skipLfs: true` 指定時のみスキップだった |
 | `archive` プラグインソース | HTTPS 経由の zip からプラグインをインストールするソースタイプ（v2.1.224）。任意で SHA-256 ハッシュピン止めによる完全性検証に対応。`owner/*` 形式のオーナーワイルドカードをマーケットプレース managed settings に指定可（v2.1.223） |
 | `<plugin>.defaultEnabled` | プラグインの `plugin.json` またはマーケットプレースエントリで `defaultEnabled: false` を指定するとインストール後デフォルト無効。`/plugin` または `claude plugin enable` で有効化。依存関係は引き続き自動有効化（v2.1.154） |
 | `requiredMinimumVersion` | （Managed のみ）Claude Code の最小許容バージョン。範囲外なら起動を拒否し承認済みバージョンへ案内（v2.1.163）。`requiredMaximumVersion` ともども **fail open** 設計で、不正な値は強制されず破棄される |
@@ -312,7 +312,8 @@ Claude Code は設定ファイルを監視し、変更を検知するとセッ�
 | `remoteControlAtStartup` | 対話セッション開始時に Remote Control へ自動接続（`/remote-control` を待たない）。未設定時は組織の admin 既定 → Claude Code の既定の順。`--remote-control` はこのキーが `false` でも 1 セッションだけ有効化する |
 | `disableRemoteControl` | Remote Control を無効化（既定 `false`）。`claude remote-control`・`--remote-control`・自動起動・セッション内トグルを全て拒否し、組織ポリシーによる無効化である旨を表示。Managed に置けば MDM でデバイス単位に強制できる |
 | `disableAgentView` | バックグラウンドエージェントとエージェントビュー（`claude agents`, `--bg`, `/background`, オンデマンドスーパーバイザ）を無効化。`CLAUDE_CODE_DISABLE_AGENT_VIEW` と「どちらかが OFF なら OFF」 |
-| `syncClaudeAiSkills` | claude.ai で有効化したスキルのダウンロードを止める。`-p`（非対話）実行かつ `CLAUDE_CODE_SYNC_SKILLS` 設定時に `~/.claude/skills/synced/` へ落ちてくるものが対象。**`false` のみ有効**で `true` は未設定と同義（同期を ON にはできない）。スコープは user / local / managed（リポジトリからは無効化できない） |
+| `syncClaudeAiSkills` | claude.ai アカウントで有効なスキルのダウンロード・ロードを止める。**2026-09-17 ドキュメント改訂で同期が自動化**: claude.ai アカウントでサインインしたターミナルセッション（対話・非対話とも）と Cowork / クラウドセッションで `~/.claude/skills/synced/` へ自動ダウンロードされる（従来は `-p` + `CLAUDE_CODE_SYNC_SKILLS` 設定時のみ）。`false` でダウンロード停止＋同期済みスキルのロード停止（user / managed 設定なら `~/.claude/skills/.trash/` へ移動）。**`false` のみ有効**で `true` は未設定と同義。スコープは user / local / managed / `--settings`（リポジトリからは無効化できない） |
+| `syncClaudeAiPlugins` | **新設（2026-09-17 リファレンス収載）**。claude.ai アカウントで有効なプラグインのダウンロード・ロードを止める。プラグインはサインイン済みターミナルセッション開始時と Cowork / クラウドセッションで `~/.claude/plugins/synced/` へダウンロードされ `<name>@synced` としてロードされる。`false` でダウンロード停止＋同期済みプラグインのロード停止（user / managed なら `~/.claude/plugins/.trash/` へ移動）。**`false` のみ有効**。個別に切るなら `enabledPlugins` に `"<name>@synced": false`。スコープは user / local / managed / `--settings`（リポジトリからは無効化できない。managed の `true` があっても任意ソースの `false` が勝つ deny-only キー） |
 | `disableClaudeAiConnectors` | claude.ai の MCP コネクタの取得・接続を停止（既定 `false`）。**いずれかのスコープの `true` が優先**されるため、コミット済みプロジェクト設定でリポジトリ単位のオプトアウトはできても、project の `false` で user/managed の `true` は覆せない。v2.1.182 以降。`ENABLE_CLAUDEAI_MCP_SERVERS=false` と「どちらかが OFF なら OFF」 |
 | `skipWebFetchPreflight` | WebFetch のドメイン安全性チェック（取得前にホスト名を `api.anthropic.com` へ送る）をスキップ。Bedrock / Vertex / Foundry など Anthropic 宛通信が塞がれた環境向け |
 | `skipAutoPermissionPrompt` | 自分で Auto Mode に入った際（設定やモードセレクタ経由）に一度だけ出る Auto Mode 説明の告知をスキップ。スコープは user / managed（リポジトリからは設定できない） |
