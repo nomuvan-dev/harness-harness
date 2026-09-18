@@ -524,7 +524,7 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 }
 ```
 
-`autoMemoryDirectory` は policy / local / user 設定から受け付ける。Project 設定（`.claude/settings.json`）からは受け付けない（セキュリティ上の理由）。
+`autoMemoryDirectory` は policy / local / user 設定から受け付ける。Project 設定（`.claude/settings.json`）からは受け付けない（セキュリティ上の理由）。2026-09-18 のドキュメント改訂で挙動が詳細化: 値がプロジェクトの `.claude/settings.json`、または「リポジトリ供給扱い」となる未信頼の `.claude/settings.local.json` 由来の場合、そのディレクトリからオートメモリを**一切ロードせず、保存もしない**。
 
 ### 5.3 `/memory` コマンド
 

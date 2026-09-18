@@ -414,6 +414,8 @@ v2.1.133 以降、すべてのイベントの入力 JSON に effort level も含
 
 > `PermissionRequest` は **サンドボックスコマンドのネットワークリクエスト**の権限プロンプトでは発火しない（ツール使用の権限要求のみ）。ネットワークリクエスト側のシグナルが必要な場合は `Notification` の `permission_prompt` タイプを使う（ただし約 6 秒の待機後に発火）。
 >
+> **`mcp_server` オブジェクト（v2.1.274+、2026-09-18 ドキュメント改訂で明文化）**: MCP ツールの場合、`PreToolUse` / `PermissionRequest` / `PostToolUse` / `PostToolUseFailure` / `PermissionDenied` の入力に `mcp_server` オブジェクトが加わる。サーバーの `name` と、定義の提供元を示す `source`（`plugin`, `sdk`, `user` / `project` 等の設定スコープ。全列挙は Agent SDK リファレンスの `McpServerProvenance`）を持つ。**信頼判断は `name` や `mcp__<server>__` プレフィックスではなく `source` に基づくこと**（名前は偽装可能なため）。
+>
 > `permission_suggestions`（2026-09-05 時点の公式記述で明確化）: `PreToolUse` と同じ `tool_name` / `tool_input` を受け取るが `tool_use_id` は無い。`permission_suggestions` には Claude Code がその要求に対して提案する**権限更新（allow ルールの追加、権限モードの変更など）**が入る。**権限ダイアログの「always allow」選択肢はこの配列から作られるが、配列＝表示される選択肢そのものではない**（`allowManagedPermissionRulesOnly` などの理由で、配列に残ったまま選択肢が表示されないことがある）。フックは受け取った `permission_suggestions` の 1 つをそのまま `updatedPermissions` として出力できる。
 | `PostToolUse` | `tool_name`, `tool_input`, `tool_response`, `tool_use_id`, `duration_ms`（v2.1.119+。権限プロンプトと PreToolUse 時間を除いたツール実行時間）。Bash では条件付きで `tool_response.bashEditDiff`（下記注参照） |
 | `PostToolUseFailure` | `tool_name`, `tool_input`, `tool_use_id`, `error`, `is_interrupt`, `duration_ms`（v2.1.119+） |
@@ -632,7 +634,7 @@ echo "$WORKTREE_PATH"
 |:--|:--|
 | `hookSpecificOutput.additionalContext` | 次のモデル呼び出し前に 1 度だけ注入されるコンテキスト文字列 |
 
-> **複数フックと長大な値の扱い**: 同一イベントで複数のフックが `additionalContext` を返した場合、Claude はそのすべてを受け取る。**1 つの値が 10,000 文字を超えると、Claude Code は全文をセッションディレクトリのファイルに書き出し、Claude にはファイルパスと短いプレビューを渡す**。
+> **複数フックと長大な値の扱い**: 同一イベントで複数のフックが `additionalContext` を返した場合、Claude はそのすべてを受け取る。**1 つの値が 10,000 文字を超えると、Claude Code は全文をセッションディレクトリのファイルに書き出し、Claude にはファイルパスと先頭最大 2,000 文字のプレビューを渡す**（2026-09-18 ドキュメント改訂で詳細化）。上限の対象は `additionalContext` / `systemMessage` / `initialUserMessage` の各文字列とプレーン stdout で、**同一イベントで複数フックが走っても文字列ごとに個別に計測**される（JSON 出力はフィールド単位、プレーン stdout は全体）。Bash の出力上限と違い**この上限を引き上げる設定・環境変数は無い**。また Claude Code はファイルを読むよう Claude に指示しないため、必ず見せたい内容は上限内に収めること。
 
 > **`SubagentStart` の再発火時の注入**: 同一サブエージェントに対してフックが再び走った場合、Claude Code は**そのサブエージェントのコンテキストに前回分のコピーがまだ残っていないときだけ**返却コンテキストを注入する。起動時に注入したコピーはそのまま残り、サブエージェントの[プロンプトキャッシュ](https://code.claude.com/docs/en/prompt-caching#subagents-and-the-cache)を壊さない。auto-compaction がそのコピーを破棄した後は、次回実行分のコンテキストが改めて注入される。
 

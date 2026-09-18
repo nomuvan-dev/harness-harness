@@ -1,5 +1,21 @@
 # harness-harness 更新履歴
 
+## 2026-09-19 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code v2.1.275（2026-09-17）/ v2.1.276（2026-09-18）と Codex CLI 0.155.0 安定版（2026-09-17）を反映。2.1.275 は claude.ai スキル/プラグイン自動同期の実装本体・npm プラグインの `--ignore-scripts` 取得・send-now キー等。2.1.276 はゲートウェイ環境の 400 リグレッション修正のみ。あわせてドキュメント改訂でフック入力の `mcp_server` オブジェクト、フック出力上限の詳細、MCP insufficient_scope 再認証フロー、組織 Skills 無効化時の同期スキル削除、チームメイト自動復帰と信頼要件、autoMemoryDirectory のリポジトリ由来ブロックを反映。Phase 3.5 スキルエコシステム巡回は前回（2026-09-15）から7日以内のためスキップ。**
+
+- `specs/claude/changelog.md` — v2.1.275 / v2.1.276 追加
+- `specs/claude/hooks.md` — MCP ツールのフック入力に `mcp_server` オブジェクト（`name` + `source`、信頼判断は `source` で。v2.1.274+）、出力上限 10,000 字の詳細（文字列ごと計測・先頭 2,000 字プレビュー・引き上げ設定なし・`initialUserMessage` も対象）
+- `specs/claude/mcp.md` — サーバー failed 時の disconnected 通知、403 insufficient_scope 時の pinned `oauth.scopes` 再認証フロー
+- `specs/claude/skills-and-commands.md` — 同期実装本体の v2.1.275 リリース、組織が Skills を無効化した場合の `.trash/` 退避と再有効化時の再ダウンロード
+- `specs/claude/agent-teams.md` — 停止済みインプロセスチームメイトの自動復帰と、定義再適用のフォルダ信頼要件
+- `specs/claude/configuration.md` — `autoMemoryDirectory` がリポジトリ供給の場合のロード/保存ブロック
+- `specs/codex/changelog.md` — CLI 0.155.0 安定版（`/voice`、agents overview 管理、Touch ID 検証、デーモン更新スケジュール、Bedrock 認証コマンド、WSL エスケープブロック等）
+
+env-vars / settings-reference / managed-settings / cloud-environments の差分は既存記述の詳細化・バージョン注記整理が主で、`allowManagedMcpServersOnly` のクロスソース化（v2.1.273）等 enterprise 管理系の深掘りは specs の対象範囲外として見送り。
+
 ## 2026-09-18 — 公式ドキュメント巡回
 
 ### 検出・更新
