@@ -3,9 +3,47 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-09-18（**v2.1.274**（2026-09-17）を反映。ハーネス観点の目玉は **MCP v2 ランタイム＋2026-07-28 ネゴシエーションの既定が Bedrock / Vertex / Foundry・テレメトリ無効環境にも拡大**、**プラグイン/マーケットプレース clone の Git LFS 既定スキップ（`skipLfs` は無効化）**、**`CLAUDE_CODE_MCP_STARTUP_WAIT_MS`**、**`"type": "sdk"` MCP エントリの警告付きスキップ**。あわせてドキュメント改訂で **claude.ai スキル同期がサインイン済みターミナルセッションで自動化**（`CLAUDE_CODE_SYNC_SKILLS` は非対話実行での待機用に格下げ）され、**`syncClaudeAiPlugins` 設定が新設**、**複数リポジトリのクラウドセッションはリポジトリの `.claude/settings.json` の hooks / permission を読まない**ことが明文化された。前回: **v2.1.273**（2026-09-15）を反映。ハーネス観点の目玉は **LLM ゲートウェイ向けヒントヘッダ（`CLAUDE_CODE_GATEWAY_HINT_HEADERS=1`）**、**Remote Control セッションの Claude アプリからのフォーク**、**Bedrock / Vertex / Foundry の auto モードがローカル分類器既定に**（`CLAUDE_CODE_AUTO_MODE_SERVER=1` でサーバー側へ）、**2.1.268 の「解析不能 Bash 行への Read / Edit deny 適用」リバート**。あわせて公式ドキュメント全体で「Claude Code on the web」の呼称が「cloud sessions（クラウドセッション）」へ改称された。前回: **v2.1.271**（2026-09-14）と **v2.1.272**（2026-09-15）を反映。2.1.272 はバグ修正のみ。2.1.271 のハーネス観点の目玉は **サブエージェント frontmatter の `omitClaudeMd`**（CLAUDE.md を読ませないサブエージェント定義が可能に）、**Monitor の watch に常時デッドライン導入（`persistent` オプション廃止）**、**auto モード＋サンドボックスでのコマンド単位 `allowed_domains`**、**リモートMCPサーバーへの認証情報環境変数の展開遮断**（`${ANTHROPIC_API_KEY}` 等は空として読まれる）、**dynamic workflow の使用上限到達時の自動一時停止＋medium ガイドライン 15→10 縮小（Pro は既定 small）**。前回: **v2.1.270**（2026-09-12）を反映。2.1.269 で入った「セッションが長く走った後に読み取り専用 git コマンドが権限確認を求める」リグレッションの修正のみ。）
+最終更新: 2026-09-19（**v2.1.275**（2026-09-17）と **v2.1.276**（2026-09-18）を反映。ハーネス観点の目玉は **claude.ai スキル / プラグイン自動同期の実装本体リリース**（`syncClaudeAiSkills` / `syncClaudeAiPlugins` でオプトアウト）、**npm ソースプラグインの `--ignore-scripts` 取得＋整合性検証**（install スクリプト非実行のサプライチェーン対策）、**`/plugin install --marketplace`**、**send-now キー（ctrl+enter）**。2.1.276 はゲートウェイ環境での `advisor_20260301` 400 リグレッション修正のみ。あわせてドキュメント改訂で **フック入力への `mcp_server` オブジェクト追加（v2.1.274+、`source` で提供元を判別）**、**MCP の 403 insufficient_scope 時の再認証フロー明文化**、**組織が claude.ai の Skills を無効化した場合の同期スキル削除（`.trash/` 退避）**、**チームメイトの自動復帰とフォルダ信頼要件**が記載された。前回: **v2.1.274**（2026-09-17）を反映。ハーネス観点の目玉は **MCP v2 ランタイム＋2026-07-28 ネゴシエーションの既定が Bedrock / Vertex / Foundry・テレメトリ無効環境にも拡大**、**プラグイン/マーケットプレース clone の Git LFS 既定スキップ（`skipLfs` は無効化）**、**`CLAUDE_CODE_MCP_STARTUP_WAIT_MS`**、**`"type": "sdk"` MCP エントリの警告付きスキップ**。あわせてドキュメント改訂で **claude.ai スキル同期がサインイン済みターミナルセッションで自動化**（`CLAUDE_CODE_SYNC_SKILLS` は非対話実行での待機用に格下げ）され、**`syncClaudeAiPlugins` 設定が新設**、**複数リポジトリのクラウドセッションはリポジトリの `.claude/settings.json` の hooks / permission を読まない**ことが明文化された。前回: **v2.1.273**（2026-09-15）を反映。ハーネス観点の目玉は **LLM ゲートウェイ向けヒントヘッダ（`CLAUDE_CODE_GATEWAY_HINT_HEADERS=1`）**、**Remote Control セッションの Claude アプリからのフォーク**、**Bedrock / Vertex / Foundry の auto モードがローカル分類器既定に**（`CLAUDE_CODE_AUTO_MODE_SERVER=1` でサーバー側へ）、**2.1.268 の「解析不能 Bash 行への Read / Edit deny 適用」リバート**。あわせて公式ドキュメント全体で「Claude Code on the web」の呼称が「cloud sessions（クラウドセッション）」へ改称された。前回: **v2.1.271**（2026-09-14）と **v2.1.272**（2026-09-15）を反映。2.1.272 はバグ修正のみ。2.1.271 のハーネス観点の目玉は **サブエージェント frontmatter の `omitClaudeMd`**（CLAUDE.md を読ませないサブエージェント定義が可能に）、**Monitor の watch に常時デッドライン導入（`persistent` オプション廃止）**、**auto モード＋サンドボックスでのコマンド単位 `allowed_domains`**、**リモートMCPサーバーへの認証情報環境変数の展開遮断**（`${ANTHROPIC_API_KEY}` 等は空として読まれる）、**dynamic workflow の使用上限到達時の自動一時停止＋medium ガイドライン 15→10 縮小（Pro は既定 small）**。前回: **v2.1.270**（2026-09-12）を反映。2.1.269 で入った「セッションが長く走った後に読み取り専用 git コマンドが権限確認を求める」リグレッションの修正のみ。）
 
 ---
+
+## v2.1.276 (2026-09-18)
+
+**修正のみ**
+
+- `ANTHROPIC_BASE_URL` がプロキシ / ゲートウェイを指す環境で全リクエストが `400 … Input tag 'advisor_20260301'` で失敗する問題を修正（2.1.275 のリグレッション）
+
+## v2.1.275 (2026-09-17)
+
+**新機能**
+
+- **claude.ai スキル / プラグイン同期が正式リリース**: claude.ai アカウントで有効なスキルとプラグインが、そのアカウントでサインインしたターミナルセッションへ自動同期。オプトアウトは `syncClaudeAiSkills: false` / `syncClaudeAiPlugins: false`（2026-09-17 のドキュメント改訂に対応する実装本体。詳細は skills-and-commands.md / configuration.md）
+- **send-now キー**: ctrl+enter（または ctrl+x ctrl+s）で現在のターンを中断してキュー済みメッセージを一括送信。送信済み・キュー済みメッセージはモデル到達までグレー表示
+- **Claude apps gateway サインインにアカウント確認**: ゲートウェイがアカウント名を提示する場合、資格情報保存前に確認を求め、`/status` にも表示
+- **`/plugin install <plugin> --marketplace <source>`**: マーケットプレース未登録なら追加を提案してからインストール
+- `otelHeadersHelper` が失敗した際の起動時警告（テレメトリが黙って出なくなる事態を検知）
+
+**変更**
+
+- **npm ソースのプラグインは `npm pack --ignore-scripts` で取得し整合性検証**: パッケージの install スクリプトは実行されなくなった（サプライチェーン対策）
+- Claude in Chrome の auto mode で分類器承認済み呼び出しは拡張の per-site チェックをスキップ（リダイレクト後の `browser_batch` "Permission denied" を解消）
+- Artifact ツール: 初回公開時に絵文字 favicon ではなく1語のタブアイコンを要求。編集権限をもらった共有アーティファクトは別コピーを作らずその場で更新するようガイダンス強化
+- routine（スケジュール実行）は編集可能なアーティファクトへのデータ保存・再公開を確認なしで実行（公開アーティファクト・初回公開・削除は引き続き確認）
+
+**主要修正**
+
+- 復元されたメモリファイルの経過時間注記がコンパクション / resume 後にリクエスト毎に変化し、プロンプトキャッシュミスを起こす問題を修正
+- `--forward-subagent-text` の stream-json / SDK 出力が `context: fork` スキル起動のサブエージェントのメッセージを落とす問題を修正
+- プラグイン / マーケットプレースのメッセージ・ログが URL 内のパスワードやトークンを表示する問題を修正
+- `claude plugin marketplace update` がフェッチ失敗時に GitHub マーケットプレースのローカルコピーを削除する問題を修正
+- 壊れた transcript（不正なメッセージエントリ等）での resume / 起動失敗・クラッシュを複数修正
+- サンドボックス化された Bash が Linux + zsh で失敗コマンドに exit code 0 を返す問題を修正
+- `/rewind` がフォーク / バックグラウンドセッションでゼロ埋め・切り詰めファイルを復元することがある問題を修正
+- `SubagentStop` フックの `matcher` 指定が agent type 空のサブエージェント全てに発火する問題を修正
+- `/update-config` がファイル権限チェックに合致しない `Write(path)` ルールを書いていたのを `Edit(path)` に修正
+- `--system-prompt` に `__SYSTEM_PROMPT_DYNAMIC_BOUNDARY__` 行を含む場合、その上のテキストがグローバルにキャッシュされるように改善
+
+**\[VSCode]** Memory ダイアログ内での保存済みメモリの閲覧・編集・削除、テキストなし画像送信、提案 diff タブの変更単位 accept / reject ボタン等を追加
 
 ## v2.1.274 (2026-09-17)
 
