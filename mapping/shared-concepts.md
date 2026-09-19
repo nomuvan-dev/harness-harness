@@ -12,7 +12,7 @@ Claude Code と Codex CLI が共有する概念の対照表。harness-harness �
 
 | 概念 | Claude Code | Codex CLI | 抽象化の方針 |
 |:--|:--|:--|:--|
-| **指示ファイル名** | `CLAUDE.md` | `AGENTS.md` | 両方を生成。内容は共通テンプレートから派生 |
+| **指示ファイル名** | `CLAUDE.md`（v2.1.277+ は `AGENTS.md` も直接読める） | `AGENTS.md` | `AGENTS.md` 単一ファイルで両対応が可能に。Claude 固有機能が必要な場合のみ両方を生成 |
 | **ファイル形式** | Markdown | Markdown | 共通 |
 | **プロジェクトスコープ** | `./CLAUDE.md`, `.claude/CLAUDE.md` | `./AGENTS.md` | 各プラットフォームの規約に従い配置 |
 | **ユーザースコープ** | `~/.claude/CLAUDE.md` | `~/.codex/AGENTS.md` | ホームディレクトリの違いを吸収 |
@@ -34,6 +34,12 @@ project-root/
 ```
 
 共通指示を単一ソースに保持し、各プラットフォーム向けファイルを生成または同期するワークフローを推奨する。
+
+> **v2.1.277 以降の新しい選択肢**: Claude Code は CLAUDE.md がないプロジェクトで `AGENTS.md` をプロジェクト指示として直接読むようになった（Bedrock / Vertex / Foundry 未対応）。シンプルなプロジェクトでは **`AGENTS.md` 1ファイルだけで Claude / Codex 両対応**が成立する。ただし注意点：
+> - `CLAUDE.local.md` を置くと AGENTS.md が読まれなくなる（`claude-md-and-agents-md` 設定で両立可）
+> - Claude は `AGENTS.override.md` / `AGENTS.local.md` を読まない（Codex 固有）
+> - Claude 固有機能（`@` インポートの承認フロー、`.claude/rules/` 等）を使い込む場合は従来どおり CLAUDE.md 併用が有利
+> - 多様性は善：単一ファイル運用と二重ファイル運用の両方を選択肢として残す
 
 ---
 

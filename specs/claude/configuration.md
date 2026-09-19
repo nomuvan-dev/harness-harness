@@ -73,6 +73,45 @@ Managed Policy の CLAUDE.md は除外不可。
 CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1 claude --add-dir ../shared-config
 ```
 
+### 1.7 AGENTS.md サポート（v2.1.277+）
+
+Claude Code は `AGENTS.md` をプロジェクト指示として直接読み込める。他のコーディングエージェント向けに `AGENTS.md` を整備済みのリポジトリなら、`CLAUDE.md` の追加・インポート・設定なしでそのまま動く。
+
+**デフォルト動作（`claude-md-or-agents-md`）**:
+
+| リポジトリの状態 | 読み込まれるもの |
+|:--|:--|
+| `AGENTS.md` のみ（作業ディレクトリ以上に CLAUDE.md / CLAUDE.local.md なし） | `AGENTS.md` |
+| `AGENTS.md` と `CLAUDE.md`（or `CLAUDE.local.md`）が共存 | `CLAUDE.md` 系のみ |
+| `CLAUDE.md` が `AGENTS.md` を `@` インポート | `CLAUDE.md`（インポート経由で AGENTS.md も） |
+
+- 「CLAUDE.md あり」の判定に数えるのは作業ディレクトリ以上の `CLAUDE.md` / `.claude/CLAUDE.md` / `CLAUDE.local.md`。`~/.claude/CLAUDE.md`・managed CLAUDE.md・`.claude/rules/` は数えず、AGENTS.md と併存して読み込まれる
+- **注意**: `CLAUDE.local.md` を置くだけで AGENTS.md が読まれなくなる。両立したい場合は `claude-md-and-agents-md` を設定
+- セッション開始時に作業ディレクトリ以上の `AGENTS.md` / `.claude/AGENTS.md` を読み込み。サブディレクトリの AGENTS.md は Read 時にオンデマンド読み込み（そのディレクトリに CLAUDE.md 系がない場合）
+- AGENTS.md 内でも `@path` インポート展開・`claudeMdExcludes` が適用される
+- `AGENTS.local.md` / `AGENTS.override.md` / `.agents/` は読まれない（Codex とは異なる）
+
+**設定（Project instructions）**: `/config` の「Project instructions」、または settings の `pluginConfigs` 配下（ビルトイン `agents-md` プラグイン。user / `--settings` / managed のみ有効、project / local settings では無視）:
+
+```json
+{
+  "pluginConfigs": {
+    "agents-md@builtin": {
+      "options": { "instructionFiles": "claude-md-and-agents-md" }
+    }
+  }
+}
+```
+
+| 値 | 動作 |
+|:--|:--|
+| `claude-md-or-agents-md` | CLAUDE.md 優先、なければ AGENTS.md（デフォルト） |
+| `claude-md-and-agents-md` | 両方読む（各ディレクトリで CLAUDE.md → AGENTS.md の順。重複読み込みはスキップ） |
+| `claude-md` | CLAUDE.md のみ（従来動作） |
+| `managed-only` | 組織 managed CLAUDE.md と auto memory のみ |
+
+**利用不可の環境**: Bedrock / Vertex / Foundry、テレメトリ無効環境ではまだ使えない（`CLAUDE.md` からのインポートで代替）。`disableAllHooks` / `allowManagedHooksOnly` 設定時やビルトイン `agents-md` プラグイン無効時も読まれない。インストール/アップグレード直後の初回セッションでは無効（次セッションから有効）。
+
 ---
 
 ## 2. settings.json
@@ -602,6 +641,7 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 | `CLAUDE_CODE_STOP_HOOK_BLOCK_CAP` | stop hook の連続ブロック上限を変更。デフォルト 8 回（v2.1.143） |
 | `OTEL_METRICS_INCLUDE_ENTRYPOINT` | `true` でセッションエントリポイントを OpenTelemetry メトリクスに `app.entrypoint` 属性として追加（v2.1.152） |
 | `CLAUDE_CODE_ENABLE_AUTO_MODE` | `1` で Bedrock / Vertex / Foundry の Opus 4.7 / 4.8 ユーザーが Auto mode に opt-in（v2.1.158） |
+| `CLAUDE_CODE_AUTO_MODE_SERVER` | auto モードのアクション審査をサーバー側分類器で行うか制御。v2.1.278 から Claude API / Enterprise / Bedrock / Vertex / Foundry / ゲートウェイでサーバー側が既定（分類器オーバーヘッド非課金）。`0` でローカル分類器に戻す。`/status` の「Auto mode server」行で現在の動作を確認可 |
 | `OTEL_RESOURCE_ATTRIBUTES` | （標準 OTEL 変数）v2.1.161 から、ここで指定した属性（`team=foo,repo=bar` 等）が OpenTelemetry メトリクスデータポイントのラベルとして添付され、Team / Repo 別カスタムディメンションでのスライス分析が可能 |
 | `MAX_THINKING_TOKENS` | 拡張思考のトークン上限。**v2.1.166** で `0` を指定すると Claude API 経由の thinking 既定モデルでも thinking を無効化できるようになった（3P プロバイダは挙動変更なし） |
 | `CLAUDE_CODE_SAFE_MODE` | `--safe-mode` フラグ相当。CLAUDE.md・プラグイン・スキル・hooks・MCP など全カスタマイズを無効化して起動（トラブルシュート用）（v2.1.169） |
