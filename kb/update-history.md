@@ -1,5 +1,17 @@
 # harness-harness 更新履歴
 
+## 2026-09-20 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code v2.1.277（2026-09-18）/ v2.1.278（2026-09-19）と Codex CLI 0.155.1 安定版（2026-09-18）を反映。最大の目玉は v2.1.277 の AGENTS.md ネイティブサポート（CLAUDE.md なしのプロジェクトで AGENTS.md を直接読む。ハーネス設計上、AGENTS.md 単一ファイルで Claude / Codex 両対応が可能に）。ほかに TaskOutput ツール削除、サブエージェント結果のヘッダ付きフレーミング、v2.1.278 の auto モードサーバー側分類器既定化。ドキュメント側では Projects（claude-projects.md、Pro/Max パブリックベータ。1会話で複数クラウドセッションを Claude が調整）が新設。Codex 0.155.1 は reasoning サマリ既定の修正のみ。Phase 3.5 スキルエコシステム巡回は前回（2026-09-15）から7日以内のためスキップ。**
+
+- `specs/claude/changelog.md` — v2.1.277 / v2.1.278 追加
+- `specs/claude/configuration.md` — §1.7 AGENTS.md サポート新設（デフォルト動作・`agents-md@builtin` の `instructionFiles` 設定・利用不可環境）、`CLAUDE_CODE_AUTO_MODE_SERVER` の既定変更を反映
+- `specs/claude/hooks.md` — InstructionsLoaded が AGENTS.md 直接読み込みでは発火しない注記
+- `specs/codex/changelog.md` — CLI 0.155.1（reasoning サマリ既定 `none` 復元、#46467）
+- `mapping/shared-concepts.md` / `mapping/codex-to-claude.md` — AGENTS.md 単一ファイル運用の新選択肢と注意点（CLAUDE.local.md の干渉、AGENTS.override.md 非対応、Bedrock 等未対応）を追記
+
 ## 2026-09-19 — 公式ドキュメント巡回
 
 ### 検出・更新

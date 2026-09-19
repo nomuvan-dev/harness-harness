@@ -428,7 +428,7 @@ v2.1.133 以降、すべてのイベントの入力 JSON に effort level も含
 | `Notification` | `message`, `title`, `notification_type` |
 | `SubagentStart` | `agent_id`, `agent_type` |
 | `SubagentStop` | `stop_hook_active`, `agent_id`, `agent_type`, `agent_transcript_path`, `last_assistant_message`, `background_tasks`, `session_crons`（v2.1.145+） |
-| `InstructionsLoaded` | `file_path`, `memory_type`, `load_reason`, `globs`(opt), `trigger_file_path`(opt), `parent_file_path`(opt) |
+| `InstructionsLoaded` | `file_path`, `memory_type`, `load_reason`, `globs`(opt), `trigger_file_path`(opt), `parent_file_path`(opt)。**Project instructions 設定経由で AGENTS.md を直接読む場合（v2.1.277+）は発火しない**。CLAUDE.md が AGENTS.md をインポートする場合は `load_reason: include` で、symlink の場合は通常の CLAUDE.md ロードとして発火する |
 | `CwdChanged` | `cwd` |
 | `FileChanged` | `file_path`, `change_type` (`created`/`modified`/`deleted`) |
 | `TaskCreated` | `task_id`, `task_subject`, `task_description`(opt), `teammate_name`, `team_name` |

@@ -3,9 +3,45 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-09-19（**v2.1.275**（2026-09-17）と **v2.1.276**（2026-09-18）を反映。ハーネス観点の目玉は **claude.ai スキル / プラグイン自動同期の実装本体リリース**（`syncClaudeAiSkills` / `syncClaudeAiPlugins` でオプトアウト）、**npm ソースプラグインの `--ignore-scripts` 取得＋整合性検証**（install スクリプト非実行のサプライチェーン対策）、**`/plugin install --marketplace`**、**send-now キー（ctrl+enter）**。2.1.276 はゲートウェイ環境での `advisor_20260301` 400 リグレッション修正のみ。あわせてドキュメント改訂で **フック入力への `mcp_server` オブジェクト追加（v2.1.274+、`source` で提供元を判別）**、**MCP の 403 insufficient_scope 時の再認証フロー明文化**、**組織が claude.ai の Skills を無効化した場合の同期スキル削除（`.trash/` 退避）**、**チームメイトの自動復帰とフォルダ信頼要件**が記載された。前回: **v2.1.274**（2026-09-17）を反映。ハーネス観点の目玉は **MCP v2 ランタイム＋2026-07-28 ネゴシエーションの既定が Bedrock / Vertex / Foundry・テレメトリ無効環境にも拡大**、**プラグイン/マーケットプレース clone の Git LFS 既定スキップ（`skipLfs` は無効化）**、**`CLAUDE_CODE_MCP_STARTUP_WAIT_MS`**、**`"type": "sdk"` MCP エントリの警告付きスキップ**。あわせてドキュメント改訂で **claude.ai スキル同期がサインイン済みターミナルセッションで自動化**（`CLAUDE_CODE_SYNC_SKILLS` は非対話実行での待機用に格下げ）され、**`syncClaudeAiPlugins` 設定が新設**、**複数リポジトリのクラウドセッションはリポジトリの `.claude/settings.json` の hooks / permission を読まない**ことが明文化された。前回: **v2.1.273**（2026-09-15）を反映。ハーネス観点の目玉は **LLM ゲートウェイ向けヒントヘッダ（`CLAUDE_CODE_GATEWAY_HINT_HEADERS=1`）**、**Remote Control セッションの Claude アプリからのフォーク**、**Bedrock / Vertex / Foundry の auto モードがローカル分類器既定に**（`CLAUDE_CODE_AUTO_MODE_SERVER=1` でサーバー側へ）、**2.1.268 の「解析不能 Bash 行への Read / Edit deny 適用」リバート**。あわせて公式ドキュメント全体で「Claude Code on the web」の呼称が「cloud sessions（クラウドセッション）」へ改称された。前回: **v2.1.271**（2026-09-14）と **v2.1.272**（2026-09-15）を反映。2.1.272 はバグ修正のみ。2.1.271 のハーネス観点の目玉は **サブエージェント frontmatter の `omitClaudeMd`**（CLAUDE.md を読ませないサブエージェント定義が可能に）、**Monitor の watch に常時デッドライン導入（`persistent` オプション廃止）**、**auto モード＋サンドボックスでのコマンド単位 `allowed_domains`**、**リモートMCPサーバーへの認証情報環境変数の展開遮断**（`${ANTHROPIC_API_KEY}` 等は空として読まれる）、**dynamic workflow の使用上限到達時の自動一時停止＋medium ガイドライン 15→10 縮小（Pro は既定 small）**。前回: **v2.1.270**（2026-09-12）を反映。2.1.269 で入った「セッションが長く走った後に読み取り専用 git コマンドが権限確認を求める」リグレッションの修正のみ。）
+最終更新: 2026-09-20（**v2.1.277**（2026-09-18）と **v2.1.278**（2026-09-19）を反映。ハーネス観点の最大の目玉は **AGENTS.md ネイティブサポート**：CLAUDE.md がないプロジェクトでは AGENTS.md をプロジェクト指示として直接読む（`/config` の「Project instructions」または `pluginConfigs` の `agents-md@builtin` で `claude-md-and-agents-md` / `claude-md` 等に変更可。Bedrock / Vertex / Foundry は未対応）。ハーネス設計への影響大：AGENTS.md 単一ファイルで Claude / Codex 両対応が可能になった（mapping/ 参照）。ほかに **TaskOutput ツール削除**（Read で出力ファイルを読む方式へ。`taskOutputMaxChars` / `TASK_MAX_OUTPUT_LENGTH` は無効化）、**サブエージェント結果のヘッダ付きフレーミング**（結果内テキストがセッション指示として通らないように）、**ゲートウェイの `CLAUDE_GATEWAY_PROXY_IS_EGRESS_BOUNDARY=1` と upstream `headers:` マップ**。2.1.278 では **auto モードのサーバー側分類器が Claude API / Enterprise / Bedrock / Vertex / Foundry / ゲートウェイで既定化**（分類器オーバーヘッド非課金、`/status` に「Auto mode server」行）。あわせてドキュメントに **Projects**（claude-projects.md 新設。1つの会話で複数クラウドセッション（スレッド）をClaudeが調整。Pro/Max パブリックベータ・段階ロールアウト）、**クラウド環境の個人環境共有**（Owner が「Who can use it」から組織共有可）、**settings-reference のビルトインプラグイン `@builtin` サフィックス**、**InstructionsLoaded フックが AGENTS.md 直接読み込みでは発火しない**注記が追加された。前回: **v2.1.275**（2026-09-17）と **v2.1.276**（2026-09-18）を反映。ハーネス観点の目玉は **claude.ai スキル / プラグイン自動同期の実装本体リリース**（`syncClaudeAiSkills` / `syncClaudeAiPlugins` でオプトアウト）、**npm ソースプラグインの `--ignore-scripts` 取得＋整合性検証**（install スクリプト非実行のサプライチェーン対策）、**`/plugin install --marketplace`**、**send-now キー（ctrl+enter）**。2.1.276 はゲートウェイ環境での `advisor_20260301` 400 リグレッション修正のみ。あわせてドキュメント改訂で **フック入力への `mcp_server` オブジェクト追加（v2.1.274+、`source` で提供元を判別）**、**MCP の 403 insufficient_scope 時の再認証フロー明文化**、**組織が claude.ai の Skills を無効化した場合の同期スキル削除（`.trash/` 退避）**、**チームメイトの自動復帰とフォルダ信頼要件**が記載された。前回: **v2.1.274**（2026-09-17）を反映。ハーネス観点の目玉は **MCP v2 ランタイム＋2026-07-28 ネゴシエーションの既定が Bedrock / Vertex / Foundry・テレメトリ無効環境にも拡大**、**プラグイン/マーケットプレース clone の Git LFS 既定スキップ（`skipLfs` は無効化）**、**`CLAUDE_CODE_MCP_STARTUP_WAIT_MS`**、**`"type": "sdk"` MCP エントリの警告付きスキップ**。あわせてドキュメント改訂で **claude.ai スキル同期がサインイン済みターミナルセッションで自動化**（`CLAUDE_CODE_SYNC_SKILLS` は非対話実行での待機用に格下げ）され、**`syncClaudeAiPlugins` 設定が新設**、**複数リポジトリのクラウドセッションはリポジトリの `.claude/settings.json` の hooks / permission を読まない**ことが明文化された。前回: **v2.1.273**（2026-09-15）を反映。ハーネス観点の目玉は **LLM ゲートウェイ向けヒントヘッダ（`CLAUDE_CODE_GATEWAY_HINT_HEADERS=1`）**、**Remote Control セッションの Claude アプリからのフォーク**、**Bedrock / Vertex / Foundry の auto モードがローカル分類器既定に**（`CLAUDE_CODE_AUTO_MODE_SERVER=1` でサーバー側へ）、**2.1.268 の「解析不能 Bash 行への Read / Edit deny 適用」リバート**。あわせて公式ドキュメント全体で「Claude Code on the web」の呼称が「cloud sessions（クラウドセッション）」へ改称された。前回: **v2.1.271**（2026-09-14）と **v2.1.272**（2026-09-15）を反映。2.1.272 はバグ修正のみ。2.1.271 のハーネス観点の目玉は **サブエージェント frontmatter の `omitClaudeMd`**（CLAUDE.md を読ませないサブエージェント定義が可能に）、**Monitor の watch に常時デッドライン導入（`persistent` オプション廃止）**、**auto モード＋サンドボックスでのコマンド単位 `allowed_domains`**、**リモートMCPサーバーへの認証情報環境変数の展開遮断**（`${ANTHROPIC_API_KEY}` 等は空として読まれる）、**dynamic workflow の使用上限到達時の自動一時停止＋medium ガイドライン 15→10 縮小（Pro は既定 small）**。前回: **v2.1.270**（2026-09-12）を反映。2.1.269 で入った「セッションが長く走った後に読み取り専用 git コマンドが権限確認を求める」リグレッションの修正のみ。）
 
 ---
+
+## v2.1.278 (2026-09-19)
+
+**auto モードのサーバー側分類器が既定化**
+
+- Claude API / Enterprise ユーザー、および Bedrock / Vertex / Foundry / ゲートウェイの auto モードが**サーバー側分類器を既定に**変更。分類器オーバーヘッドが課金されない（`CLAUDE_CODE_AUTO_MODE_SERVER` で制御、`0` でローカルに戻す）
+- `/status` に「Auto mode server」行を追加。このセッションの auto モード分類器がサーバーで動いているか確認できる
+
+## v2.1.277 (2026-09-18)
+
+**AGENTS.md サポート・ゲートウェイ強化・TaskOutput 削除**
+
+### 新機能
+
+- **AGENTS.md サポート**: CLAUDE.md がないプロジェクトでは AGENTS.md をプロジェクト指示として読む。`/config` の「Project instructions」で変更可（Bedrock / Vertex / Foundry は未対応）。詳細は configuration.md §1.7
+- ゲートウェイ: `CLAUDE_GATEWAY_PROXY_IS_EGRESS_BOUNDARY=1`（フォワードプロキシのみが egress の環境向け。ホスト名解決をプロキシに委譲）、upstream への静的 `headers:` マップ
+- バックグラウンドタスク完了時、`/tasks` 等のパネルを開いていると「更新待ち」の行を表示
+
+### 変更・削除
+
+- **TaskOutput ツールを削除**（非推奨から削除へ）。バックグラウンドタスクの出力は Read でファイルを読む方式に。`taskOutputMaxChars` 設定と `TASK_MAX_OUTPUT_LENGTH` は無効化
+- **サブエージェント結果がヘッダ付き・インデント付きで main agent に渡るように**。サブエージェント結果内のテキストがセッション自身の指示として通用しない対策
+- workflow スクリプトの計算された `agent()` プロンプトは Bedrock / Vertex / Foundry でスクリプト作成テキストとしてフレーミング（安全分類器がユーザー入力と誤読しない）
+- `/model` で Fable が Anthropic API 上で常時表示（組織設定で無効時のみグレーアウト）
+- `claude -p`（SDK / IDE 外起動）からバックグラウンドの Haiku 自動タイトルリクエストを削除
+- プロンプト内の不可視 Unicode 書式・タグ文字を除去し、クリーニング後のプロンプトを送信前に表示
+
+### 修正（ハーネス関連の主要分）
+
+- `claude -p` / Agent SDK セッションが内部エラー後に結果なしでハングする問題（エラー報告して exit 1 に）
+- `/clear` 後に継続したセッションで SessionStart フック出力があると最初のメッセージの一部が欠落し、プロンプトキャッシュが full miss になる問題
+- `--worktree` セッションで `.claude/skills` が未トラックだとプロジェクトスキルが読み込まれない問題
+- `sandbox.excludedCommands` の glob が複合 Bash コマンドの一部マッチで全体をサンドボックス除外していた問題（全パートのマッチが必要に）
+- resume されたサブエージェント / チームメイトが MCP ツール定義を再レンダリングしてプロンプトキャッシュを壊す問題
+- ヘッドレス resume がコスト・使用量合計をゼロから開始する問題（終了時に保存するように）
+- SDK / ヘッドレスのセッション開始改善: 初回ターンがディレクトリごとの CLAUDE.md 探索を待たない
 
 ## v2.1.276 (2026-09-18)
 
