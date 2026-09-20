@@ -1,5 +1,13 @@
 # harness-harness 更新履歴
 
+## 2026-09-21 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code・Codex CLI とも新バージョンなしの静かな一日。Claude Code は changelog.md / llms.txt とも変更なし（v2.1.278 のまま）。Codex は安定版 0.155.1 のまま、プレリリースが 0.156.0-alpha.9（2026-09-20）まで進行。唯一の実質更新は公式 changelog の GPT-5.3-Codex-Spark 廃止アナウンス（2026-09-14 付、research preview がデスクトップアプリ / CLI / IDE 拡張から利用不可）の反映。Codex hooks / app-server / build-plugins ページの差分は動的ビルド由来のノイズで、内容は specs 反映済みを確認（app-server の thread/rollback 非推奨・dynamicTools は 0.155.x 系でプロトコル詳細のため specs 粒度対象外）。Phase 3.5 スキルエコシステム巡回は前回（2026-09-15）から7日以内のためスキップ。**
+
+- `specs/codex/changelog.md` — 2026-09-21 巡回注記（新リリースなし、GPT-5.3-Codex-Spark 廃止アナウンス）
+
 ## 2026-09-20 — 公式ドキュメント巡回
 
 ### 検出・更新
