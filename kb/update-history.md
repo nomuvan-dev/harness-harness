@@ -1,5 +1,14 @@
 # harness-harness 更新履歴
 
+## 2026-09-22 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code・Codex CLI とも新バージョンなしの静かな一日。Claude Code は v2.1.278 のまま（changelog 最新エントリに変化なし、llms.txt も変更なし。docs .md 群のハッシュ差分は動的再生成由来と判断——env-vars / settings-reference の内容は specs 反映済みを確認）。Codex は安定版 0.155.1 のまま、プレリリースが 0.156.0-alpha.16（2026-09-21）まで進行。Phase 3.5 スキルエコシステム巡回を実施（前回 2026-09-15 から7日経過）: anthropics/skills は 177.4K stars・最終 push 2026-09-10 のまま 19 スキル増減なし。skills.sh は find-skills 3.5M でトップ継続、新顔 genmedia-labs/skills（video-edit 599.7K、クラスタ計 3.0M）が浮上。推薦 Tier の変更なし。**
+
+- `specs/codex/changelog.md` — 2026-09-22 巡回注記（新リリースなし、alpha.16 まで進行）
+- `kb/skills/_index.md` — last_patrol 2026-09-22、skills.sh トレンド数値更新、genmedia-labs/skills 新顔記録
+
 ## 2026-09-21 — 公式ドキュメント巡回
 
 ### 検出・更新
