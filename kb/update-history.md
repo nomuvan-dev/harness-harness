@@ -1,5 +1,19 @@
 # harness-harness 更新履歴
 
+## 2026-09-23 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**両陣営でモデルリリースの大きな一日。Claude Code は v2.1.280（2026-09-22）リリース: Claude Opus 5.5（`claude-opus-5-5`）追加が最大の目玉で、`opus` / `default` の解決先が Opus 5.5 に（1M コンテキスト、$4/$20 per Mtok、キャッシュ読み $0.20/Mtok、thinking 常時オン）。Pro / Team Standard の既定も Sonnet → Opus に統一。per-model effort への移行完了（旧トップレベル `effortLevel`（user 設定）は Opus 5.5 以降の新モデルに非適用）。ほかに PermissionRequest の agent フック非対応明文化、バックグラウンドサブエージェントの LSP 解禁、symlink 書き込み権限判定修正、ダイアログ y/n キー廃止、クラウドセッションのリポジトリ宣言プラグイン非ロード化。Codex 側は安定版 0.155.1 のまま（プレリリースは 0.157.0-alpha.9 まで進行）だが、changelog に GPT-6 Sol / GPT-6 Luna 発表（2026-09-22）: GPT-5.6 世代の後継で Sol はコーディング・エージェント向け、Luna は大量処理向け、単価は前世代より低い。Phase 3.5 スキルエコシステム巡回は 2026-09-22 実施済みのためスキップ（7日ルール）。**
+
+- `specs/claude/changelog.md` — v2.1.280 セクション追加（Opus 5.5、既定モデル統一、effort per-model 移行完了、ドキュメント改訂まとめ）
+- `specs/claude/configuration.md` — 既定モデル表更新（全プラン Opus 5.5）、`effortLevel` の新モデル非適用、`modelSettings` 例、`fastMode` 対応モデル、advisor ペアリング表、`CLAUDE_CODE_MAX_MCP_DESCRIPTION_LENGTH` / `VERTEX_REGION_CLAUDE_5_5_OPUS` 追加
+- `specs/claude/hooks.md` — UserPromptSubmit の `pasted_content` 展開、PermissionRequest の agent フック非対応、SubagentStop の内部エージェント発火と空 `agent_type` の matcher 挙動
+- `specs/claude/tools.md` — TaskOutput 削除（v2.1.277）反映、バックグラウンドサブエージェントの LSP 解禁（v2.1.280）
+- `specs/claude/skills-and-commands.md` — 同期スキルのダウンロード専用性、worktree 内スキル探索、frontmatter 寛容パース
+- `specs/codex/changelog.md` — 2026-09-23 巡回注記（GPT-6 Sol / Luna 発表、alpha.9 まで進行）
+- `specs/codex/configuration.md` — `model` 行に gpt-6-sol / gpt-6-luna 追記
+
 ## 2026-09-22 — 公式ドキュメント巡回
 
 ### 検出・更新
