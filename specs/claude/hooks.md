@@ -407,11 +407,13 @@ v2.1.133 以降、すべてのイベントの入力 JSON に effort level も含
 | イベント | 追加入力フィールド |
 |:--|:--|
 | `SessionStart` | `source`, `model`, `agent_type`(opt)。**v2.1.251 以降、`source` が `resume` / `fork` かつトランスクリプトに Claude の応答が1件以上ある場合のみ** `seconds_since_last_response`（直近応答からの経過秒）, `context_tokens`（再開後の最初のリクエストが再送するトークン数）, `prompt_cache_likely_expired`（直近応答がプロンプトキャッシュ寿命より古い、または後続のコンパクションがキャッシュ済み会話を置換した場合 `true`）, `estimated_cache_write_usd`（`context_tokens` をセッションのモデルへ書き込む推定 USD、応答分は含まない）が加わる |
-| `UserPromptSubmit` | `prompt` |
+| `UserPromptSubmit` | `prompt`。`[Pasted text #N]` に折りたたまれたペースト内容は**展開されて届く**。ペーストマーキング有効セッションでは展開内容が `<pasted_content id="…">` 〜 `</pasted_content id="…">` 行に挟まれるため、プロンプトをパースするフックはこの行を考慮する（2026-09-22 ドキュメント改訂で明文化） |
 | `UserPromptExpansion` | `expansion_type` (`slash_command`/`mcp_prompt`), `command_name`, `command_args`, `command_source`, `prompt` |
 | `PreToolUse` | `tool_name`, `tool_input`, `tool_use_id` |
 | `PermissionRequest` | `tool_name`, `tool_input`, `permission_suggestions`(opt) |
 
+> `PermissionRequest` は **agent フック非対応**（v2.1.280 で明確化）: サポートするフックタイプは `command` / `http` / `mcp_tool` / `prompt` のみ。agent フックを設定してもスキップされ（エラー表示あり）権限フローは変わらない。フックから allow / deny するには command / HTTP フックの decision オブジェクトを返す。agent フックは他のイベントでは prompt フックと同じイベントをサポートする。
+>
 > `PermissionRequest` は **サンドボックスコマンドのネットワークリクエスト**の権限プロンプトでは発火しない（ツール使用の権限要求のみ）。ネットワークリクエスト側のシグナルが必要な場合は `Notification` の `permission_prompt` タイプを使う（ただし約 6 秒の待機後に発火）。
 >
 > **`mcp_server` オブジェクト（v2.1.274+、2026-09-18 ドキュメント改訂で明文化）**: MCP ツールの場合、`PreToolUse` / `PermissionRequest` / `PostToolUse` / `PostToolUseFailure` / `PermissionDenied` の入力に `mcp_server` オブジェクトが加わる。サーバーの `name` と、定義の提供元を示す `source`（`plugin`, `sdk`, `user` / `project` 等の設定スコープ。全列挙は Agent SDK リファレンスの `McpServerProvenance`）を持つ。**信頼判断は `name` や `mcp__<server>__` プレフィックスではなく `source` に基づくこと**（名前は偽装可能なため）。
@@ -427,7 +429,7 @@ v2.1.133 以降、すべてのイベントの入力 JSON に effort level も含
 | `StopFailure` | `error`（`rate_limit` / `overloaded` / `authentication_failed` / `oauth_org_not_allowed` / `account_on_hold` / `billing_error` / `invalid_request` / `model_not_found` / `server_error` / `cloud_credential_error` / `max_output_tokens` / `unknown`）, `error_details`, `last_assistant_message` |
 | `Notification` | `message`, `title`, `notification_type` |
 | `SubagentStart` | `agent_id`, `agent_type` |
-| `SubagentStop` | `stop_hook_active`, `agent_id`, `agent_type`, `agent_transcript_path`, `last_assistant_message`, `background_tasks`, `session_crons`（v2.1.145+） |
+| `SubagentStop` | `stop_hook_active`, `agent_id`, `agent_type`, `agent_transcript_path`, `last_assistant_message`, `background_tasks`, `session_crons`（v2.1.145+）。**内部エージェントでも発火**（2026-09-22 ドキュメント改訂で明文化）: prompt suggestions や `/btw` 等の Claude Code 内部機能のエージェント完了時にも発火し、その場合 `agent_type` はセッション自身のエージェント名（`--agent` / `agent` 設定。未設定なら空文字列）。エージェントタイプを名指しする matcher は空 `agent_type` にマッチしない（matcher 省略 / `""` / `"*"` / 空文字にマッチする正規表現は発火する） |
 | `InstructionsLoaded` | `file_path`, `memory_type`, `load_reason`, `globs`(opt), `trigger_file_path`(opt), `parent_file_path`(opt)。**Project instructions 設定経由で AGENTS.md を直接読む場合（v2.1.277+）は発火しない**。CLAUDE.md が AGENTS.md をインポートする場合は `load_reason: include` で、symlink の場合は通常の CLAUDE.md ロードとして発火する |
 | `CwdChanged` | `cwd` |
 | `FileChanged` | `file_path`, `change_type` (`created`/`modified`/`deleted`) |
