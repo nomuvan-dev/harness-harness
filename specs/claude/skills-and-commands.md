@@ -99,8 +99,10 @@ my-skill/
 | フィールド | 必須 | 説明 |
 |:--|:--|:--|
 | `name` | No | スキル表示名。省略時はディレクトリ名。小文字英数字とハイフンのみ（最大64文字） |
-| `description` | 推奨 | スキルの用途と使用タイミング。Claude が自動適用の判断に使用。**250文字上限**（v2.1.86） |
+| `description` | 推奨 | スキルの用途と使用タイミング。Claude が自動適用の判断に使用。省略時は本文の最初の非空行を使用。スキル一覧では `when_to_use` との合算 1,536 文字で切り詰められるため主要ユースケースを冒頭に書く（旧記載の「250文字上限（v2.1.86）」は現行リファレンスから削除済み） |
+| `when_to_use` | No | Claude がスキルを呼ぶべきタイミングの補足（トリガーフレーズ・リクエスト例等）。スキル一覧では `description` に連結され、合算 1,536 文字上限の対象。唯一アンダースコア区切りのフィールド |
 | `argument-hint` | No | 引数ヒント。例: `[issue-number]` |
+| `arguments` | No | 名前付き位置引数の宣言。スペース区切り文字列または YAML リスト。宣言順に引数位置へマップされ、本文の `$name` 置換で参照する |
 | `disable-model-invocation` | No | `true` で Claude の自動呼び出しを禁止。手動 `/name` のみ |
 | `user-invocable` | No | `false` で `/` メニューから非表示。バックグラウンド知識用 |
 | `allowed-tools` | No | スキル有効時に許可なしで使えるツール |
@@ -113,6 +115,9 @@ my-skill/
 | `hooks` | No | スキルライフサイクルにスコープされたフック |
 | `paths` | No | スキル自動適用を限定するglobパターン。カンマ区切り文字列またはYAMLリスト。パスマッチ時のみ自動読み込み |
 | `shell` | No | インライン `` !`command` `` のシェル。`bash`（デフォルト）または `powershell`（Windows、`CLAUDE_CODE_USE_POWERSHELL_TOOL=1` 必要） |
+| `metadata` | No | 自由形式の YAML マップ（エンタイトルメント・カタログ情報等、自前ツーリングが読むためのデータ）。Claude Code は内容に基づく動作をせず、マップでない値は破棄。`paths` 等の既存フィールド名をキーに使わないこと |
+| `license` | No | スキルのライセンス表記。[Agent Skills 仕様](https://agentskills.io)由来。Claude Code は受理するが動作には影響しない |
+| `compatibility` | No | スキルの環境要件（想定プロダクト・システム前提等、最大500文字の文字列）。Agent Skills 仕様由来。Claude Code は受理するが動作には影響しない |
 
 ### 1.4 呼び出し制御
 
@@ -132,9 +137,15 @@ my-skill/
 | `$ARGUMENTS` | スキル呼び出し時に渡された全引数 |
 | `$ARGUMENTS[N]` | N番目の引数（0始まり） |
 | `$N` | `$ARGUMENTS[N]` の短縮形 |
+| `$name` | frontmatter `arguments` で宣言した名前付き引数。その位置に引数が無い場合は空文字列に展開される |
 | `${CLAUDE_SESSION_ID}` | 現在のセッションID |
 | `${CLAUDE_SKILL_DIR}` | スキルの `SKILL.md` があるディレクトリ |
-| `${CLAUDE_EFFORT}` | 現在の effort level（low/medium/high/xhigh/max）。スキル本文に埋め込み可能（v2.1.120） |
+| `${CLAUDE_EFFORT}` | 現在の effort level（low/medium/high/xhigh/max）。スキル本文に埋め込み可能（v2.1.120）。ultracode はレベルとしては現れない |
+| `${CLAUDE_PROJECT_DIR}` | プロジェクトルートディレクトリ（hooks の同名変数と同じパス） |
+| `${CLAUDE_PLUGIN_ROOT}` | プラグインのインストールディレクトリ（**プラグインスキルのみ**置換される） |
+| `${CLAUDE_PLUGIN_DATA}` | プラグインの永続データディレクトリ（プラグイン更新をまたいで保持。**プラグインスキルのみ**置換される） |
+
+`${CLAUDE_SKILL_DIR}` / `${CLAUDE_PROJECT_DIR}`（プラグインスキルでは `${CLAUDE_PLUGIN_ROOT}` / `${CLAUDE_PLUGIN_DATA}` も）は**本文と `allowed-tools` の Bash ルールの両方**で置換される。両方に同じ変数を使うと、同梱スクリプトを権限プロンプトなしで実行するスキルが書ける。
 
 **プレースホルダが 1 つも引数を受け取らなかった場合**、末尾に `ARGUMENTS: <value>` が追加される（従来記載は「`$ARGUMENTS` が含まれない場合」）。プレースホルダとは `$ARGUMENTS`・`$1` 等のインデックス形式・名前付き引数を指す。インデックス形式でその位置に引数が無い場合はリテラルテキストのまま残り「受け取った」とは数えない。名前付きはその位置に引数が無くても空文字列に展開されるため「受け取った」と数える。
 
@@ -448,6 +459,22 @@ MCPサーバーが公開するプロンプトは `/mcp__<server>__<prompt>` 形�
 
 `/plugin` の引数は autocomplete に対応（v2.1.157）。サブコマンド、インストール済みプラグイン名、既知マーケットプレース上のプラグインが補完される。
 
+### 4.1.1 コミュニティマーケットプレース（`claude-plugins-community`）
+
+Anthropic が管理する 2 つ目のパブリックマーケットプレース。サードパーティの投稿が審査を経て掲載される。
+
+```bash
+/plugin marketplace add anthropics/claude-plugins-community
+/plugin install <name>@claude-community
+```
+
+- **投稿方法**: claude.ai の管理画面フォーム（要 Team/Enterprise 組織＋ディレクトリ管理権限）または Console（platform.claude.com/plugins/submit。個人開発者向け）
+- 投稿前に `claude plugin validate ./your-plugin` をローカル実行（審査パイプラインも同じチェック＋自動安全スクリーニングを実行）。警告をエラー扱いにするには `--strict`
+- 承認プラグインはカタログ（anthropics/claude-plugins-community）に**コミット SHA でピン**され、リポジトリへの push で CI が自動的にピンを更新。公開カタログは審査パイプラインから**夜間同期**（承認から掲載まで遅延あり）
+- **公式マーケットプレース（`claude-plugins-official`）は別枠のキュレーション**。応募プロセスはなく、投稿フォームから official には載らない。official 掲載プラグインは自作 CLI から 1 行マーカーを出力してインストールを促せる（plugin-hints）
+
+なお `claude-plugins-official` の自動登録は**初回の対話起動時**に行われる。それ以前に非対話実行した場合やポリシーでブロックされた場合は `claude plugin marketplace add anthropics/claude-plugins-official` で手動登録する。
+
 ### 4.2 マーケットプレースの追加
 
 ```bash
@@ -468,6 +495,12 @@ MCPサーバーが公開するプロンプトは `/mcp__<server>__<prompt>` 形�
 ```bash
 claude plugin init my-plugin    # .claude/skills/my-plugin/ を生成
 ```
+
+### 4.2.2 プラグイン同梱の `settings.json`
+
+プラグインルートに `settings.json` を置くと、プラグイン有効時にデフォルト設定を適用できる。**サポートされるキーは `agent` と `subagentStatusLine` のみ**（未知のキーは黙って無視）。`agent` を設定するとプラグイン同梱のカスタムエージェントがメインスレッドとして起動し、そのシステムプロンプト・ツール制限・モデルが適用される（プラグインを有効にするだけで Claude Code の既定挙動を変えられる）。`settings.json` の値は `plugin.json` 内の `settings` 宣言より優先される。
+
+また、プラグインルートの `bin/` ディレクトリに置いた実行ファイルは、プラグイン有効中 **Bash ツールの `PATH` に追加**される（claude.ai 組織設定経由で配布するプラグインではトップレベル `bin/` は使用不可）。
 
 ### 4.3 プラグインカテゴリ
 
@@ -505,6 +538,7 @@ claude plugin init my-plugin    # .claude/skills/my-plugin/ を生成
 - 出力は JSON + HTML レポート。**スコアが閾値未満なら非ゼロ終了するため CI ゲートに使える**
 - スキルの description 調整には `tool_used: Skill` グレーダーで**発火率**を測るパターンが紹介されている（description 変更のたびに実行して回帰検出）
 - `--plugin-dir` での動作確認が「動くか」を見るのに対し、eval は「Claude が実際にどれだけ使い、正しい結果を出すか」を測る位置づけ
+- **単一スキルの反復改善には skill-creator プラグイン**（`/plugin install skill-creator@claude-plugins-official`）が別の eval ループを提供: スキルディレクトリ内 `evals/evals.json` にテストケースを保存し、テストケースごとにサブエージェントで隔離実行→`grading.json` に採点→`benchmark.json` にスキルあり/なしの合格率・時間・トークンを集計。2 バージョンのブラインド A/B 比較、should-trigger / should-not-trigger プロンプトによる description チューニング、HTML レビュービューアも備える。**`claude plugin eval` とはフォーマット非互換**
 - harness-harness 的には、ハーネスに含めるプラグイン／スキルの品質保証と新モデル移行時の回帰検出に直結する機能
 
 ### 4.6.2 プラグイン変更の即時反映（v2.1.268+）
@@ -752,7 +786,7 @@ claude -p --bare "質問"
 | `--settings` | 設定ファイルの明示的指定 |
 | `--mcp-config` | MCP設定ファイルの指定 |
 | `--agents` | エージェント定義ディレクトリの指定 |
-| `--plugin-dir` | プラグインディレクトリの指定。**v2.1.265 以降は「プラグイン群を入れた親フォルダ」も指定でき**、マニフェストを持つ子フォルダがそれぞれロードされる（実行中の子フォルダ追加・削除も拾われる） |
+| `--plugin-dir` | プラグインディレクトリの指定。**v2.1.265 以降は「プラグイン群を入れた親フォルダ」も指定でき**、マニフェストを持つ子フォルダがそれぞれロードされる（実行中の子フォルダ追加・削除も拾われる）。`.zip` アーカイブも指定可。フラグを渡せない環境では環境変数 `CLAUDE_CODE_PLUGIN_DIRS`（v2.1.280、絶対パスを `:` / Windows `;` 区切り）で同等のロードが可能（`--plugin-dir` 指定分に追加される） |
 | `--plugin-url <url>` | URL から `.zip` プラグインアーカイブを取得して当該セッションに読み込む（v2.1.129） |
 | `--system-prompt-snapshot <on\|off>` | **v2.1.257 以降**。`off` で、会話の初回リクエスト時に記録したシステムプロンプトを再利用せず**毎リクエスト再構築する**。既定は `on` |
 
