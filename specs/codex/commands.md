@@ -1,6 +1,6 @@
 # OpenAI Codex CLI コマンド仕様
 
-最終更新: 2026-09-11（巡回更新）
+最終更新: 2026-09-24（巡回更新。0.156.0 の `/tui`・`/voice settings`・`/daemon`・`--no-daemon`・`/usage` アナリティクス拡張、personality 非推奨を反映）
 
 ---
 
@@ -15,7 +15,9 @@
 | `/model` | `/model` | 使用モデルと推論レベルを選択・変更 |
 | `/plan` | `/plan [prompt]` | プランモードに切り替え（任意でプロンプト送信） |
 | `/fast` | `/fast [on\|off\|status]` | GPT-5.4 の Fast モードを切り替え |
-| `/personality` | `/personality` | 応答スタイルを選択（friendly / pragmatic / none） |
+| `/personality` | `/personality` | ~~応答スタイルを選択（friendly / pragmatic / none）~~ **0.156.0 で TUI からの personality 選択が削除**。非推奨の `friendly` / `pragmatic` 設定は応答スタイルを選択しなくなった |
+| `/tui` | `/tui` | オプションのフルスクリーン UI を選択（次回起動から適用）。トランスクリプト検索・マウス選択・右クリックコピー対応（0.156.0+） |
+| `/voice settings` | `/voice settings` | 音声会話の音声を選択（0.156.0+）。音声会話自体は 0.156.0 でデフォルト有効化され、F8 でトグル。Linux / Windows 向け音声ランタイム同梱 |
 | `/experimental` | `/experimental` | サブエージェント等の実験的機能を有効/無効化 |
 
 ### 1.2 コード・差分操作
@@ -57,7 +59,7 @@
 | コマンド | 構文 | 説明 |
 |----------|------|------|
 | `/status` | `/status` | セッション設定とトークン使用量を表示。TUI がリモートトランスポート経由で接続されている場合は接続詳細とサーバーバージョンも表示（0.135.0+）。0.148.0+ では対象となる Business / Enterprise ワークスペースでスレッド単位の**推定クレジット / USD コスト**とモデル・推論・速度・トークンの内訳を表示（ステータスライン・ターミナルタイトルにも反映。取得は非同期で、開いた後にカードが更新される） |
-| `/usage` | `/usage` | 日次・週次・累計のアカウントトークン使用量ビュー（0.140.0+）。usage-limit reset credits の表示・redeem（0.142.0+、0.144.0 でクレジット種別・期限表示と選択 redeem） |
+| `/usage` | `/usage` | 日次・週次・累計のアカウントトークン使用量ビュー（0.140.0+）。usage-limit reset credits の表示・redeem（0.142.0+、0.144.0 でクレジット種別・期限表示と選択 redeem）。**0.156.0 でアナリティクスダッシュボードに拡張**: アカウント使用量・トークン合計に加えプラグイン / スキルのアクティビティを閲覧可能 |
 | `/debug-config` | `/debug-config` | 設定レイヤーと requirements 診断を出力 |
 | `/ps` | `/ps` | 実験的バックグラウンドターミナルと出力を表示 |
 | `/mcp` | `/mcp` | 設定済み MCP ツールの一覧を表示 |
@@ -72,6 +74,7 @@
 | `/pwd` | `/pwd` | 現在の作業ディレクトリを表示（0.149.0+） |
 | `/cwd` | `/cwd` | 作業ディレクトリの管理（0.149.0+） |
 | `/apps` | `/apps` | アプリ（コネクタ）を閲覧しプロンプトに挿入 |
+| `/daemon` | `/daemon` | ローカルバックグラウンドサーバー（デーモン）を更新（0.156.0+）。CLI フラグ `--no-daemon` でデーモンをバイパス可能 |
 | `/init` | `/init` | カレントディレクトリに AGENTS.md の雛形を生成 |
 | `/feedback` | `/feedback` | ログと診断情報をメンテナーに送信 |
 | `/send-feedback` | `/send-feedback` | `/feedback` の別名 |
@@ -129,6 +132,7 @@ codex -q "タスクの説明"
 | `--profile-v2 <name>` | レイヤー化プロファイル v2 を使用（複数 TOML を重ね合わせ。旧 `[profiles]` 併用時は拒否、0.131.0+） |
 | `--enable / --disable <feature>` | 機能フラグの有効化/無効化 |
 | `--no-alt-screen` | TUI の代替画面モードを無効化 |
+| `--no-daemon` | ローカルバックグラウンドサーバー（デーモン）を使わずに実行（0.156.0+） |
 | `--oss` | ローカル OSS モデルプロバイダー（Ollama）を使用 |
 | `--search` | ライブ Web 検索を有効化 |
 
@@ -253,7 +257,7 @@ max_bytes = 1048576        # 最大サイズ（超過時は自動コンパクシ
 | `codex update` | CLI 自身を最新版にアップグレード（0.128.0+） |
 | `codex doctor` | runtime / auth / terminal / network / config / ローカル状態を横断する診断（0.131.0+）。0.135.0 で環境・Git・ターミナル・app-server・thread inventory のリッチ診断を追加。0.149.0 でエンドポイント保護・ネットワーク/プロキシ障害・デスクトップアプリ状態・アップデート接続性・Windows サンドボックスの診断を追加 |
 | `codex remote-control` | リモート制御可能な app-server を起動（0.130.0+）。0.131.0 で daemon ライフサイクル管理・ランタイム enable/disable API・registry-backed 環境を追加 |
-| `codex agents` | タスクの検索・開始・オープン・リネーム・停止を行う対話的エージェントダッシュボード（0.149.0+）。ショートカットは設定可能。TUI の agents overview からも到達できる |
+| `codex agents` | タスクの検索・開始・オープン・リネーム・停止を行う対話的エージェントダッシュボード（0.149.0+）。ショートカットは設定可能。TUI の agents overview からも到達できる。0.156.0 でステータスによるタスクフィルタと worktree セッション作成に対応（worktree サポート自体も 0.156.0 でデフォルト有効化） |
 | `codex queue` | 既存のローカル / リモートセッションへメッセージを送り込む（0.149.0+）。アイドルセッションを確実に起こす。セッション名が重複する場合は最新のものを優先 |
 | `codex plugin marketplace ...` | プラグインマーケットプレース操作 CLI（0.131.0+）。share / share checkout / version 対応。0.147.0 でポータブル Agent Plugins のインストールと local / personal / workspace / remote カタログ横断検索に対応 |
 

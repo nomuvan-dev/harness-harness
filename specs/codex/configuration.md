@@ -1,6 +1,6 @@
 # OpenAI Codex CLI 設定仕様
 
-最終更新: 2026-09-11（巡回更新。0.154.0 の実験的 worktree サポート／Windows のバックグラウンドサーバー共有を追記）
+最終更新: 2026-09-24（巡回更新。0.156.0 の worktree サポートのデフォルト有効化と `friendly` / `pragmatic` personality 設定の非推奨明文化を反映）
 
 ---
 
@@ -35,7 +35,7 @@ Codex CLI の設定は TOML 形式で管理される。複数レベルの設定�
 | `model_provider` | string | `"openai"` | モデルプロバイダー ID。組み込みプロバイダに **`amazon-bedrock-runtime`**（0.148.0+）が追加された（下記「Amazon Bedrock Runtime プロバイダ」参照） |
 | `approval_policy` | string | `"on-request"` | 承認ポリシー（後述） |
 | `sandbox_mode` | string | `"workspace-write"` | サンドボックスモード（後述） |
-| `personality` | string | `"friendly"` | 応答スタイル（`none` / `friendly` / `pragmatic`） |
+| `personality` | string | `"friendly"` | 応答スタイル。**0.156.0 で非推奨の `friendly` / `pragmatic` は応答スタイルを選択しなくなったことが明文化され、TUI からの personality 選択も削除された**。ハーネスでこのキーに依存した挙動を期待しないこと |
 | `service_tier` | string | - | パフォーマンス層（`flex` / `fast`） |
 | `web_search` | string | `"cached"` | Web 検索動作（`disabled` / `cached` / `live`） |
 | `model_reasoning_effort` | string | `"high"` | 推論レベル（`minimal` 〜 `xhigh`。上位に `max` / `ultra` あり。0.149.0 で SDK からも `max` / `ultra` を選択可能に） |
@@ -725,15 +725,15 @@ CI 等で hook trust 確認をスキップしたい場合は CLI フラグ `--da
 
 ---
 
-## 8. 実験的機能（0.154.0 時点）
+## 8. 実験的機能（0.156.0 時点）
 
-### 8.1 worktree サポート（実験的）
+### 8.1 worktree サポート（0.156.0 でデフォルト有効化）
 
-CLI 0.154.0 で、**新規セッションおよびフォークしたセッション用に隔離チェックアウト（worktree）を作成する実験的サポート**が入った。
+CLI 0.154.0 で入った**新規セッションおよびフォークしたセッション用に隔離チェックアウト（worktree）を作成するサポート**が、**0.156.0 で実験的扱いを脱してデフォルト有効化**された。agent command center から worktree セッションの作成も可能（`codex agents` / TUI の agents overview）。
 
-harness-harness の worktree 運用（`docs/conventions.md`）は従来「外側で `git worktree add` → `codex exec --cd <worktree>` で対象化」する前提だったが、本機能が安定すれば Codex 側で完結できる可能性がある。
+harness-harness の worktree 運用（`docs/conventions.md`）は従来「外側で `git worktree add` → `codex exec --cd <worktree>` で対象化」する前提だったが、Codex 側で完結できるようになった。
 
-- **現時点の方針**: 実験的扱いのため、既定は引き続き外側運用とする。並列作業のテンプレート・スキルは変更しない
+- **現時点の方針**: デフォルト有効化を受けて、外側運用を既定とする従来方針は**要再検証**。検証完了までは並列作業のテンプレート・スキルは変更しない
 - **検証観点**: 隔離チェックアウトが submodule（`private/`）を初期化するか、worktree のパス命名規約（`../<repo>-wt-<branch>/`）と衝突しないか、後片付けの責任がどちらにあるか
 
 ### 8.2 Windows のバックグラウンドサーバー共有（0.154.0）

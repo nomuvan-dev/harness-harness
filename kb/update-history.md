@@ -1,5 +1,23 @@
 # harness-harness 更新履歴
 
+## 2026-09-24 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Codex CLI 0.156.0 安定版（2026-09-22）/ 0.156.1（2026-09-23）リリースを反映（昨日の巡回時点では「新リリースなし」と判定していたが安定版タグを見落としていたため訂正）。0.156.0 の目玉は `/tui` フルスクリーンUI（transcript 検索・マウス選択・右クリックコピー）、音声会話デフォルト有効（F8 トグル・`/voice settings`）、`/usage` アナリティクスダッシュボード、worktree サポートのデフォルト有効化＋agent command center からの worktree セッション作成、`/daemon` / `--no-daemon`、新テーマ6種＋Mermaid/数式レンダリング。0.156.1 は GPT-6 Sol / Luna のモデルピッカー追加。Claude Code 側は新バージョンなし（v2.1.280 のまま）だが、ドキュメント改訂を検出: `CLAUDE_CODE_PLUGIN_DIRS` 環境変数新設、コミュニティマーケットプレース（`claude-plugins-community`）、スキル frontmatter の追加フィールド（`when_to_use` / `arguments` / `metadata` 等）、プラグイン同梱 settings.json、WebSocket MCP サーバーの追加手順明文化。Phase 3.5 スキルエコシステム巡回は 2026-09-22 実施済みのためスキップ（7日ルール）。**
+
+- `specs/codex/changelog.md` — CLI 0.156.0 / 0.156.1 セクション追加、最終更新行書き換え、2026-09-23 巡回メモに訂正注記
+- `specs/codex/commands.md` — `/tui` / `/voice settings` / `/daemon` 追加、`/usage` 拡張、`--no-daemon` フラグ、`codex agents` のステータスフィルタ・worktree セッション作成、`/personality` 非推奨明文化
+- `specs/codex/configuration.md` — worktree デフォルト有効化（外側 worktree 運用方針は要再検証と注記）、`personality` 非推奨
+- `specs/claude/configuration.md` — `CLAUDE_CODE_PLUGIN_DIRS` 追加、`TASK_MAX_OUTPUT_LENGTH` の no-op 化、`outputStyle` 拡充（`force-for-plugin` 等）、`skillOverrides` の広告一覧非表示
+- `specs/claude/skills-and-commands.md` — スキル frontmatter 5 フィールド追加、変数展開表拡充、コミュニティマーケットプレース節・プラグイン同梱 settings.json 節新設、skill-creator eval 追記
+- `specs/claude/mcp.md` — WebSocket サーバー追加手順（`.mcp.json` / `add-json` のみ）、動的ツール更新のリフレッシュ失敗時挙動・通知ストリーム再オープン制限
+
+### 変更なし・ノイズ判定
+
+- Claude Code changelog（新バージョンなし）、llms.txt（新規ページなし）、/docs/en/commands（HTML ビルドノイズ）
+- learn.chatgpt.com の hooks / build-plugins / app-server（specs 既存記述と一致）、openai/codex-plugin-cc（コード変更なし）
+
 ## 2026-09-23 — 公式ドキュメント巡回
 
 ### 検出・更新

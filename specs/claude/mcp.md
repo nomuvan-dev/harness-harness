@@ -28,7 +28,18 @@
 | **HTTP** (streamable-http) | リモートHTTPサーバー。クラウドサービス向け推奨 | 推奨 |
 | **SSE** (Server-Sent Events) | リモートSSEサーバー。非推奨 | 非推奨（HTTP を使用） |
 | **stdio** | ローカルプロセス。直接システムアクセスが必要な場合 | ローカル用 |
-| **WebSocket** (`ws`) | WebSocket接続 | 特定用途 |
+| **WebSocket** (`ws`) | WebSocket接続。永続双方向接続でサーバー側からのイベントプッシュに向く | 特定用途 |
+
+**WebSocket サーバーの追加**: `claude mcp add --transport` は `ws` を**受け付けない**ため、`.mcp.json` または `claude mcp add-json` で設定する。
+
+```bash
+claude mcp add-json events-server \
+  '{"type":"ws","url":"wss://mcp.example.com/socket","headers":{"Authorization":"Bearer YOUR_TOKEN"}}'
+```
+
+`type: "ws"` エントリは `http` と同じ `url` / `headers` / `headersHelper` / `timeout` / `alwaysLoad` フィールドを受け付ける。**OAuth 非対応**（認証はヘッダーのみ。静的トークンを `headers` に置くか `headersHelper` で接続時に生成）。リクエスト応答型のサーバーなら HTTP を使う。
+
+> **他クライアント向け手順からの追加**: セットアップ手順が Claude Desktop / Cursor 等向けに書かれている場合、URL は `claude mcp add --transport http`、起動コマンドは `claude mcp add <name> -- <command>`、`mcpServers` JSON ブロックは内側のオブジェクトを `claude mcp add-json` に渡す。注意: **`type` なしの `url` エントリは stdio サーバーとして読まれて失敗する**ため `"type": "http"` 等を補うこと。サーバー名に使える文字は英数字・ハイフン・アンダースコアのみ。
 
 ---
 
@@ -317,7 +328,9 @@ MCP SDK で独自サーバーを構築可能: https://modelcontextprotocol.io/qu
 
 ### 8.1 動的ツール更新
 
-MCP `list_changed` 通知により、サーバーが利用可能なツール・プロンプト・リソースを動的に更新可能。再接続不要。
+MCP `list_changed` 通知により、サーバーが利用可能なツール・プロンプト・リソースを動的に更新可能。再接続不要。リフレッシュ要求が失敗した場合は**前回取得済みのツール・プロンプト・リソースを保持**する（v2.1.214 より前は一時エラーで空リストに置き換わっていた）。
+
+**v2 ランタイムでの通知ストリーム**: 新プロトコルリビジョンのサーバーからの `list_changed` は Claude Code が開き続けるストリームで受信し、切断時は再オープンする。ただし (1) **10 秒以内に再切断**が続く場合は 3 回で打ち切り、(2) 10 秒超開いてから閉じるパターン（サーバーレスホストで一般的）は **1 時間に 5 回の再オープン後、約 6 時間待機**。ストリーム再開までは前回取得分を保持。早く変更を拾いたい場合は `/mcp` からサーバーを再接続する。
 
 ### 8.2 チャンネル（プッシュメッセージ）
 
