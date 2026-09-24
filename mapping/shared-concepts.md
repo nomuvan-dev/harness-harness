@@ -35,7 +35,7 @@ project-root/
 
 共通指示を単一ソースに保持し、各プラットフォーム向けファイルを生成または同期するワークフローを推奨する。
 
-> **v2.1.277 以降の新しい選択肢**: Claude Code は CLAUDE.md がないプロジェクトで `AGENTS.md` をプロジェクト指示として直接読むようになった（Bedrock / Vertex / Foundry 未対応）。シンプルなプロジェクトでは **`AGENTS.md` 1ファイルだけで Claude / Codex 両対応**が成立する。ただし注意点：
+> **v2.1.277 以降の新しい選択肢**: Claude Code は CLAUDE.md がないプロジェクトで `AGENTS.md` をプロジェクト指示として直接読むようになった（v2.1.281 以降は Bedrock / Vertex / Foundry・テレメトリ無効環境でも利用可）。シンプルなプロジェクトでは **`AGENTS.md` 1ファイルだけで Claude / Codex 両対応**が成立する。ただし注意点：
 > - `CLAUDE.local.md` を置くと AGENTS.md が読まれなくなる（`claude-md-and-agents-md` 設定で両立可）
 > - Claude は `AGENTS.override.md` / `AGENTS.local.md` を読まない（Codex 固有）
 > - Claude 固有機能（`@` インポートの承認フロー、`.claude/rules/` 等）を使い込む場合は従来どおり CLAUDE.md 併用が有利

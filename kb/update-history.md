@@ -1,5 +1,21 @@
 # harness-harness 更新履歴
 
+## 2026-09-25 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code v2.1.281（2026-09-23）リリースを反映。ハーネス観点の最大の目玉は AGENTS.md 直接読み込みのフィーチャーフラグ依存解消（Bedrock / Vertex / Foundry・テレメトリ無効環境でも利用可に。mapping/ の変換要否判断に影響）。ほかに settings.json の `"attribution": false`（旧バージョン CLI はこのキーを含むファイルをスキップするため共有ファイルは要注意）、コマンド置換のみを対象とする再帰 rm の auto / skip-permissions 下での確認要求、`--setting-sources` の派生セッション引き継ぎ、`claude plugin validate` の MCP 検査、apps gateway の Bedrock `assume_role` / `guardrail`、resume / プロキシまわりの大量の信頼性修正。あわせてドキュメント改訂で、クラウドセッションの research preview 表記撤廃（Pro / Max / Team 正式提供）、次プロンプト提案のコスト明記、claude.ai 管理コンソールのマーケットプレース制限が claude.ai 上の追加にも適用されることを検出。Codex CLI 側は新安定版なし（0.156.1 のまま。0.158.0-alpha 系が進行中）。Phase 3.5 スキルエコシステム巡回は 2026-09-22 実施済みのためスキップ（7日ルール）。**
+
+- `specs/claude/changelog.md` — v2.1.281 セクション追加、最終更新行書き換え
+- `specs/claude/configuration.md` — §1.7 AGENTS.md の利用不可環境を更新（v2.1.281 で Bedrock / Vertex / Foundry・テレメトリ無効環境の制約解消）
+- `mapping/shared-concepts.md` / `mapping/codex-to-claude.md` — AGENTS.md 単一運用の適用範囲拡大を反映（Bedrock 系注記の更新）
+
+### 変更なし・ノイズ判定
+
+- Codex changelog / learn.chatgpt.com の hooks / build-plugins / app-server（テキスト同一。マークアップの動的差分のみ）
+- openai/codex-plugin-cc（Issue 数の増減のみ）、/docs/en/commands・GitHub 系ページ（動的 HTML ノイズ）
+- settings-reference.md / managed-settings.md の差分は claude.ai 側適用の明文化のみで specs 本文は changelog 記載で対応
+
 ## 2026-09-24 — 公式ドキュメント巡回
 
 ### 検出・更新
