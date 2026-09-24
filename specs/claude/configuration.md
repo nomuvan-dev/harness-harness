@@ -110,7 +110,7 @@ Claude Code は `AGENTS.md` をプロジェクト指示として直接読み込�
 | `claude-md` | CLAUDE.md のみ（従来動作） |
 | `managed-only` | 組織 managed CLAUDE.md と auto memory のみ |
 
-**利用不可の環境**: Bedrock / Vertex / Foundry、テレメトリ無効環境ではまだ使えない（`CLAUDE.md` からのインポートで代替）。`disableAllHooks` / `allowManagedHooksOnly` 設定時やビルトイン `agents-md` プラグイン無効時も読まれない。インストール/アップグレード直後の初回セッションでは無効（次セッションから有効）。
+**利用不可の環境**: v2.1.281 以降は Bedrock / Vertex / Foundry・テレメトリ無効環境でも利用可能（v2.1.280 以前はこれらの環境で `CLAUDE.md` のみ読まれるため、`CLAUDE.md` からのインポートで代替）。読まれないのは v2.1.277 未満、ビルトイン `agents-md` プラグイン無効時、（一部ケースで）v2.1.276 以前からのアップグレード直後の初回セッション（次セッションから有効）。
 
 ---
 

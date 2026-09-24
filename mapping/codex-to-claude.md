@@ -14,14 +14,14 @@
 | `~/.codex/config.toml` | `~/.claude/settings.json` | ユーザーレベル設定 |
 | `.codex/config.toml` | `.claude/settings.json` | プロジェクトレベル設定 |
 | `/etc/codex/config.toml` | Managed Policy settings | システムレベル設定 |
-| `AGENTS.md` | `CLAUDE.md`（v2.1.277+ は変換不要: CLAUDE.md がなければ `AGENTS.md` を直接読む） | 指示ファイル。Bedrock / Vertex / Foundry では AGENTS.md 直接読み込み未対応のため変換 or インポートが必要 |
+| `AGENTS.md` | `CLAUDE.md`（v2.1.277+ は変換不要: CLAUDE.md がなければ `AGENTS.md` を直接読む） | 指示ファイル。v2.1.281 以降は Bedrock / Vertex / Foundry・テレメトリ無効環境でも直接読み込み可（v2.1.280 以前のそれら環境では変換 or インポートが必要） |
 | `~/.codex/AGENTS.md` | `~/.claude/CLAUDE.md` | グローバル指示 |
 | `AGENTS.override.md` | **対応なし** | 代替: CLAUDE.md の階層構造で優先度を制御。より具体的なスコープの CLAUDE.md が優先される |
 | `project_doc_fallback_filenames` | **対応なし** | Claude は `CLAUDE.md` 固定。フォールバック名の設定なし |
 
 ### 1.1 変換ガイド: AGENTS.md → CLAUDE.md
 
-> **v2.1.277+ ではまず「変換しない」選択肢を検討する**: Claude Code は CLAUDE.md がないプロジェクトで AGENTS.md をそのまま読む。AGENTS.md 単一運用で足りるなら変換不要。以下は Claude 固有機能を活用したい場合や、AGENTS.md 直接読み込みが使えない環境（Bedrock / Vertex / Foundry、テレメトリ無効）向けの手順。
+> **v2.1.277+ ではまず「変換しない」選択肢を検討する**: Claude Code は CLAUDE.md がないプロジェクトで AGENTS.md をそのまま読む。AGENTS.md 単一運用で足りるなら変換不要。以下は Claude 固有機能を活用したい場合や、AGENTS.md 直接読み込みが使えない環境（v2.1.280 以前の Bedrock / Vertex / Foundry・テレメトリ無効環境、v2.1.277 未満）向けの手順。
 
 - ファイル名を `AGENTS.md` から `CLAUDE.md` に変更する
 - Claude は `@path/to/file` インポート構文をサポートするため、大きな AGENTS.md は分割して `@` で参照可能
