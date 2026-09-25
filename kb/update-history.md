@@ -1,5 +1,23 @@
 # harness-harness 更新履歴
 
+## 2026-09-26 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code v2.1.282（2026-09-24）と Codex CLI 0.157.0 安定版（2026-09-25）を反映。Claude 側の目玉は project / local 設定の `env` からの OpenTelemetry エクスポート系変数の無視化（テレメトリのリポジトリ統制排除。無視分は起動時通知・`/status`・`claude doctor` に表示）、`anthropic-skills:` / `claude-ai:` 名前空間の保護（同期スキルなりすまし防止）、`maxProseWidth`、`allowClaudeInChromeWithManagedMcp`、managed 設定の堅牢化修正多数。あわせてプラグインドキュメントの大再編（単一ページ群→ `/docs/en/plugins/` 以下の約20ページ）を検出し、specs 内の旧 URL 参照（discover-plugins 等）を更新。Codex 側は GPT-6 Sol / Luna の CLI 正式対応（Bedrock サポート付き）、フルスクリーントランスクリプト既定化、バックグラウンドサーバー自動起動、`f` フォークショートカット、`/import` 拡大。Phase 3.5 スキルエコシステム巡回は 2026-09-22 実施済みのためスキップ（7日ルール）。**
+
+- `specs/claude/changelog.md` — v2.1.282 セクション追加、最終更新行書き換え
+- `specs/claude/configuration.md` — `env`（テレメトリ変数無視）・`maxProseWidth`・`allowClaudeInChromeWithManagedMcp`・`strictKnownMarketplaces` / `blockedMarketplaces`（親設定の扱い）・`sandbox.excludedCommands`（厳格サンドボックス下の project / local 無視）を更新
+- `specs/claude/skills-and-commands.md` — 名前空間保護の注記追加、プラグインドキュメント再編に伴う URL 更新
+- `specs/codex/changelog.md` — CLI 0.157.0 セクション追加、最終更新行書き換え
+
+### 変更なし・ノイズ判定
+
+- code.claude.com の多数ページ（hooks / skills / mcp / sub-agents / commands / settings-reference 等）の差分は大半がプラグインドキュメント再編に伴うリンク張り替えとテーブル再フォーマット（実質的な仕様変更は上記に集約）
+- env-vars.md の745行差分はテーブル列幅の再フォーマットのみ（変数の追加・削除なし）
+- GitHub リポジトリページ（anthropics/skills 等）は Star 数等の動的差分のみ
+- claude-tag.md は 403 で取得不可（一時的な可能性。次回巡回で再試行）
+
 ## 2026-09-25 — 公式ドキュメント巡回
 
 ### 検出・更新

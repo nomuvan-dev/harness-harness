@@ -2,7 +2,7 @@
 
 最終更新: 2026-09-11（巡回更新）
 
-公式ドキュメント: https://code.claude.com/docs/en/skills / https://code.claude.com/docs/en/commands / https://code.claude.com/docs/en/sub-agents / https://code.claude.com/docs/en/scheduled-tasks / https://code.claude.com/docs/en/web-scheduled-tasks / https://code.claude.com/docs/en/discover-plugins
+公式ドキュメント: https://code.claude.com/docs/en/skills / https://code.claude.com/docs/en/commands / https://code.claude.com/docs/en/sub-agents / https://code.claude.com/docs/en/scheduled-tasks / https://code.claude.com/docs/en/web-scheduled-tasks / https://code.claude.com/docs/en/plugins/install（2026-09-25 のドキュメント再編で discover-plugins から移動。プラグイン関連は https://code.claude.com/docs/en/plugins/overview 以下の約20ページ構成に分割された）
 
 ---
 
@@ -35,6 +35,7 @@ Skills は Claude の能力を拡張する仕組み。`SKILL.md` ファイルに
 - **worktree 内セッションのスキル探索（2026-09-22 ドキュメント改訂で明文化）**: リンクされた git worktree 内のセッションでは、親ディレクトリのスキル探索は worktree ルートで止まる。**v2.1.277 以降、worktree のチェックアウトにルートの `.claude/skills` がない場合はメインチェックアウトのプロジェクトスキルをロードする**
 - **frontmatter の寛容なパース（2026-09-22 ドキュメント改訂で明文化）**: フィールド名は表と完全一致が必要（ハイフン含む。`when_to_use` のみアンダースコア）。未知のフィールドはエラーなしで無視される。`---` 間の YAML がパース不能な場合もスキル自体はフィールドなしでロードされる（`claude --debug` でパースエラー確認）。`.claude/commands/` のコマンドファイルは `name` と `paths` を除く同じフィールドを受け付ける
 - **同期スキルの呼び出し名（2026-09-15 リファレンス改訂で明文化）**: claude.ai から同期したスキルは `/anthropic-skills:<name>` の完全名と短縮名 `/<name>` の両方で呼べる。短縮名が他のコマンド（組み込み・バンドル・ローカルスキル・プラグイン・`.claude/commands/`・MCP プロンプト。セッションで無効化中の組み込み/バンドル名も予約扱い）と衝突する場合は他方が `/<name>` を取り、同期スキルは完全名のみになる（例: ローカル `deploy` + 同期 `deploy` → `/deploy` はローカル、`/anthropic-skills:deploy` が同期側）。v2.1.269 より前は短縮名しかなかった。名前比較は大文字小文字・空白・不可視文字を無視し全角・ダッシュ類も正規化（v2.1.228 以降。別アルファベットの見た目類似文字は別名扱いで、`claude.ai sync` ラベルで区別）
+- **`anthropic-skills:` / `claude-ai:` 名前空間の保護（v2.1.282）**: この名前空間のスキルフォルダ・コマンドファイル・ワークフローコマンドはロードされなくなった（同期スキルへのなりすまし防止）。同名プラグインはロードされるが名前衝突では同期スキルに譲る。`Skill(anthropic-skills:*)` / `Skill(claude-ai:*)` の allow ルールは claude.ai から同期されたスキルのみに一致し、その名前を使うだけのプラグイン等には一致しない。この名前で設定された MCP サーバーはスキル / プロンプトを一覧しなくなる（ツールは動作。一覧に戻すにはサーバーをリネーム）
 - **`.claude/commands/`**: 旧形式だが引き続き動作する。`name` と `paths` を除き同じフロントマターに対応し、ファイル名で呼び出す。**サブディレクトリに置いたファイルは `commands/` からの相対パスの `/` を `:` に置き換えた名前になる**（例: `.claude/commands/frontend/component.md` → `/frontend:component`。2026-09-13 リファレンス改訂で命名表に明記）。**新規はスキル推奨**（スキルは補助ファイルを持てる）
 - **スキルフォルダをプラグイン化**: `.claude-plugin/plugin.json` を置くと `<name>@skills-dir` というプラグインとしてロードされ、agents / hooks / MCP サーバーを同梱できる（プロジェクトの `.claude/skills/` ではワークスペース信頼ダイアログの承認が必要）
 
@@ -447,7 +448,7 @@ MCPサーバーが公開するプロンプトは `/mcp__<server>__<prompt>` 形�
 
 ## 4. プラグインマーケットプレース
 
-公式ドキュメント: https://code.claude.com/docs/en/discover-plugins
+公式ドキュメント: https://code.claude.com/docs/en/plugins/install
 
 ### 4.1 公式マーケットプレース
 
@@ -866,6 +867,6 @@ claude -p --resume SESSION_ID "追加作業"
 - ヘッドレスモード: https://code.claude.com/docs/en/headless
 - エージェントチーム: https://code.claude.com/docs/en/agent-teams
 - プラグイン: https://code.claude.com/docs/en/plugins
-- プラグイン発見: https://code.claude.com/docs/en/discover-plugins
+- プラグイン発見: https://code.claude.com/docs/en/plugins/install
 - スケジュールタスク: https://code.claude.com/docs/en/scheduled-tasks
 - クラウドスケジュールタスク: https://code.claude.com/docs/en/web-scheduled-tasks
