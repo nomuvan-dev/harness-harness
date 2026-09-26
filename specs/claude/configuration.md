@@ -305,6 +305,8 @@ Claude Code は設定ファイルを監視し、変更を検知するとセッ�
 | `disableBundledSkills` | バンドルスキル・ワークフロー・組み込みスラッシュコマンドをモデルから隠す（v2.1.169）。環境変数 `CLAUDE_CODE_DISABLE_BUNDLED_SKILLS` でも可 |
 | `wheelScrollAccelerationEnabled` | フルスクリーンモードのマウスホイールスクロール加速を無効化（v2.1.174） |
 | `enforceAvailableModels` | （Managed のみ）`availableModels` 許可リストを Default モデルにも適用。user/project 設定による managed リストの拡張も禁止（v2.1.175） |
+| `availableModelsMatch` | （Managed のみ、v2.1.283 以降）`availableModels` のモデルIDエントリのマッチ方法。既定 `"prefix"` はエントリを1セグメント延長した後続モデルIDも許可（`claude-opus-5` → Opus 5.5 も可）。`"exact"` は記載バージョンのみ許可（そのバージョンの日付付きIDは含む）し、新リリースはリスト追加までブロック。ファミリーエイリアス（`opus` 等）は `"exact"` でもファミリー全体を許可、`best` / `opusplan` / `default` エントリは無視。`"exact"` ではリストがモデルかファミリーを1つでも指定していれば Default オプションもリスト内モデルに限定。user / project / local / `--settings` では警告付きで無視 |
+| `deniedModels` | （Managed のみ、v2.1.283 以降）特定モデルのブロックリスト（エイリアスまたはモデルIDの配列）。`availableModels` の有無・許可に関わらず適用され、ブロックされたモデルは `/model` ピッカーから隠れ、`availableModels` が強制される全箇所で選択不可。Default オプションもブロックモデルでは動かない。ファミリーエイリアスはファミリー全体を、モデルIDは全表記（日付付き・プロバイダ固有ID含む）をブロック。マイナーバージョンなしのID（`claude-opus-5`）は後続マイナー（Opus 5.5）もブロックするため、Opus 5 単体は `claude-opus-5-0` と書く。`best` / `opusplan` / `default` エントリは無視。user / project / local / `--settings` では警告付きで無視 |
 | `footerLinksRegexes` | フッター行に正規表現マッチのリンクバッジを表示（user / managed 設定）（v2.1.176） |
 | `sandbox.allowAppleEvents` | サンドボックスコマンドに macOS Apple Events 送信を許可（オプトイン）（v2.1.181） |
 | `attribution.sessionUrl` | Web / Remote Control セッションで commit・PR への claude.ai セッションリンク付与を制御（v2.1.183） |

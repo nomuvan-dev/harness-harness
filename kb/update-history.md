@@ -1,5 +1,21 @@
 # harness-harness 更新履歴
 
+## 2026-09-27 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code v2.1.283（2026-09-25）と Codex CLI 0.157.1 安定版（2026-09-26）を反映。Claude 側の目玉は `availableModelsMatch` / `deniedModels` managed 設定（モデル許可リストの exact マッチ化と個別モデルブロック）、`/doctor prompt-audit`（CLAUDE.md・スキル・エージェント・コマンドの旧モデル向けプロンプトパターン監査。ハーネス保守に直結）、2.1.282 の `claude-ai` 名前空間予約のリバート（`anthropic-skills:` の保護は維持、deny ルールは拡張）、サードパーティプロバイダ / テレメトリ無効の対話セッションの auto モード既定化。Codex 側は 0.157.1 が Chores のみのパッチ（実質変更なし）。Phase 3.5 スキルエコシステム巡回は 2026-09-22 実施済みのためスキップ（7日ルール）。**
+
+- `specs/claude/changelog.md` — v2.1.283 セクション追加、最終更新行書き換え
+- `specs/claude/configuration.md` — `availableModelsMatch` / `deniedModels` の行を managed キー表に追加
+- `specs/claude/skills-and-commands.md` — 名前空間保護の注記を更新（`claude-ai:` リバート・deny ルール拡張を反映）
+- `specs/codex/changelog.md` — CLI 0.157.1 セクション追加、最終更新行書き換え
+
+### 変更なし・ノイズ判定
+
+- Claude docs の大半のページ（33 URL）でハッシュ変化を検出したが、changelog 由来の実質変更（settings-reference の新 managed キー、model-config の Block specific models 節）以外は動的ノイズ・軽微改訂と判定
+- Codex（learn.chatgpt.com）docs は 0.157.1 エントリ追加のみ
+
 ## 2026-09-26 — 公式ドキュメント巡回
 
 ### 検出・更新
