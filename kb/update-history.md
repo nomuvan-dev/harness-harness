@@ -1,5 +1,22 @@
 # harness-harness 更新履歴
 
+## 2026-09-28 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**新バージョンリリースなし（Claude Code changelog / llms.txt は前回から不変、Codex CLI は 0.157.1 が最新安定版のまま。0.159.0-alpha 系が進行中）。実質的な仕様変更は hooks リファレンスの `mcp_tool` フック改訂のみ: 従来の「サーバーは接続済みでなければならない」制約が「接続中のサーバーを待つ」動作に変更された。ブロック可能イベント（PreToolUse / Stop 等）では `MCP_TIMEOUT` かつフック自身の `timeout` の範囲内で接続を待ち、観測系イベント（Notification / SessionEnd 等）では待たない。`cached` ステータスのサーバーは呼び出し時点で接続される。OAuth フローを開始しない点は従来どおり。Phase 3.5 スキルエコシステム巡回は 2026-09-22 実施済みのためスキップ（7日ルール）。**
+
+- `specs/claude/hooks.md` — mcp_tool ハンドラに「結果の読み取り」「サーバー接続待機」の項を追加
+
+### 変更なし・ノイズ判定
+
+- hooks.md のその他の差分は既存仕様の再編集（`CLAUDE_CODE_STOP_HOOK_BLOCK_CAP` は specs 反映済み、scratchpad_dir のリンク追加、deferred セッションの plan mode 復帰注記の文言調整）
+- developers.openai.com/codex/changelog の差分は 0.157.1（反映済み）の掲出とページ末尾の旧エントリのスクロールアウトのみ
+- api.github.com/repos/openai/codex/releases は 0.159.0-alpha.1〜9 の追加のみ（alpha はスキップ対象）
+- docs/en/commands は空白のみの差分、learn.chatgpt.com 各ページはテキストレベルで差分なし
+- github.com/openai/codex-plugin-cc は Star / Watcher 数の動的差分のみ
+- claude-tag.md は Cloudflare チャレンジで取得不可（キャッシュのハッシュを維持。次回巡回で再試行）
+
 ## 2026-09-27 — 公式ドキュメント巡回
 
 ### 検出・更新
