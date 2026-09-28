@@ -1,6 +1,6 @@
 ---
 title: Agent Skills エコシステム
-last_patrol: "2026-09-22"
+last_patrol: "2026-09-29"
 standard: agentskills.io (46 platforms confirmed)
 tracked_skills: 21  # recommended.md の行数（Tier A 11 / Tier B 10）
 patrol_schedule: weekly (月曜)
