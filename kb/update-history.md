@@ -1,5 +1,28 @@
 # harness-harness 更新履歴
 
+## 2026-09-29 — 公式ドキュメント巡回＋スキルエコシステム巡回
+
+### 検出・更新
+
+**Claude Code v2.1.284（2026-09-28 npm 公開、公式 changelog 未掲載）: Claude Sonnet 5.5（`claude-sonnet-5-5`）対応が最大トピック。** Anthropic API で `sonnet` エイリアスが Sonnet 5 → Sonnet 5.5 に（AWS/Bedrock/Vertex は従来どおり）。ネイティブ 1M・thinking 常時オン・effort 既定 `medium`・安全クラシファイア付き（cyber→Sonnet 5 フォールバック、bio→拒否）。`VERTEX_REGION_CLAUDE_5_5_SONNET` 追加。あわせて公式ドキュメント改訂多数: effort レベル表のユースケース記述化、Bash タイムアウトの自動バックグラウンド移行、vim `d0`/`c0`/`y0`（v2.1.281）、advisor「Unavailable」状態、`modelPicker.options.behavesAs`（v2.1.257）、`--agents` の headless JSON ファイルパス・空 prompt 明文化、`CLAUDE_CODE_DISABLE_DANGEROUS_RM_TIMEOUT` / `CLAUDE_CODE_DISABLE_POWERSHELL_CMD_RM_DENY`（v2.1.283）、managed `sandbox` のフィールド単位バリデーション詳説、CLAUDE.md のネットワークパス symlink 不追従・長さ警告、`/doctor prompt-audit` の memory.md 解説。
+
+**Codex CLI 0.158.0 安定版（2026-09-28）**: フルスクリーン TUI の copy-on-select / 右クリックペースト設定、`codex mcp add --oauth-client-secret`、exec-server WebSocket ベアラートークン認証、画像生成の透過背景指定、昇格権限コマンドの terminal input approval デフォルト有効化。GitHub タグは 0.159.0-alpha.13 まで進行。
+
+**Phase 3.5 スキルエコシステム巡回（前回 2026-09-22 から7日経過のため実施）**: 実質変化なし。anthropics/skills は claude-api スキルのリンク修正コミットのみ（Stars 178.2k→178.8k）、openai/skills は新規コミットなし（27.8k）、claude.com/plugins・agentskills.io・skills.sh・Codex Skills Docs はテキストレベル変更なし。recommended.md の変更なし、`_index.md` の last_patrol のみ更新。
+
+- `specs/claude/changelog.md` — v2.1.284 エントリ追加
+- `specs/claude/configuration.md` — Sonnet 5.5（エイリアス解決・effort 既定 medium）、`VERTEX_REGION_CLAUDE_5_5_SONNET`、`modelPicker.options.behavesAs`、advisor の Sonnet 5.5 ペア・Unavailable 状態
+- `specs/codex/changelog.md` — CLI 0.158.0 エントリ追加
+- `kb/skills/_index.md` — last_patrol を 2026-09-29 に更新
+
+### 変更なし・ノイズ判定
+
+- code.claude.com/docs/en/changelog.md・llms.txt は不変（v2.1.284 は公式 changelog 未掲載。次回巡回で公式記載を確認して差分があれば補完する）
+- claude-tag.md の差分は Cloudflare チャレンジページ（フェッチ失敗）によるもので実質変更なし
+- hooks.md・agent-sdk/troubleshooting.md の差分は glossary リンク追加・文分割のみ
+- claude-apps-gateway-on-aws.md の差分は `readiness_grace_seconds`（v2.1.282 反映済み）の説明追記のみ
+- learn.chatgpt.com（hooks / build-plugins / app-server）・developers.openai.com/codex/skills はテキストレベル変更なし
+
 ## 2026-09-28 — 公式ドキュメント巡回
 
 ### 検出・更新
