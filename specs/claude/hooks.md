@@ -63,7 +63,7 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 | イベント | 発火タイミング | ブロック可能 | matcher対象 |
 |:--|:--|:--|:--|
 | `WorktreeCreate` | ワークツリー作成時 | Yes | - |
-| `WorktreeRemove` | ワークツリー削除時 | **Yes（2026-09-13 リファレンス改訂）**: 非ゼロ終了コードで、削除後もディレクトリが残っている場合に削除を失敗させられる。worktree はディスクに残り、コマンドと stderr はデバッグログへ。バックグラウンドセッション削除中ならセッションも残り、agent view の拒否メッセージにフックの終了状態と stderr 冒頭が表示される。JSON 出力は破棄される（従来は「決定制御なし・失敗はデバッグログのみ」だった） | - |
+| `WorktreeRemove` | ワークツリー削除時 | **Yes（2026-09-13 リファレンス改訂）**: 非ゼロ終了コードで、削除後もディレクトリが残っている場合に削除を失敗させられる。worktree はディスクに残り、コマンドと stderr はデバッグログへ。バックグラウンドセッション削除中ならセッションも残り、agent view の拒否メッセージにフックの終了状態と stderr 冒頭が表示される。JSON 出力は破棄される（従来は「決定制御なし・失敗はデバッグログのみ」だった）。**クリーンアップ責務（2026-09-30 ドキュメント改訂で詳細化）**: WorktreeRemove フック未設定の場合、WorktreeCreate フックが返したパスに対し `git worktree remove --force` でフォールバック削除される（git が認識しない worktree はディスクに残る）。フックが exit 0 なら「削除済み」とみなされる（実際に削除したかは検証されないためフック側で確実に削除すること）。**WorktreeCreate フックが作ったブランチは Claude Code は削除しない**ため、ブランチ削除も WorktreeRemove フックで行う | - |
 | `PreCompact` | コンパクション前 | No | `manual`, `auto`（入力の `custom_instructions` は `manual` で `/compact` に引数が渡された場合のみ文字列。引数なし・`auto` では `null`。従来は空文字列と記載されていた） |
 | `PostCompact` | コンパクション後 | No | `manual`, `auto` |
 
@@ -238,7 +238,7 @@ JSON POST リクエストをURLエンドポイントに送信。
 
 ### 3.3 Prompt ハンドラ
 
-Claude モデルにプロンプトを送信して評価。
+Claude モデルにプロンプトを送信して評価。`model` 省略時の既定は、従来「高速モデル（Haiku）」だったが、**2026-09-30 ドキュメント改訂で「Claude Code が[バックグラウンド機能](https://code.claude.com/docs/en/costs#background-token-usage)に使うモデル」に変更**された（agent ハンドラも同様）。
 
 ```json
 {
@@ -507,6 +507,8 @@ v2.1.133 以降、すべてのイベントの入力 JSON に effort level も含
 ```
 
 > `updatedInput` はツール入力を**丸ごと置換**するため、変更しないフィールドも含めて返す必要がある。**Claude Code は権限ルールの評価と Bash コマンドの[自動バックグラウンド化の可否判定](https://code.claude.com/docs/en/tools-reference#background-commands)を、Claude が送った入力ではなくフックが返した入力に対して行う**（`"defer"` の場合は無視される）。
+>
+> `permissionDecisionReason` の扱い（2026-09-30 ドキュメント改訂）: `"ask"` はユーザーに表示（Claude には非表示）、`"deny"` は Claude に表示、**`"allow"` と `"defer"` はデバッグログ（`--debug`）にのみ書かれる**（従来は `"allow"` もユーザーに表示されるとされていた）。
 
 > フックが `"ask"` を返したときの権限プロンプトには、そのフックの出所ラベルが付く。ラベルは **`[settings]`**（settings ファイル由来またはエージェント frontmatter 由来） / **`[plugin:<name>]`**（プラグイン由来） / **`[skill]`**（スキル frontmatter 由来）の 3 種（従来ドキュメントの `[User]` / `[Project]` / `[Plugin]` / `[Local]` から変更）。
 

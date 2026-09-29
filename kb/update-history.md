@@ -1,5 +1,28 @@
 # harness-harness 更新履歴
 
+## 2026-09-30 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code v2.1.284 の公式 changelog 掲載を確認し、前日の npm ベース記載に正式内容を補完。** ハーネス観点の追加トピックは3点: (1) **ultracode の独立トグル化**（`xhigh` 強制廃止・任意 effort レベルで維持・`/effort ultracode [on|off]`・スライダ Tab トグル・`effortSlider:*` キーバインド3種追加・effort キャップによる無効化廃止）、(2) **対話ターミナル / VSCode の permission mode 未設定時 auto モード開始が全プラン・全プロバイダに拡大**、(3) **`/mcp reconnect all`**。ほかに「Yes, but ask again next time」、`/rate-limit-options`、gateway spend limit ドル表示、prompt/agent フック既定モデルの変更（Haiku→バックグラウンド機能用モデル）、`permissionDecisionReason` の `"allow"` デバッグログ化、auto-memory の不可視文字無害化、rules 外部 symlink 承認修正など。ドキュメント改訂でグローバル設定キー5つ（`claudeInChromeDefaultEnabled` / `copyFullResponse` / `defaultToAgentsView` / `leftArrowOpensAgents` / `prStatusFooterEnabled`）、`/slides` コマンド、Anthropic 提供コネクタ（claude.ai Claude Docs）、Enterprise の `/model` アカウント記録（v2.1.280+）、WorktreeRemove クリーンアップ責務、managed-settings の「present admin documents」概念、Claude Tag セッションの server-managed settings 非受領を収載。
+
+**Codex CLI 0.159.0 安定版（2026-09-29）**: opt-in `instant_interrupt`（応答中の即時ステアリング）、新ウェルカム画面＋ヒント表示、warnings viewer 改善、プラン判断中のトランスクリプトスクロール、Mermaid flowchart 対応拡大、app-server 履歴ページネーション。**`tui.prompt_suggestions` 設定とバンドル `plugin-creator` スキルを削除**。`.aws` ディレクトリの既定保護、Windows コンソールウィンドウ抑止、macOS TLS 修正など。**同日アナウンス: GPT-6.1 Sol（`gpt-6.1-sol`）が Codex / ChatGPT Work に追加**（Astra に近い性能を低コストで）。GPT-5.5 退役の移行ガイダンスも「利用可能な代替を選択」に変更。
+
+**Phase 3.5 スキルエコシステム巡回**: 前回 2026-09-29 から7日未満のためスキップ。
+
+- `specs/claude/changelog.md` — v2.1.284 エントリに公式 changelog 掲載内容を追記
+- `specs/claude/configuration.md` — `ultracode` キー新設（独立トグル化）、`maxEffortLevel` の ultracode 関係更新、グローバル設定キー5つ追加
+- `specs/claude/skills-and-commands.md` — `/effort` 新構文、`/model` ピッカーの ultracode 位置廃止、`/slides` 追加、`${CLAUDE_EFFORT}` 注記、EffortSlider キーバインド3種
+- `specs/claude/hooks.md` — prompt/agent ハンドラ既定モデル、`permissionDecisionReason` 扱い、WorktreeRemove クリーンアップ責務
+- `specs/claude/mcp.md` — Anthropic 提供コネクタ（claude.ai Claude Docs）、`/mcp reconnect all`、ディスカバリキャッシュのエントリ破棄条件
+- `specs/codex/changelog.md` — CLI 0.159.0 エントリ追加＋GPT-6.1 Sol アナウンス
+
+### 変更なし・ノイズ判定
+
+- code.claude.com の全 .md ページで Markdown テーブル整形（パディング除去）による全面ハッシュ変化が発生。空白正規化で実質 diff を抽出して対応（agent-teams / goal / sub-agents / claude-projects / interactive-mode / tools-reference は実質変更なし）
+- learn.chatgpt.com 系ページの diff はビルドハッシュ・検索プロバイダ切替（algolia 追加）等のサイト実装変更が主
+- managed-settings / settings-reference の細部（fail-closed 一般化・present admin documents）は changelog エントリ内の要約に留め、詳細は必要時に公式参照
+
 ## 2026-09-29 — 公式ドキュメント巡回＋スキルエコシステム巡回
 
 ### 検出・更新

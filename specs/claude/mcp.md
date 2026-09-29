@@ -227,6 +227,8 @@ v2.1.154: `claude mcp list` / `get` の出力がパイプされた場合、未�
   - **claude.ai コネクタ一覧の取得リトライ（v2.1.265）**: セッション開始時に一時的なネットワーク障害でコネクタ一覧が読めなかった場合、バックグラウンドで最大 3 回リトライし、成功した時点でコネクタが現れる。それでも現れない場合は Claude Code を再起動する
   - **初回接続の失敗**: HTTP / SSE サーバーが transient エラー（5xx・connection refused・タイムアウト）で初回接続に失敗した場合は最大 3 回リトライ。起動時とセッション途中の追加（クラウドセッションが構成から追加するサーバー、Agent SDK の `setMcpServers()` を含む）に適用。**WebSocket サーバーの初回接続**と**認証エラー / not-found** はリトライしない
   - **discovery リクエストの失敗**: 接続成功後の `tools/list` / `prompts/list` / `resources/list` は transient なネットワーク／サーバーエラーで最大 3 回・短いバックオフでリトライ。認証エラー・4xx・リクエストタイムアウトはリトライしない
+  - **`/mcp reconnect all`（v2.1.284）**: 対話ターミナルで、接続に失敗した／認証が必要な全 MCP サーバーを一括で再試行できる
+  - **ディスカバリキャッシュのエントリ破棄（2026-09-30 ドキュメント改訂）**: `/mcp` のサーバーメニューで **Disable** または **Clear authentication** を選ぶとそのサーバーのキャッシュエントリも破棄される。**Reconnect** は接続済み／failed のサーバーではエントリを破棄し、`cached` 状態のサーバーでは今すぐ接続してエントリを保持する。破棄後の次回接続時はキャッシュでなくサーバーからツール一覧を取得する
   - **Claude への通知**: tool search が有効（既定）なら、接続に失敗したサーバー名と接続エラーが Claude に伝えられ（該当ツールが見つからない `ToolSearch` 結果にも含まれる）、Claude が応答内で接続失敗を報告する。tool search 無しの構成では Claude に伝わらない
 - **MCP クライアントランタイム（v2）**: v2.1.232 以降、feature flag を取得するセッションでは MCP TypeScript SDK 2.0 ベースの v2 ランタイムが既定（起動時に選択されセッション中は固定）。**v2.1.274 以降は feature flag を取得しないセッション（Bedrock / Vertex / Foundry、Claude apps gateway 経由サインイン、`DISABLE_TELEMETRY` 等でテレメトリ無効）でも v2 が既定**になった。v2 は direct HTTP サーバーに MCP プロトコル 2026-07-28 対応を照会して対応サーバーとは新リビジョンで接続する（claude.ai コネクタは feature flag 取得セッションのみ照会。stdio や全セッションでのコネクタ照会は `MCP_PROTOCOL_NEGOTIATION=auto`）。ランタイムのピン止めは `MCP_SDK_GENERATION=v1|v2`、照会の無効化は `MCP_PROTOCOL_NEGOTIATION=legacy`
 - **`/cd` によるセッション移動（v2.1.246）**: 移動先ディレクトリの設定が有効化するプラグインの MCP サーバーが接続され、有効でなくなったプラグインのサーバーは切断される（移動後に `/reload-plugins` を実行する必要はない）
@@ -393,6 +395,10 @@ MCP サーバーはツール結果の `_meta` フィールドに `anthropic/maxR
 ### 8.9 ツール説明とサーバー指示の上限
 
 MCP ツール説明およびサーバー指示は **2KB** に制限される（v2.1.84）。超過分は切り詰められる。
+
+### 8.9.0 Anthropic 提供コネクタ（2026-09-30 ドキュメント改訂）
+
+Anthropic はユーザーや管理者が追加しなくても一部コネクタを自ら提供する。**Claude Docs が利用可能なアカウントでは `/mcp` に `claude.ai Claude Docs` がセットアップなしで現れ**、他者向けドキュメントを求められた際に Claude が使用する。オフにするには `deniedMcpServers` に `"claude.ai Claude Docs"` の `serverName` エントリを追加する。
 
 ### 8.9.1 claude.ai コネクタが Claude Code に届く経路（ドキュメント新設）
 
