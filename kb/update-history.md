@@ -1,5 +1,23 @@
 # harness-harness 更新履歴
 
+## 2026-10-01 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code v2.1.285（2026-09-29）**: ハーネス観点の目玉は (1) **`allowedProviders` managed 設定**（使用可能 API プロバイダの制限）、(2) **バックグラウンド Bash / PowerShell の時間制限導入**（`run_in_background` でも `timeout`（既定30分・最大2時間）で停止し Claude に通知）、(3) **`claude -p` / Python Agent SDK のサードパーティプロバイダ・テレメトリ無効環境での auto モード開始拡大**。ほかに `CLAUDE_CODE_DISABLE_WEB_FETCH` / `CLAUDE_CODE_NONSTREAMING_TIMEOUT_RETRIES` 環境変数、`claude --desktop`、`claude plugin configure`（`--values-stdin`）、`plugin install --config` の `<server>.<key>=<value>` 形式、カスタム `ANTHROPIC_BASE_URL` 配下の 1M コンテキスト使用、MCP サーバー名 `widgets` のクラウド予約、fork サブエージェントの permission mode 継承、project 設定による managed サンドボックス緩和の禁止、`disableWorkflows` 下でも Code Review / ultrareview 実行、Bedrock / Vertex の既定モデル除去時の同ティアフォールバックなど。
+
+**Codex CLI 0.159.1 / 0.159.2 安定版（ともに 2026-09-29）**: 0.159.1 は **GPT-6.1 Sol をバンドルカタログ・Amazon Bedrock Mantle / Runtime カタログの既定モデルに設定**。0.159.2 は Windows のコンソールウィンドウ点滅抑止のみ。公式 changelog にも GPT-6.1 Sol のエントリ（`gpt-6.1-sol`、Astra に近い性能を低コストで）が掲載。GitHub リリースタグは 0.161.0-alpha.4（2026-09-30）まで進行。
+
+**Phase 3.5 スキルエコシステム巡回**: 前回 2026-09-29 から7日未満のためスキップ。
+
+### 更新ファイル
+
+- `specs/claude/changelog.md` — v2.1.285 エントリ追加
+- `specs/claude/configuration.md` — `allowedProviders` managed 設定、`CLAUDE_CODE_DISABLE_WEB_FETCH` / `CLAUDE_CODE_NONSTREAMING_TIMEOUT_RETRIES` 環境変数を追加
+- `specs/claude/tools.md` — バックグラウンドコマンドの時間制限（v2.1.285）を追記
+- `specs/claude/skills-and-commands.md` — `claude plugin configure` / `plugin install --config` の `<server>.<key>=<value>` 形式を追加
+- `specs/codex/changelog.md` — CLI 0.159.1 / 0.159.2 エントリ追加
+
 ## 2026-09-30 — 公式ドキュメント巡回
 
 ### 検出・更新

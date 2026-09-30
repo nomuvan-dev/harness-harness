@@ -307,6 +307,7 @@ Claude Code に同梱されるスキル:
 | `/plugin` | プラグイン管理（マーケットプレース、インストール、有効化/無効化）。`claude plugin prune` で孤立した自動インストール依存を削除、`plugin uninstall --prune` でカスケード削除（v2.1.121）。マーケットプレース browse ペインに projected context cost（ターン当たり・呼び出し当たりのトークン推定）を表示（v2.1.143）。Discover/Browse 画面でインストール前にプラグインが提供する commands / agents / skills / hooks / MCP/LSP サーバーをプレビュー（v2.1.145） |
 | `/plugin list` | インストール済みプラグイン一覧表示。`--enabled` / `--disabled` フィルタ対応（v2.1.163） |
 | `claude plugin enable/disable` | 依存関係を強制。`disable` は他の有効プラグインの依存先を拒否し disable-chain ヒントを表示。`enable` は推移的依存を強制有効化（v2.1.143） |
+| `claude plugin configure <plugin>` | プラグインのオプション一覧と未設定項目を表示。`--values-stdin` で stdin から読んだ新値を保存（v2.1.285）。`claude plugin install --config` では `<server>.<key>=<value>` 形式でバンドル `.mcpb` MCP サーバー自身の設定もインストール時に指定可能（`/plugin` → Configure を経ずに起動できる） |
 | `/reload-plugins` | プラグイン変更の即時反映（v2.1.221 から `/plugin` 経由のインストールは安全な場合、実行不要で即時有効化） |
 | `/reload-skills` | スキル / コマンドディレクトリを再スキャン。セッション再起動不要。利用可能スキル数と増減数を報告する |
 | `/desktop` (`/app`) | デスクトップアプリでセッション継続 |

@@ -308,6 +308,7 @@ Claude Code は設定ファイルを監視し、変更を検知するとセッ�
 | `enforceAvailableModels` | （Managed のみ）`availableModels` 許可リストを Default モデルにも適用。user/project 設定による managed リストの拡張も禁止（v2.1.175） |
 | `availableModelsMatch` | （Managed のみ、v2.1.283 以降）`availableModels` のモデルIDエントリのマッチ方法。既定 `"prefix"` はエントリを1セグメント延長した後続モデルIDも許可（`claude-opus-5` → Opus 5.5 も可）。`"exact"` は記載バージョンのみ許可（そのバージョンの日付付きIDは含む）し、新リリースはリスト追加までブロック。ファミリーエイリアス（`opus` 等）は `"exact"` でもファミリー全体を許可、`best` / `opusplan` / `default` エントリは無視。`"exact"` ではリストがモデルかファミリーを1つでも指定していれば Default オプションもリスト内モデルに限定。user / project / local / `--settings` では警告付きで無視 |
 | `deniedModels` | （Managed のみ、v2.1.283 以降）特定モデルのブロックリスト（エイリアスまたはモデルIDの配列）。`availableModels` の有無・許可に関わらず適用され、ブロックされたモデルは `/model` ピッカーから隠れ、`availableModels` が強制される全箇所で選択不可。Default オプションもブロックモデルでは動かない。ファミリーエイリアスはファミリー全体を、モデルIDは全表記（日付付き・プロバイダ固有ID含む）をブロック。マイナーバージョンなしのID（`claude-opus-5`）は後続マイナー（Opus 5.5）もブロックするため、Opus 5 単体は `claude-opus-5-0` と書く。`best` / `opusplan` / `default` エントリは無視。user / project / local / `--settings` では警告付きで無視 |
+| `allowedProviders` | （Managed のみ、v2.1.285 以降）マシンが使用できる API プロバイダを制限する許可リスト。指定可能: Anthropic API / カスタムエンドポイント / Bedrock / Mantle / Vertex AI / Foundry / Claude Platform on AWS / Cloud gateway |
 | `footerLinksRegexes` | フッター行に正規表現マッチのリンクバッジを表示（user / managed 設定）（v2.1.176） |
 | `sandbox.allowAppleEvents` | サンドボックスコマンドに macOS Apple Events 送信を許可（オプトイン）（v2.1.181） |
 | `attribution.sessionUrl` | Web / Remote Control セッションで commit・PR への claude.ai セッションリンク付与を制御（v2.1.183） |
@@ -619,6 +620,8 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 | `CLAUDE_CODE_REMOTE` | Webリモート環境で `"true"` |
 | `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB` | `1` でサブプロセス環境（Bash ツール・hooks・MCP stdio サーバー）から認証情報を除去（v2.1.83）。除去対象は Anthropic / クラウドプロバイダの認証情報に限らず、**Claude Code が認証情報と認識する任意の変数と、パッケージレジストリ URL に埋め込まれた認証情報**まで広がる（2026-09-02 の改訂で明文化）。**hooks プロセスも対象**で、常に除去される `OTEL_*` エクスポータ変数に加えて、本変数が `1` のときは除去対象の変数が hook からも見えなくなる |
 | `CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK` | 非ストリーミングフォールバック無効化（v2.1.83） |
+| `CLAUDE_CODE_NONSTREAMING_TIMEOUT_RETRIES` | タイムアウトした非ストリーミングフォールバックリクエストの再送回数上限（v2.1.285） |
+| `CLAUDE_CODE_DISABLE_WEB_FETCH` | WebFetch ツールを無効化（v2.1.285） |
 | `CLAUDE_STREAM_IDLE_TIMEOUT_MS` | ストリーミングアイドルウォッチドッグ閾値（デフォルト90秒）（v2.1.84） |
 | `ANTHROPIC_DEFAULT_{OPUS,SONNET,HAIKU,FABLE}_MODEL_NAME` / `_DESCRIPTION` | `/model` ピッカーでのピンモデルの表示名・説明。**2026-09-09 時点のリファレンスで既定値の規則が変更**され、未設定時は「Claude Code がそのモデル ID を認識できれば**モデル名**（例: `us.anthropic.claude-sonnet-4-5-20250929-v1:0` → `Sonnet 4.5`）、認識できなければ ID そのもの」を表示する（従来は常に ID）。認識対象は Anthropic API 形式・プロバイダ/ゲートウェイ形式の ID（`[1m]` 付きも可）と、`modelOverrides` でその文字列にマップしたモデル。Microsoft Foundry のデプロイ名やアプリケーション推論プロファイル ARN は通常認識されない。説明は未設定時 `Custom Opus model` 等で始まる既定文言になり、名前が出ている行では説明側にピン留め ID が含まれる。`ANTHROPIC_CUSTOM_MODEL_OPTION_NAME` も同じ規則 |
 | `ANTHROPIC_DEFAULT_{OPUS,SONNET,HAIKU}_MODEL_SUPPORTS` | ピンモデルのeffort/thinking検出オーバーライド（v2.1.84） |
