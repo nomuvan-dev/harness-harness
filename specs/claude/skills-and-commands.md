@@ -218,7 +218,10 @@ Claude Code に同梱されるスキル:
 | スキル | 用途 |
 |:--|:--|
 | `/batch <instruction>` | コードベース全体の大規模変更を並列オーケストレーション。ワークツリーごとにエージェントを起動しPRを作成 |
-| `/claude-api` | Claude API リファレンス素材の読み込み（Python/TS/Java等） |
+| `/claude-api` | Claude API リファレンス素材の読み込み（Python/TS/Java等）。サブコマンド: `migrate` / `upgrade` / `managed-agents-onboard` / `prompt-audit`（v2.1.221+） / `cost-optimize`（v2.1.247+） / `build-eval`・`hillclimb`（v2.1.259+） / `preserved-thinking-migration`（2026-10-02 巡回で確認。preserved thinking ブロックを無効化する統合側の編集を検出・影響測定・修正提案） |
+| `/artifact-capabilities` | 公開 artifact が使えるランタイム機能（コネクタ呼び出し等）のリファレンス読み込み（2026-10-02 巡回でコマンド一覧収載を確認） |
+| `/artifact-diagramming` | artifact 内のダイアグラム作成ガイダンス読み込み（ライト / ダーク両対応のインライン SVG 等） |
+| `/claude-in-chrome [task]` | Claude in Chrome でブラウザタスクを実行（ページテスト・フォーム入力・コンソールログ読み取り等）。Chrome 拡張接続時に利用可 |
 | `/debug [description]` | セッションデバッグログの解析 |
 | `/loop [interval] <prompt>` (`/proactive`) | プロンプトを定期的に繰り返し実行（v2.1.105 で `/proactive` エイリアス追加） |
 | `/code-review [effort] [--fix]` | 変更ファイルのコード品質レビューと修正（3エージェント並列）。`/code-review high` のように effort level を指定可能。v2.1.147 で `/simplify` からリネーム。v2.1.152 で `--fix` フラグ追加（レビュー結果をワーキングツリーに直接適用）。v2.1.215 で Claude による自動起動が廃止され、ユーザーの明示的な呼び出しのみに。**GitHub PR に加えて GitLab のマージリクエストにも投稿可能（v2.1.257 以降）**。`--post` で投稿を事前選択（`--post` は v2.1.227 以降） |
@@ -622,6 +625,57 @@ cloud / 共有レポでは `.claude/settings.json` の `enabledPlugins` で宣�
 **注意点**: スキャンはセッション権限で動き独自の隔離なし。信頼できないリポジトリのスキャンは sandbox-runtime 等でセッションごとサンドボックス化する。スキャンは非決定的（同一コードでも finding が変わりうる）。
 
 **位置づけ（多層防御での役割分担）**: security-guidance（書きながらレビュー）→ `/security-review`（ブランチの単発パス）→ **claude-security（オンデマンド・ディープスキャン）** → Code Review（PR 時）→ Claude Security 管理サービス（Enterprise）→ CI の静的解析。GitLab / Bitbucket などマネージド製品が届かないリポジトリにも使える。
+
+---
+
+### 4.9 Mods（プラグイン内 JavaScript フックモジュール、v2.1.287+）
+
+公式ドキュメント: https://code.claude.com/docs/en/plugins/mods/overview （create / interface / events / api / test / troubleshoot / admin / reference の計約9ページ。2026-10-02 巡回で新設確認）
+
+**Mod** = Claude Code の見た目と挙動を変えるプラグイン。JavaScript / TypeScript のイベントハンドラ（hooks module）で構成され、Claude Code の**プロセス内**で実行される。settings.json で設定する従来のフック（公式用語では "settings hook"）がシェルコマンド / HTTP / プロンプトとして外部で動くのに対し、mod のフックは関数として内部で動く。
+
+**構成ファイル**（最小3ファイル）:
+
+```text
+first-mod/
+├── .claude-plugin/plugin.json   # プラグインマニフェスト
+└── hooks/
+    ├── hooks.json               # コードファイルを指す
+    └── register.js              # hooks module 本体（export function register(on) {...}）
+```
+
+**イベント処理の3択**: フックはイベントごとに **observe**（観察して素通し: `next(e)`）/ **rewrite**（書き換えて続行: `next({...e, ...})`）/ **answer**（自分で処理して既定動作を止める）を選ぶ。同一ファイル内のフックは変数を共有できる（例: `tool.call` でカウント、`ui.render` でスピナー横に表示）。
+
+**mod にしかできないこと**:
+- トランスクリプト横のペイン・プロンプト上のバンド・タブ・ボタン・テキストフィールドの描画
+- Claude Code 自身の UI 要素（ツール呼び出し行・スピナー・質問ダイアログ等）の置換・再スタイル（ただし**権限プロンプトは変更不可**）
+- ツール呼び出しやリクエストへの介入（保留してユーザーに質問、ツールを実行せず応答、別モデルへのリクエスト送信）
+- Claude のターンなしで即時実行される独自 `/command`（Claude 作業中でも実行可）
+- モデル呼び出し・タイマー実行・セッション間メッセージング（mods API 経由）
+
+**実行環境**: フックはプラグインがロードされる全セッション種別で実行。描画はターミナルと Desktop アプリの Code タブのみ（VSCode 拡張・`claude -p`・SDK・クラウドセッションではフックのみ動作し描画されない）。
+
+**セキュリティ**: mod はユーザー権限で動くコード（ファイル読み書き・プロセス起動・ネットワーク・環境変数のシークレット・セッション全体の閲覧と書き換え・ツール呼び出しの事前承認・プラン使用量の消費まで可能）。フックが外部作用を起こす唯一の経路が mods API であるため、`claude plugin validate ./some-mod` の `hooks:` / `calls:` 行で**インストール前に静的に挙動を列挙できる**。信頼できる作者・マーケットプレースからのみインストールすること。
+
+**有効化・無効化**: v2.1.287 以降で既定有効（早期アクセスの `CLAUDE_CODE_ENABLE_FUNCTION_HOOKS` は廃止・無視）。個別には `/plugin` の Installed タブ、セッション単位は `--safe-mode`、全体は `disableAllHooks: true`（settings hooks・カスタムステータスラインも止まる。組織 managed 分は止まらない）。ロード済み mod は `/plugin` のタブ下に「1 mod active · first-mod」のように表示。
+
+**組み込み mod**: Claude Code 自身の機能の一部が mod として実装されており、ソースが GitHub `anthropics/claude-code` の `mods/` ディレクトリで公開されている:
+
+| 名前 | 役割 |
+|:--|:--|
+| `cc-plugin-agents-md` | AGENTS.md をプロジェクト指示としてロード |
+| `cc-plugin-diff` | `/diff` コマンドとペイン描画 |
+| `cc-plugin-plugin-authoring` | mod 作成用 `plugin-authoring` スキルの提供 |
+| `cc-plugin-sec-default` | ユーザー mod から managed 設定を保護するガード（無効化不可） |
+| `cc-plugin-telemetry` | 組み込み mod のアナリティクス送信 |
+
+組み込み mod は `disableAllHooks` / `--bare` / `--safe-mode` では止まらない。
+
+**組織管理**: managed 設定の **`appendPlugins` / `prependPlugins`**（v2.1.286 時点で settings-reference 収載）で、組織の mod をユーザー mod の後 / 前に配置できる。ポリシー強制 mod の実装例として `sec-default` が参照実装。
+
+**使い分け**（公式比較表の要点）: ペイン・バンド・独自コマンド・イベント書き換えが欲しい → mod。既存スクリプトでイベントをブロック / 記録したい → settings hook。同じ指示を繰り返し貼っている → skill。外部システムに繋ぎたい → MCP サーバー。1つのプラグインに4種すべて同梱可能。
+
+**ハーネス設計への影響**: ①settings hooks では不可能だった UI カスタマイズ・イベント書き換え（answer / rewrite）が可能になり、ハーネスの表現力が大きく拡大。②一方で mod はコード実行を伴うため、テンプレートへの導入はレビュー体制（`claude plugin validate`）とセットで。③Codex CLI に相当機能はなく、mapping/ では「変換不可・ネイティブ代替なし」扱い。
 
 ---
 

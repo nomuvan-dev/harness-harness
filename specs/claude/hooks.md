@@ -12,6 +12,8 @@ Hooks はユーザー定義のシェルコマンド・HTTPエンドポイント�
 
 CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実に実行される。
 
+**v2.1.287 以降の関連機能**: プラグインは JavaScript / TypeScript の関数としてフックを登録することもできる（Claude Code プロセス内で実行され、UI 描画も可能）。これを持つプラグインは **mod** と呼ばれ、公式ドキュメントでは本仕様書の settings.json ベースのフックを "settings hook"、mod の関数フックを単に "hook" と区別する。詳細は skills-and-commands.md 4.9 参照。
+
 ---
 
 ## 2. イベント一覧

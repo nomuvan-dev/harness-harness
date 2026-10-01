@@ -593,7 +593,7 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 
 ## 6. 環境変数
 
-主要な環境変数（`settings.json` の `env` キーまたはシェルで設定）:
+主要な環境変数（`settings.json` の `env` キーまたはシェルで設定）。オン / オフ系の変数は `1` / `true` / `yes` / `on` と `0` / `false` / `no` / `off` を大文字小文字問わず受理する（`yes` / `on` / `no` / `off` は 2026-10-02 巡回で明文化を確認）:
 
 | 変数名 | 用途 |
 |:--|:--|
@@ -606,6 +606,8 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 | `CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD` | `--add-dir` からCLAUDE.md読み込み |
 | `CLAUDE_CODE_NEW_INIT` | `/init` の新しいインタラクティブフロー有効化 |
 | `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS` | バックグラウンドタスク無効化 |
+| `CLAUDE_CODE_DISABLE_MODEL_ACCESS_FALLBACK` | `1` で Bedrock / Vertex（Agent Platform）でモデルがセッション中に無効化された際の自動フォールバックを停止（2026-10-02 巡回で env-vars 収載を確認） |
+| `CLAUDE_CODE_SKIP_MODEL_ACCESS_MEMORY` | Bedrock / Vertex の起動時モデルチェック結果のマシン単位記憶をスキップ（2026-10-02 巡回で env-vars 収載を確認） |
 | `CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS` | git指示無効化 |
 | `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` | 自動コンパクション閾値（%） |
 | `CLAUDE_CODE_SESSIONEND_HOOKS_TIMEOUT_MS` | SessionEndフックタイムアウト（ミリ秒）。設定値は `timeout` 未指定の各フックのタイムアウトにもなる |
