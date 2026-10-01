@@ -1,5 +1,28 @@
 # harness-harness 更新履歴
 
+## 2026-10-02 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code v2.1.286（2026-09-30）**: ハーネス観点の目玉は (1) **`verify` スキルのコミット前実行ガイダンス**（project / user スキルに `verify` という名前のスキルがあるとコミット直前に実行するよう Claude に指示。docs / tests のみのコミットは除外）、(2) **`--bare` の挙動強化**（名指しした MCP のみ接続・system reminders なし・バックグラウンドタスクなし・タイムアウトで停止）、(3) **プラグインインストールのサプライチェーン対策**（git リポジトリ / フォルダの npm ソース拒否、依存はレジストリのみ）。ほかにモデル拒否時の同ティア旧モデル1回リトライ、権限プロンプトのスタック数表示、`/hooks` のイベント別グループ化、シークレットリダクションの穴修正多数、VSCode ブックマーク等。
+
+**Mods ドキュメント新設（最大の検出事項）**: `/docs/en/plugins/mods/` 配下に約9ページが新設。プラグイン内の JavaScript / TypeScript 関数フック（hooks module）を Claude Code プロセス内で実行し、イベントの observe / rewrite / answer、ペイン等の UI 描画、独自 `/command`、モデル呼び出しまで可能。**v2.1.287 以降で既定有効**。`/diff` / AGENTS.md ロード等は組み込み mod としてソース公開。managed `appendPlugins` / `prependPlugins` で組織 mod 配置。Codex に相当機能なし（mapping/ では変換不可扱い）。
+
+**その他ドキュメント改訂**: `/claude-api` に `preserved-thinking-migration` サブコマンド、バンドルスキル `/artifact-capabilities` / `/artifact-diagramming` / `/claude-in-chrome` の一覧収載、env-vars 2件追加＋boolean 変数の `yes`/`on`/`no`/`off` 受理、バックグラウンド時間制限の詳細節化（`BASH_DEFAULT_TIMEOUT_MS` / `BASH_MAX_TIMEOUT_MS` による引き上げ）、MCP OAuth トークンエンドポイントの HTTPS 限定、クラウド環境の env 再読込仕様、gateway on AWS の Cost attribution 節、managed settings 読み取り失敗時の挙動差、`allowedProviders` 不正値の空 allowlist 強制。
+
+**Codex CLI 0.159.3 安定版（2026-09-30）**: ChatGPT サインインセッションへのアカウントセキュリティ設定リマインダー追加のみの小規模リリース（公式 changelog ページ未掲載、GitHub リリースのみ）。GitHub リリースタグは 0.161.0-alpha.13（2026-10-01）まで進行。
+
+**Phase 3.5 スキルエコシステム巡回**: 前回 2026-09-29 から7日未満のためスキップ。
+
+### 更新ファイル
+
+- `specs/claude/changelog.md` — v2.1.286 エントリ追加
+- `specs/claude/skills-and-commands.md` — 4.9 Mods セクション新設、バンドルスキル一覧更新（`/claude-api` サブコマンド・artifact 系・claude-in-chrome）
+- `specs/claude/hooks.md` — 概要に mod（関数フック）と settings hook の用語整理を追記
+- `specs/claude/tools.md` — バックグラウンド時間制限の詳細（起算点・引き上げ方法）を追記
+- `specs/claude/configuration.md` — env vars 2件追加、boolean 変数の受理値明文化
+- `specs/codex/changelog.md` — CLI 0.159.3 エントリ追加
+
 ## 2026-10-01 — 公式ドキュメント巡回
 
 ### 検出・更新
