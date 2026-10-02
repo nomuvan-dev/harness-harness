@@ -1,5 +1,26 @@
 # harness-harness 更新履歴
 
+## 2026-10-03 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code v2.1.287（2026-10-01）**: ハーネス観点の目玉は (1) **Claude Mods 正式リリース**（既定有効。組み込み mod **You should know** 追加 — サイドエージェントが会話を監視し見落としをフラグ、`/plugin enable cc-plugin-you-should-know@builtin`。`/diff` も組み込み mod `cc-plugin-diff` 実装に）、(2) **Opus 4.7+ / Fable の 1M コンテキスト既定化が Bedrock / Vertex / Foundry / Claude apps gateway に拡大**（`CLAUDE_CODE_DISABLE_1M_CONTEXT=1` で 200K 維持）、(3) **MCP サーバー設定 `alwaysLoad: false` が全ツールを tool search 背後にディファード**。ほかに agents ビューの `n:<text>` フィルタ、OTel `user_prompt` の `prompt_text`、MCP URL プロンプト（2025-11-25 プロトコル）、self-hosted runner の組み込み `gh api`、保護ファイルへのシェル書き込み・symlink 経由書き込みの承認強化、フラグ後モデル切替の effort 維持、Sonnet 5.5 → Opus 4.7/4.8 アドバイザー対応等。
+
+**ドキュメント改訂**: Mods に **Interface gallery** ページ新設（計約10ページに）、**sandboxing.md 大幅再編**（restricts 表 / sandbox 外で動くもの / 動作確認手順 / excludedCommands 詳説 / strict sandbox mode 節。実質は既報機能の再構成）、skills の `allowManagedPermissionRulesOnly` による `allowed-tools` 無視詳説（v2.1.282+）、advisor ペアリング表のランキング方式再編、model-config「Effort level after a fallback」節、sub-agents の Fable メイン時 Explore モデル規則、mcp の resume 直後ツール呼び出し10秒保留、cli-reference の `--append-system-prompt` ＋ `-file` 併用（v2.1.283+）・`claude auth status` の `authMethod`。
+
+**Codex CLI 0.160.0 安定版（2026-10-01）**: Guardian レビューの opt-in 拡張（過去ユーザー指示取得・ハンドオフコンテキスト）、プロジェクト外セッションの workspace 既定起動＋resume 時の権限復元、agent command center「Show more」、Windows サンドボックス修正群、SQLite ストール防止、プラグインロード高速化。公式 changelog ページにも掲載。GitHub リリースタグは 0.162.0-alpha.7（2026-10-02）まで進行。
+
+**Phase 3.5 スキルエコシステム巡回**: 前回 2026-09-29 から7日未満のためスキップ。
+
+### 更新ファイル
+
+- `specs/claude/changelog.md` — v2.1.287 エントリ追加
+- `specs/claude/configuration.md` — advisorModel のペアリング更新（Sonnet 5.5 → Opus 4.7/4.8、ランキング方式）
+- `specs/claude/mcp.md` — `alwaysLoad: false` の全ツールディファード、resume 直後の10秒保留
+- `specs/claude/skills-and-commands.md` — 4.9 Mods に正式リリース・You should know・gallery ページを追記
+- `specs/codex/changelog.md` — 0.160.0 エントリ追加
+- `kb/update-history.md` — 本記録
+
 ## 2026-10-02 — 公式ドキュメント巡回
 
 ### 検出・更新
