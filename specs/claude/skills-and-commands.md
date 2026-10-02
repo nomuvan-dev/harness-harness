@@ -630,7 +630,9 @@ cloud / 共有レポでは `.claude/settings.json` の `enabledPlugins` で宣�
 
 ### 4.9 Mods（プラグイン内 JavaScript フックモジュール、v2.1.287+）
 
-公式ドキュメント: https://code.claude.com/docs/en/plugins/mods/overview （create / interface / events / api / test / troubleshoot / admin / reference の計約9ページ。2026-10-02 巡回で新設確認）
+公式ドキュメント: https://code.claude.com/docs/en/plugins/mods/overview （create / interface / gallery / events / api / test / troubleshoot / admin / reference の計約10ページ。2026-10-02 巡回で新設確認、2026-10-03 巡回で Interface gallery（UI 要素のサンプルコード＋端末スクリーンショット集）追加を確認）
+
+**v2.1.287（2026-10-01）で正式リリース**（既定有効）。同バージョンで組み込み mod **You should know** も追加: サイドエージェントが会話を監視し、ユーザー / Claude の見落としをフラグする。`/plugin enable cc-plugin-you-should-know@builtin` で有効化（テレメトリ有効のファーストパーティセッション向け）。`/diff` も組み込み mod `cc-plugin-diff` の実装になった（fullscreen では diff パネル、classic レンダラーでは diff ダイアログ。`/plugin` で無効化すると旧実装に戻る）。
 
 **Mod** = Claude Code の見た目と挙動を変えるプラグイン。JavaScript / TypeScript のイベントハンドラ（hooks module）で構成され、Claude Code の**プロセス内**で実行される。settings.json で設定する従来のフック（公式用語では "settings hook"）がシェルコマンド / HTTP / プロンプトとして外部で動くのに対し、mod のフックは関数として内部で動く。
 

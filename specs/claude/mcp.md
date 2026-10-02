@@ -208,11 +208,12 @@ v2.1.154: `claude mcp list` / `get` の出力がパイプされた場合、未�
 
 | キー | 説明 |
 |:--|:--|
-| `alwaysLoad` | `true` でそのサーバーのツールを tool-search のディファード化対象から外し常時ロード（v2.1.121） |
+| `alwaysLoad` | `true` でそのサーバーのツールを tool-search のディファード化対象から外し常時ロード（v2.1.121）。v2.1.287 以降は `false` の明示指定でそのサーバーの**全ツール**を tool search 背後にディファード |
 
 ### 3.6 接続の堅牢性
 
 - v2.1.121 以降、MCP サーバー起動時に transient error が発生しても最大 3 回まで自動リトライする（従来は接続不能のまま停止）。
+- セッション resume 直後、保存済み会話からのツール呼び出し時にサーバーがまだ初回接続中の場合、呼び出しを最大 10 秒保留しツールが利用可能になり次第実行する。時間内に接続しない場合や、既に失敗後の再接続リトライ中の場合は `No such tool available` エラー（2026-10-03 ドキュメント改訂で明文化）。
 - v2.1.121 で SDK の `mcp_authenticate` が `redirectUri` をサポート（カスタムスキーム / claude.ai connector 用）。
 - v2.1.187: リモート MCP ツール呼び出しが5分間無応答の場合、無期限ブロックせずエラーで中断（`CLAUDE_CODE_MCP_TOOL_IDLE_TIMEOUT` でオーバーライド可）。
 - v2.1.191: capability discovery（`tools/list` 等）と OAuth の discovery / token リクエストが transient エラーで短いバックオフ付きリトライ。ヘッドレス環境の OAuth はブラウザポップアップをスキップし URL 貼り付けプロンプトへ直行。
