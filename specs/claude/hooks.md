@@ -23,7 +23,7 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 | イベント | 発火タイミング | ブロック可能 | matcher対象 |
 |:--|:--|:--|:--|
 | `SessionStart` | セッション開始/再開 | No | `startup`, `resume`, `clear`, `compact`, `fork`（v2.1.214: フォーク開始時は `resume` ではなく `fork` を報告） |
-| `UserPromptSubmit` | ユーザープロンプト送信後、処理前 | Yes | - |
+| `UserPromptSubmit` | プロンプト送信後、処理前。**ユーザー入力以外でも発火**（2026-10 ドキュメント改訂で明文化）: スケジュールタスクの発火（`/loop` イテレーション含む）、バックグラウンドサブエージェントの起動元への報告、クロスセッションメッセージ受信 | Yes | - |
 | `UserPromptExpansion` | ユーザーが打ったコマンドがプロンプトへ展開される時（Claude に届く前） | Yes | `command_name`（スキル名 / コマンド名）。matcher 省略で全 prompt 型コマンドに発火 |
 | `PreToolUse` | ツール実行前 | Yes | **`EndConversation` 以外の全ツール名**（`Bash` / `PowerShell` / `Edit` / `Write` / `Read` / `Glob` / `Grep` / `Agent` / `Workflow` / `WebFetch` / `WebSearch` / `AskUserQuestion` / `ExitPlanMode` 等の組み込みツールと MCP ツール名） |
 | `PermissionRequest` | ツール使用の権限ダイアログ表示時 | Yes | ツール名 |
