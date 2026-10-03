@@ -1,5 +1,28 @@
 # harness-harness 更新履歴
 
+## 2026-10-04 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code v2.1.288（2026-10-02）**: ハーネス観点の目玉は (1) **バックグラウンドコマンドの時間制限が無人セッション（`-p` / SDK / CI / クラウド）限定に**（ローカルの端末 / デスクトップ / VS Code は無制限。v2.1.285 導入の制限の適用範囲変更）、(2) **`/autocompact` のモデル別保存**（`modelSettings.<model>.autoCompactWindow`。トップレベルキーより優先）、(3) **`UserPromptSubmit` フックがユーザー入力以外でも発火と明文化**（スケジュールタスク / `/loop`、バックグラウンドサブエージェントの報告、クロスセッションメッセージ）。ほかに `/code-review --max-findings`、agents ビュー Ctrl+F 検索・Alt+↑/↓、Ctrl+C 消去プロンプトの Up 復元、`claude purge` リネーム、`CLAUDE_CODE_DISABLE_STRUCTURED_OUTPUTS` / `CLAUDE_CODE_NONSTREAMING_TIMEOUT_RETRIES`、keybindings の `Pane` / `PaneField` コンテキスト、mods `$.ui.selection()`。セキュリティ修正: `bash -c` 内の危険 `rm` 無プロンプト実行の穴、PreToolUse / PermissionRequest フックのマッチ失敗時スキップ（→ブロック化）。挙動修正: path-scoped rules / ネスト CLAUDE.md が Write / Edit でもロード。
+
+**ドキュメント改訂**: MCP stdio への 2026-07-28 プロトコル照会の既定ロールアウト（v2.1.285+）、AskUserQuestion タイマーがバックグラウンド / screen reader / Remote Control では開始されない、agent-teams のチームメイト参照スコープに plugin 追加＋`disallowedTools` / `effort` 適用、`availableModels` のピッカー行追加のプロバイダ別規則、cross-session messaging の VS Code / デスクトップでのダイアログ非表示、claude-tag のグループ DM 課金（組織 usage balance）。
+
+**Codex CLI**: 新安定版なし（0.160.0 のまま。0.162.0-alpha.10 まで進行）。公式 changelog ページも実質変更なし。
+
+**Phase 3.5 スキルエコシステム巡回**: 前回 2026-09-29 から7日未満のためスキップ。
+
+### 更新ファイル
+
+- `specs/claude/changelog.md` — v2.1.288 エントリ追加
+- `specs/claude/hooks.md` — UserPromptSubmit の自己起動ターン発火を明記
+- `specs/claude/mcp.md` — stdio 2026-07-28 照会の既定ロールアウト・チャネルサーバー非登録の注意
+- `specs/claude/tools.md` — バックグラウンド時間制限の無人セッション限定化、AskUserQuestion タイマー非開始条件
+- `specs/claude/configuration.md` — `modelSettings.autoCompactWindow`、`autoCompactWindow` の優先関係更新、新環境変数2件
+- `specs/claude/agent-teams.md` — チームメイト参照スコープに plugin、`disallowedTools` / `effort` 適用
+- `specs/claude/skills-and-commands.md` — `/code-review --max-findings`
+- `kb/update-history.md` — 本記録
+
 ## 2026-10-03 — 公式ドキュメント巡回
 
 ### 検出・更新

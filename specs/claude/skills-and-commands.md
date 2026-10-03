@@ -224,7 +224,7 @@ Claude Code に同梱されるスキル:
 | `/claude-in-chrome [task]` | Claude in Chrome でブラウザタスクを実行（ページテスト・フォーム入力・コンソールログ読み取り等）。Chrome 拡張接続時に利用可 |
 | `/debug [description]` | セッションデバッグログの解析 |
 | `/loop [interval] <prompt>` (`/proactive`) | プロンプトを定期的に繰り返し実行（v2.1.105 で `/proactive` エイリアス追加） |
-| `/code-review [effort] [--fix]` | 変更ファイルのコード品質レビューと修正（3エージェント並列）。`/code-review high` のように effort level を指定可能。v2.1.147 で `/simplify` からリネーム。v2.1.152 で `--fix` フラグ追加（レビュー結果をワーキングツリーに直接適用）。v2.1.215 で Claude による自動起動が廃止され、ユーザーの明示的な呼び出しのみに。**GitHub PR に加えて GitLab のマージリクエストにも投稿可能（v2.1.257 以降）**。`--post` で投稿を事前選択（`--post` は v2.1.227 以降） |
+| `/code-review [effort] [--fix]` | 変更ファイルのコード品質レビューと修正（3エージェント並列）。`/code-review high` のように effort level を指定可能。v2.1.147 で `/simplify` からリネーム。v2.1.152 で `--fix` フラグ追加（レビュー結果をワーキングツリーに直接適用）。v2.1.215 で Claude による自動起動が廃止され、ユーザーの明示的な呼び出しのみに。**GitHub PR に加えて GitLab のマージリクエストにも投稿可能（v2.1.257 以降）**。`--post` で投稿を事前選択（`--post` は v2.1.227 以降）。**v2.1.288 で `--max-findings <n>|all` 追加**（通常上限より多く / 少なく指摘を報告。選択は `--max-findings default` を渡すまで再利用。エイリアス `/review` も同フラグ対応） |
 | `/verify` | コード変更が実際に意図通り動くかをエンドツーエンドで検証（テストや型チェックだけでなく対象フローを実際に動かす）。v2.1.215 で Claude による自動起動が廃止され、ユーザーの明示的な呼び出しのみに |
 | `/simplify` | v2.1.152 で `/code-review --fix` のエイリアスとして復活。v2.1.154 でクリーンアップ専用レビュー（reuse / simplification / efficiency / altitude）に変更され、`/code-review --fix` のバグハンティングは行わなくなった |
 | `/workflows` | Dynamic workflows の実行状況表示（v2.1.154）。Claude にワークフロー作成を依頼するとバックグラウンドで数十〜数百のエージェントを跨いだ作業をオーケストレーション。v2.1.160 でトリガーキーワードが `workflow` → `ultracode` にリネーム |

@@ -217,7 +217,8 @@ Agent Teamsは以下のhookイベントで品質を強制できる:
 - チームメイトはリードの会話履歴を**引き継がない**。スポーン時のプロンプトのみ受け取る
 - CLAUDE.md、MCPサーバー、Skillsは通常セッションと同様に読み込まれる
 - 権限はリードの設定を引き継ぐ。スポーン後に個別変更可能だが、スポーン時に個別設定はできない。**例外: `dontAsk` モードは引き継がれない**（2026-09-13 リファレンス改訂で明文化）。リードが `--dangerously-skip-permissions` なら全チームメイトも同様
-- チームメイトとして参照できるサブエージェント定義のスコープは **project / user / managed**（2026-09-13 リファレンス改訂。従来は「project / user / plugin / CLI 定義」と記載されていた）
+- チームメイトとして参照できるサブエージェント定義のスコープは **project / user / managed / plugin**（2026-10 リファレンス改訂で plugin が追加。2026-09-13 改訂時点は project / user / managed）
+- in-process チームメイトには定義の **`disallowedTools`**（ただし `SendMessage` と Task 系ツールはリストにあっても除去されない）と **`effort`**（frontmatter effort 規則に従う）も適用される（2026-10 リファレンス改訂で明文化。v2.1.288 でプラグイン定義エージェントが既定でなく自身の prompt / tools / disallowedTools / effort で実行されるよう修正）
 
 ## 10. サブエージェント vs Agent Teams
 
