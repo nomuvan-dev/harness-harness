@@ -106,7 +106,7 @@ Claude Code の組み込みツール一覧。**ここに書かれたツール名
   - 起動時に `--tools` / `--allowedTools`（または Agent SDK の同等オプション）で `Glob` / `Grep` を指名する。`--allowedTools` はどちらか一方の指名で**両方**戻る。**設定ファイルの allow ルールにはこの効果はない**
   - deny ルール / `--disallowedTools` / `--restricted` でセッションから `Bash` が除去されている
   - サブエージェントが `tools` フィールドに `Glob` / `Grep` を列挙し `Bash` を持たない（そのサブエージェントのみ。`--agent` でメインセッションとして走る場合はセッション全体）
-- Glob は更新時刻順、**100 件で打ち切り**（切り詰めフラグが Claude に見える）。**既定で `.gitignore` を尊重しない**（`CLAUDE_CODE_GLOB_RESPECT_GITIGNORE` 系で変更）
+- Glob は更新時刻順、**100 件で打ち切り**（切り詰めフラグが Claude に見える）。**既定で `.gitignore` を尊重しない**。変更用の環境変数は `CLAUDE_CODE_GLOB_NO_IGNORE`（`false` で `.gitignore` 尊重）と `CLAUDE_CODE_GLOB_HIDDEN`（`false` でドットファイル除外）。いずれも `@` 補完・Grep・Read には影響しない
 - Grep は ripgrep ベースで **POSIX grep ではなく ripgrep の正規表現構文**。`.gitignore` を尊重する（gitignore されたファイルはパスを直接指定すれば読める）
 - 出力モード: `files_with_matches`（既定） / `content` / `count`
 - **権限判定は探索ディレクトリの存在確認より前に行われる**（Glob / Grep 共通、公式ドキュメント明文化）。[作業ディレクトリ](https://code.claude.com/docs/en/permissions#working-directories)外の存在しない `path` に対しても読み取り権限チェックは走るため、**パスに対して権限プロンプトが出たことはそのパスが存在する証拠にはならない**（情報漏洩を避けるための挙動）
