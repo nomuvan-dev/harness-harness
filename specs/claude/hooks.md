@@ -32,7 +32,7 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 | `PostToolBatch` | 並列ツール呼び出しのバッチ全体が解決した後、次のモデル呼び出し前 | Yes | matcher非サポート（全バッチで発火） |
 | `Stop` | Claude の応答完了時 | Yes | - |
 | `StopFailure` | APIエラー発生時 | No | `rate_limit`, `overloaded`, `authentication_failed`, `oauth_org_not_allowed`, `account_on_hold`, `billing_error`, `invalid_request`, `model_not_found`, `server_error`, `cloud_credential_error`, `max_output_tokens`, `unknown`（`account_on_hold` は 2026-09-02 の公式ドキュメント改訂で追加） |
-| `PermissionDenied` | Auto Mode分類器が拒否した後 | No | ツール名 |
+| `PermissionDenied` | Auto Mode分類器が拒否した後（verdict なしの拒否を含む） | No | ツール名 |
 | `SessionEnd` | セッション終了時 | No | `clear`, `resume`, `logout`, `prompt_input_exit`, `other`（**v2.1.234 で `bypass_permissions_disabled` を廃止**。Claude Code は送出しなくなったため matcher から削除すること） |
 
 ### 2.2 サブエージェントイベント
@@ -56,7 +56,7 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 | `DirectoryAdded` | `/add-dir` または SDK `register_repo_root` でセッション途中に作業ディレクトリが登録された後 | No | -（v2.1.219） |
 | `FileChanged` | 監視対象ファイルのディスク変更時 | No | ファイル名（basename）例: `.envrc`, `.env` |
 | `TaskCreated` | `TaskCreate` ツールでタスク作成時 | Yes | matcherなし |
-| `Setup` | セッション開始時（`SessionStart` / `SubagentStart` と同じく最初のプロンプト前）。依存インストール等のセットアップ用 | No | - |
+| `Setup` | **`claude --init-only` 起動時、または `-p` モードでの `--init` / `--maintenance` 時のみ**（通常起動では発火しない。2026-10 ドキュメントで明確化）。CI / スクリプトから明示的に起動する一度きりの準備・定期クリーンアップ用。matcher は起動フラグに対応（`init` = `--init-only` / `-p --init`、`maintenance` = `-p --maintenance`）。`--init-only` は Setup フックと `startup` matcher の SessionStart フックを実行して会話を開始せず終了する。セッションごとの初期化には `SessionStart` を使う | No | `init` / `maintenance` |
 
 > **`Setup` フックの出力の扱い（ドキュメント改訂）**: `Setup` はブロックできず、終了コードに関わらず処理が続く。**どの終了コードでも `systemMessage` / `continue` / `hookSpecificOutput.additionalContext` などの JSON 出力フィールドは破棄される**（以前は `additionalContext` で Claude のコンテキストへ情報を渡せると記載されていたが、現在は渡せない）。`-p` 実行では `--output-format stream-json --verbose` で起動した場合に限り、stdout / stderr / 終了コードが `hook_response` イベントとして出力に現れる。決定制御の分類も「Context only」から `WorktreeRemove` / `Notification` / `SessionEnd` などと同じ**決定制御なし**へ移動した。
 
@@ -527,6 +527,8 @@ v2.1.133 以降、すべてのイベントの入力 JSON に effort level も含
 }
 ```
 
+`classifierContext`（v2.1.236+）: `hookSpecificOutput.classifierContext` で auto mode 分類器宛ての注記をツール結果に添付できる（**1ツール呼び出しあたり 2,000 文字上限**）。設定元により重み付けが異なり、Claude Code 設定由来は未検証コンテキスト扱い、in-process Agent SDK コールバック由来はユーザー意図として扱われうる。async フックでは無視、読み取り専用呼び出しでは破棄。`updatedToolOutput` と同時返却可。
+
 `continueOnBlock`（v2.1.139+）: PostToolUse フックがブロック判定を出した際、拒否理由を Claude に戻してターンを継続させる（従来はターン停止）。
 
 ```json
@@ -681,7 +683,9 @@ echo "$WORKTREE_PATH"
 
 ### 8.1 `if` 条件フィールド（v2.1.85）
 
-`if` フィールドはツールイベント（`PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `PermissionRequest`）でのみ評価される。他のイベントでは `if` を持つフックは実行されない。
+`if` フィールドはツールイベント（`PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `PermissionRequest`, **`PermissionDenied`**）でのみ評価される。他のイベントでは `if` を持つフックは実行されない。`if` は**単一ルールのみ**（`&&` / `||` / リスト構文は不可。複数条件は別ハンドラに分ける）。Bash に対するマッチングは best-effort: 先頭の `VAR=value` は除去して評価、複合コマンドはサブコマンドごとに評価（`$()` / バックティック内も対象）、コマンド名以上を指定したパターンは `$()` / `$VAR` が相手だと無条件実行扱い、判定不能時は常に実行される（強制が必要なら permission システムを使う）。
+
+> **`PermissionDenied` の `retry`**: JSON 出力の `hookSpecificOutput.retry: true` で「拒否されたツール呼び出しを再試行してよい」とモデルに伝えられる。分類器 verdict の無い拒否では無視される。終了コードと stderr は無視（拒否は既に発生済み）。
 
 matcher と組み合わせた2段階フィルタリング:
 1. `matcher` でツール名をフィルタ

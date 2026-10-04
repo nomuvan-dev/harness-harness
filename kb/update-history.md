@@ -1,5 +1,36 @@
 # harness-harness 更新履歴
 
+## 2026-10-05 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code v2.1.289（2026-10-03）**: 修正中心のリリース。ハーネス観点では (1) **plugins API に `agent.spawn`（チームメイト起動）追加・プラグインフックイベント間のエージェントID統一・`$.agent.list()` に idle / waiting 状態**、(2) **sandbox auto-allow 下で環境変数プレフィックスの展開値（`TZ="$HOME" rm -rf build` 等）や先行する素の変数代入により Bash deny / ask ルールがすり抜ける穴の修正**、(3) **symlink 経由で IDE から @メンション・変更・選択されたファイルに `Read` deny ルールが効かない問題の修正**。ほかにユーザーインストールのプラグインが組織管理 MCP サーバーのサインインツール説明を書き換えられた穴の修正、アップグレード直後の初回セッションの mods 未ロード修正、mods / プラグイン UI の安定性修正多数。
+
+**ドキュメント突合（サブエージェント2体による specs/ 全面照合）で検出した矛盾・誤記の修正**:
+- `CLAUDE_CODE_AUTO_BACKGROUND_WORKER_CHECKIN_SECONDS` は **v2.1.283 で削除済み** → `CLAUDE_CODE_WORKER_CHECKIN_SCHEDULE`（カンマ区切り複数値）に置換
+- `CLAUDE_CODE_GLOB_RESPECT_GITIGNORE` は公式に存在しない誤記 → 正しくは `CLAUDE_CODE_GLOB_NO_IGNORE` / `CLAUDE_CODE_GLOB_HIDDEN`
+- diff パネルの要件バージョン: v2.1.260 → **v2.1.287**（公式が引き上げ）
+- cross-session messaging の `@` メンション: 「新ターン開始時は受信側ファイルが添付される」→ **一切添付されない**に公式が改訂
+- `Setup` フックの発火条件: 「セッション開始時」→ **`--init-only` 起動または `-p` での `--init` / `--maintenance` 時のみ**
+
+**ドキュメント突合で検出した未反映仕様の追記**: admin-required sandbox とロック規則（v2.1.285）、managed 設定不正値の fail-closed 規則（v2.1.282/283）、`wslInheritsWindowsSettings` の Windows ポリシーチェーン仕様（v2.1.282）、新環境変数4件（`DISABLE_AUTH_REFRESH_LOCK` / `TRANSCRIPT_LOCAL_GC` / `DISABLE_INLINE_SHELL_RM_PROMPT` / `BRIDGE_SESSION_ID`）、スキルコンテンツのライフサイクル（コンパクション後は各スキル先頭 5,000 トークン・合計 25,000 トークン予算）、注入コマンドの実行・失敗規則、`verify` / `simplify` スキルのコミット前チェック自動指示（v2.1.286）、サブエージェント出力の指示形パターンスキャン（v2.1.210）、hooks の `classifierContext`（v2.1.236）・`PermissionDenied` の `retry`・`if` の Bash マッチング規則。
+
+**積み残し（別途専用更新を推奨）**: `specs/claude/best-practices.md` が 2026-03-23 から未更新で半年分の乖離（`/goal` 条件・`Stop` フックゲート・`/batch`・auto mode 既定化・敵対的レビュー工程等）→ **全面改訂相当**。ほかに model-config の Surface coverage 表、keybindings 仕様の受け皿新設、Monitor WebSocket 詳細、sub-agents のロード失敗条件・ヘルパーエージェント、skills の `skillOverrides` エイリアス適用・`.trash/` 復元、cloud-environments の Setup scripts / Resource limits、`sandbox.*` キー網羅、cross-session の Windows 名前付きパイプ・`notify_when_idle` 12時間制限。
+
+**Codex CLI**: 新安定版なし（0.160.0 のまま。0.162.0-alpha.13 まで進行）。公式 changelog の October セクションは 0.160.0 のみで既報。llms.txt の変更は whats-new 週次ページ追加によるもので新規ドキュメントなし。
+
+**Phase 3.5 スキルエコシステム巡回**: 前回 2026-09-29 から7日未満のためスキップ。
+
+### 更新ファイル
+
+- `specs/claude/changelog.md` — v2.1.289 エントリ追加
+- `specs/claude/configuration.md` — 環境変数の置換・追加、admin-required sandbox、fail-closed 規則、`wslInheritsWindowsSettings`
+- `specs/claude/tools.md` — Glob 環境変数の誤記修正
+- `specs/claude/agent-teams.md` — `@` メンション添付仕様の修正
+- `specs/claude/hooks.md` — `Setup` 発火条件修正、`PermissionDenied` retry、`if` 規則、`classifierContext`
+- `specs/claude/skills-and-commands.md` — diff パネル版数修正、スキルライフサイクル・注入コマンド・コミット前チェック・サブエージェント出力スキャンの節追加
+- `kb/update-history.md` — 本記録
+
 ## 2026-10-04 — 公式ドキュメント巡回
 
 ### 検出・更新
