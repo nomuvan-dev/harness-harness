@@ -213,7 +213,7 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 
 > **ハンドラの作業ディレクトリ（ドキュメント追記）**: ハンドラはカレントディレクトリで Claude Code の環境を引き継いで実行される。**カレントディレクトリが既に存在しない場合**（別シェルがセッション中に worktree や一時ディレクトリを削除した等）、Claude Code は「セッションを開始したディレクトリ → プロジェクトルート → ホームディレクトリ → システム一時ディレクトリ」の順に、存在する最初のものから command フックを実行し、警告を記録する。
 
-> **`$CLAUDE_MODEL` は存在しない**。フックからモデルを知るには `SessionStart` の `model` フィールド（常に含まれるとは限らない）か、`PreModelSwitch` / `PostModelSwitch` の `from_model` / `to_model` を使う。`$ANTHROPIC_MODEL` はシェルで設定した場合に読めるが、セッション中に `/model` で切り替えても値は変わらない。フックプロセスは親環境を継承するが、Claude Code が全サブプロセスから除去する `OTEL_*` エクスポータ変数と、`CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1` のときに除去される変数は除く。
+> **`$CLAUDE_MODEL` は存在しない**。フックからモデルを知るには `SessionStart` の `model` フィールド（常に含まれるとは限らない）か、`PreModelSwitch` / `PostModelSwitch` の `from_model` / `to_model` を使う。`$ANTHROPIC_MODEL` はシェルで設定した場合に読めるが、セッション中に `/model` で切り替えても値は変わらない。フックプロセスは親環境を継承するが、Claude Code が全サブプロセスから除去する `OTEL_*` エクスポータ変数と、`CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1` のときに除去される変数は除く。HIPAA 構成が適用されたセッションでは、Anthropic 資格情報もフック環境から除去される（2026-10-06 ドキュメント改訂）。
 
 
 ### 3.2 HTTP ハンドラ
@@ -553,7 +553,7 @@ v2.1.133 以降、すべてのイベントの入力 JSON に effort level も含
 }
 ```
 
-**v2.1.143+ のブロック上限**: ブロックを繰り返す stop hook が無限ループする問題への安全装置として、**8 連続ブロックでターンが警告とともに自動終了** するように。上限は環境変数 `CLAUDE_CODE_STOP_HOOK_BLOCK_CAP` で変更可能。
+**v2.1.143+ のブロック上限**: ブロックを繰り返す stop hook が無限ループする問題への安全装置として、**8 連続ブロックでターンが警告とともに自動終了** するように。連続カウントは Claude がツールを呼び出すたびにリセットされる（2026-10-06 ドキュメント改訂で明文化）。上限は環境変数 `CLAUDE_CODE_STOP_HOOK_BLOCK_CAP` で変更可能。
 
 **v2.1.163+ の `additionalContext` サポート**: `Stop` および `SubagentStop` フックは `hookSpecificOutput.additionalContext` を返すことで、Claude にフィードバックを与えてターンを継続させられる。従来は同等の動作が「hook エラー」扱いだったが、通常応答として扱われるようになった。
 

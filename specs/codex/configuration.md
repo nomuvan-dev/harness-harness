@@ -537,7 +537,7 @@ meeting-follow-up/
 
 > 公式: [Build plugins](https://learn.chatgpt.com/docs/build-plugins) / 完全な builder ドキュメントは [developers.openai.com/plugins](https://developers.openai.com/plugins)
 >
-> 注意: GitHub の公開サンプルカタログ [openai/skills](https://github.com/openai/skills)（deprecated）と [openai/plugins](https://github.com/openai/plugins)（**2026-08-16 に archive、read-only**）はいずれも更新停止。作成手順の一次情報は上記ドキュメントと `@plugin-creator` を参照する。
+> 注意: GitHub の公開サンプルカタログのうち [openai/skills](https://github.com/openai/skills) は deprecated のまま。一方 [openai/plugins](https://github.com/openai/plugins) は一時 archive（2026-08-16）ののち **2026-09 に archive 解除され、Codex プラグイン実例の現役カタログとして更新再開**（figma / notion / build-ios-apps 等。マーケットプレースは `.agents/plugins/marketplace.json`）。作成手順の一次情報は引き続き上記ドキュメントと `@plugin-creator` を参照する。
 
 ---
 

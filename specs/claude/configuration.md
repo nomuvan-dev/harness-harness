@@ -617,7 +617,7 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 | `CLAUDE_CODE_SESSIONEND_HOOKS_TIMEOUT_MS` | SessionEndフックタイムアウト（ミリ秒）。設定値は `timeout` 未指定の各フックのタイムアウトにもなる |
 | `CLAUDE_CODE_BASH_EDIT_DIFF` | Bash コマンドの変更ファイル記録（`bashEditDiff`）。`0`=無効 / `1`=全権限モードで記録。`bashEditDiffEnabled` 設定より優先。v2.1.269+ |
 | `MCP_TIMEOUT` | MCPサーバー起動タイムアウト（ms） |
-| `MAX_MCP_OUTPUT_TOKENS` | MCPツール出力トークン上限 |
+| `MAX_MCP_OUTPUT_TOKENS` | MCPツール出力トークン上限（既定 25,000）。`anthropic/maxResultSizeChars` 非宣言ツールの成功テキスト結果は 50,000 文字超でこの変数に関係なくファイル保存される（2026-10-06 ドキュメント改訂で明文化） |
 | `CLAUDE_CODE_MAX_MCP_DESCRIPTION_LENGTH` | MCP ツール説明・サーバー instructions の文字数上限（既定 2,048）をセッション内の全 MCP サーバーに対して変更（v2.1.280） |
 | `VERTEX_REGION_CLAUDE_5_5_OPUS` | Vertex（Google Cloud Agent Platform）使用時の Claude Opus 5.5 のリージョン上書き（v2.1.280） |
 | `VERTEX_REGION_CLAUDE_5_5_SONNET` | Vertex（Google Cloud Agent Platform）使用時の Claude Sonnet 5.5 のリージョン上書き（v2.1.284） |
