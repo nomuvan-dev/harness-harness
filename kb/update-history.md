@@ -1,5 +1,38 @@
 # harness-harness 更新履歴
 
+## 2026-10-06 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code**: 新バージョンなし（changelog は v2.1.289 のまま変更なし）。ドキュメント改訂のみ検出:
+- **hooks**: HIPAA 構成セッションではフック環境から Anthropic 資格情報も除去。Stop フックの8連続継続キャップの連続カウントはツール呼び出しごとにリセットされると明文化
+- **MCP 出力上限の詳細化**: `anthropic/maxResultSizeChars` 非宣言ツールの成功テキスト結果は 50,000 文字超で `MAX_MCP_OUTPUT_TOKENS` に関係なくファイル保存。エラー結果（`isError: true`）は約 11,000 文字超で先頭/末尾 5,000 文字のみ保持。自動バックグラウンド化された呼び出しはタスク通知経由で結果報告
+- **tools**: SendFeedback が ZDR に加え **HIPAA 構成適用組織でも非提供**。バックグラウンドサブエージェントの権限プロンプト表示中でも `Ctrl+X Ctrl+K`（全サブエージェント停止）が有効
+- settings-reference / claude-tag / commands ページはノイズまたは表現変更のみで specs 更新不要
+
+**Codex CLI**: 新安定版なし（0.160.0 のまま。GitHub タグは 0.162.0-alpha.15 までプレリリースのみ進行）。公式 changelog ページから **0.155.1（2026-09-18）エントリが削除された**（GitHub リリースには存在。0.159.3 も引き続き未掲載）。hooks / build-plugins / app-server / skills / codex-plugin-cc の各ページは実質変更なし。
+
+**Phase 3.5 スキルエコシステム巡回**（前回 2026-09-29 から7日経過のため実施）:
+- **openai/plugins が archive 解除で復活**（最終更新 2026-09-28、6.7K→7.3K stars）。figma / notion / build-ios-apps 等の Codex プラグイン実例の現役カタログとして再始動。openai/skills は deprecated 継続だが README が openai/plugins を後継案内 → 従来の「二重の行き止まり」認識は失効
+- anthropics/skills: 177.4K→179.8K stars。push が 2026-10-05 に再開（差分内容は次回巡回で skills/ 配下を直接確認）
+- skills.sh トレンド: find-skills 3.7M 首位継続、agent-browser 1.0M で5位に上昇、**新顔 reddit-automation**（794.9K、週間 114.3K はリーダーボード最速）→ Tier B に追加（ルーブリック6点、Reddit 規約リスク明示の条件付き）
+- claude.com/plugins・codex skills docs・agentskills.io（仕様バージョン）は変化なし
+
+### 更新ファイル
+
+- `specs/claude/hooks.md` — HIPAA 資格情報除去、Stop フック連続カウントのリセット明文化
+- `specs/claude/mcp.md` — MCP 出力上限の詳細（50,000 文字ファイル保存・エラー切り詰め・バックグラウンド化通知）、`MAX_MCP_OUTPUT_TOKENS` の既定値修正
+- `specs/claude/tools.md` — SendFeedback の HIPAA 非提供、権限プロンプト中の Ctrl+X Ctrl+K
+- `specs/claude/configuration.md` — `MAX_MCP_OUTPUT_TOKENS` 注記
+- `specs/codex/changelog.md` — 2026-10-06 巡回エントリ（新リリースなし・0.155.1 エントリ削除の注記）
+- `specs/codex/configuration.md` — openai/plugins 復活の反映（§6 注意書き）
+- `kb/skills/_index.md` — last_patrol 2026-10-06、openai/plugins 復活・トレンド刷新・巡回時の注意追記
+- `kb/skills/recommended.md` — reddit-automation を Tier B 追加、stars/トレンド数値更新、agent-browser の Tier A 昇格候補注記
+- `kb/skills/sources.md` — openai/plugins を「高（復活）」に変更、失効ルールの修正
+- `kb/update-history.md` — 本記録
+
+**Codex クロスレビュー（gpt-6-sol）指摘の修正 3 件**: (1) `anthropic/maxResultSizeChars` の設定箇所を「ツール結果の `_meta`」→「`tools/list` 応答のツール定義エントリの `_meta`」に修正（JSON 例もツール定義形式に差し替え）、(2) reddit-automation の機能説明を「投稿・エンゲージメント自動化」→「調査と返信ドラフト作成（自動投稿はせず人が確認して投稿）」に修正、(3) _index.md の「§6 要見直し」注記を「反映済み」に更新（本巡回で specs/codex/configuration.md §6 を同時更新したため）。
+
 ## 2026-10-05 — 公式ドキュメント巡回
 
 ### 検出・更新

@@ -382,13 +382,20 @@ mcpServers:
 
 ### 8.8 ツール結果サイズのサーバー側オーバーライド（v2.1.91）
 
-MCP サーバーはツール結果の `_meta` フィールドに `anthropic/maxResultSizeChars` アノテーションを設定することで、結果の永続化上限を最大 **500K文字** まで引き上げ可能。DBスキーマや大規模データセットなど、切り詰めると情報が失われるケースで有用。
+MCP サーバーは **`tools/list` 応答のツール定義エントリ**の `_meta` フィールドに `anthropic/maxResultSizeChars` アノテーションを設定することで（ツール結果側の `_meta` ではない）、そのツールの結果の永続化上限（既定 **50,000 文字**）を最大 **500K文字** まで引き上げ可能。宣言したツールのテキスト結果には `MAX_MCP_OUTPUT_TOKENS` に関係なくこの値が適用される（画像データはトークン上限の対象のまま）。DBスキーマや大規模データセットなど、切り詰めると情報が失われるケースで有用。
+
+**出力上限の詳細（2026-10-06 ドキュメント改訂で明文化）**:
+- トークン上限（`MAX_MCP_OUTPUT_TOKENS`、既定 25,000。警告閾値は 10,000 固定）を超えた**成功**結果（画像なし）は、セッションの `tool-results` ディレクトリ配下のファイルに保存され、会話にはファイルパスが残る
+- アノテーションのないツールの**成功テキスト結果は 50,000 文字を超えるとトークン数に関係なくファイル保存**される。`MAX_MCP_OUTPUT_TOKENS` を上げてもこの文字数閾値は変わらない
+- **エラー結果**（`isError: true`）はテキストがツールのエラーメッセージとして Claude に渡るが、約 11,000 文字を超えると**先頭 5,000 文字＋末尾 5,000 文字のみ保持**され、間に削除文字数を示すマーカーが入る
+- 自動バックグラウンド化された呼び出しはタスク通知経由で結果を報告（上記はフォアグラウンド完了時の制限）
 
 ```json
 {
-  "content": [{ "type": "text", "text": "..." }],
+  "name": "get_schema",
+  "description": "Returns the full database schema",
   "_meta": {
-    "anthropic/maxResultSizeChars": 500000
+    "anthropic/maxResultSizeChars": 200000
   }
 }
 ```
@@ -475,7 +482,7 @@ MCP サーバーがセッション中にユーザー入力を要求する仕組�
 | 変数 | 説明 |
 |:--|:--|
 | `MCP_TIMEOUT` | MCPサーバー起動タイムアウト（ms）。例: `MCP_TIMEOUT=10000` |
-| `MAX_MCP_OUTPUT_TOKENS` | MCPツール出力の警告閾値。デフォルト10,000トークン |
+| `MAX_MCP_OUTPUT_TOKENS` | MCPツール出力のトークン上限（既定 25,000。警告閾値は 10,000 固定）。なお `anthropic/maxResultSizeChars` 非宣言ツールの成功テキスト結果は 50,000 文字超でこの変数に関係なくファイル保存される |
 | `ENABLE_TOOL_SEARCH` | MCP Tool Search 機能の有効化 |
 | `MCP_CONNECTION_NONBLOCKING` | `true` で `-p` モードのMCP接続待機スキップ。`--mcp-config` サーバー接続は5秒上限（v2.1.89） |
 | `CLAUDE_PROJECT_DIR` | stdio MCP サーバーに渡される環境変数（v2.1.139+）。プロジェクトルートの絶対パス。プラグイン設定の `command` 内で `${CLAUDE_PROJECT_DIR}` として参照可能 |
