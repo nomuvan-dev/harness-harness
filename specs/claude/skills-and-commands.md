@@ -1,6 +1,6 @@
 # Claude Code Skills & コマンド仕様書
 
-最終更新: 2026-09-11（巡回更新）
+最終更新: 2026-10-07（巡回更新）
 
 公式ドキュメント: https://code.claude.com/docs/en/skills / https://code.claude.com/docs/en/commands / https://code.claude.com/docs/en/sub-agents / https://code.claude.com/docs/en/scheduled-tasks / https://code.claude.com/docs/en/web-scheduled-tasks / https://code.claude.com/docs/en/plugins/install（2026-09-25 のドキュメント再編で discover-plugins から移動。プラグイン関連は https://code.claude.com/docs/en/plugins/overview 以下の約20ページ構成に分割された）
 
@@ -34,10 +34,12 @@ Skills は Claude の能力を拡張する仕組み。`SKILL.md` ファイルに
 - **claude.ai スキルの自動同期（2026-09-17 ドキュメント改訂で大幅変更）**: claude.ai アカウントでサインインしたターミナルセッションでは、セッション開始時にアカウントで有効なスキル（自作・組織提供・`pdf` / `xlsx` 等の Anthropic 組み込み）が `~/.claude/skills/synced/` へバックグラウンドでダウンロードされ、実行中は約10分毎に claude.ai の変更をチェックして追加・更新・削除を再起動なしで反映する。同期は起動を遅らせず、スキル呼び出し時のみダウンロードを待つ。**`CLAUDE_CODE_SYNC_SKILLS=1` は「非対話実行でスキル一覧の到着を待ってからプロンプトに答えさせる」用途に格下げ**（従来はこれが唯一のローカル同期手段だった）。同期しないセッション: API キー / `ANTHROPIC_AUTH_TOKEN` / `CLAUDE_CODE_OAUTH_TOKEN` / `apiKeyHelper` 認証、feature flag 非取得（Bedrock、`CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`）、bare モード / `--safe-mode`、managed 設定でスキルがプラグインソース限定、`--setting-sources` に `user` なし。セッション中の `/login` 後は再起動で同期開始。同期済みスキルはオフラインでもロードされる。確認は `/skills` の `claude.ai sync` ラベル。マシン単位で止めるには user 設定に `syncClaudeAiSkills: false`（同期済みは `~/.claude/skills/.trash/` へ移動）。プラグインにも同様の自動同期があり `syncClaudeAiPlugins` で停止（configuration.md 参照）。**実装本体は v2.1.275（2026-09-17）でリリース**。**組織が claude.ai 側で Skills 機能を無効化した場合**（2026-09-18 ドキュメント改訂）、同期済みスキルは削除されロードされなくなる。削除分は `~/.claude/skills/.trash/` へ退避され、retention sweep で消えるまで復旧可能。組織が Skills を再有効化すれば次回同期で再ダウンロードされる。**同期はダウンロード専用**（2026-09-22 ドキュメント改訂で明文化）: `~/.claude/skills/synced/` 配下をローカルで編集しても claude.ai には保存されず、後続の同期で上書き・削除されうる。同期スキルの変更は claude.ai 側で行うこと
 - **worktree 内セッションのスキル探索（2026-09-22 ドキュメント改訂で明文化）**: リンクされた git worktree 内のセッションでは、親ディレクトリのスキル探索は worktree ルートで止まる。**v2.1.277 以降、worktree のチェックアウトにルートの `.claude/skills` がない場合はメインチェックアウトのプロジェクトスキルをロードする**
 - **frontmatter の寛容なパース（2026-09-22 ドキュメント改訂で明文化）**: フィールド名は表と完全一致が必要（ハイフン含む。`when_to_use` のみアンダースコア）。未知のフィールドはエラーなしで無視される。`---` 間の YAML がパース不能な場合もスキル自体はフィールドなしでロードされる（`claude --debug` でパースエラー確認）。`.claude/commands/` のコマンドファイルは `name` と `paths` を除く同じフィールドを受け付ける
-- **同期スキルの呼び出し名（2026-09-15 リファレンス改訂で明文化）**: claude.ai から同期したスキルは `/anthropic-skills:<name>` の完全名と短縮名 `/<name>` の両方で呼べる。短縮名が他のコマンド（組み込み・バンドル・ローカルスキル・プラグイン・`.claude/commands/`・MCP プロンプト。セッションで無効化中の組み込み/バンドル名も予約扱い）と衝突する場合は他方が `/<name>` を取り、同期スキルは完全名のみになる（例: ローカル `deploy` + 同期 `deploy` → `/deploy` はローカル、`/anthropic-skills:deploy` が同期側）。v2.1.269 より前は短縮名しかなかった。名前比較は大文字小文字・空白・不可視文字を無視し全角・ダッシュ類も正規化（v2.1.228 以降。別アルファベットの見た目類似文字は別名扱いで、`claude.ai sync` ラベルで区別）
+- **同期スキルの呼び出し名（2026-09-15 リファレンス改訂で明文化）**: claude.ai から同期したスキルは `/anthropic-skills:<name>` の完全名と短縮名 `/<name>` の両方で呼べる。短縮名が他のコマンド（組み込み・バンドル・ローカルスキル・プラグイン・`.claude/commands/`・MCP プロンプト。セッションで無効化中の組み込み/バンドル名も予約扱い）と衝突する場合は他方が `/<name>` を取り、同期スキルは完全名のみになる（例: ローカル `deploy` + 同期 `deploy` → `/deploy` はローカル、`/anthropic-skills:deploy` が同期側）。v2.1.269 より前は短縮名しかなかった。名前比較は大文字小文字・空白・不可視文字を無視し全角・ダッシュ類も正規化（v2.1.228 以降。別アルファベットの見た目類似文字は別名扱いで、`claude.ai sync` ラベルで区別）。**`/` メニュー・`/skills`・`/context` では短縮名で表示され、衝突時のみ完全名表示**。`/skills` のリスト下部に短縮名を失った同期スキルごとの説明が出て、原因が自分の `~/.claude/` のスキル / コマンドファイルならリネーム・削除対象も示す（**v2.1.281 以降**。v2.1.269〜280 は常に完全名表示で注記なし）
 - **`anthropic-skills:` 名前空間の保護（v2.1.282）**: この名前空間のスキルフォルダ・コマンドファイル・ワークフローコマンドはロードされない（同期スキルへのなりすまし防止）。同名プラグインはロードされるが名前衝突では同期スキルに譲る。`Skill(anthropic-skills:*)` の allow ルールは claude.ai から同期されたスキルのみに一致し、その名前を使うだけのプラグイン等には一致しない。この名前で設定された MCP サーバーはスキル / プロンプトを一覧しない（ツールは動作。一覧に戻すにはサーバーをリネーム）。**v2.1.283 で deny ルールを拡張**: `Skill(anthropic-skills:<name>)` の deny は Claude Desktop がプラグインとして配布する同スキルもブロックし、`Skill(skill:<name>)` の deny はスキルのエイリアス・表示名にも一致する。※v2.1.282 では `claude-ai:` 名前空間も同様に予約されたが、**v2.1.283 でリバート**（`claude-ai` 名のスキル・コマンド・ワークフロー・MCP サーバーのスキル / プロンプトは再びロードされ、`Skill(claude-ai:*)` ルールは通常のプレフィックスルール）
 - **`.claude/commands/`**: 旧形式だが引き続き動作する。`name` と `paths` を除き同じフロントマターに対応し、ファイル名で呼び出す。**サブディレクトリに置いたファイルは `commands/` からの相対パスの `/` を `:` に置き換えた名前になる**（例: `.claude/commands/frontend/component.md` → `/frontend:component`。2026-09-13 リファレンス改訂で命名表に明記）。**新規はスキル推奨**（スキルは補助ファイルを持てる）
 - **スキルフォルダをプラグイン化**: `.claude-plugin/plugin.json` を置くと `<name>@skills-dir` というプラグインとしてロードされ、agents / hooks / MCP サーバーを同梱できる（プロジェクトの `.claude/skills/` ではワークスペース信頼ダイアログの承認が必要）
+- **クラウドセッションへのスキル配布（2026-10 ドキュメント改訂で変更）**: クラウドセッションにスキルを届けるにはリポジトリの `.claude/skills/` にコミットする。**リポジトリの `.claude/settings.json` で宣言したプラグインも、user 設定で有効化したプラグインも、クラウドセッションではロードされない**（従来は repo 宣言プラグインはセッション開始時にインストールされるとされていた）
+- **消えた personal スキルの復旧**: `~/.claude/skills/` の自作フォルダが消えた場合は `~/.claude/skills/.trash/` を確認する。v2.1.280 より前は `~/.claude/skills/` 直下に `manifest.json` があると、そこに列挙されたスキルフォルダがタイムスタンプ付きフォルダへ `.trash/` 退避されロードされなくなるバグがあった。retention sweep（既定30日）で消える前にフォルダを戻せば復旧できる
 
 > **プラグインスキルの frontmatter `name`**: `name` はコマンド名の**最終セグメント**（ディレクトリ名）を置き換える。`my-plugin/skills/review/SKILL.md` に `name: fancy` を書くと `/my-plugin:fancy` になり、他が使っていなければ素の `/fancy` でも呼べる。`name` が既にプラグイン接頭辞を含む場合（`name: my-plugin:fancy`）、**v2.1.246 以降は接頭辞を重ねない**（v2.1.216〜v2.1.245 は二重化していた）。v2.1.216 より前は `name` がコマンド名全体を置き換えていた。
 
@@ -47,6 +49,7 @@ Skills は Claude の能力を拡張する仕組み。`SKILL.md` ファイルに
 |:--|:--|
 | Enterprise / Personal / Project のうち 2 つ | Enterprise > Personal > Project。`~/.claude/skills/` とプロジェクトの両方に `deploy` があれば `/deploy` は Personal のもの |
 | 上記いずれか + バンドルスキル | 自作スキルがバンドルコマンドを置き換える。ただし**エイリアスは置き換えない**（プロジェクトの `code-review` は `/code-review` を置き換えるが、バンドルのエイリアス `/review` は自作スキルを呼ばない） |
+| 上記いずれか + **組み込みコマンド** | ローカルのターミナルセッションでは自作スキルが組み込みコマンドを置き換える。エイリアスは置き換えない（プロジェクトの `usage` スキルは `/usage` を置き換えるが、エイリアス `/cost` は組み込みのまま）（2026-10 ドキュメント改訂で表に追加） |
 | スキル + `.claude/commands/` のファイル | スキルが優先 |
 | プロジェクトルートのスキル + Nested スキル | 両方ロードされる（後述の修飾名） |
 | プラグインスキル + 上記いずれか | 両方ロードされる（`/plugin-name:skill-name` で名前空間が分かれるため） |
@@ -99,7 +102,7 @@ my-skill/
 
 | フィールド | 必須 | 説明 |
 |:--|:--|:--|
-| `name` | No | スキル表示名。省略時はディレクトリ名。小文字英数字とハイフンのみ（最大64文字） |
+| `name` | No | **コマンド名**（`/` メニューに表示され、タイプして呼び出す名前）。省略時はディレクトリ名。小文字英数字とハイフンのみ（最大64文字）。**2026-10 ドキュメント改訂で、personal / project のスキルディレクトリでも `name` がコマンド名を設定するようになった**（他のコマンドが同名を使っていない場合。ディレクトリ名でも引き続き呼び出せる。従来は表示ラベルのみでコマンド名はディレクトリ名固定だった）。プラグインスキルでは従来どおり最終セグメントを置き換える |
 | `description` | 推奨 | スキルの用途と使用タイミング。Claude が自動適用の判断に使用。省略時は本文の最初の非空行を使用。スキル一覧では `when_to_use` との合算 1,536 文字で切り詰められるため主要ユースケースを冒頭に書く（旧記載の「250文字上限（v2.1.86）」は現行リファレンスから削除済み） |
 | `when_to_use` | No | Claude がスキルを呼ぶべきタイミングの補足（トリガーフレーズ・リクエスト例等）。スキル一覧では `description` に連結され、合算 1,536 文字上限の対象。唯一アンダースコア区切りのフィールド |
 | `argument-hint` | No | 引数ヒント。例: `[issue-number]` |
@@ -128,7 +131,8 @@ my-skill/
 | `disable-model-invocation: true` | Yes | No | 説明はコンテキスト外、全文はユーザー呼び出し時 |
 | `user-invocable: false` | No | Yes | 説明は常にコンテキスト内、全文は呼び出し時 |
 
-- **スタック呼び出し（v2.1.199）**: `/skill-a /skill-b do XYZ` のように先頭に並べたスキルは最大5つまで全てロードされる
+- **スタック呼び出し（v2.1.199）**: `/skill-a /skill-b do XYZ` のように先頭に並べたスキルは**最大6つ**まで全てロードされ、末尾テキストが各スキルの `$ARGUMENTS` になる
+- **スラッシュ名を書く位置（2026-10 ドキュメント改訂で明文化）**: メッセージ**先頭**の `/name` は直接実行。**文中**に句読点なしの独立した語として書いた `/name`（例: `go ahead and /deploy to staging`）は直接実行されず、「そのメッセージ中で Claude がスキルを実行してよい」という**許可**として扱われる（実行するかは文脈から Claude が判断）。許可も与えたくない場合はスラッシュを付けずに言及する
 - **フロントマターキーの表記ゆれ許容（v2.1.186）**: `display-name` / `default-enabled` / `fallback` / `metadata.*` は kebab-case / snake_case / camelCase を受理。YAML フロントマターが壊れている場合も silent fail せず空メタデータで本文をロード
 
 ### 1.5 変数展開
@@ -207,6 +211,8 @@ allowed-tools: Read, Grep, Glob
 - **個別許可/拒否**: `Skill(commit)` / `Skill(deploy *)`
 - **個別非表示**: `disable-model-invocation: true`
 
+> **`allowManagedPermissionRulesOnly` とスキルの `allowed-tools`（v2.1.282）**: 組織が managed 設定で `allowManagedPermissionRulesOnly` を設定すると、project / personal スキル等の `allowed-tools` は**無視され**、列挙ツールは組織の managed ルールと通常の権限プロンプトを通る。セッション中に `allowed-tools` を無視されたスキルは `/status` で一覧できる。注入コマンド（`` !`cmd` ``）も managed ルールで allow されない限り通常の中断規則に従う。
+>
 > **deny ルールはエイリアス・非修飾名にもマッチする（v2.1.260 以降）**: `deny` ルールがスキル自身の名前ではなくエイリアスや非修飾名を指していても Claude Code はブロックする。`Skill(review)` はバンドルスキル `/code-review` をそのエイリアス `/review` 経由でブロックし、`Skill(deploy)` は `apps/web:deploy` として列挙される[ネストスキル](https://code.claude.com/docs/en/skills#where-skills-live)を非修飾名経由でブロックする。v2.1.260 より前は、修飾名で列挙されたネストスキルを非修飾名だけの deny ルールではブロックできなかった。
 >
 > **`allow` ルールは逆で、スキル自身の名前と Claude の呼び出しに現れた名前にしかマッチしない**。エイリアス経由の許可はできない。
@@ -217,7 +223,8 @@ Claude Code に同梱されるスキル:
 
 | スキル | 用途 |
 |:--|:--|
-| `/batch <instruction>` | コードベース全体の大規模変更を並列オーケストレーション。ワークツリーごとにエージェントを起動しPRを作成 |
+| `/batch <instruction>` | コードベース全体の大規模変更を並列オーケストレーション。5〜30ユニットに分解し、ユニットごとに隔離 worktree のバックグラウンドサブエージェントが実装・テスト・変更の公開まで行う（2026-10 ドキュメント改訂で「PRを作成」から「変更を公開（publishes its change）」に表現変更）。git リポジトリ、または worktree を作成する `WorktreeCreate` フックが必要（**git 外での実行は v2.1.281 以降**） |
+| `/update-config [request]` | 設定変更を自然言語で依頼すると該当する `settings.json` を Claude が編集する（コマンド許可・環境変数・フック追加等）。テーマ・モデルなどは `/config` を使う（2026-10 巡回でコマンド一覧収載を確認） |
 | `/claude-api` | Claude API リファレンス素材の読み込み（Python/TS/Java等）。サブコマンド: `migrate` / `upgrade` / `managed-agents-onboard` / `prompt-audit`（v2.1.221+） / `cost-optimize`（v2.1.247+） / `build-eval`・`hillclimb`（v2.1.259+） / `preserved-thinking-migration`（2026-10-02 巡回で確認。preserved thinking ブロックを無効化する統合側の編集を検出・影響測定・修正提案） |
 | `/artifact-capabilities` | 公開 artifact が使えるランタイム機能（コネクタ呼び出し等）のリファレンス読み込み（2026-10-02 巡回でコマンド一覧収載を確認） |
 | `/artifact-diagramming` | artifact 内のダイアグラム作成ガイダンス読み込み（ライト / ダーク両対応のインライン SVG 等） |
@@ -252,6 +259,14 @@ Claude Code に同梱されるスキル:
 
 `verify` または `simplify` という名前のスキルがセッション開始時に存在すると、組み込みのコミット指示が「docs / tests 以外の変更では各コミット直前にそれを実行せよ」と Claude に伝える。条件: (1) enterprise / personal / project / additional-dir または `.claude/commands/` 由来（バンドル `/verify`・プラグイン・claude.ai 同期は対象外）、(2) Claude が呼び出せる（`disable-model-invocation: true` は対象外）、(3) `includeGitInstructions` をオフにしていない。また `/verify` はレシピ未記録でビルド / 起動した場合に `.claude/skills/verify/SKILL.md` へ手順を自己記録する（v2.1.200+。v2.1.205 以降は誤導箇所のみ更新）。
 
+### 1.14 Claude がスキルに従わなくなった場合（2026-10 ドキュメント改訂でトラブルシュート節新設）
+
+初回応答では従っていたスキルを途中から無視し始めた場合の切り分け:
+
+- **毎回必ず守るべきルールを飛ばした**: ルールをフック（hooks-guide）に移す。スキルと一緒に配りたい場合はスキルの `hooks` フロントマターに定義する（呼び出し時からセッション終了まで有効）
+- **判断込みで適用すべきガイダンスを飛ばした**: 「テストを実行」ではなく「**毎回の編集後に**テストを実行」のようにタスク全体へかかる表現にする（スキル本文は呼び出し時に入るだけで再読込されない）
+- **コンパクションされた**: 再呼び出しで全文を復元する。コンパクション後は先頭しか残らないため重要指示は SKILL.md の冒頭へ（§1.11 参照）
+
 ## 2. 組み込みコマンド（Slash Commands）
 
 `/` を入力して一覧表示。主要なコマンド:
@@ -264,7 +279,7 @@ Claude Code に同梱されるスキル:
 |:--|:--|
 | `/clear` (`/reset`, `/new`) | 会話履歴クリア |
 | `/compact [instructions]` | 会話コンパクション |
-| `/resume [session]` (`/continue`) | セッション再開 |
+| `/resume [session]` (`/continue`) | セッション再開。**v2.1.285 以降、実行中のバックグラウンドセッションもピッカー / ID / 名前で resume 可能**: 現在の会話がバックグラウンドへ移り、この端末が実行中セッションにアタッチされる（空プロンプトで `←` を押すと agent view に戻る）。それ以前は実行中セッションの resume は拒否され `claude attach` を案内していた |
 | `/rename [name]` | セッション名変更 |
 | `/rewind` (`/checkpoint`, `/undo`) | 会話/コードを前の状態に巻き戻し（v2.1.108 で `/undo` エイリアス追加。v2.1.191 で `/clear` 実行前からの会話再開に対応） |
 | `/cd <path>` | 会話を保ったままセッションのワーキングディレクトリを移動（v2.1.169）。v2.1.206 でパス補完対応。**v2.1.246 以降、移動と同時に移動先ディレクトリの project / local 設定、プロジェクトスキル、そのディレクトリの設定が有効化するプラグインの MCP サーバーを読み込む**（`/reload-plugins` 不要）。ファイルアクセス権だけを足したい場合は `/add-dir` を使う。`Cd` 権限ルールで移動先を制限・禁止できる |
@@ -279,7 +294,7 @@ Claude Code に同梱されるスキル:
 | コマンド | 説明 |
 |:--|:--|
 | `/config` (`/settings`) | 設定インターフェース表示。v2.1.181 で `/config key=value` 構文により任意設定をプロンプトから直接変更可能（インタラクティブ / `-p` / Remote Control 対応、例: `/config thinking=false`）。`/config --help` でショートハンドキー一覧（v2.1.183）。v2.1.202 で「Dynamic workflow size」設定（動的ワークフローのエージェント数目安 small/medium/large）追加 |
-| `/doctor` (`/checkup`) | セットアップの総合チェックアップ。問題の診断と修正まで実行（v2.1.205 で強化・`/checkup` エイリアス追加）。CLAUDE.md の冗長部分の削減提案も（v2.1.206） |
+| `/doctor [prompt-audit [path]]` (`/checkup`) | セットアップの総合チェックアップ。問題の診断と修正まで実行（v2.1.205 で強化・`/checkup` エイリアス追加）。CLAUDE.md の冗長部分の削減提案も（v2.1.206）。**v2.1.283 で `prompt-audit` サブコマンド追加**: チェックアップの代わりに CLAUDE.md・スキル等の設定ファイルを監査し、旧モデル向けの陳腐化した指示や矛盾する指示を洗い出す |
 | `/permissions` (`/allowed-tools`) | 権限設定。allow / ask / deny ルールをスコープ別に閲覧・追加・削除し、作業ディレクトリ管理と Auto mode の拒否履歴レビューを行う。**v2.1.246 で Auto mode タブが追加**され、Auto mode 分類器ルールの閲覧・編集もダイアログから可能に。応答中に実行するとダイアログが即座に開き、変更は同一ターンの次のツール呼び出しから適用される（v2.1.234 以降） |
 | `/fast [on\|off]` | Fastモードトグル |
 | `/model [model]` | モデル変更（v2.1.144 から現在セッションにのみ適用。新規セッションのデフォルト変更はピッカーで `d` キー、保存せず切り替えるだけなら `s` キー）。ピッカーの effort スライダを矢印キーで動かして effort を設定でき、低〜`xhigh` を選ぶと `modelSettings` にモデル別で保存される。**v2.1.284 以降、スライダに `ultracode` の位置はなく**（ultracode は `/effort` の独立トグルに移行）、レベル選択は ultracode の状態を変えない |
@@ -287,7 +302,7 @@ Claude Code に同梱されるスキル:
 | `/skill-doctor` | 読み込まれているスキルの**コンテキストコストと呼び出し頻度**を表示し、一度も呼ばれていないスキルと、その無効化方法を示す。最近使っていないプラグインも一覧化。対話セッションでは `/plugin` マネージャの **Stats** タブに開き、`-p` の非対話モードではテキスト出力。バンドルスキル・エンタープライズスキルは対象外。**v2.1.252 以降＋feature flag 取得が必要**で、feature flag 取得を止めているセッションと Remote Control 経由では利用不可（後者は `Skill usage reports are not available on this connection.` を返すため、セッションが動いているマシンの端末で実行する） |
 | `/memory` | CLAUDE.md/オートメモリ管理 |
 | `/hooks` | フック設定表示 |
-| `/mcp` | MCPサーバー管理。v2.1.161 で未使用 claude.ai connector を「Show unused connectors」の下に折りたたみ表示に変更 |
+| `/mcp [reconnect (<server>\|all)\|enable\|disable [<server>\|all]]` | MCPサーバー管理。v2.1.161 で未使用 claude.ai connector を「Show unused connectors」の下に折りたたみ表示に変更。**v2.1.284 で `reconnect all` 追加**（接続失敗・要認証の全サーバーを一括再試行） |
 | `/status` | ステータス表示。v2.1.221 からセッション種別（`interactive` / バックグラウンドの `attached` / `unattended`）も表示。セッション間メッセージが有効なセッションでは自身の受信箱アドレスを `Peer address` 行（`uds:` プレフィックス）に表示。v2.1.243 で `Skipped sources` 行（`managed-settings.json` 等、存在するが上位の managed ソースが有効なため適用されない managed 設定ソース）と、Claude Code on the web 向けの GitHub 接続状況行（未接続なら `/web-setup` を案内）を追加 |
 | `/list-agents` | Claude が到達可能なエージェント一覧（サブエージェント / 同一マシンの他セッション / クラウドセッション / 他マシンの Remote Control セッション）。エイリアス `/peers`。セッション間メッセージ機能の有無を確認する手段でもある（コマンド自体が未認識ならその機能を持たない）。ローカルセッションは作業ディレクトリも表示され、同名セッションの区別が可能 |
 | `/context` | コンテキスト使用量の可視化 |
@@ -327,7 +342,8 @@ Claude Code に同梱されるスキル:
 | `/plugin list` | インストール済みプラグイン一覧表示。`--enabled` / `--disabled` フィルタ対応（v2.1.163） |
 | `claude plugin enable/disable` | 依存関係を強制。`disable` は他の有効プラグインの依存先を拒否し disable-chain ヒントを表示。`enable` は推移的依存を強制有効化（v2.1.143） |
 | `claude plugin configure <plugin>` | プラグインのオプション一覧と未設定項目を表示。`--values-stdin` で stdin から読んだ新値を保存（v2.1.285）。`claude plugin install --config` では `<server>.<key>=<value>` 形式でバンドル `.mcpb` MCP サーバー自身の設定もインストール時に指定可能（`/plugin` → Configure を経ずに起動できる） |
-| `/reload-plugins` | プラグイン変更の即時反映（v2.1.221 から `/plugin` 経由のインストールは安全な場合、実行不要で即時有効化） |
+| `/reload-plugins` | プラグイン変更の即時反映（v2.1.221 から `/plugin` 経由のインストールは安全な場合、実行不要で即時有効化）。インストールサマリーの文言は `Run /reload-plugins to apply.` に変更（旧 `to activate.`） |
+| `/plugin-authoring` | mod 作成時に Claude が参照するリファレンスをロードする（組み込みプラグイン `cc-plugin-plugin-authoring` のスキル。`/plugin` で無効化可。v2.1.287 以降） |
 | `/reload-skills` | スキル / コマンドディレクトリを再スキャン。セッション再起動不要。利用可能スキル数と増減数を報告する |
 | `/desktop` (`/app`) | デスクトップアプリでセッション継続 |
 | `/remote-control` (`/rc`) | リモートコントロール有効化 |
@@ -393,7 +409,7 @@ MCPサーバーが公開するプロンプトは `/mcp__<server>__<prompt>` 形�
 | `/scroll-speed` | マウスホイールのスクロール速度をインタラクティブ調整（フルスクリーン描画時） |
 | `/terminal-setup` | Shift+Enter 等の端末キーバインド設定（VS Code / Cursor / Alacritty / Zed 等、必要な端末でのみ表示） |
 | `/install-github-app` | リポジトリへの Claude GitHub App インストール（GitHub Actions ワークフロー・シークレット設定も任意で実施） |
-| `/install-slack-app` | Claude Slack アプリのインストール（ブラウザで OAuth フローを完了） |
+| `/install-slack-app` | Claude Slack アプリのインストール（ブラウザで OAuth フローを完了）。Slack 内の Claude は「**Claude Tag**」として claude.com/docs/claude-tag/ に本格的なドキュメント群が新設された（2026-10-07 巡回で確認。Claude Code docs の en/claude-tag はそちらへのリダイレクトに変わった） |
 | `/setup-bedrock` | Amazon Bedrock の認証・リージョン・モデルピンをウィザードで設定（`CLAUDE_CODE_USE_BEDROCK=1` 時のみ表示） |
 | `/setup-vertex` | Google Cloud Agent Platform の認証・プロジェクト・リージョン・モデルピンをウィザードで設定（`CLAUDE_CODE_USE_VERTEX=1` 時のみ表示） |
 | `/bug [report]` | バグ報告 / 会話共有。送信履歴の範囲を選択し同意画面で確認してから送信 |
@@ -617,7 +633,9 @@ cloud / 共有レポでは `.claude/settings.json` の `enabledPlugins` で宣�
 
 `claude-plugins-official` 配下の公式プラグイン。セッション内でマルチエージェント脆弱性スキャンを実行するオンデマンド・ディープスキャン層。エージェントチームがアーキテクチャ把握→脅威モデル構築→脆弱性ハント→独立検証エージェントによる全 finding レビュー→レポート作成を行う。
 
-**前提条件**: Claude Code v2.1.154 以降＋有料プラン（動的ワークフロー必須。Pro は `/config` の Dynamic workflows で有効化）、`python3` 3.9 以降（標準ライブラリのみ使用。2026-09-01 の公式ドキュメント改訂で 3.9.6 → 3.9 に修正）、変更スキャン・パッチ生成には git。
+**前提条件**: Claude Code v2.1.154 以降＋有料プラン・Anthropic API アクセス・またはサードパーティプロバイダ（動的ワークフロー必須。Pro は `/config` の Dynamic workflows で有効化）、`python3` 3.9 以降（標準ライブラリのみ使用。2026-09-01 の公式ドキュメント改訂で 3.9.6 → 3.9 に修正）、変更スキャン・パッチ生成には git。
+
+**モデルとプロバイダ（2026-10 ドキュメント改訂で「Models and providers」節新設）**: プラグイン自身はモデル呼び出しを行わず、スキャンは**セッションのモデル**で動く（脆弱性ハント・検証・パッチ作成/レビューのエージェント。変更したい場合はスキャン前に `/model`）。リポジトリマッピング等の補助ステップは `sonnet` エイリアスを使う。**Bedrock / Google Cloud Agent Platform / Microsoft Foundry などサードパーティプロバイダでも実行可能**。サードパーティでは `sonnet` エイリアスの解決先が Anthropic API と異なりうるため、必要なら `ANTHROPIC_DEFAULT_SONNET_MODEL` を含むモデルピンを行う。Fable 系モデルでは cybersecurity 安全分類器がリクエストをフラグすることがあり、automatic model fallback で Opus に再実行される（Bedrock 等ではデプロイ構成次第で拒否メッセージで終わる場合あり）。
 
 **インストール**:
 
@@ -685,11 +703,35 @@ first-mod/
 | `cc-plugin-diff` | `/diff` コマンドとペイン描画 |
 | `cc-plugin-plugin-authoring` | mod 作成用 `plugin-authoring` スキルの提供 |
 | `cc-plugin-sec-default` | ユーザー mod から managed 設定を保護するガード（無効化不可） |
-| `cc-plugin-telemetry` | 組み込み mod のアナリティクス送信 |
+| `cc-plugin-telemetry` | 組み込み mod のアナリティクス送信。他の mod が呼べるメソッドも追加 |
+| `cc-plugin-you-should-know` | サイドエージェントが長時間タスク中の会話を監視し、見落としをプロンプト上の注記でフラグ。**既定で無効**。`/plugin enable cc-plugin-you-should-know@builtin` で有効化（組織で利用可能な場合のみ Installed → Show disabled に表示） |
 
-組み込み mod は `disableAllHooks` / `--bare` / `--safe-mode` では止まらない。
+組み込み mod は `disableAllHooks` / `--bare` / `--safe-mode` では止まらない。Anthropic はサンプル mod も公開している（`anthropics/claude-code-playground` の `claude-code/mods/`: `token-weather`・`blast-radius`・`replay-theater`）。
 
-**組織管理**: managed 設定の **`appendPlugins` / `prependPlugins`**（v2.1.286 時点で settings-reference 収載）で、組織の mod をユーザー mod の後 / 前に配置できる。ポリシー強制 mod の実装例として `sec-default` が参照実装。
+**組織管理**（詳細は plugins/mods/admin ページ）: managed 設定の **`appendPlugins` / `prependPlugins`**（プラグイン ID のリスト。ユーザー mod の後 / 前に配置）、**`allowManagedModsOnly`**（組織の mod と組み込み mod のみロード。settings hooks は動き続ける）、**`allowModsToOverrideDenyRules`**（ユーザー mod が deny ルールの拒否を覆すのを許可）、**`allowManagedHooksOnly`**（組織以外のフック・インストール mod をブロック）、**`disableSideloadFlags`**（`--plugin-dir` / `--plugin-url` を起動時に拒否）、**`pluginConfigs`**（mod の `userConfig` 値をプラグイン ID で配布）。ポリシー強制 mod の実装例として `sec-default` が参照実装（managed 設定があるマシン、または Team / Enterprise サインインのユーザーで全ユーザー mod より先にロード）。
+
+**イベントカタログ（reference ページの要約。完全版は `mods/types/claude-code.d.ts`）**:
+
+| グループ | 主なイベント |
+|:--|:--|
+| ツール | `tool.call`（実行前に deny / 結果差し替え可）、`tool.check`（allow / ask / deny 判定の上書き）、`tool.describe`（説明の書き換え・tool search 背後へのディファー指定） |
+| プロンプト | `prompt.submit`（書き換え / drop）、`prompt.fill` / `prompt.suggest` / `prompt.edit`、`prompt.compose` / `prompt.section`（システムプロンプトのセクション書き換え・削除）、`prompt.context`、`prompt.attachment`（リマインダー等の書き換え・抑止）、`skill.prompt`（スキル本文展開の書き換え）、`attribution.text`（コミット / PR 帰属テキスト） |
+| コマンド・設定 | `command.run` / `command.describe`、`config.set` / `config.describe` |
+| ターン | `turn.start`、`turn.step`（モデル / effort の差し替え。async generator）、`turn.complete`（回答下に1行表示可） |
+| セッション | `session.start` / `session.end` / `session.compact`（skip 可）/ `session.receive` / `session.send` / `session.append`（保存行の書き換え）/ `session.attach` / `session.detach` / `session.measure` |
+| サブエージェント | `agent.offer`（タイプの提示を抑止）、`agent.spawn`（モデル差し替え / deny。チームメイトは `e.isTeammate`） |
+| UI | `ui.render`（render site の描画）、`ui.resolve`、`ui.press` / `ui.input` / `ui.select`、`ui.focus` / `ui.scroll` / `ui.close`、`ui.message`、`ui.fault`（v2.1.289+） |
+| 他の mod | `plugin.register`（ロード拒否可。`e.uses` に validate と同じ hooks / calls 一覧）、`engine.create`（mods API の加工） |
+| テレメトリ | `telemetry.log` / `telemetry.mark`（インストール mod は `{ to: 'collector' }` フィルタ必須） |
+| settings hooks | `classic.<Event>`（`classic.Stop` 等。`e` は settings hook の stdin JSON） |
+
+mods API の各メソッド（`fs.read` 等）もイベントとして後続 mod の呼び出しをインターセプトできる。フックの実行順は tier（`prepend` → `user` → `append` → `builtin`）で、`next.to(e, tier)` による後続スキップは prepend / append 配置の mod のみ可能。
+
+**mods API（`$`）の名前空間**: `$.plugin`（name / root）、`$.ui`（open / close / toast / notice / ask / status / invalidate 等）、`$.command` / `$.tool` / `$.agent`（register / run・call / spawn / list）、`$.model`（complete / fork / classify）、`$.prompt`（submit / fill / suggest 等。`submit({text, asUser: true})` でユーザー発話として送信）、`$.turn.abort`、`$.session`（messages / usage / send / compact 等）、`$.config` / `$.settings` / `$.env`、`$.fs`（read / write / list 等。1ファイル4 MiB）、`$.store`（全セッション共有 KV、合計 4 MiB）、`$.state`（リアクティブ状態）、`$.clock`（sleep / after / every）、`$.http.fetch`、`$.process`（run は既定30秒・最大10分）、`$.mcp`（call / connect）、`$.audio`、`$.telemetry`。
+
+**render site / 要素 / 制限の要点**: 描画先は `Pane`（dock / inline）・`AbovePrompt`（バンド）のほか、`UserMessage` / `AssistantMessage` / `ToolUse` / `Spinner` / `AskUserQuestion` など Claude Code 自身の UI 置換ポイント。要素は `Box` / `Text` / `Button` / `Input` / `Select` / `Markdown` / `Code` / `Link` / `Client` に加え、ターミナル限定の `Raster`（最大 512×256 セル）/ `Image`（2 MiB）、Desktop 限定の `Svg`。フック実行時間は 1 イベント 10 秒（`prompt.edit` は 50ms）、`$.model.complete` の maxTokens は既定 1024（最大 64,000）、再描画は秒 10 回（可視ペインは 30 回）にスロットル。テストは `*.test.ts(x)` を `claude plugin test <dir>` で実行（1 テスト既定 5 秒）。`CLAUDE_CODE_PLUGIN_DIR_WATCH=1` で長時間の非対話セッションでも `--plugin-dir` mod を保存時リロード。
+
+**実行環境の詳細（overview の表）**: フックは VS Code 拡張チャットパネル・`claude -p`・Agent SDK・Remote Control（ローカル側）・クラウドセッション（プラグインが届く場合）でも動くが、**描画されるのはターミナルと Desktop アプリの Code タブのみ**（Desktop の WSL セッションはプラグイン自体が不可）。mod はサンドボックス対象外（sandbox は Claude の Bash コマンドのみ隔離）。
 
 **使い分け**（公式比較表の要点）: ペイン・バンド・独自コマンド・イベント書き換えが欲しい → mod。既存スクリプトでイベントをブロック / 記録したい → settings hook。同じ指示を繰り返し貼っている → skill。外部システムに繋ぎたい → MCP サーバー。1つのプラグインに4種すべて同梱可能。
 
@@ -707,7 +749,7 @@ first-mod/
 
 | エージェント | モデル | 用途 |
 |:--|:--|:--|
-| **Explore** | メインセッションのモデルを継承（上限 Opus。v2.1.198 で Haiku 固定から変更） | 読み取り専用のコードベース探索。quick/medium/very thorough の3段階 |
+| **Explore** | メインセッションのモデルを継承。**メインが Fable のとき**（2026-10 ドキュメント改訂で「Opus 上限」から記述変更）: サブスクリプション / Console / `ANTHROPIC_BASE_URL` の LLM ゲートウェイでは `opus` エイリアスが解決する Opus モデルで実行、Bedrock / Agent Platform / Foundry / Claude Platform on AWS / Claude apps gateway ではメインのモデルのまま | 読み取り専用のコードベース探索。quick/medium/very thorough の3段階 |
 | **Plan** | 継承 | プランモード時のリサーチ。読み取り専用 |
 | **general-purpose** | 継承 | 探索と変更の両方が必要な複雑タスク |
 | **Bash** | 継承 | 別コンテキストでのターミナルコマンド実行 |
@@ -743,11 +785,13 @@ model: sonnet
 | `~/.claude/agents/` | 全プロジェクト | 3 |
 | プラグインの `agents/` | プラグイン有効時 | 4（最低） |
 
+**`--agents` の JSON 形式（2026-10 ドキュメント改訂で詳細化）**: トップレベルキーがエージェント名（`-` 始まり不可）、値が定義。`prompt`（システムプロンプト、file-based の本文に相当）＋frontmatter 相当フィールド（`description` / `tools` / `disallowedTools` / `model` / `permissionMode` / `mcpServers` / `hooks` / `maxTurns` / `skills` / `initialPrompt` / `memory` / `effort` / `background` / `omitClaudeMd` / `isolation`）。`color` / `experimental` は受理されず黙って無視。**v2.1.281 以降**: ①非対話モード（`-p`）では JSON ファイルのパスも渡せる（コマンドラインに載らない大型定義用。対話セッションではファイルパスは拒否）、②`prompt` は空でもよく、空 `prompt`＋`memory` なしのエージェントを `--agent` でセッションエージェントにするとシステムプロンプトは既定のまま変わらない。
+
 ### 5.5 フロントマターフィールド
 
 | フィールド | 必須 | 説明 |
 |:--|:--|:--|
-| `name` | Yes | 一意識別子（小文字+ハイフン） |
+| `name` | Yes | 一意識別子（`code-reviewer` や `reviewer-v2` のような形式。[SubagentStart フック](hooks.md)に `agent_type` として渡る）。`:` は使用不可（プラグインスコープ識別子用に予約、v2.1.218 以降は含むとロードされない） |
 | `description` | Yes | Claude が委譲判断に使用する説明 |
 | `tools` | No | 許可ツール。省略時は全ツール継承 |
 | `disallowedTools` | No | 拒否ツール |
@@ -785,6 +829,8 @@ model: sonnet
 - **`CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1`（v2.1.257）を設定すると、この優先順位を無視して `CLAUDE_CODE_SUBAGENT_MODEL`（未設定ならメイン会話のモデル）が全サブエージェント・チームメイト・ワークフローエージェントに強制適用される。** ビルトインの Explore / Plan の `model` フィールドも無視される。ただし **`CLAUDE_CODE_SUBAGENT_MODEL` を設定せず本変数だけを `1` にした場合、Explore は「Claude API では Opus 上限」を維持する**。fork と `model: inherit` のサブエージェント実行スキルは常にメイン会話のモデルで動く（公式ドキュメントでは 2026-09-02 に `sub-agents` の「Run every subagent on one model」節として独立）
 - （`FORCE` を使わない場合）`CLAUDE_CODE_SUBAGENT_MODEL` を設定するだけでは、ビルトインの Explore / Plan サブエージェントが動くモデルは変わらない
 - 組織の `availableModels` 許可リストでブロックされた値は、ファミリーエイリアスなら許可リスト内の最新版に置換され、それ以外は継承モデルへフォールバックする（`CLAUDE_CODE_SUBAGENT_MODEL` を設定している場合は同じ規則の下でまずそのモデルが試される）。インタラクティブセッションでは置換時に要求モデルと置換モデルを示す警告が出る
+- **ファミリーエイリアスがメイン会話のモデルに解決される2ケース（2026-10 ドキュメント改訂で明文化）**: ①メイン会話のモデルがそのファミリーに属する場合、サブエージェントは**メイン会話の正確なモデル**（`[1m]` サフィックス込み、つまり拡張コンテキストも同じ）で動く。②サードパーティプロバイダでメイン会話のモデルファミリーを判別できない場合（Bedrock の application inference profile ARN が未解決のとき等。`opus` エイリアスのみ該当し、`ANTHROPIC_DEFAULT_OPUS_MODEL` 設定時は解決先が優先）。`CLAUDE_CODE_SUBAGENT_MODEL` 内のエイリアスは常にエイリアスの指す版に解決される
+- **サブエージェントのリクエストはメイン会話と同じ利用上限（usage limits）を消費する**（2026-10 ドキュメント改訂で明文化）
 
 ### 5.6 呼び出し方法
 
@@ -808,6 +854,8 @@ model: sonnet
 
 - 完了時に Claude はエージェントIDを受け取る。組み込みの Explore / Plan は one-shot でエージェントIDを返さないため再開できない（継続が必要なら `general-purpose` かカスタムサブエージェントを使う）
 - **`maxTurns` の上限で停止した場合**、Claude Code は返却出力を「部分的（partial）」とマークする（v2.1.246 以降）。エージェントIDを返すサブエージェントでは「メッセージを送れば停止地点から継続できる」旨も結果に付く
+
+**トランスクリプトビューでの操作（v2.1.286 で安全柵を明文化）**: fork / サブエージェントのトランスクリプトを開いている間、追加メッセージとスキルはそのエージェントへ、組み込みコマンドはメイン会話へ届く。`/compact` / `/clear` / `/rewind` はメイン会話に作用するため実行前に確認が入り、`/model` / `/fast` はこのビューからは実行されず通知が出る。エージェントが作業待ちの間にメッセージを先に読ませるには `Ctrl+Enter`（または `Ctrl+X Ctrl+S`）で送る: バックグラウンド化できる待機中のシェルコマンド / サブエージェントはバックグラウンドへ移って継続する。
 
 **フォールバックモデルチェーンの適用（v2.1.247）**: `fallbackModel` チェーンを構成している場合、サブエージェントのリクエストがチェーンの対象となる障害（モデル利用不可等）に遭うと、Claude Code はチェーンの順にモデルを試し、受理したモデルでサブエージェントを継続させる。セッション自身のモデルは変わらない。**v2.1.247 より前は、チェーンが対象とする障害でもサブエージェントは終了していた。**
 

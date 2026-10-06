@@ -1,6 +1,6 @@
 # Claude Code Hooks 仕様書
 
-最終更新: 2026-09-11（巡回更新）
+最終更新: 2026-10-07（巡回更新）
 
 公式ドキュメント: https://code.claude.com/docs/en/hooks
 
@@ -22,7 +22,7 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 
 | イベント | 発火タイミング | ブロック可能 | matcher対象 |
 |:--|:--|:--|:--|
-| `SessionStart` | セッション開始/再開 | No | `startup`, `resume`, `clear`, `compact`, `fork`（v2.1.214: フォーク開始時は `resume` ではなく `fork` を報告） |
+| `SessionStart` | セッション開始/再開 | No | `startup`, `resume`, `clear`, `compact`, `fork`（v2.1.214: フォーク開始時は `resume` ではなく `fork` を報告。`fork` の対象は `--fork-session`＋`--resume` / `--continue`、`/fork`、`/branch` に加え、**会話のバックグラウンド移行（`←` / `/background`）も含む**〈2026-10 ドキュメント改訂で明文化〉） |
 | `UserPromptSubmit` | プロンプト送信後、処理前。**ユーザー入力以外でも発火**（2026-10 ドキュメント改訂で明文化）: スケジュールタスクの発火（`/loop` イテレーション含む）、バックグラウンドサブエージェントの起動元への報告、クロスセッションメッセージ受信 | Yes | - |
 | `UserPromptExpansion` | ユーザーが打ったコマンドがプロンプトへ展開される時（Claude に届く前） | Yes | `command_name`（スキル名 / コマンド名）。matcher 省略で全 prompt 型コマンドに発火 |
 | `PreToolUse` | ツール実行前 | Yes | **`EndConversation` 以外の全ツール名**（`Bash` / `PowerShell` / `Edit` / `Write` / `Read` / `Glob` / `Grep` / `Agent` / `Workflow` / `WebFetch` / `WebSearch` / `AskUserQuestion` / `ExitPlanMode` 等の組み込みツールと MCP ツール名） |
@@ -48,7 +48,7 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 
 | イベント | 発火タイミング | ブロック可能 | matcher対象 |
 |:--|:--|:--|:--|
-| `Notification` | 通知送信時 | No | `permission_prompt`（ツール承認に加え、**サンドボックスコマンドのネットワークリクエスト承認**も対象。ターミナルセッションでは v2.1.246 以降）, `idle_prompt`, `auth_success`, `elicitation_dialog`, `agent_needs_input`（バックグラウンドエージェントが入力待ちになったとき。**v2.1.248 以降、agent team のチームメイト用ターミナル設定の質問**に対しても、一定時間ユーザーが入力しないと発火する）, `agent_completed`（バックグラウンドエージェント通知、v2.1.198）, `elicitation_url_dialog`, `elicitation_complete`, `elicitation_response`, `quota_auto_resume_fired` / `quota_auto_resume_stale` / `quota_auto_resume_disabled`（利用上限リセット後の自動継続、v2.1.243 系） |
+| `Notification` | 通知送信時 | No | `permission_prompt`（ツール承認に加え、**サンドボックスコマンドのネットワークリクエスト承認**も対象。ターミナルセッションでは v2.1.246 以降）, `idle_prompt`（応答完了約60秒後、未入力のとき。**バックグラウンドエージェント〔バックグラウンドサブエージェント等〕が実行中の間は発火しない**〈2026-10 ドキュメント改訂で明文化〉）, `auth_success`, `elicitation_dialog`, `agent_needs_input`（バックグラウンドエージェントが入力待ちになったとき。**v2.1.248 以降、agent team のチームメイト用ターミナル設定の質問**、さらに **auto mode の分類器リクエスト課金通知**〈2026-10 ドキュメント改訂〉に対しても、一定時間ユーザーが入力しないと発火する）, `agent_completed`（バックグラウンドエージェント通知、v2.1.198）, `elicitation_url_dialog`, `elicitation_complete`, `elicitation_response`, `quota_auto_resume_fired` / `quota_auto_resume_stale` / `quota_auto_resume_disabled`（利用上限リセット後の自動継続、v2.1.243 系） |
 | `MessageDisplay` | アシスタントメッセージ表示時 | No（transform/hide可） | - | アシスタントメッセージのテキストを変換または非表示にできる（v2.1.152） |
 | `ConfigChange` | 設定ファイル変更時 | Yes | `user_settings`, `project_settings`, `local_settings`, `policy_settings`, `skills` |
 | `InstructionsLoaded` | CLAUDE.md/rules読み込み時 | No | `session_start`, `nested_traversal`, `path_glob_match`, `include`, `compact` |
@@ -417,13 +417,15 @@ v2.1.133 以降、すべてのイベントの入力 JSON に effort level も含
 
 | イベント | 追加入力フィールド |
 |:--|:--|
-| `SessionStart` | `source`, `model`, `agent_type`(opt)。**v2.1.251 以降、`source` が `resume` / `fork` かつトランスクリプトに Claude の応答が1件以上ある場合のみ** `seconds_since_last_response`（直近応答からの経過秒）, `context_tokens`（再開後の最初のリクエストが再送するトークン数）, `prompt_cache_likely_expired`（直近応答がプロンプトキャッシュ寿命より古い、または後続のコンパクションがキャッシュ済み会話を置換した場合 `true`）, `estimated_cache_write_usd`（`context_tokens` をセッションのモデルへ書き込む推定 USD、応答分は含まない）が加わる |
-| `UserPromptSubmit` | `prompt`。`[Pasted text #N]` に折りたたまれたペースト内容は**展開されて届く**。ペーストマーキング有効セッションでは展開内容が `<pasted_content id="…">` 〜 `</pasted_content id="…">` 行に挟まれるため、プロンプトをパースするフックはこの行を考慮する（2026-09-22 ドキュメント改訂で明文化） |
+| `SessionStart` | `source`, `model`, `agent_type`(opt)。**v2.1.251 以降、`source` が `resume` / `fork` かつトランスクリプトに Claude の応答が1件以上ある場合のみ** `seconds_since_last_response`（直近応答からの経過秒）, `context_tokens`（再開後の最初のリクエストが再送するトークン数）, `prompt_cache_likely_expired`（直近応答がプロンプトキャッシュ寿命より古い、または後続のコンパクションがキャッシュ済み会話を置換した場合 `true`）, `estimated_cache_write_usd`（`context_tokens` をセッションのモデルへ書き込む推定 USD、応答分は含まない）が加わる。**`session_title`**（2026-10 ドキュメント改訂で明文化）: カスタムタイトルが設定済みの場合のみ含まれる。`--name` / `/rename` / フックの `sessionTitle` 出力 / SDK `renameSession()` 由来のタイトルが対象で、**自動生成タイトルは含まれない**。`sessionTitle` を出すフックは先に本フィールドを確認すると既存タイトルの上書きを避けられる |
+| `UserPromptSubmit` | `prompt`。`[Pasted text #N]` に折りたたまれたペースト内容は**展開されて届く**。ペーストマーキング有効セッションでは展開内容が `<pasted_content id="…">` 〜 `</pasted_content id="…">` 行に挟まれるため、プロンプトをパースするフックはこの行を考慮する（2026-09-22 ドキュメント改訂で明文化）。カスタムタイトル設定済みセッションでは `session_title` も受け取る（意味は `SessionStart` の同フィールドと同じ。2026-10 ドキュメント改訂） |
 | `UserPromptExpansion` | `expansion_type` (`slash_command`/`mcp_prompt`), `command_name`, `command_args`, `command_source`, `prompt` |
 | `PreToolUse` | `tool_name`, `tool_input`, `tool_use_id` |
 | `PermissionRequest` | `tool_name`, `tool_input`, `permission_suggestions`(opt) |
 
 > `PermissionRequest` は **agent フック非対応**（v2.1.280 で明確化）: サポートするフックタイプは `command` / `http` / `mcp_tool` / `prompt` のみ。agent フックを設定してもスキップされ（エラー表示あり）権限フローは変わらない。フックから allow / deny するには command / HTTP フックの decision オブジェクトを返す。agent フックは他のイベントでは prompt フックと同じイベントをサポートする。
+>
+> **権限ホストとの並走（2026-10 ドキュメント改訂で明文化）**: `--permission-prompt-tool` や Agent SDK の `canUseTool` コールバックに届く呼び出しでは、`PermissionRequest` フックはホストと**並行して**実行され、**先に決定した側が適用される**。
 >
 > `PermissionRequest` は **サンドボックスコマンドのネットワークリクエスト**の権限プロンプトでは発火しない（ツール使用の権限要求のみ）。ネットワークリクエスト側のシグナルが必要な場合は `Notification` の `permission_prompt` タイプを使う（ただし約 6 秒の待機後に発火）。
 >
@@ -510,7 +512,7 @@ v2.1.133 以降、すべてのイベントの入力 JSON に effort level も含
 
 > `updatedInput` はツール入力を**丸ごと置換**するため、変更しないフィールドも含めて返す必要がある。**Claude Code は権限ルールの評価と Bash コマンドの[自動バックグラウンド化の可否判定](https://code.claude.com/docs/en/tools-reference#background-commands)を、Claude が送った入力ではなくフックが返した入力に対して行う**（`"defer"` の場合は無視される）。
 >
-> `permissionDecisionReason` の扱い（2026-09-30 ドキュメント改訂）: `"ask"` はユーザーに表示（Claude には非表示）、`"deny"` は Claude に表示、**`"allow"` と `"defer"` はデバッグログ（`--debug`）にのみ書かれる**（従来は `"allow"` もユーザーに表示されるとされていた）。
+> `permissionDecisionReason` の扱い（2026-09-30 ドキュメント改訂）: `"ask"` はユーザーに表示（Claude には非表示）、`"deny"` は Claude に表示、**`"allow"` と `"defer"` はデバッグログ（`--debug`）にのみ書かれる**（従来は `"allow"` もユーザーに表示されるとされていた）。誰もプロンプトに答えられない `-p` 実行で Claude Code が呼び出しを自動拒否した場合、`"ask"` の理由は代わりにツール結果として Claude に渡る（2026-10 ドキュメント改訂で明文化）。
 
 > フックが `"ask"` を返したときの権限プロンプトには、そのフックの出所ラベルが付く。ラベルは **`[settings]`**（settings ファイル由来またはエージェント frontmatter 由来） / **`[plugin:<name>]`**（プラグイン由来） / **`[skill]`**（スキル frontmatter 由来）の 3 種（従来ドキュメントの `[User]` / `[Project]` / `[Plugin]` / `[Local]` から変更）。
 
@@ -562,6 +564,27 @@ v2.1.133 以降、すべてのイベントの入力 JSON に effort level も含
   "hookSpecificOutput": {
     "hookEventName": "Stop",
     "additionalContext": "テストが未通過なので修正を続けてください"
+  }
+}
+```
+
+#### UserPromptSubmit
+
+出力: 全 JSON 出力フィールドが利用可能。`hookSpecificOutput` で `additionalContext`（コンテキスト追加）、`sessionTitle`（プロンプト内容からのセッション命名）、`suppressOriginalPrompt` を返せる。
+
+**ブロックしたプロンプトの残留（2026-10 ドキュメント改訂で明文化）**: `decision: "block"`（または終了コード 2）でブロックしたプロンプトは Claude には届かないが、テキストが全消去されるわけではない:
+
+- 既定では、ユーザーに表示されるブロックメッセージの末尾に `Original prompt:` ＋送信テキストが付き、**そのメッセージはトランスクリプトファイルにも書き込まれる**
+- `hookSpecificOutput.suppressOriginalPrompt: true` を返すとブロックメッセージから原文を省略できる（`decision: "block"` でも exit 2 でも有効）
+- ただし `suppressOriginalPrompt` が変えるのは**ブロックメッセージだけ**。送信テキストはトランスクリプトやプロンプト履歴などローカルファイルに残りうるため、**ブロックフックはシークレットをディスクに残さない手段にはならない**（制限するには公式ドキュメントの Plaintext storage / Clear local data を参照）
+
+```json
+{
+  "decision": "block",
+  "reason": "このプロンプトは送信できません",
+  "hookSpecificOutput": {
+    "hookEventName": "UserPromptSubmit",
+    "suppressOriginalPrompt": true
   }
 }
 ```

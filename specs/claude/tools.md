@@ -1,6 +1,6 @@
 # Claude Code ツール仕様書
 
-最終更新: 2026-09-11（巡回更新）
+最終更新: 2026-10-07（巡回更新）
 
 公式ドキュメント: https://code.claude.com/docs/en/tools-reference
 
@@ -28,7 +28,7 @@ Claude Code の組み込みツール一覧。**ここに書かれたツール名
 |:--|:--|:--|
 | `Agent` | No | サブエージェントを独立コンテキストで起動。Agent Teams 有効時、`name` 付き呼び出しはチームメイトを起動しうる |
 | `Artifact` | Yes | HTML / Markdown ファイルを claude.ai 上の非公開インタラクティブページ（Artifact）として公開 |
-| `AskUserQuestion` | No | 選択式の質問。既定では回答するまで開いたまま（`askUserQuestionTimeout` で自動継続可）。**バックグラウンドセッション / screen reader モード / Remote Control 接続中の質問ではタイマー自体が開始されない**（2026-10 ドキュメント改訂で明文化） |
+| `AskUserQuestion` | No | 選択式の質問。既定では回答するまで開いたまま（`askUserQuestionTimeout` で自動継続可）。**バックグラウンドセッション / screen reader モード / Remote Control 接続中の質問ではタイマー自体が開始されない**（2026-10 ドキュメント改訂で明文化）。端末がフォーカス報告に対応していてウィンドウがフォーカス中の間はカウントダウンが進まない |
 | `Bash` | Yes | シェルコマンド実行 |
 | `PowerShell` | Yes | PowerShell をネイティブ実行 |
 | `CronCreate` / `CronDelete` / `CronList` | No | セッションスコープの定期・単発プロンプトのスケジュール。`--resume` / `--continue` で未期限のものは復元される |
@@ -64,7 +64,7 @@ Claude Code の組み込みツール一覧。**ここに書かれたツール名
 | `WebSearch` | Yes | Web 検索 |
 | `ToolSearch` | No | tool search 有効時にディファードツールを検索・ロード |
 | `WaitForMcpServers` | No | バックグラウンドで接続中の MCP サーバーを待つ（セッション再起動なしにツールを使えるようにする） |
-| `ListMcpResourcesTool` / `ReadMcpResourceTool` | No | MCP リソースの列挙 / URI 指定読み取り |
+| `ListMcpResourcesTool` / `ReadMcpResourceTool` | No | MCP リソースの列挙 / URI 指定読み取り。列挙は MCP Apps の UI リソース（`ui://` 等、ホストアプリが描画するページ）を除外する |
 | `EndConversation` | No | セッションを終了（§5 参照） |
 
 ---
@@ -89,11 +89,12 @@ Claude Code の組み込みツール一覧。**ここに書かれたツール名
 - **フックでシェルコマンドを検査する場合は `Bash|PowerShell` でマッチすること。`Bash` だけでは不十分**
 - 関連設定は 3 系統: `defaultShell: "powershell"`（`!` コマンド）、コマンドフックの `shell: "powershell"`（ツール有効化に依存せず動く）、スキルフロントマターの `shell: powershell`（`` !`cmd` `` ブロック）
 - プレビュー中の制限: PowerShell プロファイルは読み込まれない / Windows ではサンドボックス非対応
+- **Bash の deny ルールは PowerShell ツールも無効化する（2026-10 ドキュメント改訂で明文化）**: Windows + Git Bash 環境では、設定ファイルや `--disallowedTools` の Bash deny ルール（`Bash(git push *)` のようなスコープ付きも、素の `Bash` も）が**セッションの PowerShell ツール自体を警告なしでオフにする**（`Bash` ルールは PowerShell ツールを制限しないため、deny の迂回を防ぐ措置）。PowerShell を残したまま Bash deny ルールを使うには、①`CLAUDE_CODE_USE_POWERSHELL_TOOL=1` を設定、または ②`PowerShell(git push *)` のようなスコープ付き `PowerShell` ルールを設定ファイルに追加する。ツール全体を外す Bash deny はセッションからシェルツールを失わせる
 
 ### 3.3 Read / Edit / Write
 
 - Read は行番号付きで返す。トークン上限超過時は `PARTIAL view` 通知付きで先頭ページのみ返り、`offset` / `limit` で続きを読む。**`PARTIAL view` の読みは read-before-edit を満たさない**
-- Read は画像（視覚コンテンツとして返る）・PDF（10 ページ超は `pages` で範囲指定、1 回 20 ページまで）・`.ipynb`（全セル + 出力、100 MB 超は拒否）に対応。**ディレクトリは読めない**
+- Read は画像（視覚コンテンツとして返る）・PDF（10 ページ超は `pages` で範囲指定、1 回 20 ページまで）・`.ipynb`（全セル + 出力、100 MB 超は拒否）に対応。**ディレクトリは読めない**。**PDF のページ範囲読みは poppler-utils の `pdftoppm` が必要**（macOS は `brew install poppler`、Debian / Ubuntu は `apt-get install poppler-utils`。無いと `pdftoppm is not installed` で失敗。2026-10 ドキュメント改訂で明文化）
 - Edit は正規表現でもファジーでもない**完全一致置換**。`old_string` はファイル内に**ちょうど 1 回**出現する必要がある（複数なら文脈を足すか `replace_all: true`）
 - read-before-edit: Opus 4.6 / Haiku 4.5 以前は常に必須。新しいモデルは「読んでも権限プロンプトが不要」かつ「Read ツールが使える」場合に限り未読ファイルの上書きが可能（v2.1.228 以降。ノートブックと `PARTIAL view` は全モデルで必須）
 - **Bash での閲覧も read-before-edit を満たす**: `cat`, `nl`, `bat`, `batcat`, `head`, `tail`, `sed -n 'X,Yp'`, `grep`, `egrep`, `fgrep`, `rg` を単一ファイルにパイプ・リダイレクトなしで使った場合
@@ -126,6 +127,8 @@ Claude Code の組み込みツール一覧。**ここに書かれたツール名
 - WebSearch は結果のタイトルと URL のみ返し**ページ本文は取得しない**。1 回の呼び出しで最大 8 回のバックエンド検索を行いうる。`allowed_domains` / `blocked_domains` は併用不可
 - **セッションあたり最大 200 回**（メイン会話と全サブエージェント合算）。`CLAUDE_CODE_MAX_WEB_SEARCHES_PER_SESSION` で引き上げ可能だが**無効化はできない**。`/clear` でリセット
 - WebSearch の権限ルールは specifier を取らない。`allow` / `deny` に裸の `WebSearch` を書く形のみ
+- **WebFetch の可用性（2026-10 ドキュメント改訂で「WebFetch availability」節新設）**: v2.1.285 以降 `CLAUDE_CODE_DISABLE_WEB_FETCH=1` でオフにできる。Team / Enterprise の claude.ai アカウントで LLM ゲートウェイを経由しないセッション（およびプランを判別できないセッション）では、セッション開始時に `api.anthropic.com` から取得する**組織ポリシー**にも依存し、ポリシーが読めるまで WebFetch は保留される。欠けている場合は `/status` の `Organization policy` 行を確認（セッション外では `claude doctor`）。許可ポリシーがロードされ次第、再起動なしでツールが戻る
+- **WebFetch と artifact リンク**: URL が claude.ai の artifact リンクの場合、artifact 自体を読む承認を求めることがある
 
 ### 3.6 Agent（サブエージェント）
 
@@ -138,7 +141,7 @@ Claude Code の組み込みツール一覧。**ここに書かれたツール名
 
 ### 3.7 LSP
 
-- **言語用の code intelligence プラグインをインストールするまで非アクティブ**。設定は Claude Code ではなくプラグインから取得する
+- **言語用の code intelligence プラグインをインストールするまで非アクティブ**。設定は Claude Code ではなくプラグインから取得する。**Windows では Git Bash がインストールされている場合のみ利用可能**（2026-10 ドキュメント改訂で明文化）
 - ファイル編集ごとに型エラー・警告を自動報告するため、別途ビルドを走らせずに Claude が修正できる
 - セッション中に一度でも言語サーバーが使えた場合、そのセッションの残りではツールはアクティブなまま。起動できないファイルへの LSP 呼び出しは個別にエラー結果を返す
 - **v2.1.280 以降、バックグラウンドサブエージェントも LSP を使用可能**（バックグラウンドサブエージェントが保持する組み込みツールリストに LSP が追加された）
@@ -192,7 +195,11 @@ Claude Code の組み込みツール一覧。**ここに書かれたツール名
   - **失敗したもの**: 再実行され、それ以降に開始したエージェントも完了済みを含め再実行。`/workflows` で個別エージェントを選んで `x` で止めた場合は「失敗」扱い
 - fan-out の途中で失敗すると、完了済みの作業まで再実行される（A・B・C・D の順で開始し B が失敗すると、A はキャッシュ、B・C・D は再実行）
 - **`schema` を渡した `agent()` の検証**（公式ドキュメント明文化）: Claude Code はサブエージェント起動前にスキーマを検査し、**自己矛盾を証明できる場合は起動せずエラー**にする（例: `additionalProperties: false` が排除しているキーを `required` に含める）。出力が 5 回試行しても検証を通らない場合は最後の検証失敗を含むエラーで失敗する。試行回数は `MAX_STRUCTURED_OUTPUT_RETRIES`（既定 5 = 初回 + 4 リトライ）で変更できる
-- **Auto Mode では分類器が `agent()` 呼び出しをサブエージェント起動前にブロックできる**。ブロックされた呼び出しは `null` を返し、理由がランの進捗ビューに表示される（`pipeline()` は各 `null` を結果配列に残すので `.filter(Boolean)` が必要）
+- **Auto Mode では分類器が `agent()` 呼び出しをサブエージェント起動前にブロックできる**。ブロックされた呼び出しは `null` を返し、理由がランの進捗ビューに表示される（`pipeline()` は各 `null` を結果配列に残すので `.filter(Boolean)` が必要）。また auto モードでは、スクリプトが `agent()` に渡すプロンプトは「スクリプトが計算したテキスト」としてマークされ、分類器のレビューで**ユーザーからの依頼としては扱われない**（2026-10 ドキュメント改訂で明文化）
+
+**ultracode 有効時の緩和（2026-10 ドキュメント改訂で明文化）**: ultracode をオンにすること自体が大規模ランへのオプトインであるため、①`Large workflow` 警告は出ない、②Agent ツールで起動するサブエージェントに同時実行サブエージェント上限が適用されない、③auto モードでの初回ワークフロー起動承認もスキップされる。サブスクリプションプランではワークフローのトークンが利用上限を消費するため、ultracode オンのセッションは同じ作業でもセッション / 週次上限に早く到達する。
+
+**ワークフロー無効化と ultracode（2026-10 ドキュメント改訂）**: ワークフローを無効化すると ultracode も利用不可になり、`/effort` から **Ultracode** トグルが消える（進行中のランは継続）。ultracode 単体を禁止する managed 設定は存在せず、組織の effort キャップは ultracode セッションの effort レベルを下げるだけで ultracode 自体はオフにしない。
 - **停止したランの再起動制限**: 停止したランのエージェントプロセスがまだ終了していない場合、Claude Code は再起動を拒否する（同じエージェントの二重実行を防ぐため）。停止したランはプロセスが残っている間タスクパネルに残り、再度停止するとプロセスに再シグナルされる
 - **クラウドセッション**: ランの結果はセッションの会話履歴とともに保存され、VM が回収されても残る。セッションを再度開いてワークフローの再起動を依頼すれば、完了済みエージェントは保存結果を返す。ローカル・クラウドいずれでも、**保存結果が全く見つからない場合の再起動は勝手にやり直さず `nothing to resume` エラーで失敗する**
 - 再開できるのは**同一 Claude Code セッション内**。セッションをバックグラウンド化した場合は背景セッションで同様にリプレイして継続する。ワークフロー実行中に Claude Code を終了する場合、agent view が有効なら終了ダイアログに `Move to background and exit` が出て同様に引き継がれる。`Exit and stop tasks` を選ぶ／選択肢が出ない場合はセッションと共に停止するが、保存結果は `~/.claude/projects/` 配下のセッションディレクトリに残るため、`claude --resume` で再開したセッションからワークフロー再起動を依頼すればリプレイできる（新規セッションはリプレイ対象がなく最初から実行）

@@ -537,6 +537,8 @@ meeting-follow-up/
 
 > 公式: [Build plugins](https://learn.chatgpt.com/docs/build-plugins) / 完全な builder ドキュメントは [developers.openai.com/plugins](https://developers.openai.com/plugins)
 >
+> 2026-10 に learn.chatgpt.com の Build plugins ページは、開発者向け「Build and submit a plugin」から **ChatGPT 上で Plugin Creator（`@` メンション）と対話して作るノーコード作成ガイドへ全面改稿**された。新ページではプラグインを「**apps（サービス接続）・skills（作業手順）またはその両方**を含む再利用パッケージ」と定義し、**ChatGPT Enterprise の Custom GPTs は退役してプラグインへ移行**することが明記された（移行ガイドあり）。作成→テスト→編集→共有のフローと、app を含めてもワークスペースのアクセス権限は拡張されない点が中心。開発者向け（MCP サーバー構築・パッケージング・提出）の一次情報は developers.openai.com/plugins 側に残る。
+>
 > 注意: GitHub の公開サンプルカタログのうち [openai/skills](https://github.com/openai/skills) は deprecated のまま。一方 [openai/plugins](https://github.com/openai/plugins) は一時 archive（2026-08-16）ののち **2026-09 に archive 解除され、Codex プラグイン実例の現役カタログとして更新再開**（figma / notion / build-ios-apps 等。マーケットプレースは `.agents/plugins/marketplace.json`）。作成手順の一次情報は引き続き上記ドキュメントと `@plugin-creator` を参照する。
 
 ---
@@ -571,6 +573,8 @@ hooks = true
 > 同一ディレクトリに `hooks.json` と `config.toml` の両方の hooks 定義があると警告が出る。どちらか一方に寄せること。
 >
 > Managed のみ: `requirements.toml` に `allow_managed_hooks_only = true` を置くと、user / project / session の hook 設定を無視し managed hooks のみを実行する。**`config.toml` に書いても効かない**。
+>
+> クラウドオーケストレーション時の managed remote MCP hooks（2026-10 に公式 hooks ドキュメントへ追加）: managed policy とリモート hooks が有効な場合、**Work Cloud（ローカルアクセスあり）等はクラウドオーケストレーター上の admin 管理リモート MCP hooks を使用**する（グローバル `requirements.toml` の `mcp_tool` ハンドラで設定。ローカルアクセスなしの Work Cloud・個人アカウントは対象外）。制約: command/shell・prompt・agent ハンドラ、ローカル設定/プラグイン/ローカルディレクトリ由来の hooks、環境スコープ hooks、SessionEnd の MCP hooks は、**ツールがローカル実行でもクラウドオーケストレーションでは非対応**。オーケストレーションと実行がともにローカルなら既存の対応 hooks は従来どおり動作する。注意点として、明示的な拒否応答はアクションをブロックできるが、**PreToolUse コールバックのエラー・タイムアウト・不正応答はツールをブロックせず hook 失敗扱い**になる。また MCP hooks は Compliance API の完全な監査証跡にはならない。
 
 ### 7.3 設定形式
 

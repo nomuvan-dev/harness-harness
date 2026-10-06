@@ -1,6 +1,6 @@
 # Claude Code ベストプラクティス
 
-最終更新: 2026-03-23
+最終更新: 2026-10-07（巡回更新）
 
 公式ドキュメント: https://code.claude.com/docs/en/best-practices
 
@@ -146,7 +146,7 @@ allowed-tools: Bash(gh *)
 
 ### 3.4 スキルのコンテキストバジェット
 
-スキル説明はコンテキストウィンドウの2%（フォールバック: 16,000文字）まで読み込まれる。多数のスキルがある場合は `/context` で除外警告を確認。`SLASH_COMMAND_TOOL_CHAR_BUDGET` 環境変数で上限変更可能。
+スキル一覧（名前＋説明）のバジェットは**コンテキストウィンドウの 1%**（`skillListingBudgetFraction`、既定 `0.01`）。溢れると呼び出し頻度の低いスキルから説明が落とされる。1スキルあたり `description` + `when_to_use` 合算 **1,536 文字**上限（`skillListingMaxDescChars`）。`SLASH_COMMAND_TOOL_CHAR_BUDGET` で固定文字数指定も可能。詳細は skills-and-commands.md §7。
 
 ---
 
@@ -286,6 +286,7 @@ MDM / Group Policy / Ansible 等で配布。除外不可。
 
 ### 6.4 権限管理
 
+- **Auto mode が既定の開始モード**: **v2.1.283 以降、プランを問わず**対話ターミナル / VS Code セッションの組み込み開始権限モードは auto mode（分類器がほとんどのアクションを代行レビューし、スコープ逸脱・未知のインフラ・敵対的コンテンツ由来の操作のみブロック）。それ以前は Pro / Max / Team プランのみが auto mode 開始だった（2026-10 ドキュメント改訂で確認）
 - **権限許可リスト**: 安全と分かっているツールを許可（`npm run lint`, `git commit`）
 - **サンドボックス**: OS レベルの隔離で安全な自由実行を実現
 - **`--dangerously-skip-permissions`**: インターネットアクセスのないサンドボックス内でのみ使用
@@ -299,14 +300,17 @@ MDM / Group Policy / Ansible 等で配布。除外不可。
 
 ### 6.6 ファンアウトパターン
 
-大規模マイグレーションや分析を並列化:
+大規模マイグレーションや分析を並列化。`/batch <instruction>` なら Claude が変更を 5〜30 のサブエージェントに分割し、各自が自分の worktree で作業する。自前スクリプトでファンアウトする場合:
 
 ```bash
 for file in $(cat files.txt); do
   claude -p "Migrate $file from React to Vue. Return OK or FAIL." \
-    --allowedTools "Edit,Bash(git commit *)"
+    --allowedTools "Edit,Bash(git commit *)" \
+    --permission-mode dontAsk
 done
 ```
+
+`--allowedTools` が必要ツールを事前承認し、`--permission-mode dontAsk` が承認が必要なその他の操作を拒否する（無人実行時に重要）。最初の 2〜3 ファイルで失敗パターンを見てプロンプトを調整してから全件に回す。
 
 ### 6.7 非対話モード
 
