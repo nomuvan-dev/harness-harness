@@ -1,6 +1,6 @@
 # Claude Code 設定仕様書
 
-最終更新: 2026-09-11（巡回更新）
+最終更新: 2026-10-07（巡回更新）
 
 公式ドキュメント: https://code.claude.com/docs/en/settings / https://code.claude.com/docs/en/memory
 
@@ -186,7 +186,7 @@ Claude Code は設定ファイルを監視し、変更を検知するとセッ�
 | `allowManagedHooksOnly` | Managed フックのみ許可（Managed設定のみ） |
 | `allowedHttpHookUrls` | HTTP フック許可URL |
 | `httpHookAllowedEnvVars` | HTTP フック許可環境変数 |
-| `env` | 環境変数設定。**v2.1.251 以降、project / local 設定の `env` からは「チェックアウトしたリポジトリに委ねるべきでない変数」を設定できない**（該当変数は破棄され `claude --debug` で確認できる警告が出る。シェル・user 設定・managed 設定で設定する）。対象は ①Claude Code が自分のファイルを置く場所を決める変数（`CLAUDE_CONFIG_DIR` / `CLAUDE_CODE_TMPDIR` および `HOME` / `TMPDIR` / `TMP` / `TEMP` / `XDG_*` 系）、②セッション内容を外部へ書き出す変数（`OTEL_LOG_RAW_API_BODIES`、詳細ベータトレーシングの `ENABLE_BETA_TRACING_DETAILED` / `BETA_TRACING_ENDPOINT`）、③起動・同期の挙動を変える変数（`CLAUDE_CODE_PROCESS_WRAPPER` / `CLAUDE_CODE_SYNC_SKILLS` / `CLAUDE_CODE_SYNC_PLUGINS` / `CLAUDE_CODE_PLUGIN_CACHE_DIR` / `CLAUDE_CODE_PLUGIN_SEED_DIR`）。v2.1.251 より前は、`HOME` / `XDG_CONFIG_HOME` と ③ を除きすべて project / local 設定から設定できた。`CLAUDE_CODE_RESTRICTED` は起動環境からのみ読まれ、どの設定ファイルの `env` でも無視される。managed / project 設定由来の `ANTHROPIC_CUSTOM_HEADERS` は、認証・組織/テナント・ルーティング・API 挙動系ヘッダ（`Authorization` / `Host` 等）を設定する場合、v2.1.251 以降は適用前にユーザー承認を要求する。**v2.1.282 以降、project / local 設定の `env` からは OpenTelemetry エクスポートを有効化・設定する変数（`CLAUDE_CODE_ENABLE_TELEMETRY`、エクスポータ / エンドポイント指定、`OTEL_LOG_*` などのコンテンツキャプチャ系）も無視される**（一部のオフ値を除く。テレメトリはリポジトリでなく管理者・ユーザーが統制すべきという整理。無視された変数・テレメトリをオフにした変数は起動時通知と `/status` / `claude doctor` に一覧表示される。公式 settings-reference に「Variables Claude Code ignores in `env`」節が新設） |
+| `env` | 環境変数設定。**v2.1.251 以降、project / local 設定の `env` からは「チェックアウトしたリポジトリに委ねるべきでない変数」を設定できない**（該当変数は破棄され `claude --debug` で確認できる警告が出る。シェル・user 設定・managed 設定で設定する）。対象は ①Claude Code が自分のファイルを置く場所を決める変数（`CLAUDE_CONFIG_DIR` / `CLAUDE_CODE_TMPDIR` および `HOME` / `TMPDIR` / `TMP` / `TEMP` / `XDG_*` 系）、②セッション内容を外部へ書き出す変数（`OTEL_LOG_RAW_API_BODIES`、詳細ベータトレーシングの `ENABLE_BETA_TRACING_DETAILED` / `BETA_TRACING_ENDPOINT`）、③起動・同期の挙動を変える変数（`CLAUDE_CODE_PROCESS_WRAPPER` / `CLAUDE_CODE_SYNC_SKILLS` / `CLAUDE_CODE_SYNC_PLUGINS` / `CLAUDE_CODE_PLUGIN_CACHE_DIR` / `CLAUDE_CODE_PLUGIN_SEED_DIR`）。v2.1.251 より前は、`HOME` / `XDG_CONFIG_HOME` と ③ を除きすべて project / local 設定から設定できた。`CLAUDE_CODE_RESTRICTED` は起動環境からのみ読まれ、どの設定ファイルの `env` でも無視される。managed / project 設定由来の `ANTHROPIC_CUSTOM_HEADERS` は、認証・組織/テナント・ルーティング・API 挙動系ヘッダ（`Authorization` / `Host` 等）を設定する場合、v2.1.251 以降は適用前にユーザー承認を要求する。**v2.1.282 以降、project / local 設定の `env` からは OpenTelemetry エクスポートを有効化・設定する変数（`CLAUDE_CODE_ENABLE_TELEMETRY`、エクスポータ / エンドポイント指定、`OTEL_LOG_*` などのコンテンツキャプチャ系）も無視される**（一部のオフ値を除く。テレメトリはリポジトリでなく管理者・ユーザーが統制すべきという整理。無視された変数・テレメトリをオフにした変数は起動時通知と `/status` / `claude doctor` に一覧表示される。公式 settings-reference に「Variables Claude Code ignores in `env`」節が新設）。**Windows 系変数**（`SystemRoot` / `ComSpec` / `ProgramData` / `LOCALAPPDATA` / `PATHEXT` / `PSModulePath` / `ProgramFiles` 系）も project / local からは設定不可（2026-10 ドキュメント改訂で明文化）。また **Claude Desktop アプリやセルフホスト環境のランナーがセッションを起動する場合は、ランナーが組み立てた起動環境が優先**され、起動環境が既に設定している変数はどの設定ファイルの `env` 値でも上書きされない（無視された変数はデバッグログに記録される） |
 | `maxProseWidth` | ワイドターミナルで Claude の散文（プローズ）出力の表示幅を制限する（テーブル・コードブロックは全幅を維持）。v2.1.282 以降 |
 | `model` | デフォルトモデル上書き |
 | `availableModels` | 選択可能モデル制限。エントリはモデルファミリー（`sonnet`）・バージョン接頭辞（`claude-sonnet-4-5`）・完全なモデルID のいずれでも一致する。**バージョン接頭辞は「もう1セグメント伸ばした後続モデルID」にも一致する**ため、`claude-fable-5` は Fable 5 と Fable 5.1 の両方を許可し、Fable 5.1 だけに絞るには `claude-fable-5-1` と書く（2026-09-02 の公式ドキュメント改訂で明文化）。ファミリーエイリアス（`opus` / `sonnet` / `haiku` / `fable`）は**許可リストが通常の解決先を許すならそのモデルに解決**し、ブロックされている場合のみ許可リスト内の最新版に置換されて要求モデルと置換モデルを示す通知が出る。なお `fable` エイリアスの解決先は **Claude apps gateway セッションでは Fable 5**（`best` も同様）で、Anthropic API 直結等の他プロバイダでは Fable 5.1。`claude-fable-5-1` を配信していないゲートウェイは同モデルへのリクエストを拒否するため、配信済みゲートウェイで使う場合は `/model claude-fable-5-1` と明示する（v2.1.257 より前は全プロバイダで Fable 5 に解決していた） |
@@ -229,7 +229,7 @@ Claude Code は設定ファイルを監視し、変更を検知するとセッ�
 | `agent` | メインスレッドをサブエージェントとして実行 |
 | `language` | 応答言語設定 |
 | `sandbox.*` | サンドボックス設定。**v2.1.246 以降、`--setting-sources` / SDK `settingSources` で除外したソースの `sandbox.filesystem` エントリ・`Edit` 権限ルール・`Read` deny ルールはサンドボックス構成の組み立て時に無視される**。認証情報系は除外ソースの種類で扱いが分かれる: project / local を除外するとその `sandbox.credentials` エントリは一切適用されない。user 設定を除外した場合は `~/.claude/settings.json` の `deny` エントリとファイル `mask` エントリは「制限」として残る（ただし `mask` が実値への置換を許可する効果は失われる）が、**環境変数の `mask` エントリは落とされる** |
-| `attribution` | git commit/PR 帰属表記設定（`commit`, `pr` キー） |
+| `attribution` | git commit/PR 帰属表記設定（`commit` / `pr` 文字列と `sessionUrl` Boolean）。**v2.1.281 以降は `attribution: false` で全帰属表記を一括非表示にできる**（それ以前のバージョンは `false` を不正値として settings ファイルごとスキップするため、旧版と共用するファイルでは従来どおり `commit` / `pr` を空文字列・`sessionUrl` を `false` にする）。`commit` / `pr` のどちらかを設定すると非推奨の `includeCoAuthoredBy` は無視される。既定の `Co-Authored-By` トレーラのモデル名は**コミット時点で使用中のモデル**（サブエージェントがコミットした場合はサブエージェントのモデル名）。また Claude Code は「ユーザー自身の帰属表記指示（CLAUDE.md / memory ルール等）はこれらの commit / PR 行に優先する」と Claude に伝える（**managed 設定で設定された行は除く**）（2026-10 ドキュメント改訂） |
 | `alwaysThinkingEnabled` | 拡張思考のデフォルト有効化 |
 | `plansDirectory` | プランファイル保存先 |
 | `spinnerVerbs` | スピナー動詞カスタマイズ |
@@ -353,6 +353,8 @@ Claude Code は設定ファイルを監視し、変更を検知するとセッ�
 | `switchModelsOnFlag` | 安全性分類器がリクエストをフラグした際の挙動。`true`（既定）= フォールバックモデルへ自動切替して継続、`false` = 対話セッションでは一時停止して切替か編集かを選ばせる（`-p` などダイアログを出せない場合はエラー終了）。`/config` の **Switch models when a message is flagged** |
 | `enableWorkflows` | 動的ワークフローをユーザー単位で ON/OFF（プランの既定と違う挙動にしたい場合）。`/config` の **Dynamic workflows** がユーザー設定に書き込み、既定へ戻すとキーを削除する。未設定時は Pro プランのみ無効・その他は有効。組織全体で止める場合は `disableWorkflows`（Managed）を使う。`CLAUDE_CODE_DISABLE_WORKFLOWS` が優先 |
 | `enabledPlugins` | プラグインの個別有効/無効。キーは `plugin-name@marketplace-name`、値は Boolean。どのスコープにもエントリが無いプラグインは `defaultEnabled` に従う。`/plugin` や `claude plugin enable` が自動で書き込む |
+| `prependPlugins` | **新設（2026-10 リファレンス収載）**。[Mods](https://code.claude.com/docs/en/plugins/mods/admin)（JS 関数フックを登録するプラグイン）のうち、**ユーザーがインストールした全 mod より前に**実行する managed プラグインを `plugin-name@marketplace-name` 配列で列挙する（列挙順に実行）。managed 設定で設定する場合、組み込みガードを維持するには `sec-default@builtin` をリストに含める。managed 設定では「組織のプラグイン」と見なされない id はスキップされる。スコープ: User or managed（managed 設定が無いマシンで Team/Enterprise サインインでないユーザーに限り user 設定からも読む。project / local / `--settings` は無視） |
+| `appendPlugins` | **新設（2026-10 リファレンス収載）**。ユーザーがインストールした全 mod より**後に**実行する managed プラグインの配列（列挙順に実行）。`prependPlugins` と両方に載った id は prepend 側が優先。スコープ・制約は `prependPlugins` と同じ |
 | `pluginConfigs` | プラグインの `userConfig` ダイアログで入力した**非機微**な設定値をプラグイン ID をキーに保存。`options`（オプション名 → string / number / boolean / string 配列）と任意の `mcpServers`（サーバー別ユーザー設定）を持つ。機微なオプションは macOS Keychain（非対応環境は `~/.claude/.credentials.json`）に保存される。スコープは user / managed |
 | `fileCheckpointingEnabled` | 編集前にファイルスナップショットを取り `/rewind` で復元可能にする（既定 `true`）。`/config` の **Rewind code (checkpoints)**。`CLAUDE_CODE_DISABLE_FILE_CHECKPOINTING` と「どちらかが OFF なら OFF」 |
 | `minimumVersion` | バックグラウンド自動更新と `claude update` がこのバージョン未満をインストールしないようにする。`stable` チャンネルへ切り替える際に新しい `latest` ビルドからダウングレードされるのを防ぐ。`/config` でチャンネル切替時に「現在のバージョンに留まる」を選ぶと自動で書き込まれ、`latest` に戻すと削除される。Managed に置けば組織全体の下限を user/project から下げられなくできる |
@@ -570,6 +572,14 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 - 設定: `"autoMemoryEnabled": false`
 - 環境変数: `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1`
 
+**既定値と再有効化の制約（2026-10 ドキュメント改訂で明文化）**:
+
+- ローカルセッションでは既定でオン。**セルフホスト環境のセッションは（Claude Tag セッションを除き）既定でオフ**
+- `/memory` のトグルはオフにはできるが、以下のセッションでは**オンに戻せない**（トグル表示は `off · can't be turned on here; use a session started outside Claude Code`）:
+  - バックグラウンドセッション（agent view）
+  - 別の Claude Code セッションが起動したセッション（Claude が Bash ツールで `claude` を実行した場合など）
+- オンに戻すにはターミナルで直接 `claude` を起動し、そのセッションの `/memory` トグルを使う
+
 #### カスタムディレクトリ
 
 ```json
@@ -713,6 +723,14 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 | `CLAUDE_CODE_DISABLE_AUTH_REFRESH_LOCK` | `1` で、他プロセスが実行中の `gcpAuthRefresh` / `awsAuthRefresh` の完了を待たず自分でリフレッシュを実行する（v2.1.286 以降） |
 | `CLAUDE_CODE_TRANSCRIPT_LOCAL_GC` | `1` で、長時間の `-p` / Agent SDK セッションのトランスクリプトを各コンパクション後・5MB 超過時に前方履歴から削除する。**起動環境からのみ有効**（settings の `env` ブロックでは不可）。v2.1.287 以降 |
 | `CLAUDE_CODE_DISABLE_INLINE_SHELL_RM_PROMPT` | `1` で、`bash -c 'rm -rf ~'` のようなインラインシェルスクリプト内の critical-path 削除検査（v2.1.288 のセキュリティ修正で導入）を無効化する。**起動環境からのみ有効**。v2.1.288 以降 |
+| `CLAUDE_CODE_DISABLE_DANGEROUS_RM_TIMEOUT` | `1` で critical-path 削除プロンプトの時間制限を無効化。auto モードではこれらの削除が分類器に送られ、`bypassPermissions` モードではプロンプトが応答を待ち続ける。**起動環境からのみ有効**（settings の `env` ブロックは無視）。v2.1.281 以降 |
+| `CLAUDE_CODE_DISABLE_SUBSTITUTION_RM_PROMPT` | `1` で、ターゲット全体がコマンド置換の出力である再帰 `rm`（例 `rm -rf "$(pwd)"`）の critical-path 検査を無効化（他の critical-path 検査は継続）。**起動環境からのみ有効**。v2.1.281 以降 |
+| `CLAUDE_CODE_DISABLE_POWERSHELL_CMD_RM_DENY` | `1` で、PowerShell ツールが `cmd` ビルトイン（`rd` / `rmdir` / `del` / `erase`）によるシステムパス（ドライブルート・ホームディレクトリ等）削除を拒否する検査を無効化。settings の `env` ブロックでは無視される。v2.1.283 以降 |
+| `CLAUDE_CODE_DISABLE_REFUSAL_FALLBACK` | `1` で、安全性分類器がリクエストをフラグした際の自動モデル切替（`switchModelsOnFlag` 設定が制御する挙動）を無効化 |
+| `CLAUDE_CODE_GZIP_REQUEST_BODIES` | `0` で `api.anthropic.com` への Claude API・テレメトリ・artifact 公開リクエストボディの gzip 圧縮を無効化。既定では直接接続時に大きなボディを圧縮し、プロキシ経由・クライアント証明書設定時・`NODE_EXTRA_CA_CERTS` 設定時は圧縮しない。検出できない TLS 検査プロキシが圧縮リクエストを壊す場合に `0` を使う |
+| `CLAUDE_CODE_GATEWAY_HINT_HEADERS` | `1` でゲートウェイヒントヘッダ（`x-claude-code-request-class` / `x-claude-code-compaction` 等）をカスタムプロキシや Bedrock / Claude Platform on AWS などサードパーティプロバイダにも送信。`0` で（既定で送信する Anthropic API 直結を含め）全接続で送信を停止。v2.1.273 以降 |
+| `CLAUDE_CODE_EMIT_SESSION_STATE_EVENTS` | `1` でセッション状態を運ぶ `session_state_changed` メッセージをメッセージストリームに追加。Agent SDK か、`--print` ＋ `--output-format stream-json` ＋ `--verbose` が必要 |
+| `OTEL_LOG_MANAGED_SETTINGS` | `1` で `managed_settings_resolved` OTEL ログイベントに redact 済み managed 設定と redact 前設定の SHA-256 ダイジェストを付加。既定は無効。シェル・user 設定・managed 設定で設定する（project / local では有効化できない）。v2.1.274 以降 |
 | `CLAUDE_CODE_BRIDGE_SESSION_ID` | **Claude Code が自動設定**。Remote Control 接続中のセッション ID をフックに渡す（v2.1.199 以降） |
 | `CLAUDE_CODE_SUBAGENT_MODEL_FORCE` | `1` で `CLAUDE_CODE_SUBAGENT_MODEL`（未設定ならメインの会話モデル）を、エージェント定義や呼び出し時のモデル指定を**無視して**全サブエージェント・チームメイト・ワークフローエージェントに強制適用する。組み込みの Explore / Plan の `model` フィールドも無視される。**ただし本変数のみを設定し `CLAUDE_CODE_SUBAGENT_MODEL` を設定しない場合、Explore は「Claude API では Opus 上限」を維持する**（両方設定したときのみ上限も上書きされる）。除外されるのは fork と `model: inherit` のサブエージェント実行スキルで、これらは常にメイン会話のモデルで動く。v2.1.257 以降 |
 | `TASK_MAX_OUTPUT_LENGTH` | **v2.1.277 で TaskOutput ツールとともに削除され no-op**。以前は**バックグラウンドタスク**の出力のうち `TaskOutput` ツールが保持する文字数（既定 32,000、最大 160,000）を設定していた。現在はタスクの出力ファイルを `Read` で読む方式 |

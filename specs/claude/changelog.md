@@ -3,9 +3,61 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-10-05（**v2.1.289**（2026-10-03）を反映。修正中心のリリース。ハーネス観点では **(1) plugins API に `agent.spawn`（チームメイト起動）追加・プラグインフックイベント間でエージェントIDが統一・`$.agent.list()` に idle / waiting 状態**、**(2) sandbox auto-allow 下で環境変数プレフィックス（`TZ="$HOME" rm -rf build` 等の展開値）や先行する素の変数代入により Bash deny / ask ルールがすり抜ける穴の修正**、**(3) symlink 経由で IDE から @メンション・変更・選択されたファイルに `Read` deny ルールが効かない問題の修正**。ほかに管理対象マシンでの複合シェルコマンド内ネスト部分への deny / ask ルール維持、ユーザーインストールのプラグインが組織管理 MCP サーバーのサインインツール説明を書き換えられた穴の修正、アップグレード直後の初回セッションで mods がロードされない問題の修正、mods / プラグイン UI の安定性修正多数。Codex CLI は新安定版なし（0.160.0 のまま。0.162.0 系 alpha が進行中）。前回2026-10-04の巡回要約は v2.1.288 のエントリ参照。）
+最終更新: 2026-10-07（**v2.1.290**（2026-10-05）・**v2.1.291**（2026-10-06）を反映。2.1.290 は大型リリース。ハーネス観点では **(1) mods / plugins API 拡張（`turn.step` に `serverToolUses`、`tool.check` に `agentId`・`ceiling`、typings に `ThemeKey` / `Color`、`claude plugin validate` の gatingHooks 一覧）**、**(2) 権限まわりのセキュリティ修正多数（PreToolUse フックが入力を書き換えた後のツール呼び出しに一部ルール・安全チェックが適用されない問題、`declare` / `export` 等のプレフィックス変数代入による deny / ask すり抜け、read-only コマンドのワイルドカード展開・zsh 変数解釈差による自動承認、heredoc パイプ・Monitor ツールの sandbox auto-allow すり抜け、symlink 差し替えによる承認外ファイル読み取り、`pyright` の read-only 扱い廃止）**、**(3) WebSearch 予算が時間回復制（100回/時、`CLAUDE_CODE_WEB_SEARCH_REFILLS_PER_HOUR`）に変更・WebFetch が 100,000 字超を通知し `offset` で続き読み可能に**、**(4) Claude in Chrome をプロジェクト settings からは有効化不可に（ユーザー settings / `--chrome` / `/chrome` のみ）**。2.1.291 は 2.1.288 / 2.1.290 のリグレッション修正のみ。前回2026-10-05の巡回要約は v2.1.289 のエントリ参照。）修正中心のリリース。ハーネス観点では **(1) plugins API に `agent.spawn`（チームメイト起動）追加・プラグインフックイベント間でエージェントIDが統一・`$.agent.list()` に idle / waiting 状態**、**(2) sandbox auto-allow 下で環境変数プレフィックス（`TZ="$HOME" rm -rf build` 等の展開値）や先行する素の変数代入により Bash deny / ask ルールがすり抜ける穴の修正**、**(3) symlink 経由で IDE から @メンション・変更・選択されたファイルに `Read` deny ルールが効かない問題の修正**。ほかに管理対象マシンでの複合シェルコマンド内ネスト部分への deny / ask ルール維持、ユーザーインストールのプラグインが組織管理 MCP サーバーのサインインツール説明を書き換えられた穴の修正、アップグレード直後の初回セッションで mods がロードされない問題の修正、mods / プラグイン UI の安定性修正多数。Codex CLI は新安定版なし（0.160.0 のまま。0.162.0 系 alpha が進行中）。前回2026-10-04の巡回要約は v2.1.288 のエントリ参照。）
 
 ---
+
+## v2.1.291 (2026-10-06)
+
+**リグレッション修正のみの小規模リリース**
+
+- 2.1.290 でクラウドセッションが権限プロンプトへの回答を取りこぼすことがあった問題を修正
+- 2.1.288 で終了時にセッション末尾のメッセージが失われることがあった問題を修正
+
+## v2.1.290 (2026-10-05)
+
+**大型リリース。mods / plugins API 拡張・権限セキュリティ修正多数・WebSearch 予算の時間回復制・Chrome のプロジェクト settings 有効化廃止**
+
+### 新機能
+
+- **mods / plugins API 拡張**: `turn.step` フック結果に `serverToolUses`（API 自身が実行したツール呼び出し＝advisor。id・name・input・開始/終了時刻付き）、プラグインフックの `tool.check` イベントに `agentId`（サブエージェントの権限チェックをメインセッションと区別可能）、mods の `tool.check` が読む question / verdict に `ceiling`（組織が要求する承認レベル）、typings に `ThemeKey` / `Color` 型
+- **`claude plugin validate`**: mod がゲーティングサイトに登録する各フックを `.catch` の有無付きで一覧（`--json` では `gatingHooks`）
+- **`claude attach <name>` / `claude logs <name>`**: セッション名の一部でも id の代わりに指定可能
+- **`/claude-api managed-agents-onboard <url>|<quickstart-name>`**: Managed Agents パターンのセットアップや Console クイックスタートテンプレートの構築
+- managed settings がユーザー設定の sandbox allowRead パス・許可ドメインを無視する場合の /status・doctor 警告、managed settings ファイルが管理フォルダ外への link の場合の警告
+
+### 修正（主要・セキュリティ）
+
+- **PreToolUse フックがツール入力を書き換えた後の呼び出しに、一部の権限ルール・安全チェックが適用されなかった問題**
+- **`declare` / `typeset` / `export` / `readonly` のプレフィックス変数代入経由の名前で deny / ask ルールがすり抜ける問題**
+- **read-only コマンド（`rg`・`git grep` 等）の引数がシェルのワイルドカード展開を伴う場合や、zsh が bash と異なって解釈する変数名を持つコマンドの自動承認を廃止（承認プロンプトに変更）**
+- **heredoc をパイプするサンドボックスコマンド（`cat <<EOF | python3`）・sandbox auto-allow 下の Monitor ツールコマンドの権限チェックすり抜け修正**
+- **symlink の読み取り中差し替えで承認外ファイルを返せた問題（macOS / Windows の画像読み取り、read ブロック・`--restricted` 下の @メンション）**
+- **`permissions.blockReadsOutsideWorkingDirectories` / `Read` deny 下で、作業ディレクトリ外へ symlink されたプロジェクト CLAUDE.md・rule・AGENTS.md がロードされた問題**
+- Read deny ルールがペースト / ドラッグされた画像パスや @メンションフォルダのファイル一覧に適用されなかった問題
+- `pyright` を read-only コマンド扱いから除外（実行前に承認を要求）
+- `disableClaudeAiConnectors` / `allowedMcpServers` の URL ルールが `.mcp.json`・プラグイン・エージェント宣言の一部 MCP エントリに適用されなかった問題
+- ユーザーインストール mod が組織プラグインをアンロードさせたり組織ガードのチェックをスキップさせたりできた問題（当該 mod 側をアンロードするよう変更）
+- バックグラウンドワーカーが bypass-permissions 免責事項の同意なしに respawn 時 `--allow-dangerously-skip-permissions` を適用していた問題
+
+### 修正（その他の主要）
+
+- compaction 後に `/loop`・リマインダー等のスケジュールタスクが resume で復活しない問題、フォアグラウンド設定タスクがバックグラウンド移行後に発火しない問題
+- WebFetch が 100,000 字超のページテキストを黙って切り捨てていた問題（未読量を通知し `offset` で続き読み可能に）
+- 非英語名フォルダのスキルが SKILL.md 内の名前で見つからない問題（スキル一覧に両方の名前を表示）
+- resume されたサブエージェント・チームメイトが実行中メッセージ受信後に thinking とプロンプトキャッシュを失う問題
+
+### 変更
+
+- **インタラクティブセッションの WebSearch 予算を時間回復制に**（100回/時。`CLAUDE_CODE_WEB_SEARCH_REFILLS_PER_HOUR` でレート設定、0 で無効。従来は 200 回で打ち切り）
+- **Claude in Chrome をプロジェクトの settings ファイルからは有効化不可に**（`--chrome` / `/chrome` / ユーザー settings を使用）
+- `CLAUDE_CODE_DISABLE_ATTACHMENTS` をリポジトリの `.claude/settings.json` / `.local.json` からは設定不可に（シェル・ユーザー・managed settings は可）
+- `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC` が起動時の接続ウォームアップもスキップするように
+- `/code-review` medium effort がチューニング済みレビュー設定のないモデル（Opus 5.5 / Sonnet 5.5 含む）でも cleanup・CLAUDE.md 規約の指摘を報告するように
+- インプロセスチームメイトの Agent 結果の `agent_id` がエージェント ID に（`name@team` は `teammate_id` に残る）。TeammateIdle フックがそのサブエージェント / フォークから発火しなくなった
+- スケジュールタスク待ちのバックグラウンドセッションはアップデート・低メモリ時も再起動せず稼働継続（wakeup の消失防止）
+- クラウドセッションの組み込み `gh api`: `GH_HOST` / `GH_REPO` の github.com 以外のホストを拒否
+- [Claude Tag] Slack で `!fast` メンションによるスレッド単位の fast mode 切り替え（`!fast off` で解除）、アクセスバンドルのカスタム接続に Path prefixes フィールド追加
 
 ## v2.1.289 (2026-10-03)
 

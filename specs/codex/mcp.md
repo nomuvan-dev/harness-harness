@@ -168,6 +168,8 @@ codex app-server --listen unix://<path>       # Unix ソケット
 - プロトコルは **JSON-RPC 2.0**（双方向。`method` / `params` / `id`、応答は `result` または `error`）
 - 主なメソッド: `thread/start`・`thread/resume`・`thread/fork`・`thread/list`・`thread/archive`、`turn/start`・`turn/steer`・`turn/interrupt`、`model/list`、`command/exec`、`fs/readFile`・`fs/writeFile`
 - MCP と違い、認証・会話履歴・承認フロー・ストリーミングされるエージェントイベントまで扱える。自前プロダクトへの深い組み込みが想定用途
+- **認証ガイダンス（2026-10 に公式ドキュメントへ追加）**: app-server 認証を使う既存のローカル/OSS アプリは継続利用可能だが、**Sign in with ChatGPT への移行が推奨**される（利用状況の可視性・制御向上のため）。**商用・ホスト型サービスでの app-server 認証は従来から不許可**で、その用途は Sign in with ChatGPT（パートナー waitlist あり）を使う
+- 公式ドキュメントの例示モデルは `gpt-6.1-sol` に更新された。利用可能なモデル・reasoning effort はクライアントとアカウント次第のため、例をハードコードせず `model/list` の返却値を使うこと
 - 公式: https://learn.chatgpt.com/docs/app-server
 
 ### 5.2 移行先 B: Codex plugin for Claude Code（Claude Code から使う場合）

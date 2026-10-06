@@ -1,5 +1,36 @@
 # harness-harness 更新履歴
 
+## 2026-10-07 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code**: **v2.1.290（2026-10-05、大型）・v2.1.291（2026-10-06、リグレッション修正のみ）を反映**。v2.1.290 のハーネス観点の目玉:
+- **mods / plugins API 拡張**: `turn.step` に `serverToolUses`、`tool.check` に `agentId`・`ceiling`、typings に `ThemeKey` / `Color`、`claude plugin validate` の gatingHooks 一覧
+- **権限セキュリティ修正多数**: PreToolUse フックの入力書き換え後にルール・安全チェックが一部適用されない問題、`declare`/`export` プレフィックス変数代入の deny/ask すり抜け、read-only コマンドのワイルドカード展開・zsh 変数解釈差の自動承認廃止、heredoc パイプ・Monitor の sandbox auto-allow すり抜け、symlink 差し替え読み取り、`pyright` の read-only 扱い廃止
+- **WebSearch 予算が時間回復制に**（100回/時、`CLAUDE_CODE_WEB_SEARCH_REFILLS_PER_HOUR`）、WebFetch の 100,000 字超通知＋ `offset` 続き読み
+- **Claude in Chrome をプロジェクト settings からは有効化不可に**
+
+**ドキュメント再編（重要）**: plugins 配下が大幅拡張され、**Mods 専用ドキュメント群が新設**（docs/en/plugins/mods/ 配下に overview / create / reference / interface / gallery / events / api / test / troubleshoot / admin の10ページ。plugins 本体も overview / install / security / components / dependencies / publish / org 等17ページに分割）。specs/claude/skills-and-commands.md §4.9 の Mods 節を reference.md ベースで大幅増強（イベントカタログ、API 名前空間、render sites、制限値、管理設定 `prependPlugins` / `appendPlugins` / `allowManagedModsOnly` 等）。新設ページ4本を巡回キャッシュに追加登録。
+
+**docs 改訂の反映（9月中旬ベースライン以降の未反映分の取り込み）**: skills の `name` 衝突規則・スタック上限6・クラウドセッションでの repo 宣言プラグイン非ロード化、`/update-config`・`/plugin-authoring`・`/doctor prompt-audit` 等の新コマンド、MCP の画像ツール結果ファイル保存・ツール説明 2,048 字上限・Elicitation URL モード、Windows の Bash deny → PowerShell ツール無効化、auto mode が全プラン既定開始モードに、hooks の `suppressOriginalPrompt`・`session_title`・`PermissionRequest` 並走規則、環境変数8件（`CLAUDE_CODE_GZIP_REQUEST_BODIES` 等）、attribution 設定の拡充、オートメモリのセルフホスト既定オフ。claude-tag ページは claude.com/docs/claude-tag/ への本格ドキュメント化を検出（Claude Code specs 管轄外、kb/ 独立調査候補）。
+
+**Codex CLI**: **新安定版 CLI 0.160.1（2026-10-05）を反映**（remote stdio MCP の `SYSTEMROOT`/`TEMP`/`TMP` 保持バックポートのみの小規模パッチ。GitHub タグは 0.162.0-alpha.16 まで進行）。ドキュメント側: hooks ページに Work Cloud 向け **managed remote MCP hooks** 節が追加（クラウドオーケストレーションでは command/prompt/agent ハンドラ・ローカル hooks 非対応）、app-server ページに認証ガイダンス（商用・ホスト型での app-server 認証不許可、Sign in with ChatGPT 推奨）、**build-plugins ページが Plugin Creator によるノーコード作成ガイドへ全面改稿**（ChatGPT Enterprise の Custom GPTs 退役・プラグイン移行を明記）。
+
+**Phase 3.5 スキルエコシステム巡回**: スキップ（前回 2026-10-06 から7日未満）。
+
+### 更新ファイル
+
+- `specs/claude/changelog.md` — v2.1.290 / v2.1.291 追加
+- `specs/claude/skills-and-commands.md` — Mods 節大幅増強、skills/コマンド/サブエージェント改訂反映
+- `specs/claude/configuration.md` — `prependPlugins`/`appendPlugins`、attribution 拡充、環境変数8件、オートメモリ制約
+- `specs/claude/hooks.md` — `suppressOriginalPrompt`、`session_title`、PermissionRequest 並走、Notification 条件
+- `specs/claude/mcp.md` — 画像結果ファイル保存、説明上限、Elicitation、OAuth 制約
+- `specs/claude/tools.md` — Windows deny→PowerShell、WebFetch 可用性、ultracode 緩和3点
+- `specs/claude/best-practices.md` — auto mode 既定化、スキル一覧バジェット訂正、/batch ファンアウト
+- `specs/codex/changelog.md` — CLI 0.160.1 追加
+- `specs/codex/configuration.md` — managed remote MCP hooks 制約、build-plugins 改稿注記
+- `specs/codex/mcp.md` — app-server 認証ガイダンス
+
 ## 2026-10-06 — 公式ドキュメント巡回
 
 ### 検出・更新
