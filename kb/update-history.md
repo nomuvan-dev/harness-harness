@@ -1,5 +1,30 @@
 # harness-harness 更新履歴
 
+## 2026-10-08 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code**: **v2.1.292（2026-10-06）を反映**。ハーネス観点の目玉:
+- **`claude plugin install --marketplace <source>`**: マーケットプレース追加（`marketplace add` と同じポリシーチェック下）＋インストールを一括実行
+- **Agent ツールに `effort` パラメータ**: 呼び出し側がサブエージェントの effort レベルを指定可能（定義 frontmatter の `effort` とは別経路）
+- **mods API 拡張**: `prompt.autocomplete` イベント、`$.model.complete` のプロンプトキャッシュ対応（`cache: true` ブロック）、`agent.spawn` フックへのワークフローエージェント（run・index 付き、拒否可能）
+- **権限セキュリティ修正多数**: UNC パス読み取りの PreToolUse 承認 / auto モードによるプロンプトバイパス、notebook/PDF 読み取り中の link 差し替え、managed sandbox read-deny パスのセッション中出現への追随、managed settings キャッシュ改ざんによるポリシープラグイン無効化、Windows 8.3 短縮名の rm -rf 検出漏れ
+- `CLAUDE_CODE_OVERLOADED_RETRY_BASE_DELAY_MS` 追加、one-shot `claude -p` のバックグラウンドコマンド/wakeup 待機修正、`claude -p`/SDK 起動高速化
+
+なお v2.1.292 の mods 新機能（`prompt.autocomplete` 等）は changelog 先行で、mods/reference ドキュメントには本巡回時点で未掲載（env-vars / cli-reference の新項目も同様）。
+
+**Codex CLI**: **新安定版 CLI 0.161.0（2026-10-07）を反映**。目玉は **GPT-6.1 Sol のバンドル / Bedrock カタログ既定モデル化**、**Bedrock の multi-agent V2・Ultra reasoning 対応**、**`/mcp login <name>`**、**音声会話のデバイス選択**、**Daybreak の opt-in 制化**（`--enable cli_daybreak` / `features.cli_daybreak=true` 必須）、**`codex exec --cyber-access-program` / TS SDK `cyberAccessProgram`**。修正は filesystem escalation の制限保持付き拡張・launch permissions の再接続維持・SQLite 破損の早期検出等。同日 ChatGPT for iOS 1.2026.272（ページプレビューインライン、Codex タスクリンク、Plugins 統合エントリ）。GitHub タグは 0.162.0-alpha.18 まで進行。
+
+**Phase 3.5 スキルエコシステム巡回**: スキップ（前回 2026-10-06 から7日未満）。
+
+### 更新ファイル
+
+- `specs/claude/changelog.md` — v2.1.292 追加
+- `specs/claude/tools.md` — Agent ツール `effort` パラメータ
+- `specs/claude/configuration.md` — `CLAUDE_CODE_OVERLOADED_RETRY_BASE_DELAY_MS`
+- `specs/claude/skills-and-commands.md` — `plugin install --marketplace`、mods（`prompt.autocomplete` / `$.model.complete` キャッシュ / `agent.spawn` ワークフローエージェント）
+- `specs/codex/changelog.md` — CLI 0.161.0 追加
+
 ## 2026-10-07 — 公式ドキュメント巡回
 
 ### 検出・更新

@@ -3,9 +3,54 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-10-07（**v2.1.290**（2026-10-05）・**v2.1.291**（2026-10-06）を反映。2.1.290 は大型リリース。ハーネス観点では **(1) mods / plugins API 拡張（`turn.step` に `serverToolUses`、`tool.check` に `agentId`・`ceiling`、typings に `ThemeKey` / `Color`、`claude plugin validate` の gatingHooks 一覧）**、**(2) 権限まわりのセキュリティ修正多数（PreToolUse フックが入力を書き換えた後のツール呼び出しに一部ルール・安全チェックが適用されない問題、`declare` / `export` 等のプレフィックス変数代入による deny / ask すり抜け、read-only コマンドのワイルドカード展開・zsh 変数解釈差による自動承認、heredoc パイプ・Monitor ツールの sandbox auto-allow すり抜け、symlink 差し替えによる承認外ファイル読み取り、`pyright` の read-only 扱い廃止）**、**(3) WebSearch 予算が時間回復制（100回/時、`CLAUDE_CODE_WEB_SEARCH_REFILLS_PER_HOUR`）に変更・WebFetch が 100,000 字超を通知し `offset` で続き読み可能に**、**(4) Claude in Chrome をプロジェクト settings からは有効化不可に（ユーザー settings / `--chrome` / `/chrome` のみ）**。2.1.291 は 2.1.288 / 2.1.290 のリグレッション修正のみ。前回2026-10-05の巡回要約は v2.1.289 のエントリ参照。）修正中心のリリース。ハーネス観点では **(1) plugins API に `agent.spawn`（チームメイト起動）追加・プラグインフックイベント間でエージェントIDが統一・`$.agent.list()` に idle / waiting 状態**、**(2) sandbox auto-allow 下で環境変数プレフィックス（`TZ="$HOME" rm -rf build` 等の展開値）や先行する素の変数代入により Bash deny / ask ルールがすり抜ける穴の修正**、**(3) symlink 経由で IDE から @メンション・変更・選択されたファイルに `Read` deny ルールが効かない問題の修正**。ほかに管理対象マシンでの複合シェルコマンド内ネスト部分への deny / ask ルール維持、ユーザーインストールのプラグインが組織管理 MCP サーバーのサインインツール説明を書き換えられた穴の修正、アップグレード直後の初回セッションで mods がロードされない問題の修正、mods / プラグイン UI の安定性修正多数。Codex CLI は新安定版なし（0.160.0 のまま。0.162.0 系 alpha が進行中）。前回2026-10-04の巡回要約は v2.1.288 のエントリ参照。）
+最終更新: 2026-10-08（**v2.1.292**（2026-10-06）を反映。ハーネス観点では **(1) `claude plugin install --marketplace <source>`（マーケットプレース追加＋インストールを一括。`marketplace add` と同じポリシーチェック下）**、**(2) Agent ツールに `effort` パラメータ（呼び出し側がサブエージェントの effort レベルを指定可能）**、**(3) mods API 拡張（`prompt.autocomplete` イベントでプロンプト欄のオートコンプリートに独自行を追加、`$.model.complete` がプロンプトキャッシュ対応＝`prompt` / `system` がテキストブロックを受け `cache: true` でそこまでキャッシュ、`agent.spawn` フックにワークフローエージェントが run・index 付きで渡り拒否可能）**、**(4) 権限セキュリティ修正多数（UNC パス読み取りの PreToolUse 承認 / auto モードによるプロンプトバイパス、notebook / PDF 読み取り中の link 差し替え、managed sandbox read-deny パスのセッション中出現への追随、managed settings キャッシュ改ざんによるビルトインポリシープラグイン無効化、Windows 8.3 短縮名での home/ドライブ rm -rf 検出漏れ）**、**(5) `CLAUDE_CODE_OVERLOADED_RETRY_BASE_DELAY_MS`（529 リトライのバックオフ基準遅延）**。Codex CLI は **0.161.0 安定版**（2026-10-07。GPT-6.1 Sol がバンドル / Bedrock カタログの既定モデルに、`/mcp login <name>`、Daybreak の opt-in 制化、`--cyber-access-program`）。前回2026-10-07の巡回要約は下記 v2.1.290/291 の段落参照。）
+
+前回: 2026-10-07（**v2.1.290**（2026-10-05）・**v2.1.291**（2026-10-06）を反映。2.1.290 は大型リリース。ハーネス観点では **(1) mods / plugins API 拡張（`turn.step` に `serverToolUses`、`tool.check` に `agentId`・`ceiling`、typings に `ThemeKey` / `Color`、`claude plugin validate` の gatingHooks 一覧）**、**(2) 権限まわりのセキュリティ修正多数（PreToolUse フックが入力を書き換えた後のツール呼び出しに一部ルール・安全チェックが適用されない問題、`declare` / `export` 等のプレフィックス変数代入による deny / ask すり抜け、read-only コマンドのワイルドカード展開・zsh 変数解釈差による自動承認、heredoc パイプ・Monitor ツールの sandbox auto-allow すり抜け、symlink 差し替えによる承認外ファイル読み取り、`pyright` の read-only 扱い廃止）**、**(3) WebSearch 予算が時間回復制（100回/時、`CLAUDE_CODE_WEB_SEARCH_REFILLS_PER_HOUR`）に変更・WebFetch が 100,000 字超を通知し `offset` で続き読み可能に**、**(4) Claude in Chrome をプロジェクト settings からは有効化不可に（ユーザー settings / `--chrome` / `/chrome` のみ）**。2.1.291 は 2.1.288 / 2.1.290 のリグレッション修正のみ。前回2026-10-05の巡回要約は v2.1.289 のエントリ参照。）修正中心のリリース。ハーネス観点では **(1) plugins API に `agent.spawn`（チームメイト起動）追加・プラグインフックイベント間でエージェントIDが統一・`$.agent.list()` に idle / waiting 状態**、**(2) sandbox auto-allow 下で環境変数プレフィックス（`TZ="$HOME" rm -rf build` 等の展開値）や先行する素の変数代入により Bash deny / ask ルールがすり抜ける穴の修正**、**(3) symlink 経由で IDE から @メンション・変更・選択されたファイルに `Read` deny ルールが効かない問題の修正**。ほかに管理対象マシンでの複合シェルコマンド内ネスト部分への deny / ask ルール維持、ユーザーインストールのプラグインが組織管理 MCP サーバーのサインインツール説明を書き換えられた穴の修正、アップグレード直後の初回セッションで mods がロードされない問題の修正、mods / プラグイン UI の安定性修正多数。Codex CLI は新安定版なし（0.160.0 のまま。0.162.0 系 alpha が進行中）。前回2026-10-04の巡回要約は v2.1.288 のエントリ参照。）
 
 ---
+
+## v2.1.292 (2026-10-06)
+
+**plugin install の --marketplace・Agent ツール effort パラメータ・mods API 拡張・権限セキュリティ修正多数**
+
+### 新機能
+
+- **`claude plugin install --marketplace <source>`**: 必要ならマーケットプレースを追加（`claude plugin marketplace add` と同じポリシーチェック下）してからそのマーケットプレースのプラグインをインストール
+- **Agent ツールに `effort` パラメータ**: 呼び出し側が指定した effort レベルでサブエージェントを実行
+- **`CLAUDE_CODE_OVERLOADED_RETRY_BASE_DELAY_MS`**: overloaded（529）リトライのバックオフ基準遅延を延長する環境変数
+- **mods API 拡張**: ①`prompt.autocomplete` イベント（プロンプト欄のオートコンプリート一覧に mod 独自の行を追加）、②`$.model.complete` がプロンプトキャッシュ対応（`prompt` / `system` がテキストブロックの配列を受け、ブロックに `cache: true` を付けるとそこまでのリクエストをキャッシュ）、③`agent.spawn` フックにワークフローエージェントが run・index 付きで渡り、mod が拒否可能に
+- Artifact ツールのリスト改善: 公開アーティファクトの総数が見え、一度に最大 200 件リスト可能（従来 50 件）
+
+### 修正（セキュリティ・権限）
+
+- **ネットワーク（UNC）パスのファイル読み取りで PreToolUse フック承認・auto モードが権限プロンプトをバイパスしていた問題**
+- sandbox 化されたコマンドが `/ultrareview` アップロードのステージングコピー（`~/.claude/seed-admin`）を読めた問題
+- managed sandbox の read-deny パス（とその横のユーザー deny パス）がセッション中に出現・付け替えされた場合に、内側のプロジェクト grant が落ちず、カバー対象ファイルからの credential injection が止まらなかった問題
+- macOS / Windows の notebook / PDF 読み取りで、読み取り中の link 差し替えにより承認外ファイルが返り得た問題
+- サーバー管理設定のオンディスクキャッシュ改ざんにより、設定フェッチ失敗中にビルトインポリシープラグインを無効化・差し替えできた問題
+- Windows の 8.3 短縮名などの別表記によるホームフォルダ / ドライブへの `rm -rf` が削除として扱われなかった問題
+- `permissionMode: auto` のサブエージェント定義が auto モード利用不可時（設定・サーキットブレーカー・非対応モデル）でも auto モードに入っていた問題
+- スキル / スラッシュコマンドの `allowed-tools` ルールが、ターン途中で auto / plan モードを抜けた後のターンに復活していた問題
+
+### 修正（その他主要）
+
+- `NO_PROXY` が `HTTPS_PROXY` 設定時に Claude Code 自身の API リクエスト（サインイン・ポリシー・フィードバック・アーティファクト）で無視されていた問題
+- one-shot `claude -p` / Agent SDK ランが最終結果の 5 秒後にバックグラウンドコマンドを停止し、scheduled wakeup を落としていた問題（完了まで待つように）
+- plan モードが `claude --resume` セッションピッカー / `/resume` からの再開で復元されない問題
+- `/resume`・`/branch`・`/clear` 後に作成した保存スケジュールタスクが発火しない問題、タスクファイルへのミリ秒差の 2 連続書き込み後に作成・削除が無視される問題
+- バックグラウンドセッションの `/loop` がプロセス再起動後に静かに止まる問題（pending wakeup の喪失）
+- mods / プラグインの権限・安定性修正多数: hooks worker 再起動中のツール呼び出しがプラグイン権限フックなしで応答されていた問題、`tool.check` フックの allow 回答がダイアログ必須ツール（質問・プラン承認）をダイアログなしで実行できた問題、4,096 字超の理由を持つ prompt drop / setting deny が無視される問題、組織プラグインがユーザー mod と `$` 名衝突した際に組織側がアンロードされる問題（mod 側をアンロードするよう変更）等
+
+### 改善
+
+- `claude -p` / SDK セッションの起動高速化: 初ターンが HTTP / SSE MCP サーバーの `resources/list` 応答を待たなくなった
+- フック出力中の `<system-reminder>` タグをエスケープしてから Claude に渡すように
+- strict sandbox モード時、`FOO=bar python3 app.py` のような環境変数プレフィックス付きインタープリタコマンドをプロンプトなしで実行
+- 長い箇条書き / 番号付き応答のストリーム・リサイズ・トランスクリプト再表示が大幅高速化
+- Ctrl+C ドラフト復元の改善（スラッシュコマンドや送信後もクリアされたプロンプトに Up で戻れる）
+- Grep が `path` の代わりに `file_path` を受理、Write / WebFetch / Read が一部の迷子パラメータを失敗にせず無視
+
+ほかに Claude Tag（`!fork` 継続スレッドの出所カード化、`@Claude !status` の説明改善、Enterprise 管理の Allowed domains 編集ボタン等）・Code Review（analytics の期間合計＋リポジトリ別内訳、base ブランチ変更時の再キュー、CLAUDE.md を編集する PR でのベースブランチ版使用）・Remote Control / クラウドセッションの修正多数。
 
 ## v2.1.291 (2026-10-06)
 
