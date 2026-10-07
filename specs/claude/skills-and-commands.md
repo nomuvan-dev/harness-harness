@@ -341,7 +341,7 @@ Claude Code に同梱されるスキル:
 | `/plugin` | プラグイン管理（マーケットプレース、インストール、有効化/無効化）。`claude plugin prune` で孤立した自動インストール依存を削除、`plugin uninstall --prune` でカスケード削除（v2.1.121）。マーケットプレース browse ペインに projected context cost（ターン当たり・呼び出し当たりのトークン推定）を表示（v2.1.143）。Discover/Browse 画面でインストール前にプラグインが提供する commands / agents / skills / hooks / MCP/LSP サーバーをプレビュー（v2.1.145） |
 | `/plugin list` | インストール済みプラグイン一覧表示。`--enabled` / `--disabled` フィルタ対応（v2.1.163） |
 | `claude plugin enable/disable` | 依存関係を強制。`disable` は他の有効プラグインの依存先を拒否し disable-chain ヒントを表示。`enable` は推移的依存を強制有効化（v2.1.143） |
-| `claude plugin configure <plugin>` | プラグインのオプション一覧と未設定項目を表示。`--values-stdin` で stdin から読んだ新値を保存（v2.1.285）。`claude plugin install --config` では `<server>.<key>=<value>` 形式でバンドル `.mcpb` MCP サーバー自身の設定もインストール時に指定可能（`/plugin` → Configure を経ずに起動できる） |
+| `claude plugin configure <plugin>` | プラグインのオプション一覧と未設定項目を表示。`--values-stdin` で stdin から読んだ新値を保存（v2.1.285）。`claude plugin install --config` では `<server>.<key>=<value>` 形式でバンドル `.mcpb` MCP サーバー自身の設定もインストール時に指定可能（`/plugin` → Configure を経ずに起動できる）。**v2.1.292 で `claude plugin install --marketplace <source>` 追加**: 未登録ならマーケットプレースを追加（`claude plugin marketplace add` と同じポリシーチェック下）してからそのプラグインをインストール |
 | `/reload-plugins` | プラグイン変更の即時反映（v2.1.221 から `/plugin` 経由のインストールは安全な場合、実行不要で即時有効化）。インストールサマリーの文言は `Run /reload-plugins to apply.` に変更（旧 `to activate.`） |
 | `/plugin-authoring` | mod 作成時に Claude が参照するリファレンスをロードする（組み込みプラグイン `cc-plugin-plugin-authoring` のスキル。`/plugin` で無効化可。v2.1.287 以降） |
 | `/reload-skills` | スキル / コマンドディレクトリを再スキャン。セッション再起動不要。利用可能スキル数と増減数を報告する |
@@ -715,11 +715,11 @@ first-mod/
 | グループ | 主なイベント |
 |:--|:--|
 | ツール | `tool.call`（実行前に deny / 結果差し替え可）、`tool.check`（allow / ask / deny 判定の上書き）、`tool.describe`（説明の書き換え・tool search 背後へのディファー指定） |
-| プロンプト | `prompt.submit`（書き換え / drop）、`prompt.fill` / `prompt.suggest` / `prompt.edit`、`prompt.compose` / `prompt.section`（システムプロンプトのセクション書き換え・削除）、`prompt.context`、`prompt.attachment`（リマインダー等の書き換え・抑止）、`skill.prompt`（スキル本文展開の書き換え）、`attribution.text`（コミット / PR 帰属テキスト） |
+| プロンプト | `prompt.submit`（書き換え / drop）、`prompt.fill` / `prompt.suggest` / `prompt.edit`、`prompt.compose` / `prompt.section`（システムプロンプトのセクション書き換え・削除）、`prompt.context`、`prompt.attachment`（リマインダー等の書き換え・抑止）、`skill.prompt`（スキル本文展開の書き換え）、`attribution.text`（コミット / PR 帰属テキスト）、`prompt.autocomplete`（プロンプト欄のオートコンプリート一覧に mod 独自の行を追加。v2.1.292） |
 | コマンド・設定 | `command.run` / `command.describe`、`config.set` / `config.describe` |
 | ターン | `turn.start`、`turn.step`（モデル / effort の差し替え。async generator）、`turn.complete`（回答下に1行表示可） |
 | セッション | `session.start` / `session.end` / `session.compact`（skip 可）/ `session.receive` / `session.send` / `session.append`（保存行の書き換え）/ `session.attach` / `session.detach` / `session.measure` |
-| サブエージェント | `agent.offer`（タイプの提示を抑止）、`agent.spawn`（モデル差し替え / deny。チームメイトは `e.isTeammate`） |
+| サブエージェント | `agent.offer`（タイプの提示を抑止）、`agent.spawn`（モデル差し替え / deny。チームメイトは `e.isTeammate`。v2.1.292 からワークフローエージェントも run・index 付きで渡り拒否可能） |
 | UI | `ui.render`（render site の描画）、`ui.resolve`、`ui.press` / `ui.input` / `ui.select`、`ui.focus` / `ui.scroll` / `ui.close`、`ui.message`、`ui.fault`（v2.1.289+） |
 | 他の mod | `plugin.register`（ロード拒否可。`e.uses` に validate と同じ hooks / calls 一覧）、`engine.create`（mods API の加工） |
 | テレメトリ | `telemetry.log` / `telemetry.mark`（インストール mod は `{ to: 'collector' }` フィルタ必須） |
@@ -729,7 +729,7 @@ mods API の各メソッド（`fs.read` 等）もイベントとして後続 mod
 
 **mods API（`$`）の名前空間**: `$.plugin`（name / root）、`$.ui`（open / close / toast / notice / ask / status / invalidate 等）、`$.command` / `$.tool` / `$.agent`（register / run・call / spawn / list）、`$.model`（complete / fork / classify）、`$.prompt`（submit / fill / suggest 等。`submit({text, asUser: true})` でユーザー発話として送信）、`$.turn.abort`、`$.session`（messages / usage / send / compact 等）、`$.config` / `$.settings` / `$.env`、`$.fs`（read / write / list 等。1ファイル4 MiB）、`$.store`（全セッション共有 KV、合計 4 MiB）、`$.state`（リアクティブ状態）、`$.clock`（sleep / after / every）、`$.http.fetch`、`$.process`（run は既定30秒・最大10分）、`$.mcp`（call / connect）、`$.audio`、`$.telemetry`。
 
-**render site / 要素 / 制限の要点**: 描画先は `Pane`（dock / inline）・`AbovePrompt`（バンド）のほか、`UserMessage` / `AssistantMessage` / `ToolUse` / `Spinner` / `AskUserQuestion` など Claude Code 自身の UI 置換ポイント。要素は `Box` / `Text` / `Button` / `Input` / `Select` / `Markdown` / `Code` / `Link` / `Client` に加え、ターミナル限定の `Raster`（最大 512×256 セル）/ `Image`（2 MiB）、Desktop 限定の `Svg`。フック実行時間は 1 イベント 10 秒（`prompt.edit` は 50ms）、`$.model.complete` の maxTokens は既定 1024（最大 64,000）、再描画は秒 10 回（可視ペインは 30 回）にスロットル。テストは `*.test.ts(x)` を `claude plugin test <dir>` で実行（1 テスト既定 5 秒）。`CLAUDE_CODE_PLUGIN_DIR_WATCH=1` で長時間の非対話セッションでも `--plugin-dir` mod を保存時リロード。
+**render site / 要素 / 制限の要点**: 描画先は `Pane`（dock / inline）・`AbovePrompt`（バンド）のほか、`UserMessage` / `AssistantMessage` / `ToolUse` / `Spinner` / `AskUserQuestion` など Claude Code 自身の UI 置換ポイント。要素は `Box` / `Text` / `Button` / `Input` / `Select` / `Markdown` / `Code` / `Link` / `Client` に加え、ターミナル限定の `Raster`（最大 512×256 セル）/ `Image`（2 MiB）、Desktop 限定の `Svg`。フック実行時間は 1 イベント 10 秒（`prompt.edit` は 50ms）、`$.model.complete` の maxTokens は既定 1024（最大 64,000。v2.1.292 からプロンプトキャッシュ対応: `prompt` / `system` がテキストブロックの配列を受け、ブロックに `cache: true` を付けるとそこまでのリクエストをキャッシュ）、再描画は秒 10 回（可視ペインは 30 回）にスロットル。テストは `*.test.ts(x)` を `claude plugin test <dir>` で実行（1 テスト既定 5 秒）。`CLAUDE_CODE_PLUGIN_DIR_WATCH=1` で長時間の非対話セッションでも `--plugin-dir` mod を保存時リロード。
 
 **実行環境の詳細（overview の表）**: フックは VS Code 拡張チャットパネル・`claude -p`・Agent SDK・Remote Control（ローカル側）・クラウドセッション（プラグインが届く場合）でも動くが、**描画されるのはターミナルと Desktop アプリの Code タブのみ**（Desktop の WSL セッションはプラグイン自体が不可）。mod はサンドボックス対象外（sandbox は Claude の Bash コマンドのみ隔離）。
 

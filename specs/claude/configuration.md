@@ -683,6 +683,7 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 | `CLAUDE_CLIENT_PRESENCE_FILE` | マーカーファイルを指定し、マシン在席中のモバイルプッシュ通知を抑制（v2.1.181） |
 | `CLAUDE_CODE_MAX_RETRIES` | リトライ回数上限。v2.1.186 で上限 15 にキャップ（無人セッションは `CLAUDE_CODE_RETRY_WATCHDOG` を使用）。v2.1.199 の `CLAUDE_CODE_RETRY_WATCHDOG` 有効時はキャップ解除・非キャパシティ系一時エラーのデフォルトリトライ 300 回 |
 | `CLAUDE_CODE_MCP_TOOL_IDLE_TIMEOUT` | リモート MCP ツール呼び出しの無応答タイムアウト（デフォルト5分で中断）のオーバーライド（v2.1.187） |
+| `CLAUDE_CODE_OVERLOADED_RETRY_BASE_DELAY_MS` | overloaded（529）リクエストのリトライ時バックオフの基準遅延を延長（v2.1.292） |
 | `CLAUDE_CODE_DISABLE_STRUCTURED_OUTPUTS` | `1` で構造化出力の `output_config.format` フィールドと対応する `anthropic-beta` 値の送信を停止。構造化出力を拒否するアップストリームを持つ LLM ゲートウェイ / Mantle 向け（セッションタイトル・メモリ recall・プロンプトフックの失敗対策。v2.1.288） |
 | `CLAUDE_CODE_NONSTREAMING_TIMEOUT_RETRIES` | 非ストリーミングリクエストがタイムアウトした際の再送回数制限。`0` で初回タイムアウトで失敗。未設定時は `CLAUDE_CODE_MAX_RETRIES` に従う（v2.1.288） |
 | `OTEL_LOG_ASSISTANT_RESPONSES` | `1` で `claude_code.assistant_response` OTELログイベント（モデル応答テキスト）を出力。未設定時は `OTEL_LOG_USER_PROMPTS` に追従するため、プロンプト収集済みデプロイは `0` 明示でプロンプトのみ維持（v2.1.193） |
