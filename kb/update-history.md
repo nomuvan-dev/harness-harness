@@ -1,5 +1,31 @@
 # harness-harness 更新履歴
 
+## 2026-10-09 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code**: **v2.1.293（2026-10-07）・v2.1.294（2026-10-08）を反映**。ハーネス観点の目玉:
+- **Claude Haiku 5.5（`claude-haiku-5-5`）追加**: Anthropic API の既定 Haiku に。1M コンテキスト、$0.10/$0.50 per Mtok
+- **`subagentStatusLine` ペイロードに `agentType`**、**mods `$.tool.register` に `isDeferred`**（`false` でスキーマを最初からプロンプト掲載）
+- **重要修正**: path-scoped rules / ネスト CLAUDE.md が Bash の単一ファイル cat / head / tail / sed -n / grep 読みでロードされない問題、コンテキスト圧縮直前のアクションを圧縮後に完了扱いする問題、指示文で書いた `prompt` / `agent` フックがブロックすべきものを許す問題（v2.1.294）
+- **取り消し**: auto モード拒否メッセージ変更（2.1.281）、クラウドセッションの wakeup 喪失通知（2.1.290）
+- claude.ai スキル同期チェックがアイドル時約40分毎に
+
+**ドキュメント改訂**: MCP stdio サーバーへの新リビジョン照会が既定動作として確定、WebSearch 上限の時間回復（約100回/時、`CLAUDE_CODE_WEB_SEARCH_REFILLS_PER_HOUR`）が tools-reference / env-vars に正式収載、keybindings に AbovePrompt / Pane コンテキストと `abovePrompt:*` / `pane:*` アクション群（mods の band / pane 操作）新設、skills ページに「Check your setup with `/doctor`」節新設（commands から移設・集約）、`blockReadsOutsideWorkingDirectories` / `autoMode.classifyAllShell` が managed `false` より優先される旨を settings に明文化、`CLAUDE_CODE_FORCE_TERMINAL_IMAGES` 追加。
+
+**Codex CLI**: 新安定版なし（0.161.0 のまま。GitHub タグは 0.162.0-alpha.20 まで進行）。**アナウンス（2026-10-08）: GPT-6.1 Sol Ultrafast が Codex / ChatGPT Work に追加**（Pro $500・対象 Enterprise / Edu。Enterprise は既定オフ）。hooks / build-plugins / app-server / skills 各ページは実質的変更なし。
+
+**Phase 3.5 スキルエコシステム巡回**: スキップ（前回 2026-10-06 から7日未満）。
+
+### 更新ファイル
+
+- `specs/claude/changelog.md` — v2.1.293 / v2.1.294 追加
+- `specs/claude/tools.md` — WebSearch 上限の時間回復を正式反映
+- `specs/claude/configuration.md` — `CLAUDE_CODE_WEB_SEARCH_REFILLS_PER_HOUR` / `CLAUDE_CODE_FORCE_TERMINAL_IMAGES`、`blockReadsOutsideWorkingDirectories` / `autoMode.classifyAllShell` の優先規則
+- `specs/claude/mcp.md` — stdio プロトコル照会の既定化
+- `specs/claude/skills-and-commands.md` — claude.ai スキル同期のチェック間隔（作業中10分 / アイドル40分）
+- `specs/codex/changelog.md` — 2026-10-09 巡回エントリ（GPT-6.1 Sol Ultrafast）
+
 ## 2026-10-08 — 公式ドキュメント巡回
 
 ### 検出・更新

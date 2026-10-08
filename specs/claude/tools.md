@@ -125,7 +125,7 @@ Claude Code の組み込みツール一覧。**ここに書かれたツール名
 - **サンドボックスは組み込みの事前承認ドキュメントドメイン集合を継承しない**。サンドボックスコマンドからプロンプトなしで到達させたいドメインは `sandbox.network.allowedDomains` に追加するか `WebFetch(domain:...)` ルールで許可する（サンドボックスは後者も尊重する）。逆方向は成立せず、WebFetch はサンドボックスの allowlist を読まない
 - サンドボックスが解釈する `WebFetch(domain:...)` のワイルドカードは先頭 `*.`（`*.example.com`）と裸の `*`（v2.1.186 以降）の 2 形式のみ。`example.*` のような他の位置のワイルドカードは WebFetch 自体にはマッチするがサンドボックスには効かない
 - WebSearch は結果のタイトルと URL のみ返し**ページ本文は取得しない**。1 回の呼び出しで最大 8 回のバックエンド検索を行いうる。`allowed_domains` / `blocked_domains` は併用不可
-- **セッションあたり最大 200 回**（メイン会話と全サブエージェント合算）。`CLAUDE_CODE_MAX_WEB_SEARCHES_PER_SESSION` で引き上げ可能だが**無効化はできない**。`/clear` でリセット
+- **セッションあたり最大 200 回**（メイン会話と全サブエージェント合算）。`CLAUDE_CODE_MAX_WEB_SEARCHES_PER_SESSION` で引き上げ可能だが**無効化はできない**。**v2.1.290 以降、対話ターミナルセッションでは約100回/時で回復**（`CLAUDE_CODE_WEB_SEARCH_REFILLS_PER_HOUR` で回復レート変更可。2026-10-09 ドキュメント改訂で tools-reference に正式収載）。`/clear` でもリセットされるが、サブエージェントを生めるワークフロー等が clear を生き残る場合はカウント持ち越し
 - WebSearch の権限ルールは specifier を取らない。`allow` / `deny` に裸の `WebSearch` を書く形のみ
 - **WebFetch の可用性（2026-10 ドキュメント改訂で「WebFetch availability」節新設）**: v2.1.285 以降 `CLAUDE_CODE_DISABLE_WEB_FETCH=1` でオフにできる。Team / Enterprise の claude.ai アカウントで LLM ゲートウェイを経由しないセッション（およびプランを判別できないセッション）では、セッション開始時に `api.anthropic.com` から取得する**組織ポリシー**にも依存し、ポリシーが読めるまで WebFetch は保留される。欠けている場合は `/status` の `Organization policy` 行を確認（セッション外では `claude doctor`）。許可ポリシーがロードされ次第、再起動なしでツールが戻る
 - **WebFetch と artifact リンク**: URL が claude.ai の artifact リンクの場合、artifact 自体を読む承認を求めることがある
