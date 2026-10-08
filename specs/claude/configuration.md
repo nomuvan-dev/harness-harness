@@ -180,7 +180,7 @@ Claude Code は設定ファイルを監視し、変更を検知するとセッ�
 | `permissions.defaultMode` | デフォルト権限モード。v2.1.200 で `default` モードの表示名が「Manual」に変更（`"manual"` も `default` と同義で受理）。**v2.1.257 以降、`auto` に加えて `bypassPermissions` も project / local 設定からは有効にならない**（user / managed 設定に置くか `--permission-mode` で指定する。v2.1.257 より前は `bypassPermissions` は任意の設定ファイルから有効だった）。VS Code 拡張が開始する会話では user / managed / `--settings` の値のみ読まれる |
 | `permissions.additionalDirectories` | 追加ワーキングディレクトリ。**サンドボックス既定の書き込み可能パスにも含まれる**（2026-08-31 時点の公式ドキュメント改訂で明文化）: 既定では作業ディレクトリ・セッション一時ディレクトリ（`$TMPDIR`）・`--add-dir` / `/add-dir` で追加したディレクトリに加え、本キーのディレクトリにもサンドボックスコマンドが書き込める。ファイルアクセス権のみを与え skills / commands / subagents は読み込まない点は従来通り（`skills-and-commands.md` 参照） |
 | `permissions.disableBypassPermissionsMode` | `bypassPermissions` モード無効化 |
-| `permissions.blockReadsOutsideWorkingDirectories` | （v2.1.257 で追加、**v2.1.260 で settings リファレンスに正式収載**）作業ディレクトリ外のファイル読み取りを **`bypassPermissions` を含む全権限モード**でブロックする（Read / Grep / Glob / LSP）。`cat` 等の認識済みファイルコマンドを使う Bash コマンドは、auto モードや `bypassPermissions` モードでも確認プロンプトが出る。**スコープは `Any file`**（いずれかの設定ソースが `true` なら有効。リポジトリのコミット済み設定でプロジェクト単位に有効化できるが、既に有効なブロックの解除はできない）。auto モードの初回の作業ディレクトリ外読み取りプロンプトで「ブロックする」を選ぶと Claude Code が本キーに `true` を書き込む。サンドボックス有効時は、サンドボックスコマンドからのホームディレクトリ・マウントボリュームルートの読み取りも拒否し、サンドボックス外での再試行は `bypassPermissions` モードでも承認を求める（`sandbox.filesystem.denyRead` にパスを列挙する代わりに使える）。`~/.claude/` 配下の skills / plugins / rules / agents / commands / `CLAUDE.md` は読める。リンクされた git worktree（セッション途中で入ったものを含む）では共通 `.git` ディレクトリは読み書き可能なまま |
+| `permissions.blockReadsOutsideWorkingDirectories` | （v2.1.257 で追加、**v2.1.260 で settings リファレンスに正式収載**）作業ディレクトリ外のファイル読み取りを **`bypassPermissions` を含む全権限モード**でブロックする（Read / Grep / Glob / LSP）。`cat` 等の認識済みファイルコマンドを使う Bash コマンドは、auto モードや `bypassPermissions` モードでも確認プロンプトが出る。**スコープは `Any file`**（いずれかの設定ソースが `true` なら有効。リポジトリのコミット済み設定でプロジェクト単位に有効化できるが、既に有効なブロックの解除はできない）。auto モードの初回の作業ディレクトリ外読み取りプロンプトで「ブロックする」を選ぶと Claude Code が本キーに `true` を書き込む。サンドボックス有効時は、サンドボックスコマンドからのホームディレクトリ・マウントボリュームルートの読み取りも拒否し、サンドボックス外での再試行は `bypassPermissions` モードでも承認を求める（`sandbox.filesystem.denyRead` にパスを列挙する代わりに使える）。`~/.claude/` 配下の skills / plugins / rules / agents / commands / `CLAUDE.md` は読める。リンクされた git worktree（セッション途中で入ったものを含む）では共通 `.git` ディレクトリは読み書き可能なまま。**いずれかのスコープの `true` は managed ソースの `false` よりも優先される**（2026-10-09 ドキュメント改訂で settings の優先規則表に明文化） |
 | `hooks` | ライフサイクルフック設定 |
 | `disableAllHooks` | 全フック無効化 |
 | `allowManagedHooksOnly` | Managed フックのみ許可（Managed設定のみ） |
@@ -314,7 +314,7 @@ Claude Code は設定ファイルを監視し、変更を検知するとセッ�
 | `attribution.sessionUrl` | Web / Remote Control セッションで commit・PR への claude.ai セッションリンク付与を制御（v2.1.183） |
 | `respondToBashCommands` | `false` で `!` bashコマンド出力への Claude 自動応答を無効化（v2.1.186 から自動応答がデフォルト） |
 | `sandbox.credentials` | サンドボックスコマンドによる認証情報ファイル・シークレット環境変数の読み取りをブロック（v2.1.187）。v2.1.221 で `mode: "mask"` 追加（Linux/WSL）: センチネル値を読ませ egress 時にプロキシが実値へ置換。`extract` 正規表現で範囲指定可。macOS は `deny` にフォールバック。v2.1.224 でマスキングオプション拡充: `extract`（抽出範囲指定）・`decode: "jwt"`（JWT デコード）・`awsPairs` / `sigv4`（AWS 認証情報ペア・SigV4 署名対応） |
-| `autoMode.classifyAllShell` | 全 Bash/PowerShell コマンドを auto-mode 分類器に通す（デフォルトは任意コード実行パターンのみ）（v2.1.193） |
+| `autoMode.classifyAllShell` | 全 Bash/PowerShell コマンドを auto-mode 分類器に通す（デフォルトは任意コード実行パターンのみ）（v2.1.193）。**`~/.claude/settings.json` または `--settings` からの `true` は managed ソースの `false` よりも優先される**（2026-10-09 ドキュメント改訂で明文化） |
 | `axScreenReader` | スクリーンリーダー向けプレーンテキスト描画にオプトイン。`claude --ax-screen-reader` / `CLAUDE_AX_SCREEN_READER=1` でも可（v2.1.208） |
 | `vimInsertModeRemaps` | vim モードのインサートモードで `jj` → Escape のような 2 キーシーケンスをマップ（v2.1.208） |
 | `sandbox.filesystem.disabled` | ファイルシステム分離のみスキップし、ネットワーク egress 制御は維持（v2.1.216） |
@@ -695,6 +695,8 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 | `CLAUDE_CODE_PROCESS_WRAPPER` | agent view とバックグラウンドサービスの全 Claude Code 自己スポーンを、指定した企業ランチャー（ラッパー実行ファイル）経由で起動（v2.1.208） |
 | `CLAUDE_CODE_FORWARD_SUBAGENT_TEXT` | stream-json 出力にサブエージェントのテキスト・思考を含める。`--forward-subagent-text` フラグと同等（v2.1.211） |
 | `CLAUDE_CODE_MAX_WEB_SEARCHES_PER_SESSION` | WebSearch ツール呼び出しのセッション上限（デフォルト 200）。暴走検索ループ対策（v2.1.212） |
+| `CLAUDE_CODE_WEB_SEARCH_REFILLS_PER_HOUR` | 対話ターミナルセッションの WebSearch 上限の時間回復レート（デフォルト約100回/時。v2.1.290、2026-10-09 ドキュメント改訂で env-vars に正式収載） |
+| `CLAUDE_CODE_FORCE_TERMINAL_IMAGES` | `1` で mods の `Image` 要素を画像として描画（kitty graphics protocol + Unicode placeholder 対応だが自動検出されない端末向け。tmux / screen 内では効果なし）（2026-10-09 ドキュメント改訂） |
 | `CLAUDE_CODE_MAX_SUBAGENTS_PER_SESSION` | サブエージェントスポーンのセッション上限（デフォルト 200）。`/clear` でリセット（v2.1.212） |
 | `CLAUDE_CODE_MCP_AUTO_BACKGROUND_MS` | MCP ツール呼び出しの自動バックグラウンド化閾値（デフォルト 2 分）の変更・無効化（v2.1.212） |
 | `CLAUDE_CODE_OTEL_CONTENT_MAX_LENGTH` | OpenTelemetry コンテンツ属性の切り詰め上限（デフォルト 60KB）を設定（v2.1.214） |

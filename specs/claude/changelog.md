@@ -3,11 +3,57 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-10-08（**v2.1.292**（2026-10-06）を反映。ハーネス観点では **(1) `claude plugin install --marketplace <source>`（マーケットプレース追加＋インストールを一括。`marketplace add` と同じポリシーチェック下）**、**(2) Agent ツールに `effort` パラメータ（呼び出し側がサブエージェントの effort レベルを指定可能）**、**(3) mods API 拡張（`prompt.autocomplete` イベントでプロンプト欄のオートコンプリートに独自行を追加、`$.model.complete` がプロンプトキャッシュ対応＝`prompt` / `system` がテキストブロックを受け `cache: true` でそこまでキャッシュ、`agent.spawn` フックにワークフローエージェントが run・index 付きで渡り拒否可能）**、**(4) 権限セキュリティ修正多数（UNC パス読み取りの PreToolUse 承認 / auto モードによるプロンプトバイパス、notebook / PDF 読み取り中の link 差し替え、managed sandbox read-deny パスのセッション中出現への追随、managed settings キャッシュ改ざんによるビルトインポリシープラグイン無効化、Windows 8.3 短縮名での home/ドライブ rm -rf 検出漏れ）**、**(5) `CLAUDE_CODE_OVERLOADED_RETRY_BASE_DELAY_MS`（529 リトライのバックオフ基準遅延）**。Codex CLI は **0.161.0 安定版**（2026-10-07。GPT-6.1 Sol がバンドル / Bedrock カタログの既定モデルに、`/mcp login <name>`、Daybreak の opt-in 制化、`--cyber-access-program`）。前回2026-10-07の巡回要約は下記 v2.1.290/291 の段落参照。）
+最終更新: 2026-10-09（**v2.1.293**（2026-10-07）・**v2.1.294**（2026-10-08）を反映。ハーネス観点では **(1) Claude Haiku 5.5（`claude-haiku-5-5`）追加（Anthropic API の既定 Haiku に。1M コンテキスト、$0.10/$0.50 per Mtok、100K 超プロンプトは $0.50/$2.50）**、**(2) `subagentStatusLine` ペイロードに `agentType`（カスタムサブエージェント種別をスクリプトから判別可能）**、**(3) mods の `$.tool.register` に `isDeferred`（`false` でツールスキーマを tool search 裏でなく最初からプロンプトに掲載）**、**(4) 重要修正: path-scoped rules / ネスト CLAUDE.md が Bash の単一ファイル cat / head / tail / sed -n / grep 読みでロードされない問題、コンテキスト圧縮直前の自作アクションを圧縮後に完了扱いして完了済み作業を取り消し・やり直す問題、`prompt` / `agent` フックを指示文で書いた場合にブロックすべきものを許す問題（v2.1.294）**、**(5) Stop / SubagentStop の指示文 `prompt` フックの判定改善（早期停止抑制。v2.1.294）**、**(6) claude.ai スキル同期のチェック間隔がアイドル時約40分に（作業中は約10分のまま）**。ドキュメント改訂: MCP stdio サーバーへの新リビジョン照会が既定動作として明文化、WebSearch 上限の時間回復（約100回/時）が tools-reference に正式収載、keybindings に AbovePrompt / Pane コンテキストと `abovePrompt:*` / `pane:*` アクション群（mods の band / pane 操作）が新設、skills ページに「Check your setup with `/doctor`」節が新設（commands からの移設・集約）、`blockReadsOutsideWorkingDirectories` / `autoMode.classifyAllShell` の managed `false` より優先される旨が settings に明文化。Codex CLI は新安定版なし（0.161.0 のまま。0.162.0-alpha.20 まで進行。**アナウンス 2026-10-08: GPT-6.1 Sol Ultrafast** が Codex / ChatGPT Work に）。前回2026-10-08の巡回要約は下記 v2.1.292 の段落参照。）
 
-前回: 2026-10-07（**v2.1.290**（2026-10-05）・**v2.1.291**（2026-10-06）を反映。2.1.290 は大型リリース。ハーネス観点では **(1) mods / plugins API 拡張（`turn.step` に `serverToolUses`、`tool.check` に `agentId`・`ceiling`、typings に `ThemeKey` / `Color`、`claude plugin validate` の gatingHooks 一覧）**、**(2) 権限まわりのセキュリティ修正多数（PreToolUse フックが入力を書き換えた後のツール呼び出しに一部ルール・安全チェックが適用されない問題、`declare` / `export` 等のプレフィックス変数代入による deny / ask すり抜け、read-only コマンドのワイルドカード展開・zsh 変数解釈差による自動承認、heredoc パイプ・Monitor ツールの sandbox auto-allow すり抜け、symlink 差し替えによる承認外ファイル読み取り、`pyright` の read-only 扱い廃止）**、**(3) WebSearch 予算が時間回復制（100回/時、`CLAUDE_CODE_WEB_SEARCH_REFILLS_PER_HOUR`）に変更・WebFetch が 100,000 字超を通知し `offset` で続き読み可能に**、**(4) Claude in Chrome をプロジェクト settings からは有効化不可に（ユーザー settings / `--chrome` / `/chrome` のみ）**。2.1.291 は 2.1.288 / 2.1.290 のリグレッション修正のみ。前回2026-10-05の巡回要約は v2.1.289 のエントリ参照。）修正中心のリリース。ハーネス観点では **(1) plugins API に `agent.spawn`（チームメイト起動）追加・プラグインフックイベント間でエージェントIDが統一・`$.agent.list()` に idle / waiting 状態**、**(2) sandbox auto-allow 下で環境変数プレフィックス（`TZ="$HOME" rm -rf build` 等の展開値）や先行する素の変数代入により Bash deny / ask ルールがすり抜ける穴の修正**、**(3) symlink 経由で IDE から @メンション・変更・選択されたファイルに `Read` deny ルールが効かない問題の修正**。ほかに管理対象マシンでの複合シェルコマンド内ネスト部分への deny / ask ルール維持、ユーザーインストールのプラグインが組織管理 MCP サーバーのサインインツール説明を書き換えられた穴の修正、アップグレード直後の初回セッションで mods がロードされない問題の修正、mods / プラグイン UI の安定性修正多数。Codex CLI は新安定版なし（0.160.0 のまま。0.162.0 系 alpha が進行中）。前回2026-10-04の巡回要約は v2.1.288 のエントリ参照。）
+前回: 2026-10-08（**v2.1.292**（2026-10-06）を反映。ハーネス観点では **(1) `claude plugin install --marketplace <source>`（マーケットプレース追加＋インストールを一括。`marketplace add` と同じポリシーチェック下）**、**(2) Agent ツールに `effort` パラメータ（呼び出し側がサブエージェントの effort レベルを指定可能）**、**(3) mods API 拡張（`prompt.autocomplete` イベントでプロンプト欄のオートコンプリートに独自行を追加、`$.model.complete` がプロンプトキャッシュ対応＝`prompt` / `system` がテキストブロックを受け `cache: true` でそこまでキャッシュ、`agent.spawn` フックにワークフローエージェントが run・index 付きで渡り拒否可能）**、**(4) 権限セキュリティ修正多数（UNC パス読み取りの PreToolUse 承認 / auto モードによるプロンプトバイパス、notebook / PDF 読み取り中の link 差し替え、managed sandbox read-deny パスのセッション中出現への追随、managed settings キャッシュ改ざんによるビルトインポリシープラグイン無効化、Windows 8.3 短縮名での home/ドライブ rm -rf 検出漏れ）**、**(5) `CLAUDE_CODE_OVERLOADED_RETRY_BASE_DELAY_MS`（529 リトライのバックオフ基準遅延）**。Codex CLI は **0.161.0 安定版**（2026-10-07。GPT-6.1 Sol がバンドル / Bedrock カタログの既定モデルに、`/mcp login <name>`、Daybreak の opt-in 制化、`--cyber-access-program`）。前回2026-10-07の巡回要約は下記 v2.1.290/291 の段落参照。）
+
 
 ---
+
+## v2.1.294 (2026-10-08)
+
+**指示文で書いた prompt / agent フックの判定修正**
+
+- **`prompt` / `agent` フックを指示文で書いた場合（「〜なコマンドをブロック」等）に、ブロックすべきものを許してしまう問題を修正**
+- Stop / SubagentStop の指示文 `prompt` フック（「ビルドが壊れていたら続行」等）の判定を改善し、Claude が早期に停止しにくくなった
+
+## v2.1.293 (2026-10-07)
+
+**Claude Haiku 5.5 追加・subagentStatusLine の agentType・mods isDeferred・ルールロード/圧縮まわりの重要修正**
+
+### 新機能
+
+- **Claude Haiku 5.5（`claude-haiku-5-5`）追加**: Anthropic API の既定 Haiku モデルに。1M コンテキスト、$0.10/$0.50 per Mtok（100K 超プロンプトは $0.50/$2.50）
+- **`subagentStatusLine` ペイロードに `agentType`**: ステータスラインスクリプトがカスタムサブエージェント種別を判別可能に
+- **mods: `$.tool.register` に `isDeferred`**: `false` を指定するとツールスキーマが tool search の裏ではなく最初からプロンプトに掲載される
+
+### 修正（重要）
+
+- **path-scoped rules・ネストした CLAUDE.md が、Claude が Read ツールでなく Bash の単一ファイル cat / head / tail / sed -n / grep でファイルを見たときにロードされない問題を修正**
+- **コンテキスト圧縮直前の自分の最終アクションを圧縮後に完了済み扱いし、完了済みの作業を取り消し・やり直すことがある問題を修正**
+- HTTP MCP 接続が送信済みリクエストをクローズまで保持し続けるメモリリークを修正
+- `claude agents` が bypass permissions を提案しながら、同意が `.claude/settings.local.json` / `--settings` ファイルのみに保存されているとバックグラウンドセッションがそれを無視していた問題を修正（先に同意を求め、bypass を無視するセッションには常時表示の注記）
+- mod の `classic.*` イベントフックが plugin hooks worker の再起動中にスキップされ、settings フックのみで応答していた問題を修正
+- `claude plugin test` が `$.session.append` を呼ぶ mods で失敗する問題を修正。テストは新設の `mock.session` で追記行を読み戻せる
+- `claude plugin eval` が Docker Desktop のある Mac（`~/.docker/bin` 配下のリンク）で Bash 付与ランを全拒否する問題を修正。拒否時は credential store のどの部分がリンクを保持していたかを表示
+- ホスト・権限ルール・`--tools` で `SendMessage` が外されたセッション（再開セッション含む）で、サブエージェントへの継続・メッセージ送信を案内してしまう問題を修正。サブエージェント / `--agent` セッションが自分のツールリスト外というだけで「セッション全体で無効」と案内される問題も修正
+- claude.ai 同期スキルの編集済み description が新しい会話 / `/clear` までモデルに届かないことがある問題を修正
+- Windows: ステータスライン・フック・シェルコマンドの停止が、同じプロセス ID を再割り当てされた無関係プロセスを終了させることがある問題を修正
+- `claude purge` が削除できないファイルで黙って止まる問題を修正（残りを削除し、削除できなかったものを列挙して exit 1）
+
+### 変更・取り消し
+
+- **auto モードの拒否メッセージ変更（2.1.281 の「拒否はコマンド単体でなく結果に及ぶ」通知）を取り消し**
+- 2.1.290 の「コンテナ再起動で `/loop` wakeup・スケジュールタスクを失ったクラウドセッションへの通知」修正を取り消し（セッションはスリープしたまま）
+- claude.ai スキル同期のチェック間隔: セッション未使用時は約10分→約40分に
+- モデルに通知するエージェント一覧・MCP サーバー一覧の順序: 非 ASCII 文字を含む名前が ASCII 名の後に
+- OpenTelemetry `claude_code.at_mention` ログをプロンプト読み取りごとにエージェント100件・MCP リソース100件までに制限
+- アーティファクト: ライブラリのバージョンピンを「2週間以上前の正確なバージョン」に
+
+### Claude Tag / Code Review
+
+- [Claude Tag] Enterprise Grid の共有チャンネルでの「ワークスペース未設定」誤表示、チャンネル設定変更中のタスク中断、ルーチンの別ラン起動、Google コネクタ表示などを修正。チャンネルルール上限が各ワークスペース / 組織全体ページとも 20→50 に
+- [Code Review] Add a repository ダイアログが追加できなかったリポジトリと理由（GitHub write 権限不足等）を列挙するように
 
 ## v2.1.292 (2026-10-06)
 
