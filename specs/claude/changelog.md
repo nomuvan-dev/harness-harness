@@ -3,12 +3,53 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-10-09（**v2.1.293**（2026-10-07）・**v2.1.294**（2026-10-08）を反映。ハーネス観点では **(1) Claude Haiku 5.5（`claude-haiku-5-5`）追加（Anthropic API の既定 Haiku に。1M コンテキスト、$0.10/$0.50 per Mtok、100K 超プロンプトは $0.50/$2.50）**、**(2) `subagentStatusLine` ペイロードに `agentType`（カスタムサブエージェント種別をスクリプトから判別可能）**、**(3) mods の `$.tool.register` に `isDeferred`（`false` でツールスキーマを tool search 裏でなく最初からプロンプトに掲載）**、**(4) 重要修正: path-scoped rules / ネスト CLAUDE.md が Bash の単一ファイル cat / head / tail / sed -n / grep 読みでロードされない問題、コンテキスト圧縮直前の自作アクションを圧縮後に完了扱いして完了済み作業を取り消し・やり直す問題、`prompt` / `agent` フックを指示文で書いた場合にブロックすべきものを許す問題（v2.1.294）**、**(5) Stop / SubagentStop の指示文 `prompt` フックの判定改善（早期停止抑制。v2.1.294）**、**(6) claude.ai スキル同期のチェック間隔がアイドル時約40分に（作業中は約10分のまま）**。ドキュメント改訂: MCP stdio サーバーへの新リビジョン照会が既定動作として明文化、WebSearch 上限の時間回復（約100回/時）が tools-reference に正式収載、keybindings に AbovePrompt / Pane コンテキストと `abovePrompt:*` / `pane:*` アクション群（mods の band / pane 操作）が新設、skills ページに「Check your setup with `/doctor`」節が新設（commands からの移設・集約）、`blockReadsOutsideWorkingDirectories` / `autoMode.classifyAllShell` の managed `false` より優先される旨が settings に明文化。Codex CLI は新安定版なし（0.161.0 のまま。0.162.0-alpha.20 まで進行。**アナウンス 2026-10-08: GPT-6.1 Sol Ultrafast** が Codex / ChatGPT Work に）。前回2026-10-08の巡回要約は下記 v2.1.292 の段落参照。）
+最終更新: 2026-10-10（**v2.1.295**（2026-10-08）を反映。ハーネス観点では **(1) command / HTTP フックに `onFailure: "block"` 追加（フックが起動不可・タイムアウト・想定外 exit code の場合にアクションを通さずブロック＝ポリシーフックの fail-closed 化が可能に。従来は非ブロッキング扱いで素通り）**、**(2) サブエージェントの `skills` フィールドからのプリロードが最大32スキル・各1回に制限（Skill ツールがあれば残りは呼び出し可能）**、**(3) tool search 経由でモデルがロードする MCP ツール説明の切り詰めが 2,048→16,384 文字に拡大**、**(4) `CLAUDE_CODE_RETRY_WATCHDOG_MAX_WAIT_MS`（永続リトライ時の 429/529 待機の上限）**、**(5) `forceLoginMethod: "gateway"` / `forceLoginGatewayUrl` が managed settings なしのユーザー settings でも設定可能に**、**(6) OSC 7501（Program Status Protocol）対応（対応端末に作業中/入力待ち/完了を表示）**、**(7) 重要修正: `[1m]` モデルで context-1m beta を拒否するゲートウェイ/Bedrock/Vertex/Foundry 宛リクエストが全失敗する問題（beta なしで再送）、`claude -p` のテキスト出力がバックグラウンド作業による別ターン開始時に前のレスポンスを落とす問題、スキルの `allowed-tools` / `effort` が `-p` で落ちて Bash が拒否される問題、リモート MCP の長時間断後の未再接続/タイトループ再接続（バックオフ化・最大30秒）、Edit が mtime 不変のまま内容が変わったファイルを既読扱いする問題、複数行 JSON を出力する async フックの出力無視、Grep の `-l`/`-c`/`-r` フラグ付き呼び出し失敗**。Ctrl+C（アタッチ済みバックグラウンドセッションのアイドルプロンプト）は保留 `/loop` wakeup を残し2度押しでデタッチ・Esc で停止に変更。ドキュメント改訂: env-vars に `CLAUDE_CODE_RETRY_WATCHDOG_MAX_WAIT_MS` 収載（hooks ページの `onFailure` は本巡回時点で未収載＝changelog 先行）。Codex CLI は **0.162.0 安定版**（2026-10-08。managed worktree ツール、Command Center タスクピン留め、`/copy` トランスクリプトコピー、カスタムプロバイダの capability オーバーライド等。下記 specs/codex/changelog.md 参照）。前回2026-10-09の巡回要約は下記参照。）
 
-前回: 2026-10-08（**v2.1.292**（2026-10-06）を反映。ハーネス観点では **(1) `claude plugin install --marketplace <source>`（マーケットプレース追加＋インストールを一括。`marketplace add` と同じポリシーチェック下）**、**(2) Agent ツールに `effort` パラメータ（呼び出し側がサブエージェントの effort レベルを指定可能）**、**(3) mods API 拡張（`prompt.autocomplete` イベントでプロンプト欄のオートコンプリートに独自行を追加、`$.model.complete` がプロンプトキャッシュ対応＝`prompt` / `system` がテキストブロックを受け `cache: true` でそこまでキャッシュ、`agent.spawn` フックにワークフローエージェントが run・index 付きで渡り拒否可能）**、**(4) 権限セキュリティ修正多数（UNC パス読み取りの PreToolUse 承認 / auto モードによるプロンプトバイパス、notebook / PDF 読み取り中の link 差し替え、managed sandbox read-deny パスのセッション中出現への追随、managed settings キャッシュ改ざんによるビルトインポリシープラグイン無効化、Windows 8.3 短縮名での home/ドライブ rm -rf 検出漏れ）**、**(5) `CLAUDE_CODE_OVERLOADED_RETRY_BASE_DELAY_MS`（529 リトライのバックオフ基準遅延）**。Codex CLI は **0.161.0 安定版**（2026-10-07。GPT-6.1 Sol がバンドル / Bedrock カタログの既定モデルに、`/mcp login <name>`、Daybreak の opt-in 制化、`--cyber-access-program`）。前回2026-10-07の巡回要約は下記 v2.1.290/291 の段落参照。）
+前回: 2026-10-09（**v2.1.293**（2026-10-07）・**v2.1.294**（2026-10-08）を反映。ハーネス観点では **(1) Claude Haiku 5.5（`claude-haiku-5-5`）追加（Anthropic API の既定 Haiku に。1M コンテキスト、$0.10/$0.50 per Mtok、100K 超プロンプトは $0.50/$2.50）**、**(2) `subagentStatusLine` ペイロードに `agentType`（カスタムサブエージェント種別をスクリプトから判別可能）**、**(3) mods の `$.tool.register` に `isDeferred`（`false` でツールスキーマを tool search 裏でなく最初からプロンプトに掲載）**、**(4) 重要修正: path-scoped rules / ネスト CLAUDE.md が Bash の単一ファイル cat / head / tail / sed -n / grep 読みでロードされない問題、コンテキスト圧縮直前の自作アクションを圧縮後に完了扱いして完了済み作業を取り消し・やり直す問題、`prompt` / `agent` フックを指示文で書いた場合にブロックすべきものを許す問題（v2.1.294）**、**(5) Stop / SubagentStop の指示文 `prompt` フックの判定改善（早期停止抑制。v2.1.294）**、**(6) claude.ai スキル同期のチェック間隔がアイドル時約40分に（作業中は約10分のまま）**。ドキュメント改訂: MCP stdio サーバーへの新リビジョン照会が既定動作として明文化、WebSearch 上限の時間回復（約100回/時）が tools-reference に正式収載、keybindings に AbovePrompt / Pane コンテキストと `abovePrompt:*` / `pane:*` アクション群（mods の band / pane 操作）が新設、skills ページに「Check your setup with `/doctor`」節が新設（commands からの移設・集約）、`blockReadsOutsideWorkingDirectories` / `autoMode.classifyAllShell` の managed `false` より優先される旨が settings に明文化。Codex CLI は新安定版なし（0.161.0 のまま。0.162.0-alpha.20 まで進行。**アナウンス 2026-10-08: GPT-6.1 Sol Ultrafast** が Codex / ChatGPT Work に）。前回2026-10-08の巡回要約は下記 v2.1.292 の段落参照。）
 
 
 ---
+
+## v2.1.295 (2026-10-08)
+
+**フックの fail-closed 化（`onFailure: "block"`）・サブエージェントのスキルプリロード上限・tool search の MCP 説明上限拡大**
+
+### 新機能
+
+- **command / HTTP フックに `onFailure: "block"`**: フックが起動できない・タイムアウトした・想定外の exit code で終わった場合に、アクションを通さずブロックする。ポリシーフックの fail-closed 化が可能に（従来は非ブロッキングエラー扱いで素通りだった）
+- **OSC 7501（Program Status Protocol）対応**: 対応端末が Claude Code の状態（作業中 / 入力待ち / 完了）を表示できる
+- **`CLAUDE_CODE_RETRY_WATCHDOG_MAX_WAIT_MS`**: 無人リトライモード（`CLAUDE_CODE_RETRY_WATCHDOG`）が 429 / 529 を待つ時間の上限
+- **`forceLoginMethod: "gateway"` / `forceLoginGatewayUrl`**: managed settings のないマシンでもユーザー settings で設定でき、`/login` が指定の Claude apps gateway を開く
+- `claude -p` が最終ターン後も開いたままのとき、何を待っているかを stderr（端末時のみ）に表示
+- `claude plugin install` / `enable` / `disable` / `marketplace add` が書き込み先 settings ファイルのロード不能を警告。`plugin validate` は README にインストール行がない場合に貼り付け用の行を提示（exit code は不変）
+- mods: `$.ui.notify`（ネイティブ通知）、`Button` が子要素（文字列・`Text`）を受け付け
+- ゲートウェイ系: upstream ごとの `models` リスト（ワイルドカード `*` 可）、`timeouts.upstream_ttfb_ms`（ストリーム開始までの上限）、`inference` 監査イベントに `upstream_request_id`、成功レスポンスに `request-id` ヘッダ
+
+### 変更
+
+- **tool search 経由でモデルがロードする MCP ツール説明の切り詰めが 2,048 → 16,384 文字に拡大**
+- **サブエージェントの `skills` フィールドからのプリロードは最大32スキル・各1回に制限**（Skill ツールを持つサブエージェントは残りも呼び出し可能）
+- アタッチ済みバックグラウンドセッションのアイドルプロンプトでの Ctrl+C は保留中の `/loop` wakeup を残す（2度押しでデタッチしループ継続。停止は Esc）
+- claude.ai コネクタが既定で MCP プロトコル 2026-07-28 をネゴシエート（`MCP_PROTOCOL_NEGOTIATION=legacy` でオプトアウト）
+- WebSocket（`ws`）MCP サーバー: 16 MiB 超のメッセージはパースせず接続を閉じる（他トランスポートと同じ上限に）
+- mods がツール実行後に結果を拒否した場合、「ツールは実行されプラグインが結果を保留した」と表示されるように
+
+### 修正（ハーネス観点の主要分）
+
+- **`[1m]` モデル: ゲートウェイ / Bedrock / Vertex / Foundry が context-1m beta を拒否すると全リクエストが失敗していた問題（beta なしで再送するように)**
+- **`claude -p` のテキスト出力が、バックグラウンド作業による別ターン開始時に前のターンのレスポンスを落とす問題（各ターンの応答をターン終了時に出力）**
+- **スキルの `allowed-tools` / `effort` が応答ストリーム終了前に Skill ツールが完了すると落ち、`-p` でスキルの Bash コマンドが拒否される問題**
+- **リモート MCP: 15秒超の断から再接続しない / 接続直後に切るサーバーへタイトループ再接続する問題（バックオフ化・最大30秒）**。サーバーのエラー応答にネットワークエラー名が含まれると切断される問題、ページネーションカーソル繰り返しサーバーへの同一ページ20回要求も修正
+- **Edit が mtime 不変のまま内容が変わったファイルを「既読」と扱う問題**
+- **複数行で JSON を出力する async フックの出力が無視される問題**
+- Grep の `-l` / `-c` / `-r` フラグ付き呼び出しが失敗する問題、Bash ツールが `description` でなく `command_description` を渡されると失敗する問題
+- `--tools` / `--restricted` が起動後に登録されるビルトインツールに適用されない問題
+- MCP ツールが返す CSS / JS / XML が .bin 保存され Read 拒否される問題
+- 圧縮直前の `/rewind` 後プロンプト喪失・削除ターン復活、スケジュールタスクの rewind / Esc 後の復活・喪失
+- `/plugin` の Errors タブがロード失敗マーケットプレースを確認なしで削除しプラグインをアンインストールする問題
+- Claude in Chrome: `host:80` で書いた site deny ルールが plain `http://` ページに適用されない問題
+- 長大行・大量空行・未閉鎖文字列のシンタックスハイライトで端末が数秒〜数分フリーズする問題
+- xhigh / max effort で Web 検索と `agent` フック評価が大幅に遅くなる問題
 
 ## v2.1.294 (2026-10-08)
 
