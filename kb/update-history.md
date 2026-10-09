@@ -1,5 +1,30 @@
 # harness-harness 更新履歴
 
+## 2026-10-10 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code**: **v2.1.295（2026-10-08）を反映**。ハーネス観点の目玉:
+- **command / HTTP フックに `onFailure: "block"`**: フック起動不可・タイムアウト・想定外 exit code でアクションをブロック＝ポリシーフックの fail-closed 化が可能に（従来は素通り）
+- **サブエージェント `skills` プリロードが最大32スキル・各1回に**（Skill ツールがあれば残りは呼び出し可能）
+- **tool search 経由の MCP ツール説明の切り詰めが 2,048→16,384 文字に拡大**
+- **`CLAUDE_CODE_RETRY_WATCHDOG_MAX_WAIT_MS`**（永続リトライの 429/529 待機上限）、`forceLoginMethod: "gateway"` / `forceLoginGatewayUrl` がユーザー settings でも可、OSC 7501（Program Status Protocol）対応
+- **重要修正**: `[1m]` モデルで context-1m beta 拒否アップストリーム宛が全失敗する問題、`claude -p` のテキスト出力が前ターンのレスポンスを落とす問題、スキルの `allowed-tools` / `effort` が `-p` で落ちる問題、リモート MCP の再接続（バックオフ化）、Edit の mtime 不変ファイル既読扱い、複数行 JSON async フック出力無視、Grep `-l`/`-c`/`-r` 失敗
+
+**ドキュメント改訂**: env-vars に `CLAUDE_CODE_RETRY_WATCHDOG_MAX_WAIT_MS` 収載。hooks ページの `onFailure` は本巡回時点で未収載（changelog 先行のため specs には changelog を根拠に注記付きで反映）。
+
+**Codex CLI**: **0.162.0 安定版（2026-10-08）を反映**。managed Git worktree 作成・一覧ツール（TUI）、Command Center タスクピン留め（`p`）、`/copy` トランスクリプトコピー＋`Ctrl+Insert`＋`tui.mouse_scroll_speed`、承認ヘッダ等の URL クリック可能化、カスタム Responses 互換プロバイダの capability オーバーライド（live web access / remote compaction）、Code Mode の opt-in ランク付き tool search。修正は `apply_patch` の CRLF 保持、`Retry-After` 尊重、Linux / Windows サンドボックス修正等。GitHub タグは 0.163.0-alpha.4（2026-10-09）まで進行。
+
+**Phase 3.5 スキルエコシステム巡回**: スキップ（前回 2026-10-06 から7日未満）。
+
+### 更新ファイル
+
+- `specs/claude/changelog.md` — v2.1.295 追加
+- `specs/claude/hooks.md` — 共通フィールドに `onFailure` 追加
+- `specs/claude/configuration.md` — `CLAUDE_CODE_RETRY_WATCHDOG_MAX_WAIT_MS` 追加
+- `specs/claude/mcp.md` — tool search 経由のツール説明上限 16,384 文字を追記
+- `specs/codex/changelog.md` — CLI 0.162.0 追加
+
 ## 2026-10-09 — 公式ドキュメント巡回
 
 ### 検出・更新
