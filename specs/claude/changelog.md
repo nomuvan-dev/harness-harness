@@ -3,12 +3,53 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-10-10（**v2.1.295**（2026-10-08）を反映。ハーネス観点では **(1) command / HTTP フックに `onFailure: "block"` 追加（フックが起動不可・タイムアウト・想定外 exit code の場合にアクションを通さずブロック＝ポリシーフックの fail-closed 化が可能に。従来は非ブロッキング扱いで素通り）**、**(2) サブエージェントの `skills` フィールドからのプリロードが最大32スキル・各1回に制限（Skill ツールがあれば残りは呼び出し可能）**、**(3) tool search 経由でモデルがロードする MCP ツール説明の切り詰めが 2,048→16,384 文字に拡大**、**(4) `CLAUDE_CODE_RETRY_WATCHDOG_MAX_WAIT_MS`（永続リトライ時の 429/529 待機の上限）**、**(5) `forceLoginMethod: "gateway"` / `forceLoginGatewayUrl` が managed settings なしのユーザー settings でも設定可能に**、**(6) OSC 7501（Program Status Protocol）対応（対応端末に作業中/入力待ち/完了を表示）**、**(7) 重要修正: `[1m]` モデルで context-1m beta を拒否するゲートウェイ/Bedrock/Vertex/Foundry 宛リクエストが全失敗する問題（beta なしで再送）、`claude -p` のテキスト出力がバックグラウンド作業による別ターン開始時に前のレスポンスを落とす問題、スキルの `allowed-tools` / `effort` が `-p` で落ちて Bash が拒否される問題、リモート MCP の長時間断後の未再接続/タイトループ再接続（バックオフ化・最大30秒）、Edit が mtime 不変のまま内容が変わったファイルを既読扱いする問題、複数行 JSON を出力する async フックの出力無視、Grep の `-l`/`-c`/`-r` フラグ付き呼び出し失敗**。Ctrl+C（アタッチ済みバックグラウンドセッションのアイドルプロンプト）は保留 `/loop` wakeup を残し2度押しでデタッチ・Esc で停止に変更。ドキュメント改訂: env-vars に `CLAUDE_CODE_RETRY_WATCHDOG_MAX_WAIT_MS` 収載（hooks ページの `onFailure` は本巡回時点で未収載＝changelog 先行）。Codex CLI は **0.162.0 安定版**（2026-10-08。managed worktree ツール、Command Center タスクピン留め、`/copy` トランスクリプトコピー、カスタムプロバイダの capability オーバーライド等。下記 specs/codex/changelog.md 参照）。前回2026-10-09の巡回要約は下記参照。）
+最終更新: 2026-10-11（**v2.1.296**（2026-10-09）を反映。ハーネス観点では **(1) サブエージェント frontmatter / `--agents` 定義に `autoCompactWindow`（サブエージェントをメイン会話より早く auto-compact させる）**、**(2) `CLAUDE_CODE_WORKFLOW_SUBAGENT_MODEL`（全ワークフローエージェントを 1 モデルで実行。他のサブエージェントは各自のモデル維持）**、**(3) `CLAUDE_CODE_OVERLOADED_RETRY_MAX_DELAY_MS`（529 リトライのバックオフ最大遅延を延長）**、**(4) Read ツールに `allow_large` オプション（コンテキスト残量があれば既定上限超えのテキストファイルを 1 回で全読み）**、**(5) 最初からプロンプトに載る MCP ツール説明・サーバー指示の既定上限が 2,048→4,096 文字に拡大**、**(6) Claude apps gateway の `managed.policies[]` に `code` キー（`cli` と同じ設定を Claude Desktop の Code タブにも適用。`desktop` と並べると Desktop の gateway モードが有効化）**、**(7) 重要修正: managed settings の `PreToolUse` フックの `"continue": false` deny / managed `prompt` フックのブロックが呼び出し拒否のみでターンを終了させない問題、managed の PostToolUse `updatedMCPToolOutput` 未適用、ヘッドレスセッションがフォルダで無効化済みの `.mcp.json` / プラグイン MCP サーバーを起動する問題、`forceLoginMethod: "gateway"`＋`forceLoginGatewayUrl` なしで保存済み gateway サインインが無視される 2.1.295 リグレッション、プラグインヒントタグ様のテキストを含むフック出力の改変、`BASH_ARGV0` 代入による Bash 権限チェックの自動承認すり抜け、非 UTF-8 ファイル（Shift-JIS / GBK 等）への Edit が非 ASCII 文字を全破壊する問題（拒否に変更）、Windows の 1 KB 超 PowerShell コマンドが常に権限プロンプトになる問題（32 KB まで allow ルール適用）**。Changed: Sonnet 5.5 のキャッシュ読みが $0.10/Mtok に値下げ（`/cost` / status line / `--max-budget-usd` / SDK へ反映）、`←` でバックグラウンド化した際の進行中ターン / `!` コマンドは完走でなく停止に。ドキュメント改訂: hooks ページに `onFailure` が「Block the action when a hook fails」節として正式収載（2.1.295 の changelog 先行が解消）、tools-reference に Read `allow_large` の「Large files」節が収載。env-vars の新 2 変数・sub-agents の `autoCompactWindow`・mcp の 4,096 上限・gateway の `code` キーは本巡回時点で未収載＝changelog 先行。Codex CLI は **0.162.1 安定版**（2026-10-09。TUI クラッシュ / バックグラウンドサーバー互換チェックの 2 修正のみの小規模パッチ）。前回2026-10-10の巡回要約は下記参照。）
 
-前回: 2026-10-09（**v2.1.293**（2026-10-07）・**v2.1.294**（2026-10-08）を反映。ハーネス観点では **(1) Claude Haiku 5.5（`claude-haiku-5-5`）追加（Anthropic API の既定 Haiku に。1M コンテキスト、$0.10/$0.50 per Mtok、100K 超プロンプトは $0.50/$2.50）**、**(2) `subagentStatusLine` ペイロードに `agentType`（カスタムサブエージェント種別をスクリプトから判別可能）**、**(3) mods の `$.tool.register` に `isDeferred`（`false` でツールスキーマを tool search 裏でなく最初からプロンプトに掲載）**、**(4) 重要修正: path-scoped rules / ネスト CLAUDE.md が Bash の単一ファイル cat / head / tail / sed -n / grep 読みでロードされない問題、コンテキスト圧縮直前の自作アクションを圧縮後に完了扱いして完了済み作業を取り消し・やり直す問題、`prompt` / `agent` フックを指示文で書いた場合にブロックすべきものを許す問題（v2.1.294）**、**(5) Stop / SubagentStop の指示文 `prompt` フックの判定改善（早期停止抑制。v2.1.294）**、**(6) claude.ai スキル同期のチェック間隔がアイドル時約40分に（作業中は約10分のまま）**。ドキュメント改訂: MCP stdio サーバーへの新リビジョン照会が既定動作として明文化、WebSearch 上限の時間回復（約100回/時）が tools-reference に正式収載、keybindings に AbovePrompt / Pane コンテキストと `abovePrompt:*` / `pane:*` アクション群（mods の band / pane 操作）が新設、skills ページに「Check your setup with `/doctor`」節が新設（commands からの移設・集約）、`blockReadsOutsideWorkingDirectories` / `autoMode.classifyAllShell` の managed `false` より優先される旨が settings に明文化。Codex CLI は新安定版なし（0.161.0 のまま。0.162.0-alpha.20 まで進行。**アナウンス 2026-10-08: GPT-6.1 Sol Ultrafast** が Codex / ChatGPT Work に）。前回2026-10-08の巡回要約は下記 v2.1.292 の段落参照。）
+前回: 2026-10-10（**v2.1.295**（2026-10-08）を反映。ハーネス観点では **(1) command / HTTP フックに `onFailure: "block"` 追加（フックが起動不可・タイムアウト・想定外 exit code の場合にアクションを通さずブロック＝ポリシーフックの fail-closed 化が可能に。従来は非ブロッキング扱いで素通り）**、**(2) サブエージェントの `skills` フィールドからのプリロードが最大32スキル・各1回に制限（Skill ツールがあれば残りは呼び出し可能）**、**(3) tool search 経由でモデルがロードする MCP ツール説明の切り詰めが 2,048→16,384 文字に拡大**、**(4) `CLAUDE_CODE_RETRY_WATCHDOG_MAX_WAIT_MS`（永続リトライ時の 429/529 待機の上限）**、**(5) `forceLoginMethod: "gateway"` / `forceLoginGatewayUrl` が managed settings なしのユーザー settings でも設定可能に**、**(6) OSC 7501（Program Status Protocol）対応（対応端末に作業中/入力待ち/完了を表示）**、**(7) 重要修正: `[1m]` モデルで context-1m beta を拒否するゲートウェイ/Bedrock/Vertex/Foundry 宛リクエストが全失敗する問題（beta なしで再送）、`claude -p` のテキスト出力がバックグラウンド作業による別ターン開始時に前のレスポンスを落とす問題、スキルの `allowed-tools` / `effort` が `-p` で落ちて Bash が拒否される問題、リモート MCP の長時間断後の未再接続/タイトループ再接続（バックオフ化・最大30秒）、Edit が mtime 不変のまま内容が変わったファイルを既読扱いする問題、複数行 JSON を出力する async フックの出力無視、Grep の `-l`/`-c`/`-r` フラグ付き呼び出し失敗**。Ctrl+C（アタッチ済みバックグラウンドセッションのアイドルプロンプト）は保留 `/loop` wakeup を残し2度押しでデタッチ・Esc で停止に変更。ドキュメント改訂: env-vars に `CLAUDE_CODE_RETRY_WATCHDOG_MAX_WAIT_MS` 収載（hooks ページの `onFailure` は本巡回時点で未収載＝changelog 先行）。Codex CLI は **0.162.0 安定版**（2026-10-08。managed worktree ツール、Command Center タスクピン留め、`/copy` トランスクリプトコピー、カスタムプロバイダの capability オーバーライド等。下記 specs/codex/changelog.md 参照）。前回2026-10-09の巡回要約は下記参照。）
 
 
 ---
+
+## v2.1.296 (2026-10-09)
+
+**サブエージェントの `autoCompactWindow`・Read `allow_large`・ワークフロー専用サブエージェントモデル・MCP 説明既定上限 4,096 文字**
+
+### 新機能
+
+- **サブエージェント frontmatter / `--agents` 定義に `autoCompactWindow`**: サブエージェントをメイン会話のウィンドウより早く auto-compact させられる
+- **`CLAUDE_CODE_WORKFLOW_SUBAGENT_MODEL`**: Workflow ツールの全エージェントを 1 つのモデルで実行（ワークフロー外のサブエージェントは各自のモデル維持）
+- **`CLAUDE_CODE_OVERLOADED_RETRY_MAX_DELAY_MS`**: overloaded（529）リトライのバックオフ最大遅延を延長（v2.1.292 の `..._BASE_DELAY_MS` と対）
+- **Read ツールに `allow_large` オプション**: コンテキストに残量があれば、既定上限（25,000 トークン / 256 KB）超えのテキストファイルを 1 回で全読みできる。サイズ判定はコンテキストウィンドウ残量に対して行われる。画像・PDF・ノートブックは対象外
+- **Claude apps gateway の `managed.policies[]` に `code` キー**: `cli` と同じ設定を Claude Desktop の Code タブにも適用。`desktop` と並べると Desktop の gateway モードが有効化される
+- `/plugin` に、同名の他プラグインによってフックが除外されたプラグインへの注記を追加
+- [Cloud sessions] self-hosted 環境の Activity タブの Sessions / Runners 一覧に複数選択可のステータスフィルタ
+- [Claude Tag] Claude Tag Admin 権限者が Activity ページの Memory タブでワークスペース / チャンネルメモリファイルを作成・編集・削除可能に
+
+### 変更
+
+- **最初からプロンプトに載る MCP ツール説明・サーバー指示の既定上限が 2,048→4,096 文字に拡大**（tool search 経由の 16,384 文字は v2.1.295 から）
+- **Sonnet 5.5 のキャッシュ読みを $0.10/Mtok に値下げ**（従来 $0.20。`/cost`・status line・`--max-budget-usd`・SDK のコスト値に反映）
+- `←` でセッションをバックグラウンドに移す際、進行中のターン / `!` コマンドは見えないまま完走せず停止するように
+- [VSCode] `@browser` 接続セッションを含む全セッションで Claude in Chrome がブラウザ操作前に確認するように（サイトのセッション許可で再確認は止まる）
+- バンドル dataviz スキル更新（ライトモード第7系列の紫を明るく、ダークモードのプライマリテキストを柔らかく、y 軸ラベルの 1K 形式）
+
+### 重要な修正
+
+- **managed settings の `PreToolUse` フックが `"continue": false` で deny / managed `prompt` フックがブロックした際、呼び出し拒否のみでターンが終了しない問題**
+- **managed settings の PostToolUse フックの `updatedMCPToolOutput` が一部セッションで未適用の問題**
+- **ヘッドレスセッションが、ディレクトリ変更やプラグインリロード後に、そのフォルダで無効化済みの `.mcp.json` / プラグイン MCP サーバーを起動する問題**
+- `forceLoginMethod: "gateway"`（`forceLoginGatewayUrl` なし）の managed settings 下で保存済み gateway サインインが無視される問題（2.1.295 リグレッション）、および `allowedProviders` に `"gateway"` を返す gateway がユーザー settings でその gateway を指定するマシンを締め出す問題
+- **`BASH_ARGV0` シェル変数を代入して使うコマンドが Bash 権限チェックで自動承認される問題**（承認プロンプトを出すように）
+- **非 UTF-8 ファイル（Windows-1252 / Shift-JIS / GBK）への Edit / NotebookEdit が非 ASCII 文字を全て置き換えてしまう問題**（当該編集は拒否に変更）
+- プラグインヒントタグに似たテキストを含むフック出力が改変される問題
+- 共有トランスクリプト / デバッグログのシークレット redaction が、値なしキーに続く値（シェル文字列内の JSON 含む）を見逃す問題
+- Esc / 割り込みが `UserPromptSubmit` フックや mod の `prompt.submit` フック中に、ヘッドレスセッションを終了・入力済みプロンプトを消去・未チェックのプロンプトを通過させる問題
+- Haiku 5.5 等 adaptive thinking 専用モデルのトークンカウントが一部 gateway 背後で失敗 / 他所で budget thinking として計上される問題
+- resume したサブエージェントに、セッションシャットダウンで中断されたツール呼び出しを「ユーザーが拒否した」と伝える問題
+- ワークフロースクリプトの深いネスト値の暗黙切り詰め、`$` served メソッドの作業ディレクトリ誤り、`$.agent.register` のリロード済み mod からの受理等の mods / workflow 修正
+- Windows: 約 1 KB 超の PowerShell コマンドが常に権限プロンプトになる問題（allow ルール・read-only 判定が 32 KB まで適用）、stdio MCP サーバーのシャットダウン時 force-kill（stdin close→300ms 待ち→kill に）、GitHub `owner/repo` プラグインの SSH 鍵なしマシンでの install 失敗（HTTPS リトライ）、Git Bash の `rm -rf /c/Users/<name>` が bypass permissions モードで確認なしの問題
+- [Claude Tag] 括弧入り URL のリンク切れ、hex 色に見える 6 桁数字への色スウォッチ、プラグイン確認カードの ID 表示、self-hosted runner 移動時の返信消失等
+- [Code Review] PR のチェックが完了後も「in progress」のままになる問題
 
 ## v2.1.295 (2026-10-08)
 

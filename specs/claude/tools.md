@@ -95,6 +95,7 @@ Claude Code の組み込みツール一覧。**ここに書かれたツール名
 
 - Read は行番号付きで返す。トークン上限超過時は `PARTIAL view` 通知付きで先頭ページのみ返り、`offset` / `limit` で続きを読む。**`PARTIAL view` の読みは read-before-edit を満たさない**
 - Read は画像（視覚コンテンツとして返る）・PDF（10 ページ超は `pages` で範囲指定、1 回 20 ページまで）・`.ipynb`（全セル + 出力、100 MB 超は拒否）に対応。**ディレクトリは読めない**。**PDF のページ範囲読みは poppler-utils の `pdftoppm` が必要**（macOS は `brew install poppler`、Debian / Ubuntu は `apt-get install poppler-utils`。無いと `pdftoppm is not installed` で失敗。2026-10 ドキュメント改訂で明文化）
+- **`allow_large: true`（v2.1.296+）**: 既定の上限（1 回 25,000 トークン / ファイル全体 256 KB 拒否）を超えるテキストファイルを、`offset` / `limit` のページングなしで 1 回で読める。サイズはコンテキストウィンドウの残量に対して判定される。画像・PDF・ノートブックは従来の上限のまま（公式 tools-reference の「Large files」節に収載済み）
 - Edit は正規表現でもファジーでもない**完全一致置換**。`old_string` はファイル内に**ちょうど 1 回**出現する必要がある（複数なら文脈を足すか `replace_all: true`）
 - read-before-edit: Opus 4.6 / Haiku 4.5 以前は常に必須。新しいモデルは「読んでも権限プロンプトが不要」かつ「Read ツールが使える」場合に限り未読ファイルの上書きが可能（v2.1.228 以降。ノートブックと `PARTIAL view` は全モデルで必須）
 - **Bash での閲覧も read-before-edit を満たす**: `cat`, `nl`, `bat`, `batcat`, `head`, `tail`, `sed -n 'X,Yp'`, `grep`, `egrep`, `fgrep`, `rg` を単一ファイルにパイプ・リダイレクトなしで使った場合

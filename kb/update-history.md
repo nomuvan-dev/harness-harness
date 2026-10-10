@@ -1,5 +1,34 @@
 # harness-harness 更新履歴
 
+## 2026-10-11 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code**: **v2.1.296（2026-10-09）を反映**。ハーネス観点の目玉:
+- **サブエージェント frontmatter / `--agents` に `autoCompactWindow`**（メイン会話より早い auto-compact）
+- **`CLAUDE_CODE_WORKFLOW_SUBAGENT_MODEL`**（全ワークフローエージェントを 1 モデルで実行）、**`CLAUDE_CODE_OVERLOADED_RETRY_MAX_DELAY_MS`**（529 バックオフ最大遅延）
+- **Read に `allow_large`**（コンテキスト残量内で既定上限超えファイルを 1 回で全読み）
+- **最初からプロンプトに載る MCP ツール説明・サーバー指示の既定上限 2,048→4,096 文字**
+- **gateway `managed.policies[]` に `code` キー**（Claude Desktop の Code タブにも cli 設定を適用）
+- Sonnet 5.5 キャッシュ読み $0.10/Mtok に値下げ
+- **重要修正**: managed PreToolUse `"continue": false` / managed `prompt` ブロックがターンを終了させない問題、無効化済み `.mcp.json` サーバーのヘッドレス起動、`BASH_ARGV0` による権限チェックすり抜け、非 UTF-8 ファイル（Shift-JIS 等）への Edit の文字破壊（拒否に変更）、Windows の 1 KB 超 PowerShell 常時プロンプト
+
+**ドキュメント改訂**: hooks ページに `onFailure` が「Block the action when a hook fails」節として正式収載（v2.1.295 の changelog 先行が解消）、tools-reference に Read `allow_large` の「Large files」節が収載。env-vars の新 2 変数・sub-agents の `autoCompactWindow`・mcp の 4,096 上限・gateway の `code` キーは未収載（changelog 先行として注記付きで specs に反映）。
+
+**Codex CLI**: **0.162.1 安定版（2026-10-09）を反映**。TUI の複数行非同期質問クラッシュ修正＋バックグラウンドサーバー feature 互換チェック修正のみの小規模パッチ。GitHub タグは 0.163.0-alpha.5（2026-10-10）まで進行。
+
+**Phase 3.5 スキルエコシステム巡回**: スキップ（前回 2026-10-06 から7日未満）。
+
+### 更新ファイル
+
+- `specs/claude/changelog.md` — v2.1.296 追加
+- `specs/claude/hooks.md` — `onFailure` の正式収載を反映（changelog 先行注記を解消）
+- `specs/claude/tools.md` — Read `allow_large` 追加
+- `specs/claude/configuration.md` — `CLAUDE_CODE_WORKFLOW_SUBAGENT_MODEL` / `CLAUDE_CODE_OVERLOADED_RETRY_MAX_DELAY_MS` 追加
+- `specs/claude/mcp.md` — 既定上限 4,096 文字への拡大を追記
+- `specs/claude/skills-and-commands.md` — サブエージェント frontmatter / `--agents` に `autoCompactWindow` 追加
+- `specs/codex/changelog.md` — CLI 0.162.1 追加
+
 ## 2026-10-10 — 公式ドキュメント巡回
 
 ### 検出・更新
