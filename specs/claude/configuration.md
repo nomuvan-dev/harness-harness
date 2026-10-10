@@ -684,6 +684,7 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 | `CLAUDE_CODE_MAX_RETRIES` | リトライ回数上限。v2.1.186 で上限 15 にキャップ（無人セッションは `CLAUDE_CODE_RETRY_WATCHDOG` を使用）。v2.1.199 の `CLAUDE_CODE_RETRY_WATCHDOG` 有効時はキャップ解除・非キャパシティ系一時エラーのデフォルトリトライ 300 回 |
 | `CLAUDE_CODE_MCP_TOOL_IDLE_TIMEOUT` | リモート MCP ツール呼び出しの無応答タイムアウト（デフォルト5分で中断）のオーバーライド（v2.1.187） |
 | `CLAUDE_CODE_OVERLOADED_RETRY_BASE_DELAY_MS` | overloaded（529）リクエストのリトライ時バックオフの基準遅延を延長（v2.1.292） |
+| `CLAUDE_CODE_OVERLOADED_RETRY_MAX_DELAY_MS` | overloaded（529）リクエストのリトライ時バックオフの最大遅延を延長（v2.1.296。※env-vars ページは巡回時点で未収載＝changelog 先行） |
 | `CLAUDE_CODE_RETRY_WATCHDOG_MAX_WAIT_MS` | `CLAUDE_CODE_RETRY_WATCHDOG` 有効時に各 API リクエストが 429 / 529 を待ち続ける時間の上限（ミリ秒、例 `1800000`=30分）。超過後の同種エラーでリクエストを終了。未設定時は無制限（v2.1.295） |
 | `CLAUDE_CODE_DISABLE_STRUCTURED_OUTPUTS` | `1` で構造化出力の `output_config.format` フィールドと対応する `anthropic-beta` 値の送信を停止。構造化出力を拒否するアップストリームを持つ LLM ゲートウェイ / Mantle 向け（セッションタイトル・メモリ recall・プロンプトフックの失敗対策。v2.1.288） |
 | `CLAUDE_CODE_NONSTREAMING_TIMEOUT_RETRIES` | 非ストリーミングリクエストがタイムアウトした際の再送回数制限。`0` で初回タイムアウトで失敗。未設定時は `CLAUDE_CODE_MAX_RETRIES` に従う（v2.1.288） |
@@ -737,6 +738,7 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 | `OTEL_LOG_MANAGED_SETTINGS` | `1` で `managed_settings_resolved` OTEL ログイベントに redact 済み managed 設定と redact 前設定の SHA-256 ダイジェストを付加。既定は無効。シェル・user 設定・managed 設定で設定する（project / local では有効化できない）。v2.1.274 以降 |
 | `CLAUDE_CODE_BRIDGE_SESSION_ID` | **Claude Code が自動設定**。Remote Control 接続中のセッション ID をフックに渡す（v2.1.199 以降） |
 | `CLAUDE_CODE_SUBAGENT_MODEL_FORCE` | `1` で `CLAUDE_CODE_SUBAGENT_MODEL`（未設定ならメインの会話モデル）を、エージェント定義や呼び出し時のモデル指定を**無視して**全サブエージェント・チームメイト・ワークフローエージェントに強制適用する。組み込みの Explore / Plan の `model` フィールドも無視される。**ただし本変数のみを設定し `CLAUDE_CODE_SUBAGENT_MODEL` を設定しない場合、Explore は「Claude API では Opus 上限」を維持する**（両方設定したときのみ上限も上書きされる）。除外されるのは fork と `model: inherit` のサブエージェント実行スキルで、これらは常にメイン会話のモデルで動く。v2.1.257 以降 |
+| `CLAUDE_CODE_WORKFLOW_SUBAGENT_MODEL` | Workflow ツールが起動する全ワークフローエージェントを 1 つのモデルで実行する。ワークフロー外のサブエージェントのモデルには影響しない（v2.1.296。※env-vars ページは巡回時点で未収載＝changelog 先行） |
 | `TASK_MAX_OUTPUT_LENGTH` | **v2.1.277 で TaskOutput ツールとともに削除され no-op**。以前は**バックグラウンドタスク**の出力のうち `TaskOutput` ツールが保持する文字数（既定 32,000、最大 160,000）を設定していた。現在はタスクの出力ファイルを `Read` で読む方式 |
 | `CLAUDE_CODE_DISABLE_CFC_PROMPT` | `1` で Claude in Chrome のブラウザツールは使えるまま、システムプロンプトの Chrome セクションと `/claude-in-chrome` バンドルスキルを省略する。Claude Code を埋め込むホスト向け |
 | `CLAUDE_CODE_NONBLOCKING_STDOUT` | **v2.1.261 以降**。`1` でターミナル出力を2つ目のノンブロッキング FD 経由で書く。読み取りを止めたターミナル（一時停止した tmux control-mode ペイン、ストールした SSH 接続など）が Claude Code をセッション途中でフリーズさせるのを防ぐ。stdout がターミナルの場合の macOS / Linux / WSL で有効 |

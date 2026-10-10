@@ -703,7 +703,7 @@ echo "$WORKTREE_PATH"
 | `once` | **初回の成功実行後**にフックを取り除く。失敗・exit code 2 によるブロック・タイムアウトの場合はフックが残り、次の一致イベントで再実行される。スキル frontmatter で宣言したフックのみ有効（settings ファイルとエージェント frontmatter では無視） | `false` |
 | `statusMessage` | スピナーメッセージ | - |
 | `if` | ツールイベント専用の条件フィルタ（permission rule構文） | - |
-| `onFailure` | **`"block"` を指定すると、フックが起動できない・タイムアウトした・想定外の exit code で終わった場合にアクションをブロックする**（command / HTTP フック。v2.1.295+）。既定ではこれらは非ブロッキングエラー扱いで素通りするため、ポリシーフックを fail-closed にしたい場合に指定する（※公式 hooks ページは本巡回時点で未収載＝changelog 先行） | 非ブロッキング（fail-open） |
+| `onFailure` | **`"block"` を指定すると、フックが起動できない・タイムアウトした・想定外の exit code で終わった場合にアクションをブロックする**（command / HTTP フック。v2.1.295+）。既定ではこれらは非ブロッキングエラー扱いで素通りするため、ポリシーフックを fail-closed にしたい場合に指定する（2026-10-11 巡回で公式 hooks ページに「Block the action when a hook fails」節として正式収載を確認。PreToolUse のタイムアウトは既定で通常の権限フローに流れて素通りするため、タイムアウト時もブロックしたい場合に有効） | 非ブロッキング（fail-open） |
 
 ### 8.1 `if` 条件フィールド（v2.1.85）
 
