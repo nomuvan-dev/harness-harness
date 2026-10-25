@@ -212,6 +212,7 @@ Claude Code は設定ファイルを監視し、変更を検知するとセッ�
 | `autoMemoryEnabled` | オートメモリ有効/無効（デフォルト: true） |
 | `autoMemoryDirectory` | オートメモリ保存先ディレクトリ |
 | `cleanupPeriodDays` | セッション保持日数（デフォルト: 30）。`0` は全トランスクリプト削除+永続化無効。検証エラーで拒否されなくなった（v2.1.89で `0` の動作変更）。v2.1.117 で `~/.claude/tasks/`、`~/.claude/shell-snapshots/`、`~/.claude/backups/` もスイープ対象に拡張 |
+| `idleCompaction` | `false` でアイドルコンパクション（200K+ トークンの会話を約54分放置で 1 時間プロンプトキャッシュ失効前に自動 compact）を無効化（v2.1.299。`/config` の「Idle compaction」行でも切替可＝v2.1.302。閾値は `CLAUDE_CODE_IDLE_COMPACT_MIN_TOKENS`） |
 | `showThinkingSummaries` | thinking summariesの表示（v2.1.89でデフォルト `false` に変更。`true` で復元） |
 | `companyAnnouncements` | 起動時通知メッセージ |
 | `forceLoginMethod` | ログイン方式強制（`claudeai` / `console`）。v2.1.146〜v2.1.160 で Bedrock / Vertex / Foundry / Mantle のサードパーティプロバイダセッションが組織 pin と並んでブロックされるリグレッションあり。**v2.1.161 で修正済** |
@@ -275,6 +276,7 @@ Claude Code は設定ファイルを監視し、変更を検知するとセッ�
 | `worktree.symlinkDirectories` | ワークツリーシンボリックリンク対象 |
 | `worktree.sparsePaths` | ワークツリースパースチェックアウト対象 |
 | `sandbox.failIfUnavailable` | サンドボックス起動不可時にエラー終了（v2.1.83） |
+| `sandbox.allowNestedUserNamespaces` | （Linux）サンドボックスコマンドにユーザー名前空間の作成を許可（Chromium / rootless podman 等が必要とする）。**サンドボックスのファイル保護を迂回し得る**ため注意（v2.1.305） |
 | `sandbox.network.deniedDomains` | サンドボックスでブロックするドメイン一覧。`allowedDomains` と併用可（v2.1.113） |
 | `sandbox.network.strictAllowlist` | サンドボックスコマンドで許可リスト外ホストをプロンプトなしで拒否（v2.1.219） |
 | `disableDeepLinkRegistration` | `claude-cli://` プロトコルハンドラ登録の無効化（v2.1.83） |
@@ -684,8 +686,15 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 | `CLAUDE_CODE_MAX_RETRIES` | リトライ回数上限。v2.1.186 で上限 15 にキャップ（無人セッションは `CLAUDE_CODE_RETRY_WATCHDOG` を使用）。v2.1.199 の `CLAUDE_CODE_RETRY_WATCHDOG` 有効時はキャップ解除・非キャパシティ系一時エラーのデフォルトリトライ 300 回 |
 | `CLAUDE_CODE_MCP_TOOL_IDLE_TIMEOUT` | リモート MCP ツール呼び出しの無応答タイムアウト（デフォルト5分で中断）のオーバーライド（v2.1.187） |
 | `CLAUDE_CODE_OVERLOADED_RETRY_BASE_DELAY_MS` | overloaded（529）リクエストのリトライ時バックオフの基準遅延を延長（v2.1.292） |
-| `CLAUDE_CODE_OVERLOADED_RETRY_MAX_DELAY_MS` | overloaded（529）リクエストのリトライ時バックオフの最大遅延を延長（v2.1.296。※env-vars ページは巡回時点で未収載＝changelog 先行） |
+| `CLAUDE_CODE_OVERLOADED_RETRY_MAX_DELAY_MS` | overloaded（529）リクエストのリトライ時バックオフの最大遅延を延長（v2.1.296。2026-10-26 巡回で env-vars ページへの収載を確認） |
 | `CLAUDE_CODE_RETRY_WATCHDOG_MAX_WAIT_MS` | `CLAUDE_CODE_RETRY_WATCHDOG` 有効時に各 API リクエストが 429 / 529 を待ち続ける時間の上限（ミリ秒、例 `1800000`=30分）。超過後の同種エラーでリクエストを終了。未設定時は無制限（v2.1.295） |
+| `CLAUDE_CODE_RETRY_WATCHDOG_MAX_USAGE_LIMIT_WAIT_MS` | 無人リトライモード（`CLAUDE_CODE_RETRY_WATCHDOG`）がリセットの遠すぎる usage limit で待機せずリクエストを終了する閾値（v2.1.301） |
+| `CLAUDE_CODE_RETRY_WATCHDOG_USAGE_LIMIT_RECHECK_MS` | 無人リトライモードがリセット前に解除された usage limit に気づく再チェック間隔（v2.1.305） |
+| `CLAUDE_CODE_DISABLE_FILE_MENTIONS` | `@` ファイルメンションをファイル内容でなくパスとしてモデルに渡す（モデルがファイルツールで読む）（v2.1.299） |
+| `CLAUDE_CODE_IDLE_COMPACT_MIN_TOKENS` | アイドルコンパクション（200K+ トークンの会話を約54分放置で 1 時間プロンプトキャッシュ失効前に自動 compact）の発動最小トークン数を変更。settings.json の `"idleCompaction": false` で機能ごと無効化（いずれも v2.1.290+ 必要、機能実装は v2.1.299） |
+| `CLAUDE_CODE_AUTO_MODE_MODEL` | クライアント側 auto mode 分類器が使うモデルを選択（サーバー側 auto mode には影響しない）（v2.1.302） |
+| `CLAUDE_CODE_GZIP_REQUEST_BODIES` | `0` で api.anthropic.com への大型リクエストの gzip 圧縮（テレメトリ無効時も既定有効）をオフ（v2.1.300） |
+| `CLAUDE_CODE_FORK_SUBAGENT` | `0` で fork サブエージェント（`subagent_type: "fork"`）を無効化。v2.1.302 から端末に加え `claude -p` / Agent SDK / Desktop / VS Code でも既定有効（`claude mcp serve` は非提供） |
 | `CLAUDE_CODE_DISABLE_STRUCTURED_OUTPUTS` | `1` で構造化出力の `output_config.format` フィールドと対応する `anthropic-beta` 値の送信を停止。構造化出力を拒否するアップストリームを持つ LLM ゲートウェイ / Mantle 向け（セッションタイトル・メモリ recall・プロンプトフックの失敗対策。v2.1.288） |
 | `CLAUDE_CODE_NONSTREAMING_TIMEOUT_RETRIES` | 非ストリーミングリクエストがタイムアウトした際の再送回数制限。`0` で初回タイムアウトで失敗。未設定時は `CLAUDE_CODE_MAX_RETRIES` に従う（v2.1.288） |
 | `OTEL_LOG_ASSISTANT_RESPONSES` | `1` で `claude_code.assistant_response` OTELログイベント（モデル応答テキスト）を出力。未設定時は `OTEL_LOG_USER_PROMPTS` に追従するため、プロンプト収集済みデプロイは `0` 明示でプロンプトのみ維持（v2.1.193） |

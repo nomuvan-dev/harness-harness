@@ -23,7 +23,7 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 | イベント | 発火タイミング | ブロック可能 | matcher対象 |
 |:--|:--|:--|:--|
 | `SessionStart` | セッション開始/再開 | No | `startup`, `resume`, `clear`, `compact`, `fork`（v2.1.214: フォーク開始時は `resume` ではなく `fork` を報告。`fork` の対象は `--fork-session`＋`--resume` / `--continue`、`/fork`、`/branch` に加え、**会話のバックグラウンド移行（`←` / `/background`）も含む**〈2026-10 ドキュメント改訂で明文化〉） |
-| `UserPromptSubmit` | プロンプト送信後、処理前。**ユーザー入力以外でも発火**（2026-10 ドキュメント改訂で明文化）: スケジュールタスクの発火（`/loop` イテレーション含む）、バックグラウンドサブエージェントの起動元への報告、クロスセッションメッセージ受信 | Yes | - |
+| `UserPromptSubmit` | プロンプト送信後、処理前。**ユーザー入力以外でも発火**（2026-10 ドキュメント改訂で明文化）: スケジュールタスクの発火（`/loop` イテレーション含む）、バックグラウンドサブエージェントの起動元への報告、クロスセッションメッセージ受信。**v2.1.299 からスキル / カスタムスラッシュコマンドの展開前に実行**され、プロンプトをブロックすると埋め込みシェルコマンドも止まる（スキル自身の frontmatter `UserPromptSubmit` フックは起動プロンプトの次のプロンプトから発火） | Yes | - |
 | `UserPromptExpansion` | ユーザーが打ったコマンドがプロンプトへ展開される時（Claude に届く前） | Yes | `command_name`（スキル名 / コマンド名）。matcher 省略で全 prompt 型コマンドに発火 |
 | `PreToolUse` | ツール実行前 | Yes | **`EndConversation` 以外の全ツール名**（`Bash` / `PowerShell` / `Edit` / `Write` / `Read` / `Glob` / `Grep` / `Agent` / `Workflow` / `WebFetch` / `WebSearch` / `AskUserQuestion` / `ExitPlanMode` 等の組み込みツールと MCP ツール名） |
 | `PermissionRequest` | ツール使用の権限ダイアログ表示時 | Yes | ツール名 |
@@ -512,6 +512,8 @@ v2.1.133 以降、すべてのイベントの入力 JSON に effort level も含
 
 > `updatedInput` はツール入力を**丸ごと置換**するため、変更しないフィールドも含めて返す必要がある。**Claude Code は権限ルールの評価と Bash コマンドの[自動バックグラウンド化の可否判定](https://code.claude.com/docs/en/tools-reference#background-commands)を、Claude が送った入力ではなくフックが返した入力に対して行う**（`"defer"` の場合は無視される）。
 >
+> v2.1.300 から、PreToolUse / PermissionRequest フックの `updatedInput` はモデル入力と同様に検証される: 未知のキーは除去され、ツールが拒否する入力はその呼び出しを deny する。
+>
 > `permissionDecisionReason` の扱い（2026-09-30 ドキュメント改訂）: `"ask"` はユーザーに表示（Claude には非表示）、`"deny"` は Claude に表示、**`"allow"` と `"defer"` はデバッグログ（`--debug`）にのみ書かれる**（従来は `"allow"` もユーザーに表示されるとされていた）。誰もプロンプトに答えられない `-p` 実行で Claude Code が呼び出しを自動拒否した場合、`"ask"` の理由は代わりにツール結果として Claude に渡る（2026-10 ドキュメント改訂で明文化）。
 
 > フックが `"ask"` を返したときの権限プロンプトには、そのフックの出所ラベルが付く。ラベルは **`[settings]`**（settings ファイル由来またはエージェント frontmatter 由来） / **`[plugin:<name>]`**（プラグイン由来） / **`[skill]`**（スキル frontmatter 由来）の 3 種（従来ドキュメントの `[User]` / `[Project]` / `[Plugin]` / `[Local]` から変更）。
@@ -704,6 +706,13 @@ echo "$WORKTREE_PATH"
 | `statusMessage` | スピナーメッセージ | - |
 | `if` | ツールイベント専用の条件フィルタ（permission rule構文） | - |
 | `onFailure` | **`"block"` を指定すると、フックが起動できない・タイムアウトした・想定外の exit code で終わった場合にアクションをブロックする**（command / HTTP フック。v2.1.295+）。既定ではこれらは非ブロッキングエラー扱いで素通りするため、ポリシーフックを fail-closed にしたい場合に指定する（2026-10-11 巡回で公式 hooks ページに「Block the action when a hook fails」節として正式収載を確認。PreToolUse のタイムアウトは既定で通常の権限フローに流れて素通りするため、タイムアウト時もブロックしたい場合に有効） | 非ブロッキング（fail-open） |
+
+### 8.0 実行上限・fail-closed 化（2026-10 の変更）
+
+- **prompt / agent フックは同一イベント最大 12 並列**で実行され、残りは順番待ちになる（v2.1.302）
+- **スキルフックの上限**: 1 ソース（リポジトリ / 自分のフォルダ / プラグイン）のスキル群はセッションあたり最大 1,024 フック・16,384 matcher 文字まで登録可能（v2.1.304）
+- **プラグインフックがブロック可能なアクションは、フックにイベントを渡せない / 回答を受け取れない場合に素通りでなく拒否される**（実行済みツールは結果が差し止められる）（v2.1.299）
+- プラグインフック・ワークフロースクリプトが返す値は 28,000 レベル超のネストを拒否（v2.1.299）
 
 ### 8.1 `if` 条件フィールド（v2.1.85）
 

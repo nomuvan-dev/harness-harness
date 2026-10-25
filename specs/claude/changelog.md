@@ -3,12 +3,251 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-10-11（**v2.1.296**（2026-10-09）を反映。ハーネス観点では **(1) サブエージェント frontmatter / `--agents` 定義に `autoCompactWindow`（サブエージェントをメイン会話より早く auto-compact させる）**、**(2) `CLAUDE_CODE_WORKFLOW_SUBAGENT_MODEL`（全ワークフローエージェントを 1 モデルで実行。他のサブエージェントは各自のモデル維持）**、**(3) `CLAUDE_CODE_OVERLOADED_RETRY_MAX_DELAY_MS`（529 リトライのバックオフ最大遅延を延長）**、**(4) Read ツールに `allow_large` オプション（コンテキスト残量があれば既定上限超えのテキストファイルを 1 回で全読み）**、**(5) 最初からプロンプトに載る MCP ツール説明・サーバー指示の既定上限が 2,048→4,096 文字に拡大**、**(6) Claude apps gateway の `managed.policies[]` に `code` キー（`cli` と同じ設定を Claude Desktop の Code タブにも適用。`desktop` と並べると Desktop の gateway モードが有効化）**、**(7) 重要修正: managed settings の `PreToolUse` フックの `"continue": false` deny / managed `prompt` フックのブロックが呼び出し拒否のみでターンを終了させない問題、managed の PostToolUse `updatedMCPToolOutput` 未適用、ヘッドレスセッションがフォルダで無効化済みの `.mcp.json` / プラグイン MCP サーバーを起動する問題、`forceLoginMethod: "gateway"`＋`forceLoginGatewayUrl` なしで保存済み gateway サインインが無視される 2.1.295 リグレッション、プラグインヒントタグ様のテキストを含むフック出力の改変、`BASH_ARGV0` 代入による Bash 権限チェックの自動承認すり抜け、非 UTF-8 ファイル（Shift-JIS / GBK 等）への Edit が非 ASCII 文字を全破壊する問題（拒否に変更）、Windows の 1 KB 超 PowerShell コマンドが常に権限プロンプトになる問題（32 KB まで allow ルール適用）**。Changed: Sonnet 5.5 のキャッシュ読みが $0.10/Mtok に値下げ（`/cost` / status line / `--max-budget-usd` / SDK へ反映）、`←` でバックグラウンド化した際の進行中ターン / `!` コマンドは完走でなく停止に。ドキュメント改訂: hooks ページに `onFailure` が「Block the action when a hook fails」節として正式収載（2.1.295 の changelog 先行が解消）、tools-reference に Read `allow_large` の「Large files」節が収載。env-vars の新 2 変数・sub-agents の `autoCompactWindow`・mcp の 4,096 上限・gateway の `code` キーは本巡回時点で未収載＝changelog 先行。Codex CLI は **0.162.1 安定版**（2026-10-09。TUI クラッシュ / バックグラウンドサーバー互換チェックの 2 修正のみの小規模パッチ）。前回2026-10-10の巡回要約は下記参照。）
+最終更新: 2026-10-26（**v2.1.299〜v2.1.310**（2026-10-14〜10-23）を一括反映（12 バージョン。10/11 以降巡回が止まっていたため）。ハーネス観点の目玉は **(1) アイドルコンパクション**（200K+ トークンの会話を約54分放置すると 1 時間プロンプトキャッシュ失効前に自動 compact。`CLAUDE_CODE_IDLE_COMPACT_MIN_TOKENS` / `"idleCompaction": false` / `/config` 行で制御。v2.1.299〜302）、**(2) `/auto-mode-setup`**（プロジェクトと直近セッションを読んで auto mode に環境を学習させるガイド付きセットアップ。v2.1.304）、**(3) fork サブエージェントが `claude -p` / SDK / Desktop / VS Code でも既定有効化＋Desktop / VS Code のメイン会話サブエージェントは常にバックグラウンド実行に**（v2.1.302）、**(4) `claude -p` / SDK がサードパーティプロバイダ・テレメトリ無効・新規インストールで既定 `default` permission mode 開始に変更**（従来 auto。`--permission-mode auto` で維持。v2.1.302）、**(5) MCP allow ルールの厳格化**（`mcp__a` が `a__b` 等に波及しない。サーバー名に `__` を含む場合は `mcp__<正規化名>__*` と書く。agent `tools:` リストも同様。v2.1.299）、**(6) `UserPromptSubmit` フックがスキル / カスタムコマンド展開前に実行**（ブロックで埋め込みシェルも停止。v2.1.299）、**(7) compaction 後にスキル一覧を再送＋`/reload-skills` は差分のみ送信**（v2.1.304）、**(8) スキルフックの上限**（ソースごとに 1,024 フック / 16,384 matcher 文字。v2.1.304）、**(9) `sandbox.allowNestedUserNamespaces`**（Linux で Chromium / rootless podman 用にユーザー名前空間作成を許可＝ファイル保護を迂回し得る。v2.1.305）、**(10) Code Review のレビューレベル**（Quick / Standard / Deep を組織・リポジトリ単位で設定＋組織全リポジトリ一括対象化＋`@claude review stop`。v2.1.304/307）、**(11) `claude ultrareview` が workspace trust 必須に**（スクリプトは `--trust-workspace`。v2.1.309）、**(12) `sed -i` が編集プレビューでなく標準 Bash プロンプトで実行され `/rewind` 対象外に**（v2.1.309）、**(13) 重要修正: plan mode が PreToolUse / mod `tool.check` の allow した書き込みを実行してしまう問題、サンドボックス Bash がシェル起動ファイルをサンドボックス外で実行する問題、`--mcp-config` ファイルへのサンドボックス内変更、`--worktree` 終了時の未 push コミット喪失、Bash 権限チェックの `cd` ラップ / リダイレクト失敗変数 / サブシェル付き `Edit(path)` deny 迂回**。環境変数の追加: `CLAUDE_CODE_DISABLE_FILE_MENTIONS` / `CLAUDE_CODE_AUTO_MODE_MODEL` / `CLAUDE_CODE_RETRY_WATCHDOG_MAX_USAGE_LIMIT_WAIT_MS` / `..._USAGE_LIMIT_RECHECK_MS` / `CLAUDE_CODE_GZIP_REQUEST_BODIES`。ドキュメント改訂: 前回「changelog 先行」とした項目が収載済みに — sub-agents の `autoCompactWindow`、tools-reference の Read `allow_large`、mcp の 4,096 文字上限、env-vars の新変数群（`CLAUDE_CODE_WORKFLOW_SUBAGENT_MODEL` のみ未収載）、settings-reference に `idleCompaction` / `allowNestedUserNamespaces` / `allowedMcpServers`。Codex CLI は **0.163.0**（2026-10-15）/ **0.164.0**（2026-10-23）の 2 安定版（specs/codex/changelog.md 参照）。前回2026-10-11の巡回要約は下記参照。）
+
+前回: 2026-10-11（**v2.1.296**（2026-10-09）を反映。ハーネス観点では **(1) サブエージェント frontmatter / `--agents` 定義に `autoCompactWindow`（サブエージェントをメイン会話より早く auto-compact させる）**、**(2) `CLAUDE_CODE_WORKFLOW_SUBAGENT_MODEL`（全ワークフローエージェントを 1 モデルで実行。他のサブエージェントは各自のモデル維持）**、**(3) `CLAUDE_CODE_OVERLOADED_RETRY_MAX_DELAY_MS`（529 リトライのバックオフ最大遅延を延長）**、**(4) Read ツールに `allow_large` オプション（コンテキスト残量があれば既定上限超えのテキストファイルを 1 回で全読み）**、**(5) 最初からプロンプトに載る MCP ツール説明・サーバー指示の既定上限が 2,048→4,096 文字に拡大**、**(6) Claude apps gateway の `managed.policies[]` に `code` キー（`cli` と同じ設定を Claude Desktop の Code タブにも適用。`desktop` と並べると Desktop の gateway モードが有効化）**、**(7) 重要修正: managed settings の `PreToolUse` フックの `"continue": false` deny / managed `prompt` フックのブロックが呼び出し拒否のみでターンを終了させない問題、managed の PostToolUse `updatedMCPToolOutput` 未適用、ヘッドレスセッションがフォルダで無効化済みの `.mcp.json` / プラグイン MCP サーバーを起動する問題、`forceLoginMethod: "gateway"`＋`forceLoginGatewayUrl` なしで保存済み gateway サインインが無視される 2.1.295 リグレッション、プラグインヒントタグ様のテキストを含むフック出力の改変、`BASH_ARGV0` 代入による Bash 権限チェックの自動承認すり抜け、非 UTF-8 ファイル（Shift-JIS / GBK 等）への Edit が非 ASCII 文字を全破壊する問題（拒否に変更）、Windows の 1 KB 超 PowerShell コマンドが常に権限プロンプトになる問題（32 KB まで allow ルール適用）**。Changed: Sonnet 5.5 のキャッシュ読みが $0.10/Mtok に値下げ（`/cost` / status line / `--max-budget-usd` / SDK へ反映）、`←` でバックグラウンド化した際の進行中ターン / `!` コマンドは完走でなく停止に。ドキュメント改訂: hooks ページに `onFailure` が「Block the action when a hook fails」節として正式収載（2.1.295 の changelog 先行が解消）、tools-reference に Read `allow_large` の「Large files」節が収載。env-vars の新 2 変数・sub-agents の `autoCompactWindow`・mcp の 4,096 上限・gateway の `code` キーは本巡回時点で未収載＝changelog 先行。Codex CLI は **0.162.1 安定版**（2026-10-09。TUI クラッシュ / バックグラウンドサーバー互換チェックの 2 修正のみの小規模パッチ）。前回2026-10-10の巡回要約は下記参照。）
 
 前回: 2026-10-10（**v2.1.295**（2026-10-08）を反映。ハーネス観点では **(1) command / HTTP フックに `onFailure: "block"` 追加（フックが起動不可・タイムアウト・想定外 exit code の場合にアクションを通さずブロック＝ポリシーフックの fail-closed 化が可能に。従来は非ブロッキング扱いで素通り）**、**(2) サブエージェントの `skills` フィールドからのプリロードが最大32スキル・各1回に制限（Skill ツールがあれば残りは呼び出し可能）**、**(3) tool search 経由でモデルがロードする MCP ツール説明の切り詰めが 2,048→16,384 文字に拡大**、**(4) `CLAUDE_CODE_RETRY_WATCHDOG_MAX_WAIT_MS`（永続リトライ時の 429/529 待機の上限）**、**(5) `forceLoginMethod: "gateway"` / `forceLoginGatewayUrl` が managed settings なしのユーザー settings でも設定可能に**、**(6) OSC 7501（Program Status Protocol）対応（対応端末に作業中/入力待ち/完了を表示）**、**(7) 重要修正: `[1m]` モデルで context-1m beta を拒否するゲートウェイ/Bedrock/Vertex/Foundry 宛リクエストが全失敗する問題（beta なしで再送）、`claude -p` のテキスト出力がバックグラウンド作業による別ターン開始時に前のレスポンスを落とす問題、スキルの `allowed-tools` / `effort` が `-p` で落ちて Bash が拒否される問題、リモート MCP の長時間断後の未再接続/タイトループ再接続（バックオフ化・最大30秒）、Edit が mtime 不変のまま内容が変わったファイルを既読扱いする問題、複数行 JSON を出力する async フックの出力無視、Grep の `-l`/`-c`/`-r` フラグ付き呼び出し失敗**。Ctrl+C（アタッチ済みバックグラウンドセッションのアイドルプロンプト）は保留 `/loop` wakeup を残し2度押しでデタッチ・Esc で停止に変更。ドキュメント改訂: env-vars に `CLAUDE_CODE_RETRY_WATCHDOG_MAX_WAIT_MS` 収載（hooks ページの `onFailure` は本巡回時点で未収載＝changelog 先行）。Codex CLI は **0.162.0 安定版**（2026-10-08。managed worktree ツール、Command Center タスクピン留め、`/copy` トランスクリプトコピー、カスタムプロバイダの capability オーバーライド等。下記 specs/codex/changelog.md 参照）。前回2026-10-09の巡回要約は下記参照。）
 
 
 ---
+
+## v2.1.310 (2026-10-23)
+
+**Monitor ツール / プラグインモニターが Bedrock・Vertex・Foundry でも利用可能に**
+
+### 新機能
+
+- **Monitor ツールとプラグインモニターが Bedrock / Vertex / Foundry、テレメトリ・非必須通信無効時にも利用可能に**。長時間フォアグラウンド sleep のブロックも同環境へ拡大
+- [Cloud sessions] Enterprise カスタムロールに Cloud sessions / Remote Control 権限を追加（Owner がロール別にアクセス制御可能）
+
+### 変更
+
+- 非対話セッションで MCP ツール呼び出しが elicitation 未回答のままタイムアウトした際のエラーを改善（回答が来なかったこと・再呼び出し不要であることをモデルに伝える）
+
+### 修正
+
+- `effort-2025-11-24` beta 値や会話途中 system メッセージを拒否するゲートウェイ配下でリクエストが失敗する問題（これら抜きでリトライ）
+- `cleanupPeriodDays` が極端に大きい値の際にバックグラウンドクリーンアップが貼り付け画像等の新しいファイルを削除する問題
+- 「Prompt is too long」後の compaction が base64 / SVG 等の高密度テキストを残しすぎて再失敗する問題
+- Windows: Git Bash 不在時に引用符のみの PreToolUse / PermissionRequest フックコマンドがツール呼び出しを素通しする問題
+
+## v2.1.309 (2026-10-22)
+
+**`sed -i` の編集プレビュー廃止・`claude ultrareview` の workspace trust 必須化・bypass mode の危険 `rm` 即時拒否**
+
+### 変更
+
+- **`sed -i` が標準 Bash プロンプトで書かれた通りに実行される**（ファイル編集プレビューのシミュレーション廃止）。他の Bash 編集同様 `/rewind` の復元対象外に
+- **`claude ultrareview` が workspace trust を必須化**: 端末では確認、非対話では拒否。スクリプトは `--trust-workspace`（値なし）または `CLAUDE_CODE_DISABLE_ULTRAREVIEW_TRUST_CHECK=1`
+- **Desktop / VS Code の bypass permissions mode で危険な `rm` / `rmdir` を書き換えヒント付きで即時拒否**（無人セッションを止めないため）
+- サンドボックス除外コマンドが、サンドボックス有効だが起動不可の際に write-list パスへの書き込み前に確認するように（サンドボックスなしフォールバックは拒否）
+- worktree の作成・再利用で git がオンデマンドのオブジェクト取得をしないように（partial clone は先に取得）
+- dataviz スキルが APCA をテキストコントラスト指標として受理（AA 準拠必須箇所は WCAG 2 維持）
+- `/claude-api` スキルが Managed Agents サブエージェントチームを `multiagent_20261001`（dynamic workflows 既定有効）で構築するように
+
+### 修正（62件から抜粋）
+
+- **macOS / Linux のサンドボックス Bash がシェル起動ファイルを各コマンド前にサンドボックス外で実行していた問題**
+- **サンドボックスコマンド・自動承認編集が `--mcp-config` で渡した MCP 設定ファイルを変更できた問題**
+- macOS サンドボックス `denyWrite` glob が symlink 経由の実パスに適用されない問題
+- 無効化済み MCP サーバーが print / SDK セッションで後続の権限プロンプトにより再接続される問題
+- リダイレクトの open 失敗があり得るコマンドが設定した変数を Bash 権限チェックが信用する問題
+- `cd` がラップ・プレフィックスされた複合コマンドの git 実行で権限プロンプトが出ない問題
+- サブシェルを含むコマンドで `Edit(path)` deny ルールが Bash リダイレクトをブロックしない問題
+- 巨大なネスト CLAUDE.md 配下のファイル読みで compaction が繰り返される問題（サイズ上限超の nested CLAUDE.md は先頭のみロード）
+
+## v2.1.308 (2026-10-22)
+
+- バグ修正と信頼性改善のみ
+
+## v2.1.307 (2026-10-21)
+
+**`/claude-api api-version`・OTel `safety_event`・`@claude review stop`**
+
+### 新機能
+
+- **`/claude-api api-version`**: Claude API コードを API version `2026-10-21` へ移行
+- **OpenTelemetry `claude_code.safety_event`**: 権限ルール / auto mode / 安全チェック / フック / サンドボックスが停止・確認・差し戻したツール呼び出しごとに記録
+- [Code Review] **`@claude review stop`**（`off` / `pause` も可）: PR の `@claude review always` 購読を解除
+
+### 変更
+
+- `axScreenReader` 設定と `CLAUDE_AX_SCREEN_READER` が user / managed / `--settings` からのみ適用に（2.1.305 から）
+- WebSearch 予算切れ時の通知に「ブラウザ / computer use でも検索エンジンに問い合わせないこと」を追記
+
+### 改善・修正（26件から抜粋）
+
+- **パース不能なツール呼び出しを最大2回リトライ**してからターンをエラー終了するように
+- **同時起動した fork サブエージェントに各自の起動がどれかを伝える**ように（他 fork の作業を始めてしまう問題を大幅軽減）
+- HTTP MCP ツール呼び出しが接続断で二重送信される問題(読み取り専用・冪等ツールのみリトライに)
+- `CLAUDE_CODE_DISABLE_1M_CONTEXT` 設定時に `opus[1m]` 等のエイリアスで model-not-found になる問題
+
+## v2.1.306 (2026-10-21)
+
+- `claude -p` が cloud セッション内で環境変数なし起動時に「Not logged in」になる問題と、多数の MCP ツールを持つセッションで API エラーが「prompt is too long」に化ける問題の2修正のみ
+
+## v2.1.305 (2026-10-20)
+
+**`sandbox.allowNestedUserNamespaces`・`allowedMcpServers` のフィルタ変更**
+
+### 新機能
+
+- **`sandbox.allowNestedUserNamespaces`**: Linux のサンドボックスコマンドにユーザー名前空間作成を許可（Chromium / rootless podman 用）。**サンドボックスのファイル保護を迂回し得る**点に注意
+- `CLAUDE_CODE_RETRY_WATCHDOG_USAGE_LIMIT_RECHECK_MS`: 無人リトライモードがリセット前に解除された usage limit に気づく間隔
+
+### 変更
+
+- **`allowedMcpServers` が `env` のみに `${VAR}` を使う `managed-mcp.json` stdio サーバーをフィルタしなくなった**（allowlist 外のものがアップグレードでロードされる。止めるには `deniedMcpServers`）
+- 組織の managed settings が `allowManagedPermissionRulesOnly` の場合、Claude Desktop がパスマウントするプラグインの `allowed-tools` を保持しないように
+- `/usage` の警告が発生源を名指す1行の修正提案になり `f` で適用可能に（VS Code / `/doctor` にも表示）
+
+### 修正（22件から抜粋）
+
+- **tool search を拒否するエンドポイント / ゲートウェイ配下（Vertex / Bedrock 等）で全リクエストが失敗する 2.1.304 リグレッション**（tool search なしでリトライ）
+- bare リポジトリの新規 worktree がローカル HEAD から開始されることがある問題＋未変更サブエージェント worktree の未クリーンアップ
+- cloud セッション / SDK の `setMcpServers` で渡した MCP サーバーが同名の自前設定サーバーに置き換わる問題
+- Workflow resume が完了済み `pipeline()` / `parallel()` エージェントをジャーナルから返さず再実行する問題
+
+## v2.1.304 (2026-10-19)
+
+**`/auto-mode-setup`・Code Review レビューレベル・compaction 後のスキル一覧再送・tool search がカスタムゲートウェイでも既定有効**
+
+### 新機能
+
+- **`/auto-mode-setup`**: プロジェクトと直近セッションを読んで auto mode に環境を教えるガイド付きセットアップ（Bedrock / Vertex / Foundry / gateway / テレメトリ無効でも利用可）
+- **`/claude-api managed-agents-secure`**: Managed Agents エージェント設定を Anthropic の security guide と突合（変更なし）
+- mod の `tool.check` 回答に `decider: "person"`（権限ダイアログ / ホストコールバックのみが承認可能）、イベントに `e.isReadOnly`
+- Pro / Max プランで非アクティブ会話の resume が 5 時間 usage limit の大きな割合を消費する場合の警告
+- [Code Review] **レビューレベル（Quick / Standard / Deep）を組織・リポジトリ単位で設定可能に**＋GitHub 組織の全リポジトリ（後から追加されたものも含む）を一括レビュー対象化するオプション
+
+### 変更
+
+- **tool search がカスタム `ANTHROPIC_BASE_URL` 配下でも既定有効に**（400 / 422 は tool search なしでリトライ）
+- **compaction 後にスキル一覧をモデルへ再送。`/reload-skills` は新規・変更スキルのみ送信**
+- **スキルフックの上限: 1 ソース（リポジトリ / 自分のフォルダ / プラグイン）あたり 1,024 フック・16,384 matcher 文字 / セッション**
+- mod の `settings.read` フックが各設定レイヤを受け取りマージ済み設定を書き換え可能に（managed mod で組織設定を上限化できる）
+- plugins-only フックポリシー下でフックが除外されたスキルは `allowed-tools` も付与されない
+
+### 修正（43件から抜粋）
+
+- **`claude --worktree` が detached HEAD / 別ブランチ時に確認なしで worktree とブランチを削除しコミットを失い得た問題**
+- プラグインがサブエージェント起動により headless 実行を `--max-turns` / Stop / 入力終了後も継続できた問題
+- LLM ゲートウェイ配下の `context_management: Extra inputs are not permitted` エラー（フィールドなしで再送）
+- `/rewind` 後にスキルがモデルに列挙されなくなる問題
+- 自己ペース `/loop` の 1 時間上限 wakeup がプロンプトキャッシュ失効直後に発火する問題
+
+## v2.1.303 (2026-10-18)
+
+- バグ修正と信頼性改善のみ
+
+## v2.1.302 (2026-10-16)
+
+**fork サブエージェント全面既定化・`claude -p` / SDK の既定 permission mode 変更・`CLAUDE_CODE_AUTO_MODE_MODEL`**
+
+### 新機能
+
+- **`CLAUDE_CODE_AUTO_MODE_MODEL`**: クライアント側 auto mode 分類器のモデルを選択（サーバー側には影響しない）
+- `/config` に **Idle compaction** 行（アイドルコンパクションのオン / オフ）
+- `/design-sync` / `/design-login` に standalone Claude Design（claude.ai/design）が 2026-12-14 に終了する旨の通知
+
+### 変更
+
+- **`claude -p` / Agent SDK が permission mode 未指定時、サードパーティプロバイダ・テレメトリ無効・新規インストールでは `default` モード開始に**（`--permission-mode auto` で従来動作）
+- **fork サブエージェント（`subagent_type: "fork"`）が `claude -p` / SDK / Desktop / VS Code でも既定有効に**（`CLAUDE_CODE_FORK_SUBAGENT=0` で無効。`claude mcp serve` は非提供）
+- **Desktop / VS Code のメイン会話サブエージェントは常にバックグラウンド実行に**（端末と同様）。サブエージェント自身の Agent 呼び出しは `-p` / SDK / Desktop / VS Code で既定フォアグラウンドに
+- prompt / agent フックは同一イベント最大 12 並列に（残りは待機）
+- 多数プラグイン有効時の起動時間を改善（特に Windows）
+
+### 修正（43件から抜粋）
+
+- ターン停止時に compaction 中だと「Prompt is too long」になる問題
+- Read ツールが任意サイズの画像・画像名のパイプ / デバイスを全量メモリロードする問題（128 MB 超の画像ソースは拒否）
+- mid-session 追加ツールの ToolSearch / compaction 後再ロードでプロンプトキャッシュミスする問題
+- API が MCP ツールの入力スキーマを拒否すると全ターン 400 になる問題（以後そのツールをパラメータなしで送信）
+
+## v2.1.301 (2026-10-15)
+
+**unattended リトライの usage limit 上限・vim `%` モーション・OTel `tool_decision` 拡充**
+
+### 新機能
+
+- **`CLAUDE_CODE_RETRY_WATCHDOG_MAX_USAGE_LIMIT_WAIT_MS`**: 無人リトライモードがリセットの遠すぎる usage limit で待たずにリクエストを終了
+- vim mode に `%` モーション（対応括弧ジャンプ。d/c/y と組み合わせ可）
+- OTel `tool_decision` イベントに `classifier_verdict` / `permission_mode` / `classifier_category`（auto mode 分類器の判定を権限ルールと区別可能に）
+- mod の `Input` に `rows`（複数行テキストフィールド）
+- [VSCode] LaTeX 数式レンダリング（`$$` / `\[…\]` / インライン `$…$`）
+
+### 改善・修正（37件から抜粋）
+
+- **コンテキストウィンドウの小さいモデルへの切替時、長すぎる会話を前モデルで先に要約**するように
+- `fable`（`best`）エイリアスが組織に最新 Fable 非提供時にエラーになる問題（前世代 Fable で 1 回リトライ）
+- `WorktreeCreate` フック作成の worktree が未 push コミット保持の可能性があっても終了時に確認なしで削除される問題
+- plan mode が PreToolUse / mod `tool.check` フックの allow した書き込み（MCP ツール / ファイル / シェル）を実行してしまう問題 ※changelog 上は 2.1.299 掲載
+- 引数名が非常に多い / 長いスキル・コマンドの起動が数秒止まる問題（先頭 64 個・各 64 文字まで充填）
+
+## v2.1.300 (2026-10-14)
+
+**`/advisor` が Claude Platform on AWS に・OTel GenAI 属性・トランスクリプトへのリクエスト全記録**
+
+### 新機能
+
+- **`/advisor` が Claude Platform on AWS で利用可能に**（`/advisor` / `advisorModel` / `--advisor` で選択。`CLAUDE_CODE_DISABLE_ADVISOR_TOOL=1` で無効）
+- OTel トレーススパンに GenAI semantic-convention 属性（`gen_ai.provider.name` / `gen_ai.conversation.id` / `gen_ai.tool.name` / `error.type` 等）
+- `api_request` イベントに `cache_creation_5m_tokens` / `cache_creation_1h_tokens`（キャッシュ書き込みを lifetime 別に分割）
+- mod: prompt decorations の `virtualText`、`$.ui.view({ agentId })`（エージェントのトランスクリプトをメインビュー表示）、`agent.spawn` フックでワークフローエージェントの `prompt` / `model` 書き換え、`prompt.change` フック
+- [Claude Tag] Slack Connect チャンネル対応（既定オフ）・コネクタ承認の Allow once / Deny プライベートカード・Slack ボイスクリップのトランスクリプト読み取り
+
+### 変更
+
+- **ローカルセッショントランスクリプトに各 API リクエストの system prompt・ツール・パラメータも記録**（共有トランスクリプトでリクエストを正確に再現可能に）
+- api.anthropic.com への大型リクエストはテレメトリ無効でも gzip 圧縮（`CLAUDE_CODE_GZIP_REQUEST_BODIES=0` で無効）
+- フックの `updatedInput`（PreToolUse / PermissionRequest）がモデル入力と同様に検証されるように（未知キーは除去、ツールが拒否する入力は呼び出し拒否）
+- `claude remote-control` の `--sandbox` / `--no-sandbox` フラグ削除（無効だった。settings の `sandbox.enabled` を使用）
+- 終了時にバックグラウンドコマンドが停止要求後 1.5 秒で強制 kill されるように
+
+### 修正（59件から抜粋）
+
+- サンドボックスシェルコマンドが `--plugin-dir` フォルダ（サンドボックス外で再ロード・実行されるコード）へ書き込めた問題
+- スクリプト内で実行時組み立てされる `rm` への過剰プロンプト（`CLAUDE_CODE_STRICT_INLINE_SHELL_RM_PROMPT=1` で従来動作）
+- エージェントフックが `model` を無視する問題（エイリアス解決・サブエージェントモデルによる上書き排除・利用不可モデルは呼び出し元へフォールバック）
+- reftable リポジトリでの `--worktree` 失敗・ブランチ「.invalid」表示
+
+## v2.1.299 (2026-10-14)
+
+**アイドルコンパクション・MCP allow ルール厳格化・`UserPromptSubmit` フックのスキル展開前実行・131 バグ修正**
+
+### 新機能
+
+- **アイドルコンパクション**: 200K+ トークンの会話を約 54 分放置すると 1 時間プロンプトキャッシュ失効前に自動 compact。`CLAUDE_CODE_IDLE_COMPACT_MIN_TOKENS` で閾値変更、settings.json の `"idleCompaction": false` で無効（v2.1.290+ が必要）
+- **`CLAUDE_CODE_DISABLE_FILE_MENTIONS`**: `@` ファイルメンションを内容でなくパスとして渡す（モデルがファイルツールで読む）
+- `/usage` に max effort / workflows / always-on context / 大型ツール結果の警告
+- `/effort` / `/fast` を agent view から新規セッションの既定として設定可能に
+- `claude plugin eval` に `--disallow-tools` / `disallowed_tools`（Agent 等の組み込みツールを eval から除外）
+- bypass permissions が利用可能な際に plan mode がほとんどの編集・コマンドを確認しない旨の初回通知
+- mod: `$.prompt.media`（managed mod がプロンプト添付画像 / 文書のバイト列を読める）、`$.session.identity()`、`Text` の `size` / `weight` / `mono` / `tabular`、`session.append` の `queue` ドア
+
+### 変更
+
+- **MCP allow ルールが名指ししたサーバーのみに適用**: `mcp__a` は `a__b` / `a_` を許可しない。サーバー名に `__` を含む場合は `mcp__<正規化名>__*` と書く。**agent `tools:` リストも同様**
+- **`UserPromptSubmit` フックがスキル / カスタムコマンド展開前に実行**（プロンプトをブロックすると埋め込みシェルコマンドも停止）。スキル自身の frontmatter `UserPromptSubmit` フックは起動プロンプトの次から
+- **ファイル / フォルダ名に不可視文字・方向転換文字・`<` `>` を含むスキル・コマンドはリネームまで非提供に**
+- Anthropic 第一者 MCP サーバー（api.anthropic.com）のツール説明・サーバー指示が 4,096 文字で切られず全文到達
+- cloud / Remote Control の MCP コネクタが MCP protocol 2026-07-28 を既定ネゴシエート（`MCP_PROTOCOL_NEGOTIATION=legacy` でオプトアウト）
+- プラグインフックがブロック可能なアクションは、フックへの受け渡し・回答返却が不可能な場合に素通りでなく拒否に
+- 終了時に表示される resume コマンドがセッション名でなく ID を使用（セッション名由来のコマンド実行を防止）
+- `turn.start` mod フックがサブエージェント・チームメイトのターンも対象に（`e.agentId` で区別）
+- auto mode の Cowork cloud セッションで `PermissionRequest` フックによるシェルコマンド / サブエージェント承認が不可に
+
+### 修正（131件から抜粋）
+
+- **plan mode が PreToolUse / mod `tool.check` フックの allow した書き込みを実行する問題**
+- **`SendMessage` が CLI 再起動・セッション resume 後にサブエージェントを名前で見つけられない問題**
+- 第三者ゲートウェイ（`ANTHROPIC_BASE_URL`）の API キーが feature flag / 起動 / fast mode / プロフィール / フィードバックリクエストに載る問題
+- `__proto__` キー除去により mod の `tool.check` ガードがすり抜けられる問題
+- macOS サンドボックスが symlink 経由で denied パスを実パスで読み書きできる問題
+- UTF-16LE（BOM 付き）の Read 文字化け、Write の BOM 欠落・Shift-JIS / GBK / Windows-1252 / UTF-16BE の暗黙 UTF-8 変換（拒否に変更）
+- 出力トークン上限で切れた応答が非ストリーミングフォールバック後に無言でターン終了する問題
 
 ## v2.1.296 (2026-10-09)
 
