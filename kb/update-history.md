@@ -1,5 +1,34 @@
 # harness-harness 更新履歴
 
+## 2026-10-26 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code**: **v2.1.299〜v2.1.310（2026-10-14〜10-23）を一括反映**（10/11 以降巡回停止のため 12 バージョン）。ハーネス観点の目玉:
+- **アイドルコンパクション**（200K+ トークン・約54分放置で自動 compact。`CLAUDE_CODE_IDLE_COMPACT_MIN_TOKENS` / `"idleCompaction": false`。v2.1.299〜302）
+- **`/auto-mode-setup`**（auto mode に環境を学習させるガイド付きセットアップ。v2.1.304）
+- **fork サブエージェントが `-p` / SDK / Desktop / VS Code でも既定有効化**＋Desktop / VS Code のサブエージェント常時バックグラウンド化（v2.1.302）
+- **`claude -p` / SDK の既定 permission mode がサードパーティプロバイダ等で `default` に変更**（v2.1.302）
+- **MCP allow ルール厳格化**（`mcp__a` の波及廃止。`__` 含有名は `mcp__<正規化名>__*`。agent `tools:` も同様。v2.1.299）
+- **`UserPromptSubmit` フックのスキル / コマンド展開前実行**（v2.1.299）、compaction 後スキル一覧再送＋`/reload-skills` 差分化（v2.1.304）、スキルフック上限 1,024 / 16,384（v2.1.304）、prompt / agent フック最大 12 並列（v2.1.302）
+- `sandbox.allowNestedUserNamespaces`（v2.1.305）、Code Review レビューレベル（v2.1.304）、`claude ultrareview` の workspace trust 必須化・`sed -i` のプレビュー廃止（v2.1.309）、Monitor ツールの Bedrock / Vertex / Foundry 対応（v2.1.310）
+- **重要修正**: plan mode が PreToolUse / `tool.check` の allow した書き込みを実行、サンドボックス Bash のシェル起動ファイル外部実行、`--mcp-config` ファイルのサンドボックス内改変、`--worktree` 終了時のコミット喪失、各種 Bash 権限チェック迂回
+
+**ドキュメント改訂**: 前回「changelog 先行」の項目が収載済みに（sub-agents `autoCompactWindow`、tools-reference `allow_large`、mcp 4,096 上限、env-vars 新変数群、settings-reference `idleCompaction` / `allowNestedUserNamespaces`）。`CLAUDE_CODE_WORKFLOW_SUBAGENT_MODEL` のみ未収載。
+
+**Codex CLI**: **0.163.0（2026-10-15）/ 0.164.0（2026-10-23）の 2 安定版を反映**。0.163.0: ミッドターンステアリング、`/config` 検索 UI、`/keymap` リーダーキー、読み取り専用ツール並列実行、Daybreak 既定有効化、バンドル zsh 廃止。0.164.0: `/presets`、`/model` / `/permissions` インライン引数、enterprise MCP 認証、credential マスキング、画像プレビュー。**アナウンス: GPT-5.5 が 2026-10-14 に ChatGPT サインインの Codex から退役**（`gpt-6.1-sol` へ移行）。GitHub タグは 0.165.0-alpha.1 まで進行。
+
+**Phase 3.5 スキルエコシステム巡回**: 実施（前回 2026-10-06 から 7 日超）。anthropics/skills は 183.7K stars（+3.9K）・**skills/ 配下を直接確認し 19 スキルで増減なし**（前回巡回の宿題を解消）。claude.com/plugins は Claude Code 向け 549 プラグイン・上位の顔ぶれ変化なし。skills.sh は find-skills 4.0M でトップ継続、agent-browser が 3 位に上昇、frontend-design は 13 位に後退。openai/skills 28.3K stars（deprecated 継続）、codex-plugin-cc 34.6K stars（最終 push 2026-07-08 のまま）。推薦スキルの昇格・降格なし。
+
+### 更新ファイル
+
+- `specs/claude/changelog.md` — v2.1.299〜v2.1.310 追加
+- `specs/claude/configuration.md` — 新環境変数 8 件・`idleCompaction`・`sandbox.allowNestedUserNamespaces` 追加
+- `specs/claude/hooks.md` — `UserPromptSubmit` 展開前実行・`updatedInput` 検証・実行上限 / fail-closed 化の節追加
+- `specs/claude/mcp.md` — MCP 権限ルール厳格マッチングの節追加
+- `specs/codex/changelog.md` — CLI 0.163.0 / 0.164.0 追加
+- `kb/skills/_index.md` — last_patrol 更新・各サイト計測値更新・anthropics/skills 19 スキル確認
+
 ## 2026-10-11 — 公式ドキュメント巡回
 
 ### 検出・更新
