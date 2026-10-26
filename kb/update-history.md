@@ -1,5 +1,19 @@
 # harness-harness 更新履歴
 
+## 2026-10-27 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code**: 巡回対象の全ドキュメント（changelog.md 含む）に変更なし。前回巡回（2026-10-26）の v2.1.310 から新バージョンなし。
+
+**Codex CLI**: 安定版・SDK とも新リリースなし（安定版 0.164.0 のまま、GitHub タグも 0.165.0-alpha.1 から進行なし）。**アナウンス（2026-10-26）: GPT-6.1 Terra が ChatGPT Work / Codex に追加** — 強力な画像理解と精密な computer use を両立した高速・高効率モデル。hooks / build-plugins / app-server / codex-plugin-cc 各ページはビルド ID・スター数等のノイズのみ。
+
+**Phase 3.5 スキルエコシステム巡回**: スキップ（前回 2026-10-26 から 7 日以内）。
+
+### 更新ファイル
+
+- `specs/codex/changelog.md` — 2026-10-27 巡回エントリ追加（GPT-6.1 Terra アナウンス）
+
 ## 2026-10-26 — 公式ドキュメント巡回
 
 ### 検出・更新
