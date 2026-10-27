@@ -189,6 +189,17 @@ Claude Code の組み込みツール一覧。**ここに書かれたツール名
 - `claude -p` / Agent SDK では Workflow ツール呼び出しがセッションの通常の権限評価を通るため、deny ルール・ask ルール・`dontAsk` モードがそのまま適用される。起動を許可する手段は次のいずれか: allow ルールの `Workflow`（全ワークフロー）または `Workflow(<name>)`（保存済みワークフローを名前指定） / auto モードの分類器 / bypass permissions モード / `allow` を返す `PreToolUse` フック / `--permission-prompt-tool`（SDK では `canUseTool` コールバックか `PermissionRequest` フック）
 - **ワークフローが起動するサブエージェントは、ユーザーの権限ルールを使い、権限モードは[サブエージェントの権限モード決定規則](https://code.claude.com/docs/en/sub-agents#permission-modes)に従う**（従来記載の「常に `acceptEdits` で動く」は現行仕様ではない）。長時間実行でプロンプトを避けたい場合は、エージェントが必要とするツールを事前に allow ルールへ入れる
 
+**`ultracode` キーワードの有効範囲（2026-10 ドキュメント改訂で「Where the keyword works」節新設）**: `ultracode` キーワード（および "use a workflow" / "run a workflow" 等の自然言語での直接依頼）がオプトインになるのは**ユーザーが自分でタイプしたプロンプトのみ** — 対話プロンプト・IDE 拡張パネル・Remote Control クライアント・キーボード入力の `origin` を `{kind: "human"}` とスタンプする Agent SDK アプリ。以下の経路ではワークフローを起動**しない**: `-p` で渡したプロンプト、human スタンプなしの SDK プロンプト、スケジュールタスクのプロンプト、webhook ペイロードや PR コメントのリレー。誤ってトリガーした場合は macOS で `Option+W`（Windows / Linux は `Alt+W`）、またはハイライトされたキーワード直後にカーソルがある状態で backspace を押して解除。キーワードトリガー自体を止めるには `/config` の「Ultracode keyword trigger」をオフにする。
+
+**保存と配布**: `/workflows` でランを選択して `s` を押すと保存ダイアログが開く（Tab で保存先切替）:
+
+- **プロジェクト**: `.claude/workflows/`（リポジトリをクローンした全員と共有）
+- **パーソナル**: `~/.claude/workflows/`（全プロジェクトで自分だけ利用可。`CLAUDE_CONFIG_DIR` 設定時はそのパス配下の `workflows/`。ダイアログに解決済みパスを表示）
+
+保存後は両配置とも以後のセッションで `/<name>` として実行できる。**symlink チェック**: 保存先に symlink があると書き込まずエラー表示。プロジェクト配置は `.claude`・`.claude/workflows`・対象ファイルのいずれかが symlink なら拒否。パーソナル配置は対象ファイル自身が symlink の場合のみ拒否（dotfiles ツール管理の `~/.claude` ディレクトリは許容）。v2.1.216 より前はリンクを辿って選択外の場所に書き込みうるバグがあった。**モノレポ**: プロジェクト保存は作業ディレクトリからリポジトリルートまでの間で**既存の最も近い** `.claude/workflows/` に書き込む（1つもなければルートに作成）。ロードもそのパス上の全 `.claude/workflows/` から行われ、同名は作業ディレクトリに最も近いものが勝ち、プロジェクトとパーソナルの同名はプロジェクトが勝つ。**プラグイン配布**: プラグインルートの `workflows/` ディレクトリ（またはマニフェストの `workflows` フィールドで別パス指定）に置くと `/<plugin>:<name>` の名前空間付きで実行できる。
+
+**保存済みワークフローへの入力（`args`）**: 保存済みワークフローは `args` パラメータで入力を受け取れ、スクリプト内では **`args` という名前のグローバル**として読める。Claude は構造化データとして渡すため、配列 / オブジェクトのメソッドをパースなしで直接呼べる（例: `Run /triage-issues on issues 1024, 1025, and 1030` → リストが渡る）。省略時は `undefined`。
+
 **停止したランの再開**:
 
 - 一時停止したランは `/workflows` で選択して `p`。停止したランは同じスクリプトでの再起動を Claude に依頼する。エージェント開始順にリプレイされ、各エージェントは以下のいずれかになる:

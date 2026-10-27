@@ -1,6 +1,6 @@
 # Claude Code Hooks 仕様書
 
-最終更新: 2026-10-07（巡回更新）
+最終更新: 2026-10-28（巡回更新）
 
 公式ドキュメント: https://code.claude.com/docs/en/hooks
 
@@ -518,6 +518,16 @@ v2.1.133 以降、すべてのイベントの入力 JSON に effort level も含
 
 > フックが `"ask"` を返したときの権限プロンプトには、そのフックの出所ラベルが付く。ラベルは **`[settings]`**（settings ファイル由来またはエージェント frontmatter 由来） / **`[plugin:<name>]`**（プラグイン由来） / **`[skill]`**（スキル frontmatter 由来）の 3 種（従来ドキュメントの `[User]` / `[Project]` / `[Plugin]` / `[Local]` から変更）。
 
+**`permissionDecision: "defer"` の動作（2026-10 ドキュメント改訂で詳細化）**: `"defer"` は `claude -p` をサブプロセスとして動かし JSON 出力を読む統合（Agent SDK アプリ、Claude Code 上のカスタム UI 等）向け。ツール呼び出しで Claude を一時停止し、呼び出し側が自前の UI で入力を集めてから再開させる。**`-p` の非対話モードでのみ有効**で、対話セッションでは警告をログして無視される。典型例は `AskUserQuestion`（答えるターミナルが無い場合）。
+
+- フックが `"defer"` を返すとツールは実行されず、ターンが `stop_reason: "tool_deferred"` の結果で終了する（pending のツール呼び出しはトランスクリプトに残る）。結果の `deferred_tool_use` オブジェクトにツールの `id` / `name` / `input`（実行前に Claude が生成したパラメータ）が入る
+- 呼び出し側は `claude -p --resume <session-id>` で再開する。同じツール呼び出しで `PreToolUse` が**再発火**するので、`"allow"`＋`updatedInput` で回答を渡してツールを実行させる（答えがまだ無ければ再度 `"defer"` も可。プロンプト無しで再開し続け、`"allow"` / `"deny"` でループを抜ける）
+- **再開時にツールが利用不能**（提供元 MCP サーバーが再開セッションで未接続等）の場合、再開の最初の結果は `stop_reason: "tool_deferred_unavailable"`＋`is_error: true` となり、**フックは発火しない**（`deferred_tool_use` は含まれるのでどのツールかは特定できる）。プロンプト無しの再開なら呼び出しは pending のまま残り、プロンプト付きで再開するとツール結果なしで回答され deferred 呼び出しは破棄される
+- **ターン内のツール呼び出しが 1 つの場合のみ**有効。複数同時呼び出し（バッチ）では警告付きで無視され、通常の権限フローへ流れる（resume が再実行できるのは 1 ツールだけのため）
+- **タイムアウト・リトライ上限は無い**。セッションは再開までディスクに残るが、`cleanupPeriodDays`（既定 30 日）の保持スイープの対象
+- プランモードの deferred セッションを再開するには `--resume` に加えて `--permission-prompt-tool` が必要（v2.1.246+）。また `-p` での再開は保存済み権限モードを復元しない（新規 `claude -p` と同じモードで開始）ため、必要なら `--permission-mode` / `--dangerously-skip-permissions` を再指定する
+- 複数の PreToolUse フックが異なる決定を返した場合の優先順位は `deny` > `defer` > `ask` > `allow`。`"defer"` では `updatedInput` / `additionalContext` は無視され、`permissionDecisionReason` はデバッグログにのみ書かれる
+
 #### PostToolUse
 
 ツール出力をフックで書き換える（v2.1.121 以降は MCP 以外の全ツールが対象）:
@@ -573,6 +583,10 @@ v2.1.133 以降、すべてのイベントの入力 JSON に effort level も含
 #### UserPromptSubmit
 
 出力: 全 JSON 出力フィールドが利用可能。`hookSpecificOutput` で `additionalContext`（コンテキスト追加）、`sessionTitle`（プロンプト内容からのセッション命名）、`suppressOriginalPrompt` を返せる。
+
+**タイムアウト時の挙動（2026-10 ドキュメント改訂で明文化）**: `async: true` の command フックを除き、command / http / mcp_tool の `UserPromptSubmit` フックがタイムアウトに達すると**キャンセルされ、`additionalContext` を含む出力は破棄される**。プロンプトはそのコンテキストなしで Claude に届く（トランスクリプトにフック名・発火したタイムアウト・出力破棄を示す通知が出る）。タイムアウトでプロンプトをブロックしたい場合は command / HTTP フックに `onFailure: "block"` を指定する（§8 参照）。**例外**: Agent SDK のコールバックフックが `UserPromptSubmit` でタイムアウトした場合は、フック名とタイムアウトを示すメッセージとともに**プロンプトをブロックする**（ポリシーゲートとして動くコールバックを fail-open にしないため。セッション自体は継続）。
+
+**プロンプトチェック中の `Esc`（2026-10 ドキュメント改訂で明文化）**: フックがプロンプトをチェックしている間に `Esc` やセッション割り込みを行うとチェックは停止し、プロンプトは Claude に届かない。入力したテキストは入力欄に戻り、再送時に改めてチェックされる。**例外**: 割り込みと同時にフックがブロックした場合、プロンプトはブロックされたまま（そのフックのブロックメッセージが表示される）でテキストは入力欄に戻らない。
 
 **ブロックしたプロンプトの残留（2026-10 ドキュメント改訂で明文化）**: `decision: "block"`（または終了コード 2）でブロックしたプロンプトは Claude には届かないが、テキストが全消去されるわけではない:
 
@@ -700,7 +714,7 @@ echo "$WORKTREE_PATH"
 
 | フィールド | 説明 | デフォルト |
 |:--|:--|:--|
-| `timeout` | タイムアウト（秒）。**`async: true` の command フックには適用されない**（バックグラウンドに入った後は Claude Code が強制終了しない）。`asyncRewake` のフックには引き続き適用される。`UserPromptSubmit` / **`PreModelSwitch`（v2.1.251+）** では command / http / mcp_tool の既定が 30 に、`MessageDisplay` では 10 に下がる。`SessionEnd` は全フックで 1.5 秒の共通予算（予算は settings 内の最大 per-hook `timeout` まで自動で引き上がる・上限60秒。プラグイン提供フックの `timeout` は予算を上げない。`CLAUDE_CODE_SESSIONEND_HOOKS_TIMEOUT_MS` で明示上書き可能で、**この値は `timeout` 未指定の各フックのタイムアウトにもなる**。v2.1.268 より前は予算のみ上がり個別フックは1.5秒のままだった） | command / http / mcp_tool: 600, prompt: 30, agent: 60 |
+| `timeout` | タイムアウト（秒）。**`async: true` の command フックには適用されない**（バックグラウンドに入った後は Claude Code が強制終了しない）。`asyncRewake` のフックには引き続き適用される。`UserPromptSubmit` / **`PreModelSwitch`（v2.1.251+）** では command / http / mcp_tool の既定が 30 に、`MessageDisplay` では 10 に下がる。**`UserPromptSubmit` のタイムアウト時はフックがキャンセルされ出力は破棄、プロンプトは素通りする（Agent SDK コールバックフックのみブロック。§6.4 参照）**。`SessionEnd` は全フックで 1.5 秒の共通予算（予算は settings 内の最大 per-hook `timeout` まで自動で引き上がる・上限60秒。プラグイン提供フックの `timeout` は予算を上げない。`CLAUDE_CODE_SESSIONEND_HOOKS_TIMEOUT_MS` で明示上書き可能で、**この値は `timeout` 未指定の各フックのタイムアウトにもなる**。v2.1.268 より前は予算のみ上がり個別フックは1.5秒のままだった） | command / http / mcp_tool: 600, prompt: 30, agent: 60 |
 | `async` | バックグラウンド実行（command のみ） | `false` |
 | `once` | **初回の成功実行後**にフックを取り除く。失敗・exit code 2 によるブロック・タイムアウトの場合はフックが残り、次の一致イベントで再実行される。スキル frontmatter で宣言したフックのみ有効（settings ファイルとエージェント frontmatter では無視） | `false` |
 | `statusMessage` | スピナーメッセージ | - |
