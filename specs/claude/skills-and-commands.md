@@ -225,7 +225,7 @@ Claude Code に同梱されるスキル:
 |:--|:--|
 | `/batch <instruction>` | コードベース全体の大規模変更を並列オーケストレーション。5〜30ユニットに分解し、ユニットごとに隔離 worktree のバックグラウンドサブエージェントが実装・テスト・変更の公開まで行う（2026-10 ドキュメント改訂で「PRを作成」から「変更を公開（publishes its change）」に表現変更）。git リポジトリ、または worktree を作成する `WorktreeCreate` フックが必要（**git 外での実行は v2.1.281 以降**） |
 | `/update-config [request]` | 設定変更を自然言語で依頼すると該当する `settings.json` を Claude が編集する（コマンド許可・環境変数・フック追加等）。テーマ・モデルなどは `/config` を使う（2026-10 巡回でコマンド一覧収載を確認） |
-| `/claude-api` | Claude API リファレンス素材の読み込み（Python/TS/Java等）。サブコマンド: `migrate` / `upgrade` / `managed-agents-onboard` / `prompt-audit`（v2.1.221+） / `cost-optimize`（v2.1.247+） / `build-eval`・`hillclimb`（v2.1.259+） / `preserved-thinking-migration`（2026-10-02 巡回で確認。preserved thinking ブロックを無効化する統合側の編集を検出・影響測定・修正提案） |
+| `/claude-api` | Claude API リファレンス素材の読み込み（Python/TS/Java等）。サブコマンド: `migrate` / `upgrade`（**v2.1.236+**。Anthropic SDK のメジャーバージョン移行、現在は Python `anthropic` 0.x→1.x） / `api-version`（**v2.1.307+**。コードを新しい [API バージョン](https://platform.claude.com/docs/en/api/versioning)向けに更新し、リクエストをそのバージョンへ切り替える） / `managed-agents-onboard`（引数なしは新規 Managed Agent 作成ウィザード。**v2.1.290+ で `<url>`**（そのページが記述する Managed Agent を構築）**と `<quickstart-name>`**（Console のクイックスタートテンプレート名。テンプレート名でない1語を渡すと有効な名前を列挙）を受理） / `managed-agents-secure [<agent-id>]`（**v2.1.304+**。Managed Agent の設定を [secure-deployment ガイド](https://platform.claude.com/docs/en/managed-agents/secure-deployment)と突合して監査。要 `ant` CLI） / `prompt-audit`（v2.1.221+） / `cost-optimize`（v2.1.247+） / `build-eval`・`hillclimb`（v2.1.259+） / `preserved-thinking-migration`（2026-10-02 巡回で確認。preserved thinking ブロックを無効化する統合側の編集を検出・影響測定・修正提案） |
 | `/artifact-capabilities` | 公開 artifact が使えるランタイム機能（コネクタ呼び出し等）のリファレンス読み込み（2026-10-02 巡回でコマンド一覧収載を確認） |
 | `/artifact-diagramming` | artifact 内のダイアグラム作成ガイダンス読み込み（ライト / ダーク両対応のインライン SVG 等） |
 | `/claude-in-chrome [task]` | Claude in Chrome でブラウザタスクを実行（ページテスト・フォーム入力・コンソールログ読み取り等）。Chrome 拡張接続時に利用可 |
@@ -235,6 +235,7 @@ Claude Code に同梱されるスキル:
 | `/verify` | コード変更が実際に意図通り動くかをエンドツーエンドで検証（テストや型チェックだけでなく対象フローを実際に動かす）。v2.1.215 で Claude による自動起動が廃止され、ユーザーの明示的な呼び出しのみに |
 | `/simplify` | v2.1.152 で `/code-review --fix` のエイリアスとして復活。v2.1.154 でクリーンアップ専用レビュー（reuse / simplification / efficiency / altitude）に変更され、`/code-review --fix` のバグハンティングは行わなくなった |
 | `/workflows` | Dynamic workflows の実行状況表示（v2.1.154）。Claude にワークフロー作成を依頼するとバックグラウンドで数十〜数百のエージェントを跨いだ作業をオーケストレーション。v2.1.160 でトリガーキーワードが `workflow` → `ultracode` にリネーム |
+| `/workflow-authoring` | 動的ワークフロースクリプト作成のリファレンスをロード（スクリプト API・再開挙動・品質パターン・実例）。通常は Claude がスクリプトを書く前に自動ロードするので、手で呼ぶのは保存済みスクリプトを手編集する前など。**動的ワークフローが有効な場合のみ利用可、要 v2.1.248 以降** |
 | `/less-permission-prompts` | 読み取り専用 bash/MCP 呼び出しを検出し許可リスト追加を提案（v2.1.111） |
 | `/team-onboarding` | 新メンバー向けのプロジェクトオンボーディング資料生成（v2.1.101） |
 | `/build-eval` | Claude を使ったアプリ向けの eval セットを構築する（**v2.1.259 以降**） |
@@ -272,6 +273,13 @@ Claude Code に同梱されるスキル:
 `/` を入力して一覧表示。主要なコマンド:
 
 > **タイポ時の挙動（v2.1.236）**: 存在しないコマンド、またはそのセッションで利用できないコマンドで Enter を押しても、最も近いコマンドへのファジーマッチで勝手に実行されることはなくなり、その旨が報告される。プレフィックス入力とエイリアスは従来どおり実行される。
+>
+> **コマンドメニューのマッチング挙動（2026-10 commands リファレンスで明文化）**:
+>
+> - **ハイライト**: `/` の後の文字がコマンド名またはエイリアスに、名前の先頭か語の途中の先頭からマッチした場合のみ最上位候補をハイライトする。`:` / `_` / `-` の区切り文字は無視される（`/adddir` → `/add-dir`、エイリアス経由で `/new` → `/clear`）。Enter でハイライト候補を実行（v2.1.236+）
+> - **タイポ後**: 何もハイライトされない。近い候補はリストに残り Tab / 矢印キーで選択できるが、Enter は入力をそのまま送信し Unknown command を報告する
+> - **利用不可コマンド**: メニューから省略される。何もマッチしない場合は `No commands match "/name"` を表示
+> - **隠しコマンド**: `/heapdump` 等は意図的にメニューに出ず、部分一致でも現れない。フルネームをタイプした時のみ一覧表示・実行される
 
 ### 2.1 セッション管理
 
@@ -294,13 +302,14 @@ Claude Code に同梱されるスキル:
 | コマンド | 説明 |
 |:--|:--|
 | `/config` (`/settings`) | 設定インターフェース表示。v2.1.181 で `/config key=value` 構文により任意設定をプロンプトから直接変更可能（インタラクティブ / `-p` / Remote Control 対応、例: `/config thinking=false`）。`/config --help` でショートハンドキー一覧（v2.1.183）。v2.1.202 で「Dynamic workflow size」設定（動的ワークフローのエージェント数目安 small/medium/large）追加 |
-| `/doctor [prompt-audit [path]]` (`/checkup`) | セットアップの総合チェックアップ。問題の診断と修正まで実行（v2.1.205 で強化・`/checkup` エイリアス追加）。CLAUDE.md の冗長部分の削減提案も（v2.1.206）。**v2.1.283 で `prompt-audit` サブコマンド追加**: チェックアップの代わりに CLAUDE.md・スキル等の設定ファイルを監査し、旧モデル向けの陳腐化した指示や矛盾する指示を洗い出す |
+| `/doctor [prompt-audit [path]]` (`/checkup`) | セットアップの総合チェックアップ。問題の診断と修正まで実行（v2.1.205 で強化・`/checkup` エイリアス追加）。CLAUDE.md の冗長部分の削減提案も（v2.1.206）。**v2.1.283 で `prompt-audit` サブコマンド追加**: チェックアップの代わりに CLAUDE.md・スキル等の設定ファイルを監査し、旧モデル向けの陳腐化した指示や矛盾する指示を洗い出す。**v2.1.305 で usage チェック追加**: Pro / Max / Team / Enterprise プランでは、直近7日間のプラン使用量を下げるために `/usage` が推奨する変更もチェックアップに含まれ、Claude が自分で実行できる変更は提案し、残りは助言（ユーザーが実行すべきコマンド等）として報告する。Remote Control 接続中は usage チェックは省略される。`disableBundledSkills` 有効時も `/doctor` はタイプすれば実行可能で、隠すには環境変数 `DISABLE_DOCTOR_COMMAND` か `skillOverrides` の `"doctor": "off"` を設定する |
 | `/permissions` (`/allowed-tools`) | 権限設定。allow / ask / deny ルールをスコープ別に閲覧・追加・削除し、作業ディレクトリ管理と Auto mode の拒否履歴レビューを行う。**v2.1.246 で Auto mode タブが追加**され、Auto mode 分類器ルールの閲覧・編集もダイアログから可能に。応答中に実行するとダイアログが即座に開き、変更は同一ターンの次のツール呼び出しから適用される（v2.1.234 以降） |
 | `/fast [on\|off]` | Fastモードトグル |
 | `/model [model]` | モデル変更（v2.1.144 から現在セッションにのみ適用。新規セッションのデフォルト変更はピッカーで `d` キー、保存せず切り替えるだけなら `s` キー）。ピッカーの effort スライダを矢印キーで動かして effort を設定でき、低〜`xhigh` を選ぶと `modelSettings` にモデル別で保存される。**v2.1.284 以降、スライダに `ultracode` の位置はなく**（ultracode は `/effort` の独立トグルに移行）、レベル選択は ultracode の状態を変えない |
 | `/effort [level\|auto\|status\|ultracode [on\|off]]` | エフォートレベル設定。引数なしで対話スライダ、レベル名で直接設定、`auto` で**現在のモデルの保存済みレベルをクリア**（他モデルのエントリと最上位の `effortLevel` は残る）、`status` で現在値を表示。`max` はセッション限定（設定ファイルには保存されない）。**v2.1.284 で ultracode が独立トグルに変更**: `ultracode` / `ultracode on` で現在の effort レベルのままセッションの ultracode をオン、`ultracode off` でオフ（`ultracode` 設定キーが `true` でもセッション単位でオフ可）。スライダでは **Tab** キーでトグル（`effortSlider:toggleUltracode`）。ultracode はもはや `xhigh` を強制せず、レベル変更でオフにもならない（v2.1.284 より前は ultracode 選択＝`xhigh` 強制・別レベル選択でオフ）。**v2.1.251 でモデルごとに既定 effort レベルを保存**するようになり、保存先は `effortLevel` ではなく設定キー [`modelSettings`](configuration.md)（user 設定）に変わった。モデルを切り替えても各モデルの設定が保持される。Claude の作業中に実行しても即時反映（キュー待ちしない）。v2.1.154 でスライダのラベルが「Speed」/「Intelligence」→「Faster」/「Smarter」に変更。v2.1.161 でダイアログが「Reduce motion」アクセシビリティ設定を尊重 |
 | `/skill-doctor` | 読み込まれているスキルの**コンテキストコストと呼び出し頻度**を表示し、一度も呼ばれていないスキルと、その無効化方法を示す。最近使っていないプラグインも一覧化。対話セッションでは `/plugin` マネージャの **Stats** タブに開き、`-p` の非対話モードではテキスト出力。バンドルスキル・エンタープライズスキルは対象外。**v2.1.252 以降＋feature flag 取得が必要**で、feature flag 取得を止めているセッションと Remote Control 経由では利用不可（後者は `Skill usage reports are not available on this connection.` を返すため、セッションが動いているマシンの端末で実行する） |
 | `/memory` | CLAUDE.md/オートメモリ管理 |
+| `/output-style [style]` | 出力スタイルの一覧表示・切り替え（例: `/output-style concise`）。要 v2.1.269 以降。詳細（組み込みスタイル・カスタムスタイル・保存先）は [configuration.md](configuration.md) の `outputStyle` を参照 |
 | `/hooks` | フック設定表示 |
 | `/mcp [reconnect (<server>\|all)\|enable\|disable [<server>\|all]]` | MCPサーバー管理。v2.1.161 で未使用 claude.ai connector を「Show unused connectors」の下に折りたたみ表示に変更。**v2.1.284 で `reconnect all` 追加**（接続失敗・要認証の全サーバーを一括再試行） |
 | `/status` | ステータス表示。v2.1.221 からセッション種別（`interactive` / バックグラウンドの `attached` / `unattended`）も表示。セッション間メッセージが有効なセッションでは自身の受信箱アドレスを `Peer address` 行（`uds:` プレフィックス）に表示。v2.1.243 で `Skipped sources` 行（`managed-settings.json` 等、存在するが上位の managed ソースが有効なため適用されない managed 設定ソース）と、Claude Code on the web 向けの GitHub 接続状況行（未接続なら `/web-setup` を案内）を追加 |
@@ -652,6 +661,8 @@ cloud / 共有レポでは `.claude/settings.json` の `enabledPlugins` で宣�
 | **変更のみスキャン** | ブランチ diff / PR / 単一コミットを対象。コミット済みの変更のみ（要 git） |
 | **Suggest patches** | finding を選んでパッチ生成。独立レビューエージェントが検証してから `patches/F<n>.patch` に出力 |
 
+**スキャン effort レベル（2026-10 ドキュメント改訂で「Choose a scan effort」節新設）**: `low` / `medium`（既定）/ `high` の3段階。`low` はクイックな初見チェックで、コードベーススキャン時にアーキテクチャマップと脅威モデルをスキップ。`high` は `medium` の内容に加えて同じコードに対する脆弱性ハントを増やす。**finding の独立検証は全レベルで実施**される。レベルはリクエスト文中で指定する（例: `/claude-security scan my public API code at high`）。大規模リポジトリで期待より finding が少ない場合は、`high` でのスキャン・2回目のスキャン（またはその両方）が、1回の `medium` スキャンでは出ない finding を出すことがある。
+
 **結果出力**: `CLAUDE-SECURITY-<timestamp>/` ディレクトリに `RESULTS.md`（finding ID・severity・confidence 付き）、`RESULTS.jsonl`、`REVISION-<commit>.json`（スキャン対象コミットの記録）。ディレクトリ自身が `.gitignore` を持ち誤コミットを防止。
 
 **パッチは自動適用されない**: `git apply` でユーザー自身が適用。パッチごとに独立 PR 推奨。
@@ -714,9 +725,9 @@ first-mod/
 
 | グループ | 主なイベント |
 |:--|:--|
-| ツール | `tool.call`（実行前に deny / 結果差し替え可）、`tool.check`（allow / ask / deny 判定の上書き）、`tool.describe`（説明の書き換え・tool search 背後へのディファー指定） |
-| プロンプト | `prompt.submit`（書き換え / drop）、`prompt.fill` / `prompt.suggest` / `prompt.edit`、`prompt.compose` / `prompt.section`（システムプロンプトのセクション書き換え・削除）、`prompt.context`、`prompt.attachment`（リマインダー等の書き換え・抑止）、`skill.prompt`（スキル本文展開の書き換え）、`attribution.text`（コミット / PR 帰属テキスト）、`prompt.autocomplete`（プロンプト欄のオートコンプリート一覧に mod 独自の行を追加。v2.1.292） |
-| コマンド・設定 | `command.run` / `command.describe`、`config.set` / `config.describe` |
+| ツール | `tool.call`（実行前に deny / 結果差し替え可）、`tool.check`（allow / ask / deny 判定の上書き。**v2.1.290+ で `e.agentId`**（サブエージェント / インプロセスのチームメイトの呼び出しで設定され、メイン会話では欠落）**と `e.ceiling`**（組織が ask に設定した connector ツールで `"ask"`）、**v2.1.304+ で `e.isReadOnly`**（ツールがその呼び出しを読み取り専用と報告した場合に `true`。それ以外は `false` ではなく欠落））、`tool.describe`（説明の書き換え・tool search 背後へのディファー指定） |
+| プロンプト | `prompt.submit`（書き換え / drop）、`prompt.fill` / `prompt.suggest` / `prompt.edit`、`prompt.compose` / `prompt.section`（システムプロンプトのセクション書き換え・削除）、`prompt.context`、`prompt.attachment`（リマインダー等の書き換え・抑止）、`skill.prompt`（スキル本文展開の書き換え。**v2.1.299+ で `e.source`**（enterprise / personal / project 配置なら `policySettings` / `userSettings` / `projectSettings`、他は `plugin` / `mcp` / `syncedSkills` / `built-in` 等）**・`e.pluginName`・`e.path`・`e.frontmatter`・`e.frontmatterProblem`**（frontmatter が欠落している理由）を提供。フックは変更した `text` / `frontmatter` を `next` に渡せるが、**それ以外のフィールドを変更するとフック自体が失敗**する）、`attribution.text`（コミット / PR 帰属テキスト）、`prompt.autocomplete`（プロンプト欄のオートコンプリート一覧に mod 独自の行を追加。v2.1.292）、**`prompt.mention`（v2.1.290+）**: プロンプトで @-mention されたファイルを Claude Code が読む直前に発火。`next({...e, path})` で別ファイルへリダイレクト、`{deny: reason}` で拒否可 |
+| コマンド・設定 | `command.run` / `command.describe`、`config.set` / `config.describe`、**`settings.read`**: mod が `$.settings.read` を呼んだ時、または Claude Code がセッションのマージ済み設定を構築する時に発火（**後者での発火と `e.layers` は v2.1.304+**）。`e.layers` は設定を持つソースごとの `{source, settings}` オブジェクト（precedence の低い順）。`e.source` は mod が単一ソースを指定して読んだ場合のみ設定される |
 | ターン | `turn.start`、`turn.step`（モデル / effort の差し替え。async generator）、`turn.complete`（回答下に1行表示可） |
 | セッション | `session.start` / `session.end` / `session.compact`（skip 可）/ `session.receive` / `session.send` / `session.append`（保存行の書き換え）/ `session.attach` / `session.detach` / `session.measure` |
 | サブエージェント | `agent.offer`（タイプの提示を抑止）、`agent.spawn`（モデル差し替え / deny。チームメイトは `e.isTeammate`。v2.1.292 からワークフローエージェントも run・index 付きで渡り拒否可能） |

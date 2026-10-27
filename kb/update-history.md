@@ -1,5 +1,42 @@
 # harness-harness 更新履歴
 
+## 2026-10-28 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code**: **v2.1.311（2026-10-26）を反映**。ハーネス観点の目玉:
+- **`ultrathink` が対話端末で xhigh effort 実行に**（Opus 5.5 / Sonnet 5.5 / Haiku 5.5 / Fable 5.1、Anthropic API のみ。レインボー表示は effort を上げられる場面のみ）
+- **モデル名・ID の `[1m]` サフィックス廃止**（効果のないモデル。指定は引き続き受理）
+- **`DISABLE_COMPACT` の片方向化**（オフ方向のみ）、Bedrock / Mantle / Vertex / Foundry のモデル設定が署名付きファイル由来に（`CLAUDE_CODE_MODEL_CATALOG=off`）
+- **重要修正**: `SubagentStop` フック毎分2回誤発火、サブエージェントが起動後接続の MCP ツールを使えない問題、compaction 直後の MEMORY.md / CLAUDE.md 古い内容参照、`/code-review` 等のセッション再起動時二重実行
+
+**ドキュメント実質差分の一括反映**（docs ページ再生成に伴う未収載分を精査）:
+- hooks: UserPromptSubmit のタイムアウト挙動（出力破棄 vs SDK コールバックはブロック）、プロンプトチェック中 Esc、`permissionDecision: "defer"` の全メカニクス
+- mcp: **MCPタスク（サーバー側実行、public beta、v2.1.304+）**、`anthropic/requiresUserInteraction`、`idempotentHint` / `readOnlyHint`、`--callback-port`、ツール名128字上限
+- best-practices: **公式ページ全面改稿を反映** — 強調（IMPORTANT/YOU MUST）推奨の撤回、「やめてよいこと」テーブル（コンテキスト保全目的のサブエージェント等の廃止）、effort 中心のデフォルト変更指針
+- agent-teams: `--setting-sources` のチームメイト伝播、auto-mode クラシファイアの全エージェント間メッセージ審査、in-process チームメイトのバックグラウンドサブエージェント不可
+- skills-and-commands: `/claude-api` サブコマンド追補、`/doctor` 使用量チェック（v2.1.305+）、`/workflow-authoring`、コマンドメニューマッチング、claude-security スキャン effort、mods イベントカタログ（`settings.read` / `prompt.mention` 追加等）
+- configuration: `ultrathink` キーワード仕様、Haiku 5.5（`claude-haiku-5-5`）、`sshHostCommands`、compaction 系環境変数群（`DISABLE_COMPACT` / `CLAUDE_CODE_MAX_CONTEXT_TOKENS` の依存関係等）、`CLAUDE_CODE_SIMPLE_SYSTEM_PROMPT`
+- tools: workflows の `ultracode` キーワード有効範囲・保存と配布・`args`
+
+**Codex CLI**: 安定版・SDK とも新リリースなし（安定版 0.164.0 のまま、GitHub タグは 0.166.0-alpha.2 まで進行）。公式 changelog 新着は **ChatGPT for iOS 1.2026.286**（2026-10-22）のみ。hooks / build-plugins / app-server / codex-plugin-cc はノイズのみ。
+
+**Phase 3.5 スキルエコシステム巡回**: スキップ（前回 2026-10-26 から 7 日以内）。
+
+**次回以降の宿題**: llms.txt に specs/ 未カバーの新ページ（`routines.md`、`auto-mode-config.md` / `auto-mode-classifier-billing.md`、`context-window.md`、`debug-your-config.md`、`deep-links.md`、`desktop-scheduled-tasks.md` 等）。claude-tag.md / claude-projects.md はプロダクト面ドキュメントのため specs/ スコープ外と判断（要スコープ判断）。
+
+### 更新ファイル
+
+- `specs/claude/changelog.md` — v2.1.311 追加
+- `specs/claude/configuration.md` — ultrathink / Haiku 5.5 / `sshHostCommands` / 環境変数 9 件追加
+- `specs/claude/hooks.md` — UserPromptSubmit タイムアウト・Esc、`defer` メカニクス
+- `specs/claude/mcp.md` — MCPタスク、`requiresUserInteraction`、ツールアノテーション等
+- `specs/claude/best-practices.md` — 公式全面改稿の反映（§1.4 撤回、§8 / §9 新設）
+- `specs/claude/agent-teams.md` — 4 件追補
+- `specs/claude/skills-and-commands.md` — 6 件追補
+- `specs/claude/tools.md` — workflows 3 件追補
+- `specs/codex/changelog.md` — 2026-10-28 巡回エントリ（iOS 1.2026.286）
+
 ## 2026-10-27 — 公式ドキュメント巡回
 
 ### 検出・更新

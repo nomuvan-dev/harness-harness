@@ -1,6 +1,6 @@
 # Claude Code MCP 仕様書
 
-最終更新: 2026-10-07（巡回更新）
+最終更新: 2026-10-28（巡回更新）
 
 公式ドキュメント: https://code.claude.com/docs/en/mcp
 
@@ -250,6 +250,17 @@ Claude API はリクエスト中の全ツールの入力スキーマを検査し
 
 なおルートレベル `anyOf` / `oneOf` / `allOf` の書き換え（v2.1.195 以降。それ以前は該当ツールを一律スキップ）はこれとは別系統の扱いで、機能フラグ取得がオフでもフラグが未着でも従来どおりの挙動を保つ。
 
+### 3.8 フルネーム 128 文字超のツールの除外
+
+`mcp__<server>__<tool>` のフルネームが **128 文字を超える** MCP ツールは、Claude に送るツール一覧から除外される（Claude API がそのようなツールを含むリクエストを拒否するため。除外によりサーバーの他ツールは生きる）。`/mcp` には表示されるのに Claude が呼べないツールはこれを疑い、`/mcp` でツールを選んでフルネームを確認する。
+
+### 3.9 `idempotentHint` / `readOnlyHint` ツールアノテーション（再試行・並列実行）
+
+サーバー側で `tools/list` エントリの `annotations` に以下のいずれかを `true` で設定すると「二度呼んでも安全」と宣言でき、**HTTP / claude.ai コネクタサーバーへの接続が閉じた時点で pending だった呼び出しを、新しい接続で 1 回だけ再試行**してもらえる。宣言のない呼び出しは `connection closed before the tool call was answered` エラーで失敗しうる。
+
+- **`idempotentHint`**: 変更を行いうるが、同じ引数での再呼び出しが安全なツール
+- **`readOnlyHint`**: 何も変更しないツール。加えて**他の read-only 呼び出しと並列実行**される
+
 ---
 
 ## 4. MCP インストールスコープ
@@ -468,9 +479,44 @@ MCP サーバーがセッション中にユーザー入力を要求する仕組�
 
 プロトコルリビジョン 2026-07-28 で接続している場合、Claude Code はクライアントケーパビリティで `elicitation: {form: {}, url: {}}` を宣言し、サーバーは標準の elicitation リクエストで両モードを要求できる。
 
+### 8.13.1 MCPタスク（サーバー側実行、public beta、v2.1.304+）
+
+MCP サーバー自身がレポートエクスポートやビルドのような長時間ジョブを実行する仕組み（[MCP tasks extension](https://modelcontextprotocol.io/extensions/tasks/overview) ベース）。サーバーがジョブを受理した時点で Claude のツール呼び出しは返り、Claude は作業を継続する。実行中はフッターに `1 MCP task` のようなカウントが表示され、Claude Code がサーバーへステータス確認して追跡する。ジョブ終了時は**結果はトランスクリプトではなく Claude に渡る**ため、内容は Claude に尋ねる（Claude がアイドルなら結果到着時に自発的に動き出す）。
+
+**停止**: `/tasks` でタスクを選び `x` を押す（または Claude に頼む）。**`Esc` では止まらない**。切断中のサーバーはまず `/mcp` から再接続すること（再接続せずに止めるとキャンセル要求が送られず、Claude Code はタスクを忘れて追跡不能になる）。
+
+**終了・クリア・再開**:
+
+- **リモートサーバーのタスクは Claude Code 終了後も走り続ける**。終了ダイアログのどの選択肢もリモートタスクをキャンセルしない（`The following will stop when you exit:` に列挙されていても）。止めたければ終了前に `/tasks` で停止する
+- 再追跡するには**同じセッションを対話的に再開**する（`claude --resume` / `--continue` / `/resume`。`--input-format stream-json` も可）。ワンショットの `claude -p` での resume はタスクを追跡しない。新規セッションや `--fork-session` も追跡しない
+- `/clear` / `/branch` / 別セッションへの `/resume` では、Claude Code が開いている限り結果は現在の会話に届く
+
+**タスク化の条件**（すべて満たす場合のみ。満たさない呼び出しは通常のツール呼び出しとなり、2 分超の自動バックグラウンド化〔`CLAUDE_CODE_MCP_AUTO_BACKGROUND_MS`、§10〕の対象）:
+
+- サーバーがタスクをサポートしている
+- HTTP / stdio / claude.ai コネクタのサーバーで、プロトコルリビジョン 2026-07-28 で接続している（`MCP_SDK_GENERATION=v1` / `MCP_PROTOCOL_NEGOTIATION=legacy` では不可）
+- セッションが機能フラグを取得している（Bedrock 等のサードパーティプロバイダ、テレメトリ/フラグ取得オフでは不可）
+- Anthropic がそのサーフェスで MCP タスクを有効化している（v2.1.304 時点: ターミナル CLI・Agent SDK・GitHub Actions。VS Code 拡張や Desktop アプリは対象外）
+- メイン会話からの呼び出し（サブエージェントは不可）
+- 対話セッションであるか、Agent SDK / `--input-format stream-json` の `claude -p` で `CLAUDE_AUTO_BACKGROUND_TASKS=1`、かつ `CLAUDE_CODE_DISABLE_MCP_TASK_BACKGROUND` が `1` でなく、`CLAUDE_CODE_MCP_AUTO_BACKGROUND_MS` が `0` でないこと（ワンショットの `claude -p "<prompt>"` は MCP タスクを得られない）
+
+**非対話セッションでの入力要求**: 実行中タスクが elicitation で入力を求めた場合、非対話セッションでは **`Elicitation` フックの実行も Agent SDK の `onElicitation` 呼び出しも行わずに**サーバーへタスクのキャンセルを要求する。
+
+**待機させたい場合**: `CLAUDE_CODE_MCP_AUTO_BACKGROUND_MS=0`（全 MCP ツール呼び出しを待つ）、または `CLAUDE_CODE_DISABLE_MCP_TASK_BACKGROUND=1`（タスク結果を待つ。自動バックグラウンド化が有効なら 2 分で通常のバックグラウンド呼び出しに移行し、その場合セッション終了を生き延びない）。待機中の `Esc` やタイムアウト到達は呼び出しを終了させ、サーバーへキャンセルを要求する。
+
+### 8.13.2 `anthropic/requiresUserInteraction` アノテーション（毎回承認を要求）
+
+サーバー側で、ツールの `tools/list` エントリの `_meta["anthropic/requiresUserInteraction"]` に **JSON の Boolean `true`** を設定すると（他の値は無視）、そのツールは**毎回明示的な承認が必要**になる。同意取得やアクセス付与のように「権限プロンプト自体が目的」のツール向け。
+
+- `acceptEdits` / `auto` / `bypassPermissions` の各権限モードでも**毎回プロンプトが出る**。「don't ask again」の選択肢は提示されず、マッチする allow ルールでもプロンプトはスキップされない
+- プロンプトを出せない `dontAsk` モードでは呼び出しは**拒否**される
+- 非対話モードの `--permission-prompt-tool` が返す `allow` は `MCP tool requires user interaction; not supported via --permission-prompt-tool` のメッセージ付きで **deny に変換**される（プロンプトは人間に届く必要があるため）
+- Agent SDK の `canUseTool` コールバックは**承認できる**（SDK アプリがユーザーに提示する前提）
+- Remote Control や Agent SDK 上のサーフェスで普段使えるワンタップ承認は、このアノテーション付きツールでは**提供されず**、完全な権限プロンプトが表示される
+
 ### 8.14 OAuth 認証の詳細
 
-- **固定コールバックポート**: `--oauth-port` で OAuth コールバックポートを固定
+- **固定コールバックポート**: `claude mcp add --callback-port <n>` で OAuth コールバックを `http://localhost:PORT/callback` 形式の事前登録リダイレクト URI に固定できる（既定はランダムポート）。単独（dynamic client registration）でも `--client-id`（事前設定クレデンシャル）との併用でも使える
 - **事前設定 OAuth 認証情報**: `.mcp.json` にクライアントID/シークレットを記載可能
 - **OAuth メタデータディスカバリのオーバーライド**: カスタムメタデータURLの指定
 - **RFC 9728 対応**: Protected Resource Metadata ディスカバリに対応（v2.1.85）
