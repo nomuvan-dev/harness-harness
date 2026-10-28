@@ -633,7 +633,7 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 | `CLAUDE_CODE_DISABLE_UNKNOWN_MODEL_WINDOW_ENFORCEMENT` | `1` で未認識モデルのウィンドウ強制を無効化し、API が too-long エラーを返すまでコンパクションを遅延 |
 | `CLAUDE_CODE_SYNC_SKILLS_WAIT_TIMEOUT_MS` | 初回クエリが claude.ai スキル一覧の初期取得を待つ上限（既定 `5000`） |
 | `CLAUDE_CODE_SYNC_SKILLS_INSTALL_TIMEOUT_MS` | セッション途中の Agent SDK スキルリロードの上限（既定 `30000`）。なお `CLAUDE_CODE_SYNC_SKILLS` 自体が必要なのは `-p` 実行のみ（claude.ai サインイン済みターミナルセッションは設定なしで同期） |
-| `CLAUDE_CODE_SIMPLE_SYSTEM_PROMPT` | `0` で任意のモデルでフルシステムプロンプトを選択（短縮プロンプトには出力スタイルの `keep-coding-instructions` が作用する SWE 指示セクションがない） |
+| `CLAUDE_CODE_SIMPLE_SYSTEM_PROMPT` | `0` で任意のモデルでフルシステムプロンプトを選択（短縮プロンプトには出力スタイルの `keep-coding-instructions` が作用する SWE 指示セクションがない）。**v2.1.312 以降、Bedrock / Vertex / Foundry / Mantle の未認識モデル名（カスタムデプロイ名・inference profile ARN 等）は Sonnet / Haiku のフロントでも既定で短縮プロンプトになる**ため、フル維持にはこの `0` 指定が必要 |
 | `CLAUDE_CODE_MODEL_CATALOG` | `off` で Bedrock / Mantle / Vertex / Foundry のモデル設定を downloads.claude.ai の署名付きファイルから読む動作（v2.1.311）を無効化（公式 docs 未収載。changelog のみ） |
 | `CLAUDE_CODE_SESSIONEND_HOOKS_TIMEOUT_MS` | SessionEndフックタイムアウト（ミリ秒）。設定値は `timeout` 未指定の各フックのタイムアウトにもなる |
 | `CLAUDE_CODE_BASH_EDIT_DIFF` | Bash コマンドの変更ファイル記録（`bashEditDiff`）。`0`=無効 / `1`=全権限モードで記録。`bashEditDiffEnabled` 設定より優先。v2.1.269+ |
@@ -749,7 +749,8 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 | `CLAUDE_CODE_DISABLE_DANGEROUS_RM_TIMEOUT` | `1` で critical-path 削除プロンプトの時間制限を無効化。auto モードではこれらの削除が分類器に送られ、`bypassPermissions` モードではプロンプトが応答を待ち続ける。**起動環境からのみ有効**（settings の `env` ブロックは無視）。v2.1.281 以降 |
 | `CLAUDE_CODE_DISABLE_SUBSTITUTION_RM_PROMPT` | `1` で、ターゲット全体がコマンド置換の出力である再帰 `rm`（例 `rm -rf "$(pwd)"`）の critical-path 検査を無効化（他の critical-path 検査は継続）。**起動環境からのみ有効**。v2.1.281 以降 |
 | `CLAUDE_CODE_DISABLE_POWERSHELL_CMD_RM_DENY` | `1` で、PowerShell ツールが `cmd` ビルトイン（`rd` / `rmdir` / `del` / `erase`）によるシステムパス（ドライブルート・ホームディレクトリ等）削除を拒否する検査を無効化。settings の `env` ブロックでは無視される。v2.1.283 以降 |
-| `CLAUDE_CODE_DISABLE_REFUSAL_FALLBACK` | `1` で、安全性分類器がリクエストをフラグした際の自動モデル切替（`switchModelsOnFlag` 設定が制御する挙動）を無効化 |
+| `CLAUDE_CODE_DISABLE_REFUSAL_FALLBACK` | `1` で、安全性分類器がリクエストをフラグした際の自動モデル切替（`switchModelsOnFlag` 設定が制御する挙動）を無効化。v2.1.312 以降は切替対象にカスタムデプロイ名等の未認識モデル名も含まれる |
+| `CLAUDE_CODE_EVEN_MORE_DANGEROUSLY_SKIP_PERMISSIONS` | `1` で、`bypassPermissions` モードにおける危険な `rm`（critical-path 削除）の確認プロンプトを省略して無確認実行。**起動環境からのみ有効**（settings の `env` ブロックでは無視）。v2.1.311 以降 |
 | `CLAUDE_CODE_GZIP_REQUEST_BODIES` | `0` で `api.anthropic.com` への Claude API・テレメトリ・artifact 公開リクエストボディの gzip 圧縮を無効化。既定では直接接続時に大きなボディを圧縮し、プロキシ経由・クライアント証明書設定時・`NODE_EXTRA_CA_CERTS` 設定時は圧縮しない。検出できない TLS 検査プロキシが圧縮リクエストを壊す場合に `0` を使う |
 | `CLAUDE_CODE_GATEWAY_HINT_HEADERS` | `1` でゲートウェイヒントヘッダ（`x-claude-code-request-class` / `x-claude-code-compaction` 等）をカスタムプロキシや Bedrock / Claude Platform on AWS などサードパーティプロバイダにも送信。`0` で（既定で送信する Anthropic API 直結を含め）全接続で送信を停止。v2.1.273 以降 |
 | `CLAUDE_CODE_EMIT_SESSION_STATE_EVENTS` | `1` でセッション状態を運ぶ `session_state_changed` メッセージをメッセージストリームに追加。Agent SDK か、`--print` ＋ `--output-format stream-json` ＋ `--verbose` が必要 |

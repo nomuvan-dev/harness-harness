@@ -3,7 +3,9 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-10-28（**v2.1.311**（2026-10-26）を反映。ハーネス観点の目玉は **(1) `ultrathink` が対話端末で xhigh effort 実行に**（Opus 5.5 / Sonnet 5.5 / Haiku 5.5 / Fable 5.1、Anthropic API 経由。応答中の入力でそのターンの残りも引き上げ）、**(2) モデル名・ID の `[1m]` サフィックス廃止**（効果のないモデルで。指定は引き続き受理）、**(3) `DISABLE_COMPACT` の片方向化**（オフにする方向のみ。再有効化不可）、**(4) Bedrock / Mantle / Vertex / Foundry のモデル設定が downloads.claude.ai の署名付きファイル由来に**（`CLAUDE_CODE_MODEL_CATALOG=off` で無効化）、**(5) 重要修正: `SubagentStop` フックの毎分 2 回誤発火、サブエージェントが起動後接続の MCP ツールを使えない問題、compaction 直後の MEMORY.md / CLAUDE.md 古い内容参照、`/code-review` 等サブエージェント実行スキルのセッション再起動時二重実行、サブエージェント worktree の早期削除**。`--output-format json` / `stream-json` の制御文字 `\uXXXX` エスケープ化、`CLAUDE_CODE_SYNC_SKILLS` のスキル一覧マシン内再利用（10 分）も）
+最終更新: 2026-10-29（**v2.1.312**（2026-10-27）を反映。ハーネス観点の目玉は **(1) prompt / agent フックの同時実行上限**（サブエージェント含むセッションあたり最大 24 並列＋イベントのタイムアウトを超えて待ったものは最大 12。`timeout` の 1 秒未満指定は 1 秒扱い）、**(2) サブエージェントの `autoCompactWindow` が `CLAUDE_CODE_AUTO_COMPACT_WINDOW` のウィンドウを下げられるように**（従来は環境変数設定時は無効。引き上げは不可。※公式 sub-agents ページは本巡回時点で旧挙動の記述のまま＝changelog 先行）、**(3) Bedrock / Vertex / Foundry / Mantle の未認識モデル名（カスタムデプロイ名・inference profile ARN 等）が Sonnet / Haiku のフロントでも短縮システムプロンプトに**（`CLAUDE_CODE_SIMPLE_SYSTEM_PROMPT=0` でフル維持）、**(4) 安全性分類器フラグ時の自動モデル切替が未認識モデル名もカバー**（`CLAUDE_CODE_DISABLE_REFUSAL_FALLBACK=1` で無効化）、**(5) gateway に `oidc.user_id_claim`**（Entra ID の `oid` 等 `sub` 以外の id_token クレームでユーザー識別）、**(6) OTel の `claude_code.safety_event` 送信停止＋公式マーケットプレイスプラグインの固定 URL リモート MCP サーバーが `mcp_server.name` に実名報告**、**(7) 重要修正: 冒頭しか読んでいない巨大 CLAUDE.md / rules / @-include ファイルの Write 上書き（全読みか Edit を要求するように）、git リポジトリ深部への Bash `cd` 後に per-directory / `paths:` スキルが見つからない問題、不正な名前のコマンド 1 つで全コマンドがロードされず `claude -p` が無出力になる問題、VS Code サインイン後の managed settings / 組織ポリシー未取得**。ドキュメント改訂: env-vars に `CLAUDE_CODE_EVEN_MORE_DANGEROUSLY_SKIP_PERMISSIONS`（v2.1.311。bypassPermissions モードの critical-path 削除プロンプト省略）が収載、model-config に `ultrathink` の xhigh 昇格が収載（v2.1.311 の changelog 先行が解消）。Codex CLI は **0.165.0 安定版**（2026-10-27。specs/codex/changelog.md 参照）。前回2026-10-28の巡回要約は下記参照。）
+
+前回: 2026-10-28（**v2.1.311**（2026-10-26）を反映。ハーネス観点の目玉は **(1) `ultrathink` が対話端末で xhigh effort 実行に**（Opus 5.5 / Sonnet 5.5 / Haiku 5.5 / Fable 5.1、Anthropic API 経由。応答中の入力でそのターンの残りも引き上げ）、**(2) モデル名・ID の `[1m]` サフィックス廃止**（効果のないモデルで。指定は引き続き受理）、**(3) `DISABLE_COMPACT` の片方向化**（オフにする方向のみ。再有効化不可）、**(4) Bedrock / Mantle / Vertex / Foundry のモデル設定が downloads.claude.ai の署名付きファイル由来に**（`CLAUDE_CODE_MODEL_CATALOG=off` で無効化）、**(5) 重要修正: `SubagentStop` フックの毎分 2 回誤発火、サブエージェントが起動後接続の MCP ツールを使えない問題、compaction 直後の MEMORY.md / CLAUDE.md 古い内容参照、`/code-review` 等サブエージェント実行スキルのセッション再起動時二重実行、サブエージェント worktree の早期削除**。`--output-format json` / `stream-json` の制御文字 `\uXXXX` エスケープ化、`CLAUDE_CODE_SYNC_SKILLS` のスキル一覧マシン内再利用（10 分）も）
 
 前回: 2026-10-26（**v2.1.299〜v2.1.310**（2026-10-14〜10-23）を一括反映（12 バージョン。10/11 以降巡回が止まっていたため）。ハーネス観点の目玉は **(1) アイドルコンパクション**（200K+ トークンの会話を約54分放置すると 1 時間プロンプトキャッシュ失効前に自動 compact。`CLAUDE_CODE_IDLE_COMPACT_MIN_TOKENS` / `"idleCompaction": false` / `/config` 行で制御。v2.1.299〜302）、**(2) `/auto-mode-setup`**（プロジェクトと直近セッションを読んで auto mode に環境を学習させるガイド付きセットアップ。v2.1.304）、**(3) fork サブエージェントが `claude -p` / SDK / Desktop / VS Code でも既定有効化＋Desktop / VS Code のメイン会話サブエージェントは常にバックグラウンド実行に**（v2.1.302）、**(4) `claude -p` / SDK がサードパーティプロバイダ・テレメトリ無効・新規インストールで既定 `default` permission mode 開始に変更**（従来 auto。`--permission-mode auto` で維持。v2.1.302）、**(5) MCP allow ルールの厳格化**（`mcp__a` が `a__b` 等に波及しない。サーバー名に `__` を含む場合は `mcp__<正規化名>__*` と書く。agent `tools:` リストも同様。v2.1.299）、**(6) `UserPromptSubmit` フックがスキル / カスタムコマンド展開前に実行**（ブロックで埋め込みシェルも停止。v2.1.299）、**(7) compaction 後にスキル一覧を再送＋`/reload-skills` は差分のみ送信**（v2.1.304）、**(8) スキルフックの上限**（ソースごとに 1,024 フック / 16,384 matcher 文字。v2.1.304）、**(9) `sandbox.allowNestedUserNamespaces`**（Linux で Chromium / rootless podman 用にユーザー名前空間作成を許可＝ファイル保護を迂回し得る。v2.1.305）、**(10) Code Review のレビューレベル**（Quick / Standard / Deep を組織・リポジトリ単位で設定＋組織全リポジトリ一括対象化＋`@claude review stop`。v2.1.304/307）、**(11) `claude ultrareview` が workspace trust 必須に**（スクリプトは `--trust-workspace`。v2.1.309）、**(12) `sed -i` が編集プレビューでなく標準 Bash プロンプトで実行され `/rewind` 対象外に**（v2.1.309）、**(13) 重要修正: plan mode が PreToolUse / mod `tool.check` の allow した書き込みを実行してしまう問題、サンドボックス Bash がシェル起動ファイルをサンドボックス外で実行する問題、`--mcp-config` ファイルへのサンドボックス内変更、`--worktree` 終了時の未 push コミット喪失、Bash 権限チェックの `cd` ラップ / リダイレクト失敗変数 / サブシェル付き `Edit(path)` deny 迂回**。環境変数の追加: `CLAUDE_CODE_DISABLE_FILE_MENTIONS` / `CLAUDE_CODE_AUTO_MODE_MODEL` / `CLAUDE_CODE_RETRY_WATCHDOG_MAX_USAGE_LIMIT_WAIT_MS` / `..._USAGE_LIMIT_RECHECK_MS` / `CLAUDE_CODE_GZIP_REQUEST_BODIES`。ドキュメント改訂: 前回「changelog 先行」とした項目が収載済みに — sub-agents の `autoCompactWindow`、tools-reference の Read `allow_large`、mcp の 4,096 文字上限、env-vars の新変数群（`CLAUDE_CODE_WORKFLOW_SUBAGENT_MODEL` のみ未収載）、settings-reference に `idleCompaction` / `allowNestedUserNamespaces` / `allowedMcpServers`。Codex CLI は **0.163.0**（2026-10-15）/ **0.164.0**（2026-10-23）の 2 安定版（specs/codex/changelog.md 参照）。前回2026-10-11の巡回要約は下記参照。）
 
@@ -13,6 +15,38 @@
 
 
 ---
+
+## v2.1.312 (2026-10-27)
+
+**フック同時実行上限・サブエージェント `autoCompactWindow` の環境変数ウィンドウ引き下げ・未認識モデル名の短縮プロンプト化**
+
+### 新機能
+
+- **Claude apps gateway に `oidc.user_id_claim`**: Microsoft Entra ID の `oid` など `sub` 以外の id_token クレームでユーザーを識別
+- フルスクリーンでキュー済みメッセージ下の「to send now」ヒントをクリックすると即時送信
+- [Cloud sessions] クラウド実行ルーチンの作成・編集時のモデルピッカーに effort レベル、環境設定のセットアップスクリプト欄に色・行番号・Copy ボタン付き Bash エディタ
+
+### 変更
+
+- **prompt / agent フックの同時実行がセッションあたり最大 24（サブエージェント含む）＋イベントのタイムアウトを超えて待機したものは最大 12 に制限**。`timeout` の 1 秒未満指定は 1 秒として扱われる
+- **サブエージェントの `autoCompactWindow` が `CLAUDE_CODE_AUTO_COMPACT_WINDOW` の設定ウィンドウを引き下げられるように**(従来は環境変数設定時は無効)。引き上げは従来どおり不可
+- **Bedrock / Vertex / Foundry / Mantle で Claude Code が認識しないモデル名（カスタムデプロイ名・inference profile ARN 等）は Sonnet / Haiku のフロントでも短縮システムプロンプトを使用**。`CLAUDE_CODE_SIMPLE_SYSTEM_PROMPT=0` でフルプロンプト維持
+- **安全性分類器フラグ後の自動モデル切替が未認識モデル名もカバー**。`CLAUDE_CODE_DISABLE_REFUSAL_FALLBACK=1` で無効化
+- 使用量上限メッセージが 5 時間ウィンドウを「session limit」でなく「5-hour limit」と表記（VS Code はリセット時刻も表示）
+- CLI から開始したクラウドセッションの名前・ブランチ名をサーバーが決定
+- OTel の `mcp_server.name` が公式 Anthropic マーケットプレイスプラグイン宣言の固定 URL リモート MCP サーバーで `custom` でなく実名を報告
+- **OTel の `claude_code.safety_event` イベント送信を停止**
+
+### 修正（主要）
+
+- VS Code 拡張からのサインイン後、セッションの残りで managed settings / 組織ポリシーが取得されない問題
+- **冒頭しか見ていない巨大 CLAUDE.md / rules / @-include ファイルを Write が上書きする問題**（全読みまたは Edit を要求するように）
+- **git リポジトリ深部への Bash `cd` 後に per-directory / `paths:` スキルが見つからない問題**
+- 不正な名前のコマンド 1 つで全コマンドのロードが止まり `claude -p` が無出力になり得る問題
+- ターミナルでの resume 直後の最初の返信が次回 resume 時に欠落し得る問題
+- スピナー / OTel `effort` 値 / トランスクリプトがタスク中に選んだ新 effort レベルを適用前に表示する問題（実効レベルを表示）
+- [Code Review] GitHub の push イベント遅配時に古いコミットをレビュー（または未レビュー）になる問題（PR の現在コミットをレビュー）
+- [Claude Tag] ネットワークアクセス None の環境のチャンネルで返信しない問題、別スレッド回答中のファイル誤投稿、旧プライベートチャンネルの公開化で ID が変わると設定がワークスペース既定に落ちる問題
 
 ## v2.1.311 (2026-10-26)
 

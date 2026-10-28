@@ -818,7 +818,7 @@ model: sonnet
 > **ハーネス影響**: `permissionMode: bypassPermissions` を宣言していたサブエージェント定義は、v2.1.267 以降は通常の権限プロンプトを受けるようになる。自律実行を前提にした定義は、メイン会話側のモード（`--dangerously-skip-permissions` や Auto Mode）で担保する設計に切り替える。
 | `maxTurns` | No | 最大エージェンティックターン数。**上限に達した場合、Claude Code は出力を「部分的（partial）」とマークして返し、Claude は[サブエージェントの resume](https://code.claude.com/docs/en/sub-agents#resume-subagents) で継続できる**（partial マークは v2.1.246 以降。エージェントIDを返すサブエージェントでは「メッセージを送れば続きから再開できる」旨も結果に付く） |
 | `skills` | No | 起動時にプリロードするスキル |
-| `autoCompactWindow` | No | サブエージェントがメイン会話のウィンドウより早く auto-compact するためのウィンドウ指定（v2.1.296+。`--agents` 定義でも指定可。※公式 sub-agents ページは巡回時点で未収載＝changelog 先行） |
+| `autoCompactWindow` | No | サブエージェントがメイン会話のウィンドウより早く auto-compact するためのウィンドウ指定（`100000`〜`1000000`。v2.1.296+。`--agents` 定義でも指定可。公式 sub-agents ページに収載済み。**v2.1.312 以降は `CLAUDE_CODE_AUTO_COMPACT_WINDOW` 設定時もそのウィンドウを引き下げられる**（引き上げは不可。公式ページは旧挙動の記述のまま＝changelog 先行） |
 | `mcpServers` | No | スコープされたMCPサーバー |
 | `hooks` | No | ライフサイクルフック |
 | `memory` | No | 永続メモリスコープ (`user` / `project` / `local`) |

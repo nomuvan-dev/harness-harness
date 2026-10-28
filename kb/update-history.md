@@ -1,5 +1,30 @@
 # harness-harness 更新履歴
 
+## 2026-10-29 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code**: **v2.1.312（2026-10-27）を反映**。ハーネス観点の目玉:
+- **prompt / agent フックの同時実行上限**（セッションあたり最大 24 並列、タイムアウト超え待機は最大 12。`timeout` の 1 秒未満指定は 1 秒扱い。公式 hooks ページ未収載＝changelog 先行）
+- **サブエージェント `autoCompactWindow` が `CLAUDE_CODE_AUTO_COMPACT_WINDOW` のウィンドウを引き下げ可能に**（公式 sub-agents ページは旧挙動のまま＝changelog 先行）
+- **Bedrock / Vertex / Foundry / Mantle の未認識モデル名が既定で短縮システムプロンプトに**（`CLAUDE_CODE_SIMPLE_SYSTEM_PROMPT=0` でフル維持）＋安全性分類器フラグ時の自動モデル切替が未認識モデル名もカバー
+- gateway `oidc.user_id_claim`、OTel `claude_code.safety_event` 送信停止
+- **重要修正**: 冒頭しか読んでいない巨大 CLAUDE.md / rules / @-include の Write 上書き、git 深部 `cd` 後の per-directory / `paths:` スキル不発見、不正名コマンド 1 つで `claude -p` 無出力
+
+**ドキュメント改訂**: env-vars に `CLAUDE_CODE_EVEN_MORE_DANGEROUSLY_SKIP_PERMISSIONS`（v2.1.311）収載、model-config に `ultrathink` xhigh 昇格収載（changelog 先行解消）。
+
+**Codex CLI**: **0.165.0 安定版（2026-10-27）を反映**。Vertex AI 組み込みプロバイダ（`model_provider = "gcp"`）、GPT-6.1 Terra カタログ追加、会話中 reasoning effort 変更の既定有効化、memory v2 既定化＋外部エージェントメモリインポート、マーケットプレイス URL 検証のセキュリティ修正。GitHub タグは 0.166.0-alpha.5 まで進行。iOS は 1.2026.286 のまま。
+
+**Phase 3.5 スキルエコシステム巡回**: スキップ（前回 2026-10-26 から 7 日以内）。
+
+### 更新ファイル
+
+- `specs/claude/changelog.md` — v2.1.312 追加
+- `specs/claude/configuration.md` — `CLAUDE_CODE_EVEN_MORE_DANGEROUSLY_SKIP_PERMISSIONS` 追加、`CLAUDE_CODE_SIMPLE_SYSTEM_PROMPT` / `CLAUDE_CODE_DISABLE_REFUSAL_FALLBACK` の v2.1.312 挙動追記
+- `specs/claude/hooks.md` — prompt / agent フック同時実行上限（v2.1.312）
+- `specs/claude/skills-and-commands.md` — `autoCompactWindow` の陳腐化注記を更新
+- `specs/codex/changelog.md` — 0.165.0 追加
+
 ## 2026-10-28 — 公式ドキュメント巡回
 
 ### 検出・更新
