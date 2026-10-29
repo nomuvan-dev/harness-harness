@@ -1,5 +1,26 @@
 # harness-harness 更新履歴
 
+## 2026-10-30 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code**: 新バージョンなし（changelog.md ハッシュ不変、v2.1.312 のまま）。ドキュメント実質改訂を反映:
+- **mcp.md**: `claude mcp remove` はローカルの OAuth トークンを消すが認可サーバー側で失効させない → 失効したい場合は先に `claude mcp logout <name>`。新ステータス `✘ Blocked by enterprise managed policy`（managed MCP のallowlist/denylistブロックは非表示になる点と区別）。環境変数の**空文字列は「設定済み」扱い**で `${VAR:-default}` が空に展開される注意
+- **env-vars / model-config**: `CLAUDE_CODE_EFFORT_LEVEL=auto|unset` で「**effort レベルを送信しない**」が可能に（API 既定が適用。`/effort status` で確認、v2.1.304 より前は表示バグ）。`CLAUDE_CODE_DISABLE_BACKGROUND_TASKS` とは別に**バックグラウンドセッション停止は `CLAUDE_CODE_DISABLE_AGENT_VIEW=1`** と明記
+- **settings-reference / managed-settings**: アイドルコンパクションの対象が VS Code 拡張 / デスクトップ Code タブ（ローカル or SSH 実行セッション）に拡大（「Anthropic 選定アカウント」条件が消滅）、アイドル時間は約54分→約1時間表記に。**ログインキー（`forceLoginOrgUUID` / `forceLoginMethod`）の供給元ルール新設**: MDM ポリシー / managed ファイルがリモート設定（admin コンソール）に優先
+- **skills.md**: description 内の山括弧が `&lt;` / `&gt;` 表示になる件と回避策（角括弧 or `argument-hint`）
+- plugins 系: `claude-code-plugins` の「demo マーケットプレイス」呼称が削除（文言のみ、specs 更新不要）
+
+**Codex CLI**: 新安定版なし（0.165.0 のまま。GitHub タグは 0.166.0-alpha.6 まで進行）。learn.chatgpt.com はナビ改編のみ（enterprise/plugin-management が「Import and sync plugins from GitHub」に改題、API credits ページ追加 — いずれも CLI 仕様に影響なし）。codex-plugin-cc は push なし（Stars 34,672→34,706）。
+
+**Phase 3.5 スキルエコシステム巡回**: スキップ（前回 2026-10-26 から 7 日以内）。
+
+### 更新ファイル
+
+- `specs/claude/mcp.md` — mcp logout による失効手順、enterprise policy ブロック表示、空文字列展開の注意
+- `specs/claude/configuration.md` — `CLAUDE_CODE_EFFORT_LEVEL` 行追加（auto/unset = 未送信）、`CLAUDE_CODE_DISABLE_BACKGROUND_TASKS` 詳細化、idleCompaction 条件改訂、`forceLoginOrgUUID` ログインキー供給元ルール
+- `specs/claude/skills-and-commands.md` — description の山括弧エスケープ表示と回避策
+
 ## 2026-10-29 — 公式ドキュメント巡回
 
 ### 検出・更新

@@ -132,13 +132,14 @@ v2.1.154: `claude mcp list` / `get` の出力がパイプされた場合、未�
 | `⏸ Pending approval (run `claude` to approve)` | 未承認の `.mcp.json` プロジェクトスコープサーバー。`claude` を対話起動して承認する | `claude mcp list` と `get` |
 | `✘ Rejected (see disabledMcpjsonServers in settings)` | `disabledMcpjsonServers` で拒否されている | `claude mcp get <name>` のみ |
 | `⊘ Disabled for this project (re-enable via /mcp)` | プロジェクトの `disabledMcpServers` に列挙されている。`/mcp` パネルから再有効化 | `claude mcp list` と `get` |
+| `✘ Blocked by enterprise managed policy` | 組織ポリシーが拒否しているサーバー（2026-10-30 リファレンス改訂で明文化）。管理者にどのポリシーか確認する。なお [managed MCP 設定](https://code.claude.com/docs/en/managed-mcp.md)の allowlist / denylist 等でブロックされたサーバーはこのステータスではなく**両コマンドから非表示**になる | `claude mcp list` と `get` |
 
 > v2.1.238 より前は、無効化済みサーバーにもヘルスチェックのため接続しに行き接続結果を報告していた。
 
 **MCP 設定の警告（4 種）**:
 
 - **前後の空白**: `command` / `url` / `args` 各要素 / `env`・`headers` の値とキー名に前後の空白があると警告（`Leading or trailing whitespace in: headers.Authorization` のように値は伏せてフィールド名だけ表示）。Claude Code はトリムせずそのまま使うので設定側を直す
-- **サーバー削除時の OAuth 後始末**: リモートサーバーを削除すると、Claude Code はそのサーバー向けに保存していた **OAuth トークンとクライアント登録も削除する**（2026-09-06 時点のリファレンスで明記）。再追加時は再サインインが必要
+- **サーバー削除時の OAuth 後始末**: リモートサーバーを削除すると、Claude Code はそのサーバー向けに保存していた **OAuth トークンとクライアント登録も削除する**（2026-09-06 時点のリファレンスで明記）。再追加時は再サインインが必要。ただし**認可サーバー側でのトークン失効は行わない** — 失効させたい場合は `claude mcp remove <name>` の前に `claude mcp logout <name>` を実行する（認可サーバーが revocation 対応の場合。2026-10-30 リファレンス改訂で明文化）
 - **複数スコープでの同名サーバー**: 異なるエンドポイントで同じサーバー名を複数スコープに定義すると警告。OAuth サインインはエンドポイント単位で保存されるため、別プロジェクトでは再サインインが必要になる。`claude mcp remove <name> --scope <scope>` で整理する。警告中のエンドポイントは `${VAR}` を展開せずそのまま引用される
 - **予約名**: `workspace` / `claude-in-chrome` / `computer-use` / `Claude Preview` / `Claude Browser` は組み込みサーバー用に予約済み。定義するとロード時にスキップされリネームを促す警告。`claude mcp add` はエラーで拒否（`Claude Browser` の予約は v2.1.205 以降）
 - **未設定の環境変数**: `${VAR}` 参照が未設定かつ `:-default` も無い場合、変数名を挙げて警告した上で `${VAR}` のテキストのまま**サーバーはロードされる**。変数を設定するか `${VAR:-default}` を書く
@@ -181,6 +182,8 @@ v2.1.154: `claude mcp list` / `get` の出力がパイプされた場合、未�
 - `${VAR:-default}` -- VAR が未設定時はデフォルト値
 
 展開可能な箇所: `command`, `args`, `env`, `url`, `headers`
+
+**空文字列の扱い**（2026-10-30 リファレンス改訂で明文化）: 変数を空文字列に設定した場合も「設定済み」と見なされ、`${VAR:-default}` は `default` ではなく空文字列に展開される。例えば `url` が `${API_BASE_URL:-https://api.example.com}/mcp` のとき `API_BASE_URL=""` だと `url` は `/mcp` になり `claude mcp list` が `'url' is not a valid URL` を報告する。デフォルトを使いたい場合は空文字列ではなく unset にする
 
 > **認証情報系変数はリモートサーバーへ展開されない（v2.1.271）**: リモートサーバーの `url` / `headers` では、`ANTHROPIC_API_KEY` / `ANTHROPIC_AUTH_TOKEN` などの Claude Code 自身の資格情報、`AWS_BEARER_TOKEN_BEDROCK` などのクラウドプロバイダ資格情報、`HTTPS_PROXY` / `NPM_TOKEN` などの環境の資格情報は**空として読まれる**（変数の設定有無にかかわらず。`:-default` フォールバックも無視）。プロジェクトの `.mcp.json` やプラグインが資格情報を任意のサーバーへ送るのを防ぐため。`Bearer ${ANTHROPIC_AUTH_TOKEN}` と書くとサーバーには `Bearer `（資格情報なし）が届き、通常 `401` で接続失敗になる。`ANTHROPIC_BASE_URL` のようなベースURLは展開される（値自体に資格情報が埋め込まれている場合を除く）。対象外の名前（`API_KEY` 等）は従来どおり展開。対象の資格情報を渡したい場合は独自名の変数にコピーして参照する。検知は `claude --debug-file` のログで `never expanded toward a remote server` を検索
 

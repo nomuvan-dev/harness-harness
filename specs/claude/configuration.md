@@ -212,11 +212,11 @@ Claude Code は設定ファイルを監視し、変更を検知するとセッ�
 | `autoMemoryEnabled` | オートメモリ有効/無効（デフォルト: true） |
 | `autoMemoryDirectory` | オートメモリ保存先ディレクトリ |
 | `cleanupPeriodDays` | セッション保持日数（デフォルト: 30）。`0` は全トランスクリプト削除+永続化無効。検証エラーで拒否されなくなった（v2.1.89で `0` の動作変更）。v2.1.117 で `~/.claude/tasks/`、`~/.claude/shell-snapshots/`、`~/.claude/backups/` もスイープ対象に拡張 |
-| `idleCompaction` | `false` でアイドルコンパクション（200K+ トークンの会話を約54分放置で 1 時間プロンプトキャッシュ失効前に自動 compact）を無効化（v2.1.299。`/config` の「Idle compaction」行でも切替可＝v2.1.302。閾値は `CLAUDE_CODE_IDLE_COMPACT_MIN_TOKENS`。`DISABLE_AUTO_COMPACT=1` はアイドルコンパクションも無効化する） |
+| `idleCompaction` | `false` でアイドルコンパクション（200K+ トークンの会話を約1時間放置で自動 compact）を無効化（v2.1.299。`/config` の「Idle compaction」行でも切替可＝v2.1.302。閾値は `CLAUDE_CODE_IDLE_COMPACT_MIN_TOKENS`。`DISABLE_AUTO_COMPACT=1` はアイドルコンパクションも無効化する）。**2026-10-30 リファレンス改訂**: 対象セッションが「対話端末、VS Code 拡張チャットパネル、デスクトップアプリ Code タブ（セッションが自分のマシンまたは SSH 経由で実行される場合）」に拡大（従来の VS Code / デスクトップは「Anthropic 選定アカウントのみ」だった）。アイドル時間も「約54分」→「約1時間（その間マシンが起きていること）」に改訂。無効化はセッションが実行されるマシン / WSL ディストリビューション側の `~/.claude/settings.json` に書く |
 | `showThinkingSummaries` | thinking summariesの表示（v2.1.89でデフォルト `false` に変更。`true` で復元） |
 | `companyAnnouncements` | 起動時通知メッセージ |
 | `forceLoginMethod` | ログイン方式強制（`claudeai` / `console`）。v2.1.146〜v2.1.160 で Bedrock / Vertex / Foundry / Mantle のサードパーティプロバイダセッションが組織 pin と並んでブロックされるリグレッションあり。**v2.1.161 で修正済** |
-| `forceLoginOrgUUID` | 組織UUID強制選択。同上のリグレッションが v2.1.146〜v2.1.160 にあり、**v2.1.161 で修正済** |
+| `forceLoginOrgUUID` | 組織UUID強制選択。同上のリグレッションが v2.1.146〜v2.1.160 にあり、**v2.1.161 で修正済**。**ログインキーの供給元ルール（2026-10-30 managed-settings 改訂で新設）**: MDM ポリシーまたは managed settings ファイルがあるマシンでは、`forceLoginOrgUUID` と `forceLoginMethod`（`"claudeai"` / `"console"`）はリモート設定（claude.ai admin コンソール）が同キーを設定していても MDM ポリシー / ファイル側から読む。両方ある場合は MDM ポリシーを使う（ポリシーが何かポリシーキーを設定していればファイル側のログインキーは `managedSourcesBehavior: "merge"` でも無視）。ポリシー / ファイルがキーを省略していればリモート設定の値が適用される。全クライアントが v2.1.299+ になるまでは server-managed settings 側にも併記を推奨。ゲートウェイログインキーはリモート設定の値を一切使わない |
 | `enableAllProjectMcpServers` | プロジェクトMCPサーバー全自動承認 |
 | `enabledMcpjsonServers` | 承認するMCPサーバーリスト |
 | `disabledMcpjsonServers` | 拒否するMCPサーバーリスト |
@@ -622,7 +622,8 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 | `CLAUDE_CODE_DISABLE_AUTO_MEMORY` | オートメモリ無効化 |
 | `CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD` | `--add-dir` からCLAUDE.md読み込み |
 | `CLAUDE_CODE_NEW_INIT` | `/init` の新しいインタラクティブフロー有効化 |
-| `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS` | バックグラウンドタスク無効化 |
+| `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS` | `1` でバックグラウンドタスク無効化（Bash / PowerShell / サブエージェントの `run_in_background`、Ctrl+B、フォークスキルのバックグラウンド実行、サブエージェント・長時間 MCP 呼び出し・タイムアウトしたシェルの自動バックグラウンド移行）。MCP tasks と Monitor ツールはバックグラウンドのまま。**バックグラウンドセッション（agent view）も止めるには `CLAUDE_CODE_DISABLE_AGENT_VIEW=1` を併用**（2026-10-30 env-vars 改訂で明文化） |
+| `CLAUDE_CODE_EFFORT_LEVEL` | effort レベルを指定（`low` / `medium` / `high` / `xhigh` / `max`。対応レベルはモデル依存）。`--effort` / `/effort` / `modelSettings` / `effortLevel` より優先、`maxEffortLevel` キャップは適用される。**`auto` または `unset` を指定すると「effort レベルを送信しない」**（API 側のモデル既定が適用。2026-10-30 model-config 改訂で "Send no effort level" として明文化）。送信していない間はヘッダー/フッターに effort 非表示、`/effort status` が `Effort level: auto` と表示（`auto (currently <level>)` なら依然送信中 — `max` 未満の `maxEffortLevel` があると Claude Code 既定レベルをキャップに丸めて送る。v2.1.304 より前は未送信でも `auto (currently high)` と表示されるバグあり） |
 | `CLAUDE_CODE_DISABLE_MODEL_ACCESS_FALLBACK` | `1` で Bedrock / Vertex（Agent Platform）でモデルがセッション中に無効化された際の自動フォールバックを停止（2026-10-02 巡回で env-vars 収載を確認） |
 | `CLAUDE_CODE_SKIP_MODEL_ACCESS_MEMORY` | Bedrock / Vertex の起動時モデルチェック結果のマシン単位記憶をスキップ（2026-10-02 巡回で env-vars 収載を確認） |
 | `CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS` | git指示無効化 |
@@ -700,7 +701,7 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 | `CLAUDE_CODE_RETRY_WATCHDOG_MAX_USAGE_LIMIT_WAIT_MS` | 無人リトライモード（`CLAUDE_CODE_RETRY_WATCHDOG`）がリセットの遠すぎる usage limit で待機せずリクエストを終了する閾値（v2.1.301） |
 | `CLAUDE_CODE_RETRY_WATCHDOG_USAGE_LIMIT_RECHECK_MS` | 無人リトライモードがリセット前に解除された usage limit に気づく再チェック間隔（v2.1.305） |
 | `CLAUDE_CODE_DISABLE_FILE_MENTIONS` | `@` ファイルメンションをファイル内容でなくパスとしてモデルに渡す（モデルがファイルツールで読む）（v2.1.299） |
-| `CLAUDE_CODE_IDLE_COMPACT_MIN_TOKENS` | アイドルコンパクション（200K+ トークンの会話を約54分放置で 1 時間プロンプトキャッシュ失効前に自動 compact）の発動最小トークン数を変更。settings.json の `"idleCompaction": false` で機能ごと無効化（いずれも v2.1.290+ 必要、機能実装は v2.1.299） |
+| `CLAUDE_CODE_IDLE_COMPACT_MIN_TOKENS` | アイドルコンパクション（200K+ トークンの会話を約1時間放置で自動 compact）の発動最小トークン数を変更。settings.json の `"idleCompaction": false` で機能ごと無効化（いずれも v2.1.290+ 必要、機能実装は v2.1.299） |
 | `CLAUDE_CODE_AUTO_MODE_MODEL` | クライアント側 auto mode 分類器が使うモデルを選択（サーバー側 auto mode には影響しない）（v2.1.302） |
 | `CLAUDE_CODE_GZIP_REQUEST_BODIES` | `0` で api.anthropic.com への大型リクエストの gzip 圧縮（テレメトリ無効時も既定有効）をオフ（v2.1.300） |
 | `CLAUDE_CODE_FORK_SUBAGENT` | `0` で fork サブエージェント（`subagent_type: "fork"`）を無効化。v2.1.302 から端末に加え `claude -p` / Agent SDK / Desktop / VS Code でも既定有効（`claude mcp serve` は非提供） |
