@@ -405,15 +405,15 @@ MCPツールは `mcp__<server>__<tool>` パターンに従う:
 
 - `worktree`: ワークツリー内で実行中の場合、そのパス
 
-v2.1.133 以降、すべてのイベントの入力 JSON に effort level も含まれる:
+v2.1.133 以降、ツール実行コンテキストを持つイベント（`PreToolUse` / `PostToolUse` / `Stop` / `SubagentStop` 等。effort 対応モデルのみ）の入力 JSON に effort level も含まれる:
 
 ```json
 {
-  "effort": { "level": "low" | "medium" | "high" }
+  "effort": { "level": "low" | "medium" | "high" | "xhigh" | "max" }
 }
 ```
 
-加えて、hooks のコマンドおよび Bash ツールサブプロセスから `$CLAUDE_EFFORT` 環境変数で同じ値が参照可能。
+`level` はフック実行時点の effort **設定**で、スキル / サブエージェントの frontmatter `effort` や `ultrathink` によるレベルも反映される。モデルが未対応のレベルを指定した場合は実際に実行されたレベルが入る。**変更したレベルは適用開始前からここに現れうる**（2026-10-30 ドキュメント改訂。新レベルの適用開始タイミングは model-config の "When a new effort level starts" 参照）。加えて、hooks のコマンドおよび Bash ツールサブプロセスから `$CLAUDE_EFFORT` 環境変数で同じ値が参照可能。
 
 ### 6.2 イベント固有の入力フィールド
 
@@ -519,6 +519,8 @@ v2.1.133 以降、すべてのイベントの入力 JSON に effort level も含
 > `permissionDecisionReason` の扱い（2026-09-30 ドキュメント改訂）: `"ask"` はユーザーに表示（Claude には非表示）、`"deny"` は Claude に表示、**`"allow"` と `"defer"` はデバッグログ（`--debug`）にのみ書かれる**（従来は `"allow"` もユーザーに表示されるとされていた）。誰もプロンプトに答えられない `-p` 実行で Claude Code が呼び出しを自動拒否した場合、`"ask"` の理由は代わりにツール結果として Claude に渡る（2026-10 ドキュメント改訂で明文化）。
 
 > フックが `"ask"` を返したときの権限プロンプトには、そのフックの出所ラベルが付く。ラベルは **`[settings]`**（settings ファイル由来またはエージェント frontmatter 由来） / **`[plugin:<name>]`**（プラグイン由来） / **`[skill]`**（スキル frontmatter 由来）の 3 種（従来ドキュメントの `[User]` / `[Project]` / `[Plugin]` / `[Local]` から変更）。
+
+**auto モードでの PreToolUse `"ask"`（2026-10-30 ドキュメント改訂で節新設）**: auto モードでは PreToolUse フックの `"ask"` は通常そのまま権限プロンプトに送られ、分類器は判定しない。例外が 2 つ — ①**Claude Code 自身のチェックにも引っかかる呼び出し**（保護パスへの書き込み、サンドボックス外実行の要求など）は、プロンプト表示前に分類器が**拒否だけは**できる（承認された場合は通常どおりプロンプトへ）。②**`SubagentHandback`**（サブエージェントのレポート納品ツール）はプロンプトを出さず、分類器が反対しても実行される。`SubagentHandback` を止めるには `"deny"` を返す — サブエージェントは最大 3 回「レポート未納品、再呼び出しせよ」と告げられ、フックが拒否し続けるとレポート未納品のままサブエージェントが終了し、待っていた会話にその旨の注記が入る。
 
 **`permissionDecision: "defer"` の動作（2026-10 ドキュメント改訂で詳細化）**: `"defer"` は `claude -p` をサブプロセスとして動かし JSON 出力を読む統合（Agent SDK アプリ、Claude Code 上のカスタム UI 等）向け。ツール呼び出しで Claude を一時停止し、呼び出し側が自前の UI で入力を集めてから再開させる。**`-p` の非対話モードでのみ有効**で、対話セッションでは警告をログして無視される。典型例は `AskUserQuestion`（答えるターミナルが無い場合）。
 
