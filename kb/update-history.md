@@ -1,5 +1,35 @@
 # harness-harness 更新履歴
 
+## 2026-10-31 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code**: **v2.1.314（2026-10-30）を反映**（2.1.313 は公開リリースなし）。ハーネス観点の目玉:
+- **`permissions.blockWritesOutsideWorkingDirectories`**（Write / Edit / NotebookEdit がワーキングディレクトリ外を全権限モードで拒否。settings-reference 未収載＝changelog 先行）
+- **フック `if` 条件が Monitor ツールのシェルコマンドにマッチ**＋Bash マッチのフックが Monitor 起動コマンドでも実行（block / ask のみ）
+- **アイドルコンパクション拡大**（VS Code / Desktop Code タブ、テレメトリ無効サブスクライバー、1 時間キャッシュ有効の Bedrock / Vertex / Foundry / gateway）
+- 重要修正: effort キャップの "Invalid effort level" 連続失敗、`claude -p` 起動失敗の exit 0 無出力、`-p --resume` worktree のサンドボックス未保護、`--setting-sources` 除外ファイルからの設定漏れ、PreCompact フック巨大出力の compaction 失敗（10,000 字切断）
+
+ドキュメント実質改訂（大規模）:
+- **新プランティア「Ultra」が全ドキュメントに追加**（Pro / Max / Ultra 並記）
+- **effort 解決順が 5 段階に細分化**（env var → セッション中の選択 → `--effort` → 設定 → モデル既定）＋スキル `effort` はターンの残り（`context: fork` はフォーク先）と明確化
+- **hooks に「PreToolUse ask decisions in auto mode」節新設**（分類器が拒否のみ可能なケース、`SubagentHandback` の deny 時最大 3 回リトライ）
+- **WebSearch の `mode` フィールド収載**（standard / extended、v2.1.282+）、**`/restart`（`/update`）コマンド収載**（v2.1.288+）
+- sandboxing: `denyWrite` glob の symlink 解決注記。claude-projects: スレッド上限 200→500/日
+
+**Codex CLI**: **0.166.0 安定版（2026-10-29）を反映**。キーボード駆動トランスクリプト選択、GPT-6.1 Terra の Vertex AI / Bedrock カタログ追加、`codex queue --resume`、`codex doctor --network-only`、resume / fork の承認設定・reasoning トークン集計保持等。hooks / build-plugins / app-server / skills / codex-plugin-cc 各ページはノイズのみ。
+
+**Phase 3.5 スキルエコシステム巡回**: スキップ（前回 2026-10-26 から 7 日以内）。GitHub スキルリポジトリ群・skills.sh・claude.com/plugins はカウンタ変動のみで実質変更なし。
+
+### 更新ファイル
+
+- `specs/claude/changelog.md` — v2.1.314 追加
+- `specs/codex/changelog.md` — CLI 0.166.0 追加
+- `specs/claude/configuration.md` — `permissions.blockWritesOutsideWorkingDirectories` 追加、effort 解決順 5 段階化・スキル / サブエージェント effort 適用範囲の改訂
+- `specs/claude/hooks.md` — effort フィールド記述刷新、auto モードでの PreToolUse ask 節追加
+- `specs/claude/tools.md` — WebSearch `mode` フィールド追加
+- `specs/claude/skills-and-commands.md` — スキル `effort` 適用範囲改訂、`/restart` 追加、`/privacy-settings` の Ultra 追記
+
 ## 2026-10-30 — 公式ドキュメント巡回
 
 ### 検出・更新

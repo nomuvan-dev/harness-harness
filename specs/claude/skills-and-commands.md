@@ -112,7 +112,7 @@ my-skill/
 | `allowed-tools` | No | スキル有効時に許可なしで使えるツール |
 | `disallowed-tools` | No | スキル有効時にモデルから取り除くツール（v2.1.152）。スラッシュコマンドのフロントマターでも有効 |
 | `model` | No | スキル有効時のモデル指定。上書きは当該ターンの残りにのみ適用され設定には保存されない（次のプロンプトでセッションのモデルに戻る）。`/model` と同じ値、または `inherit`。組織の `availableModels` 許可リストで除外された値は使われずセッションは現行モデルを維持する。**Auto Mode、および plan モードで分類器がコマンドをレビューする間は、auto mode が非対応のモデルも同様に使われない**（公式ドキュメント明文化）。`context: fork` と併用した場合はフォークされたサブエージェントのモデルを指す |
-| `effort` | No | エフォートレベル (`low` / `medium` / `high` / `xhigh` / `max`。対応レベルはモデル依存)。セッションの effort を上書きする。**v2.1.267 以降は Fable 5 / Opus 4.8 / Opus 4.7 のように既定 effort が固定されているモデルでも frontmatter の effort が適用される**（それ以前は固定が優先され frontmatter は無視されていた）。`maxEffortLevel` のキャップは引き続き適用される |
+| `effort` | No | エフォートレベル (`low` / `medium` / `high` / `xhigh` / `max`。対応レベルはモデル依存)。**現在のターンの残りに適用**され、セッションの effort を上書きする（`CLAUDE_CODE_EFFORT_LEVEL` 環境変数は上書きしない。`context: fork` の場合はフォークされたサブエージェントの effort になる — 2026-10-30 ドキュメント改訂で適用範囲が明確化）。**v2.1.267 以降は Fable 5 / Opus 4.8 / Opus 4.7 のように既定 effort が固定されているモデルでも frontmatter の effort が適用される**（それ以前は固定が優先され frontmatter は無視されていた）。`maxEffortLevel` のキャップは引き続き適用される |
 | `context` | No | `fork` でフォークサブエージェントコンテキストで実行。v2.1.218 から fork スキルは既定でバックグラウンド実行 |
 | `agent` | No | `context: fork` 時のサブエージェントタイプ指定 |
 | `background` | No | `context: fork` スキルのバックグラウンド実行を `false` でオプトアウト（v2.1.218） |
@@ -423,7 +423,8 @@ MCPサーバーが公開するプロンプトは `/mcp__<server>__<prompt>` 形�
 | `/setup-vertex` | Google Cloud Agent Platform の認証・プロジェクト・リージョン・モデルピンをウィザードで設定（`CLAUDE_CODE_USE_VERTEX=1` 時のみ表示） |
 | `/bug [report]` | バグ報告 / 会話共有。送信履歴の範囲を選択し同意画面で確認してから送信 |
 | `/feedback [report]` | Claude Code へのプロダクトフィードバック送信（`/bug` と同じダイアログ・同意フロー）。Claude 起草フィードバック（`SendFeedback` ツール）が有効なセッションでは、**引数なしの `/feedback` はドラフトキュー**を開き、Claude がキューしたドラフトのレビュー・編集・送信・破棄ができる（`w` で通常ダイアログ）。引数付き `/feedback` と `/bug` は常にダイアログを直接開く（v2.1.247） |
-| `/privacy-settings` | プライバシー設定の確認・更新（Pro / Max プランのみ） |
+| `/privacy-settings` | プライバシー設定の確認・更新（Pro / Max / Ultra プランのみ） |
+| `/restart` (`/update`) | **v2.1.288 で追加（2026-10-30 コマンドリファレンス収載）**。Claude Code を再起動して同セッションを再開する — インストール済みアップデートの適用用（アップデート完了後にフッターが促したときに実行）。Pro / Max / Ultra プラン＋macOS / Linux のネイティブインストールが必要（WSL 不可） |
 | `/upgrade` | 上位プランへのアップグレードページをブラウザで開く |
 | `/rate-limit-options` | claude.ai の利用上限でリクエストが止まった際の選択肢メニュー（リセットまで待って自動継続 / usage credits 追加 / プランのアップグレード）を開く。自分の端末で上限に達した場合は Claude Code 側から自動的に開くこともある。自動継続の ON/OFF は `autoContinueAtUsageLimit` 設定 |
 | `/passes` | Claude Code の1週間無料パスを友人に共有（対象アカウントのみ表示） |

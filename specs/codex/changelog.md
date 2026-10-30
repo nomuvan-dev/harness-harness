@@ -4,7 +4,9 @@
 公式: https://learn.chatgpt.com/docs/changelog
 （2026-08-15 時点で `https://developers.openai.com/codex/changelog` は上記へ 308 恒久リダイレクト）
 
-最終更新: 2026-10-29（**CLI 0.165.0 安定版**（2026-10-27）を反映。目玉は **組み込み Google Cloud Vertex AI プロバイダ**（`model_provider = "gcp"`）、**GPT-6.1 Terra のモデルカタログ追加**（2026-10-26 アナウンスの画像理解・computer use 特化モデル）、**会話中の reasoning effort 変更が対応モデルで既定有効に**、**memory v2 が新規プロファイルで既定有効＋外部エージェントのメモリインポート対応**、**セッションピッカーのリポジトリフィルタ＋agent command center のディレクトリグルーピング**（リンク済み worktree 横断のナビゲーション改善）、**app-server API に実験的 attached thread forks**。修正は新規 TUI セッションのサーバー既定 approval reviewer 尊重、実行設定が不正でも TUI 設定の編集・即時適用維持、ローカル response future 破棄時のリモート MCP ツールリクエストキャンセル、割り込み / Plan モード切替後にキュー済みエージェントメッセージが作業を再開してしまう問題、プロバイダの model-not-found エラーのリトライ停止（エラーメッセージ保持）、**マーケットプレイス URL 検証の抜け穴**（許可パターンと照合したホストと別ホストに Git が接続し得た。セキュリティ修正）。GitHub リリースタグは 0.166.0-alpha.5（2026-10-28）まで進行。公式 changelog ページにも 0.165.0 掲載済み。ChatGPT for iOS は 1.2026.286 のまま新着なし。前回2026-10-28の巡回要約は下記参照。）
+最終更新: 2026-10-31（**CLI 0.166.0 安定版**（2026-10-29）を反映。目玉は **キーボード駆動のトランスクリプト選択**（単語・行・ページ単位の移動、検索統合、ショートカット設定可）、**GPT-6.1 Terra がバンドル / Vertex AI / Amazon Bedrock のモデルカタログに追加**（0.165.0 ではバンドルのみだった）、**`codex queue --resume`**（メッセージキュー後のアンロード済みスレッド再開）、**TUI の safety-block 説明の明確化＋選択可能な安全な後続プロンプト提案**、**`codex doctor --network-only`**（設定・接続・WebSocket に絞った診断）、非同期の質問・選択肢・回答・トランスクリプト返信での Markdown レンダリング統一。修正は resume / fork 時の承認・権限設定の保持、kill された composer テキスト復元時のローカル画像添付保持、親スレッド unarchive 時の子孫スレッド復元、app-server スレッドの起動・終了レース、TUI 再接続リカバリ（オフライン時の `/quit` / `/exit` 含む）、**resume / fork をまたぐ reasoning トークン集計の保持**（早すぎる compaction を防止）。Chores で **standalone executor を正規の CLI / app-server リリースパッケージに同梱**、ビルドを Node.js 24.22.1 / Rust 1.95.0 に統一。公式 changelog ページにも 0.166.0 掲載済み。ChatGPT for iOS は 1.2026.286 のまま、その他アナウンスの新着なし。hooks / build-plugins / app-server / skills / codex-plugin-cc 各ページはビルド ID・スター数等のノイズのみで実質的変更なし。前回2026-10-29の巡回要約は下記参照。）
+
+前回: 2026-10-29（**CLI 0.165.0 安定版**（2026-10-27）を反映。目玉は **組み込み Google Cloud Vertex AI プロバイダ**（`model_provider = "gcp"`）、**GPT-6.1 Terra のモデルカタログ追加**（2026-10-26 アナウンスの画像理解・computer use 特化モデル）、**会話中の reasoning effort 変更が対応モデルで既定有効に**、**memory v2 が新規プロファイルで既定有効＋外部エージェントのメモリインポート対応**、**セッションピッカーのリポジトリフィルタ＋agent command center のディレクトリグルーピング**（リンク済み worktree 横断のナビゲーション改善）、**app-server API に実験的 attached thread forks**。修正は新規 TUI セッションのサーバー既定 approval reviewer 尊重、実行設定が不正でも TUI 設定の編集・即時適用維持、ローカル response future 破棄時のリモート MCP ツールリクエストキャンセル、割り込み / Plan モード切替後にキュー済みエージェントメッセージが作業を再開してしまう問題、プロバイダの model-not-found エラーのリトライ停止（エラーメッセージ保持）、**マーケットプレイス URL 検証の抜け穴**（許可パターンと照合したホストと別ホストに Git が接続し得た。セキュリティ修正）。GitHub リリースタグは 0.166.0-alpha.5（2026-10-28）まで進行。公式 changelog ページにも 0.165.0 掲載済み。ChatGPT for iOS は 1.2026.286 のまま新着なし。前回2026-10-28の巡回要約は下記参照。）
 
 前回: 2026-10-28（安定版・SDK とも新リリースなし。安定版 CLI は 0.164.0 のまま、GitHub リリースタグは 0.166.0-alpha.2（2026-10-27）までプレリリースのみ進行。公式 changelog の新着は **ChatGPT for iOS 1.2026.286**（2026-10-22）のみ: composer 上部のバックグラウンドコマンドピル（対応リモートホストで実行中コマンドの閲覧・停止）、`@` による他の接続ホストのチャット参照、未回答の質問がターン後・チャット再オープン後も保持、使用量上限の説明とリセット時刻のチャット内表示、レスポンスタイムアウト後にプロンプトが失敗したように見える問題の修正等。hooks / build-plugins / app-server / codex-plugin-cc 各ページはビルド ID・スター数等のノイズのみで実質的変更なし（codex-plugin-cc の最終 push は 2026-07-08 のまま））
 
@@ -27,6 +29,36 @@
 （2026-09-17 巡回: 安定版・SDK とも新リリースなし。0.155.0-alpha.11（2026-09-16）までプレリリースのみ進行。**重要アナウンス（2026-09-14）: GPT-5.5 が 2026-10-14 に ChatGPT / ChatGPT Work / Codex から退役**。ChatGPT サインインの Codex では退役日までに `gpt-5.5` → `gpt-5.6-sol`（GPT-5.6 Sol）へ切り替えること。ワークスペース既定・保存済みモデル設定・managed 設定・カスタムエージェント・スケジュールタスク・スクリプトの `gpt-5.5` 指定も要更新。OpenAI API には適用されない）
 
 （2026-09-16 巡回: 安定版・SDK とも新リリースなし。0.155.0-alpha.4〜6 のプレリリースのみ進行）
+
+---
+
+## CLI 0.166.0 (2026-10-29)
+
+**キーボード駆動トランスクリプト選択・`codex queue --resume`・`codex doctor --network-only`**
+
+### 新機能
+
+- **キーボード駆動のトランスクリプト選択**: 単語・行・ページ単位のモーション、検索（Find）統合、ショートカット設定可
+- **GPT-6.1 Terra を Vertex AI / Amazon Bedrock のモデルカタログにも追加**（バンドルカタログは 0.165.0 で追加済み）
+- **`codex queue --resume`**: メッセージをキューした後、アンロード済みスレッドを再開
+- **TUI の safety-block 説明を明確化＋選択可能な安全な後続プロンプト提案**
+- **`codex doctor --network-only`**: 設定・接続性・WebSocket に絞った診断
+- 非同期の質問・選択肢・回答・トランスクリプト返信で Markdown レンダリングを統一
+
+### 修正
+
+- **resume / fork 時に承認済みの approval / permission 設定を保持**
+- **resume / fork をまたいで reasoning トークン集計を保持**（早すぎる compaction を防止）
+- kill された composer テキストの復元時にローカル画像添付を保持
+- 親スレッドの unarchive 時に spawn された子孫スレッドを復元
+- app-server のスレッド起動・終了レースを修正し、完了済みランタイムを即時解放
+- TUI 再接続リカバリの改善（オフライン時の `/quit` / `/exit` 処理含む）
+- macOS: インストールが使用中・パスに非 ASCII 文字を含む場合の standalone リリースクリーンアップを修正
+
+### Chores
+
+- **standalone executor を正規の CLI / app-server リリースパッケージに同梱**
+- ビルドを Node.js 24.22.1 / Rust 1.95.0 に統一、Bazel をソースビルド V8 ＋ネイティブ Windows MSVC アーカイブ対応に
 
 ---
 
