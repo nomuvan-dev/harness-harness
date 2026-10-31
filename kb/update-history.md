@@ -1,5 +1,27 @@
 # harness-harness 更新履歴
 
+## 2026-11-01 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code**: **v2.1.316（2026-10-31）を反映**（2.1.315 は公開リリースなし）。ハーネス観点の目玉:
+- **新環境変数 3 つ**: `CLAUDE_CODE_DISABLE_ULTRATHINK`（`ultrathink` キーワード無効化）、`CLAUDE_CODE_SUBAGENT_EFFORT`（指定のないサブエージェントの effort 既定。従来はセッションの effort を継承）、`CLAUDE_CODE_DISABLE_LOOPED_CROSS_CERT_DROP`（ループ相互認証のクロス証明書保持）。いずれも env-vars ページ未収載＝changelog 先行
+- **Opus 4.8 の fast mode 非推奨化**（2026-10-30 付、2026-11-30 削除。削除後はエラーでフォールバックなし。Opus 5.5 へ移行）
+- **Team / Enterprise の server-managed settings が承認プロンプトなしで適用に**（検証できない保存コピーは拒否）
+- gateway: `pooled_budget`（グループ共有月次予算）、`managed.policy_mode: layered`、Bedrock upstream の `guardrail.input_tagging`
+- 重要修正: 自己終了時のシェルコマンド残留（macOS / Linux）、`SHELLOPTS` export 時の Bash スクリプト停止、継承モデルのサブエージェントが wake でメインモデル化、`--restricted` の Read allow 経由ディレクトリ外アップロード、PowerShell フックの exit 2 ブロック不能ケース
+
+ドキュメント側: docs ページのレンダリング形式変更（タブ→`[tab]`・アコーディオン→`[accordion]` マーカー化）のみで実質的な仕様変更なし。claude-tag.md は HTML 配信に変わったが内容は同一（claude.com/docs/claude-tag/overview へ正規化）。
+
+**Codex CLI**: 新バージョンなし（0.166.0 のまま。changelog・GitHub releases とも変化なし）。
+
+**Phase 3.5 スキルエコシステム巡回**: スキップ（前回 2026-10-26 から 7 日以内）。
+
+### 更新ファイル
+
+- `specs/claude/changelog.md` — v2.1.316 追加
+- `specs/claude/configuration.md` — 新環境変数 3 つ追加、`fastMode` に Opus 4.8 非推奨化注記
+
 ## 2026-10-31 — 公式ドキュメント巡回
 
 ### 検出・更新

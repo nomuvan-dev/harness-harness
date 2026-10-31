@@ -333,7 +333,7 @@ Claude Code は設定ファイルを監視し、変更を検知するとセッ�
 | `claudeMdExcludes` | メモリ読み込み時にスキップする CLAUDE.md のパターン配列（glob または絶対パス。**絶対ファイルパスに対してマッチ**）。大規模モノレポで他チームの CLAUDE.md を除外する用途 |
 | `verbose` | トランスクリプトでツール呼び出しの入出力を常に全文表示する（既定 `false` = 要約表示 + `Ctrl+O` で展開）。フック・MCP サーバー・長いシェルコマンドのデバッグ向け。`/config` の **Verbose output**。`--verbose` がセッション単位で優先。`viewMode` を設定するとこのキーは上書きされる |
 | `voice` | 音声ディクテーションの有効化と入力キーの挙動。`enabled`（Boolean）/ `autoSubmit`（Boolean、hold モードのみ）/ `mode`（`"hold"` = 押している間だけ録音、`"tap"` = 1 回目で録音開始・2 回目で送信）。`/voice` が自動で書き込む。`enabled: true` で `mode` 未指定なら `"hold"` |
-| `fastMode` | 利用可能なセッションで Fast モードを有効化（トークン単価は上がるが応答が速い。反復開発・ライブデバッグ向け）。`/fast` が `~/.claude/settings.json` に `fastMode: true` を書き込み、再度実行すると削除する。**Opus 5.5 / Opus 5 / Opus 4.8 でのみ動作**（v2.1.280 で Opus 5.5 追加）し、他モデルから ON にすると Opus に切り替わり、非対応モデルに切り替えると OFF になる。`CLAUDE_CODE_DISABLE_FAST_MODE` が優先。managed 設定が `disableFastMode` を設定している場合、非対話・VSCode・クラウドセッションでの `/fast on` は拒否される（v2.1.280） |
+| `fastMode` | 利用可能なセッションで Fast モードを有効化（トークン単価は上がるが応答が速い。反復開発・ライブデバッグ向け）。`/fast` が `~/.claude/settings.json` に `fastMode: true` を書き込み、再度実行すると削除する。**Opus 5.5 / Opus 5 / Opus 4.8 でのみ動作**（v2.1.280 で Opus 5.5 追加。**Opus 4.8 の fast mode は 2026-10-30 付で非推奨化、2026-11-30 に削除予定** — 削除後はエラーになり標準 Opus 4.8 へフォールバックしない。v2.1.316 changelog）し、他モデルから ON にすると Opus に切り替わり、非対応モデルに切り替えると OFF になる。`CLAUDE_CODE_DISABLE_FAST_MODE` が優先。managed 設定が `disableFastMode` を設定している場合、非対話・VSCode・クラウドセッションでの `/fast on` は拒否される（v2.1.280） |
 | `theme` | インターフェースの配色テーマ。`/config` の **Theme**。既定 `"dark"`。旧版が `~/.claude.json` に残した値は、どの settings ファイルも指定していない場合に適用される |
 | `tui` | 端末 UI レンダラの選択。`"fullscreen"` = 代替画面バッファのちらつきのないレンダラ（仮想スクロールバック付き）、`"default"` = 従来のメイン画面レンダラ。`/tui fullscreen` / `/tui default` が書き込む。未設定時は Claude Code が自動選択。`CLAUDE_CODE_NO_FLICKER` / `CLAUDE_CODE_DISABLE_ALTERNATE_SCREEN` がセッション単位で優先 |
 | `viewMode` | 起動時のトランスクリプト表示（`"default"` / `"verbose"` / `"focus"`）。設定すると `/focus` の記憶と `verbose` 設定の両方を上書きする。`--verbose` がセッション単位で優先 |
@@ -754,6 +754,9 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 | `CLAUDE_CODE_DISABLE_REFUSAL_FALLBACK` | `1` で、安全性分類器がリクエストをフラグした際の自動モデル切替（`switchModelsOnFlag` 設定が制御する挙動）を無効化。v2.1.312 以降は切替対象にカスタムデプロイ名等の未認識モデル名も含まれる |
 | `CLAUDE_CODE_EVEN_MORE_DANGEROUSLY_SKIP_PERMISSIONS` | `1` で、`bypassPermissions` モードにおける危険な `rm`（critical-path 削除）の確認プロンプトを省略して無確認実行。**起動環境からのみ有効**（settings の `env` ブロックでは無視）。v2.1.311 以降 |
 | `CLAUDE_CODE_GZIP_REQUEST_BODIES` | `0` で `api.anthropic.com` への Claude API・テレメトリ・artifact 公開リクエストボディの gzip 圧縮を無効化。既定では直接接続時に大きなボディを圧縮し、プロキシ経由・クライアント証明書設定時・`NODE_EXTRA_CA_CERTS` 設定時は圧縮しない。検出できない TLS 検査プロキシが圧縮リクエストを壊す場合に `0` を使う |
+| `CLAUDE_CODE_DISABLE_ULTRATHINK` | `ultrathink` キーワードを無効化（v2.1.316。env-vars ページ未収載＝changelog 先行） |
+| `CLAUDE_CODE_SUBAGENT_EFFORT` | 他で effort レベルの指定がないサブエージェントの実行 effort レベルを設定。未設定時はセッションの effort を継承（v2.1.316。env-vars ページ未収載＝changelog 先行） |
+| `CLAUDE_CODE_DISABLE_LOOPED_CROSS_CERT_DROP` | ループ状に相互認証するシステムクロス証明書の除去を無効化して保持。プライベート CA がそれを必要とするサーバー向け（v2.1.316。env-vars ページ未収載＝changelog 先行） |
 | `CLAUDE_CODE_GATEWAY_HINT_HEADERS` | `1` でゲートウェイヒントヘッダ（`x-claude-code-request-class` / `x-claude-code-compaction` 等）をカスタムプロキシや Bedrock / Claude Platform on AWS などサードパーティプロバイダにも送信。`0` で（既定で送信する Anthropic API 直結を含め）全接続で送信を停止。v2.1.273 以降 |
 | `CLAUDE_CODE_EMIT_SESSION_STATE_EVENTS` | `1` でセッション状態を運ぶ `session_state_changed` メッセージをメッセージストリームに追加。Agent SDK か、`--print` ＋ `--output-format stream-json` ＋ `--verbose` が必要 |
 | `OTEL_LOG_MANAGED_SETTINGS` | `1` で `managed_settings_resolved` OTEL ログイベントに redact 済み managed 設定と redact 前設定の SHA-256 ダイジェストを付加。既定は無効。シェル・user 設定・managed 設定で設定する（project / local では有効化できない）。v2.1.274 以降 |

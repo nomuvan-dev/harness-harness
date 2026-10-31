@@ -3,7 +3,9 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-10-31（**v2.1.314**（2026-10-30）を反映（2.1.313 は公開リリースなし）。ハーネス観点の目玉は **(1) `permissions.blockWritesOutsideWorkingDirectories`**（Write / Edit / NotebookEdit がワーキングディレクトリ外パスを全権限モードで拒否。settings-reference は未収載＝changelog 先行）、**(2) アイドルコンパクションの拡大**（VS Code / Claude Desktop の Code タブに追加＋テレメトリ無効のサブスクライバーと 1 時間キャッシュ有効の Bedrock / Vertex / Foundry / LLM gateway でも実行）、**(3) フック `if` 条件が Monitor ツールのシェルコマンドにもマッチ**（`Bash(tail *)` が Monitor 起動のコマンドに適用。あわせて Bash マッチのフックが Monitor 起動コマンドで実行されるように修正 — block / ask は可、approve / rewrite は不可）、**(4) auto モード（Cowork cloud）でフックの MCP ツール allow が「無回答」扱いに**（分類器または権限プロンプトが判定）、**(5) 重要修正: 組織の effort キャップで "Invalid effort level" が毎ターン失敗→レベルを下げてリトライ、`claude -p` 起動失敗時に exit 0 無出力→エラー表示で exit 1、`claude -p --resume` / `--continue` で入った worktree にサンドボックス保護が未適用、`--setting-sources` で除外した設定ファイルから auto mode ルール・保存済み権限 consent が漏れる、PreCompact フックの巨大出力で compaction 失敗（出力を 10,000 字で切断）、ドット表記モデル ID（`claude-opus-4.8` 等）が gateway 経由で旧モデル扱い、gateway が beta ヘッダーを名指しで拒否した際のヘッダー外しリトライ**。ドキュメント改訂が大規模: **新プランティア「Ultra」が全ドキュメントに追加**（Pro / Max / Ultra 並記。cloud sessions・Artifact・Projects・ultrareview 無料 3 回等すべて対象）、**effort 解決順が 5 段階に細分化**（env var → セッション中の選択 → `--effort` → 設定 → モデル既定）、**スキル `effort` の適用範囲明確化**（ターンの残り / `context: fork` はフォーク先）、**hooks に「auto モードでの PreToolUse ask」節新設**（分類器が拒否のみ可能なケース＋`SubagentHandback` の deny 時リトライ仕様）、**WebSearch の `mode` フィールド収載**（standard / extended。v2.1.282+）、**`/restart`（エイリアス `/update`）コマンド収載**（v2.1.288+。Pro / Max / Ultra のネイティブ macOS / Linux）、sandboxing に `denyWrite` glob の symlink 解決注記、Projects のスレッド上限 200→500/日。Codex CLI は **0.166.0 安定版**（2026-10-29。specs/codex/changelog.md 参照）。前回2026-10-29の巡回要約は下記参照。）
+最終更新: 2026-11-01（**v2.1.316**（2026-10-31）を反映（2.1.315 は公開リリースなし）。ハーネス観点の目玉は **(1) 新環境変数 3 つ**（`CLAUDE_CODE_DISABLE_ULTRATHINK`＝`ultrathink` キーワードの無効化、`CLAUDE_CODE_SUBAGENT_EFFORT`＝明示指定のないサブエージェントの effort レベル既定（従来はセッションの effort を継承）、`CLAUDE_CODE_DISABLE_LOOPED_CROSS_CERT_DROP`＝ループ相互認証のシステムクロス証明書を保持。いずれも env-vars ページ未収載＝changelog 先行）、**(2) Opus 4.8 の fast mode 非推奨化**（2026-10-30 付。2026-11-30 に削除、削除後はエラーで標準 Opus 4.8 へのフォールバックなし。スピードアップ継続には Opus 5.5 へ移行）、**(3) Team / Enterprise の server-managed settings が承認プロンプトなしで適用に**（検証できない保存コピーは拒否）、**(4) gateway 機能追加**（`pooled_budget`＝グループ共有の月次予算、`managed.policy_mode: layered`＝マッチした全ポリシーをマージ適用、Bedrock upstream の `guardrail.input_tagging`＝prompt attacks フィルタ用入力タグ付与）、**(5) 重要修正: Claude Code 自己終了時に macOS / Linux でシェルコマンドが残留、`SHELLOPTS` export 時に Bash スクリプトが最初のコマンドで停止、親サブエージェントのモデルを継承したサブエージェントが wake 時にメインモデルへ移動、`--restricted` セッションが Read allow ルール経由で作業ディレクトリ外ファイルをアップロード、Vertex / Bedrock の `sonnet` / `opus` / `haiku` エイリアスが未提供時にエラー（旧モデルへ切替に修正）、PowerShell フックが型キャスト / `param` / `using` / 属性開始コマンドで exit code 2 ブロック不能、`CLAUDE_CODE_AUTO_MODE_SERVER=1` がプロキシ / gateway 背後のホストアプリ起動セッションで無視**。ドキュメント側は docs ページのレンダリング形式変更（タブ→`[tab]`・アコーディオン→`[accordion]` マーカー）のみで実質的な仕様変更なし。Codex CLI は新バージョンなし（0.166.0 のまま）。前回2026-10-31の巡回要約は下記参照。）
+
+前回: 2026-10-31（**v2.1.314**（2026-10-30）を反映（2.1.313 は公開リリースなし）。ハーネス観点の目玉は **(1) `permissions.blockWritesOutsideWorkingDirectories`**（Write / Edit / NotebookEdit がワーキングディレクトリ外パスを全権限モードで拒否。settings-reference は未収載＝changelog 先行）、**(2) アイドルコンパクションの拡大**（VS Code / Claude Desktop の Code タブに追加＋テレメトリ無効のサブスクライバーと 1 時間キャッシュ有効の Bedrock / Vertex / Foundry / LLM gateway でも実行）、**(3) フック `if` 条件が Monitor ツールのシェルコマンドにもマッチ**（`Bash(tail *)` が Monitor 起動のコマンドに適用。あわせて Bash マッチのフックが Monitor 起動コマンドで実行されるように修正 — block / ask は可、approve / rewrite は不可）、**(4) auto モード（Cowork cloud）でフックの MCP ツール allow が「無回答」扱いに**（分類器または権限プロンプトが判定）、**(5) 重要修正: 組織の effort キャップで "Invalid effort level" が毎ターン失敗→レベルを下げてリトライ、`claude -p` 起動失敗時に exit 0 無出力→エラー表示で exit 1、`claude -p --resume` / `--continue` で入った worktree にサンドボックス保護が未適用、`--setting-sources` で除外した設定ファイルから auto mode ルール・保存済み権限 consent が漏れる、PreCompact フックの巨大出力で compaction 失敗（出力を 10,000 字で切断）、ドット表記モデル ID（`claude-opus-4.8` 等）が gateway 経由で旧モデル扱い、gateway が beta ヘッダーを名指しで拒否した際のヘッダー外しリトライ**。ドキュメント改訂が大規模: **新プランティア「Ultra」が全ドキュメントに追加**（Pro / Max / Ultra 並記。cloud sessions・Artifact・Projects・ultrareview 無料 3 回等すべて対象）、**effort 解決順が 5 段階に細分化**（env var → セッション中の選択 → `--effort` → 設定 → モデル既定）、**スキル `effort` の適用範囲明確化**（ターンの残り / `context: fork` はフォーク先）、**hooks に「auto モードでの PreToolUse ask」節新設**（分類器が拒否のみ可能なケース＋`SubagentHandback` の deny 時リトライ仕様）、**WebSearch の `mode` フィールド収載**（standard / extended。v2.1.282+）、**`/restart`（エイリアス `/update`）コマンド収載**（v2.1.288+。Pro / Max / Ultra のネイティブ macOS / Linux）、sandboxing に `denyWrite` glob の symlink 解決注記、Projects のスレッド上限 200→500/日。Codex CLI は **0.166.0 安定版**（2026-10-29。specs/codex/changelog.md 参照）。前回2026-10-29の巡回要約は下記参照。）
 
 前回: 2026-10-29（**v2.1.312**（2026-10-27）を反映。ハーネス観点の目玉は **(1) prompt / agent フックの同時実行上限**（サブエージェント含むセッションあたり最大 24 並列＋イベントのタイムアウトを超えて待ったものは最大 12。`timeout` の 1 秒未満指定は 1 秒扱い）、**(2) サブエージェントの `autoCompactWindow` が `CLAUDE_CODE_AUTO_COMPACT_WINDOW` のウィンドウを下げられるように**（従来は環境変数設定時は無効。引き上げは不可。※公式 sub-agents ページは本巡回時点で旧挙動の記述のまま＝changelog 先行）、**(3) Bedrock / Vertex / Foundry / Mantle の未認識モデル名（カスタムデプロイ名・inference profile ARN 等）が Sonnet / Haiku のフロントでも短縮システムプロンプトに**（`CLAUDE_CODE_SIMPLE_SYSTEM_PROMPT=0` でフル維持）、**(4) 安全性分類器フラグ時の自動モデル切替が未認識モデル名もカバー**（`CLAUDE_CODE_DISABLE_REFUSAL_FALLBACK=1` で無効化）、**(5) gateway に `oidc.user_id_claim`**（Entra ID の `oid` 等 `sub` 以外の id_token クレームでユーザー識別）、**(6) OTel の `claude_code.safety_event` 送信停止＋公式マーケットプレイスプラグインの固定 URL リモート MCP サーバーが `mcp_server.name` に実名報告**、**(7) 重要修正: 冒頭しか読んでいない巨大 CLAUDE.md / rules / @-include ファイルの Write 上書き（全読みか Edit を要求するように）、git リポジトリ深部への Bash `cd` 後に per-directory / `paths:` スキルが見つからない問題、不正な名前のコマンド 1 つで全コマンドがロードされず `claude -p` が無出力になる問題、VS Code サインイン後の managed settings / 組織ポリシー未取得**。ドキュメント改訂: env-vars に `CLAUDE_CODE_EVEN_MORE_DANGEROUSLY_SKIP_PERMISSIONS`（v2.1.311。bypassPermissions モードの critical-path 削除プロンプト省略）が収載、model-config に `ultrathink` の xhigh 昇格が収載（v2.1.311 の changelog 先行が解消）。Codex CLI は **0.165.0 安定版**（2026-10-27。specs/codex/changelog.md 参照）。前回2026-10-28の巡回要約は下記参照。）
 
@@ -15,6 +17,59 @@
 
 前回: 2026-10-10（**v2.1.295**（2026-10-08）を反映。ハーネス観点では **(1) command / HTTP フックに `onFailure: "block"` 追加（フックが起動不可・タイムアウト・想定外 exit code の場合にアクションを通さずブロック＝ポリシーフックの fail-closed 化が可能に。従来は非ブロッキング扱いで素通り）**、**(2) サブエージェントの `skills` フィールドからのプリロードが最大32スキル・各1回に制限（Skill ツールがあれば残りは呼び出し可能）**、**(3) tool search 経由でモデルがロードする MCP ツール説明の切り詰めが 2,048→16,384 文字に拡大**、**(4) `CLAUDE_CODE_RETRY_WATCHDOG_MAX_WAIT_MS`（永続リトライ時の 429/529 待機の上限）**、**(5) `forceLoginMethod: "gateway"` / `forceLoginGatewayUrl` が managed settings なしのユーザー settings でも設定可能に**、**(6) OSC 7501（Program Status Protocol）対応（対応端末に作業中/入力待ち/完了を表示）**、**(7) 重要修正: `[1m]` モデルで context-1m beta を拒否するゲートウェイ/Bedrock/Vertex/Foundry 宛リクエストが全失敗する問題（beta なしで再送）、`claude -p` のテキスト出力がバックグラウンド作業による別ターン開始時に前のレスポンスを落とす問題、スキルの `allowed-tools` / `effort` が `-p` で落ちて Bash が拒否される問題、リモート MCP の長時間断後の未再接続/タイトループ再接続（バックオフ化・最大30秒）、Edit が mtime 不変のまま内容が変わったファイルを既読扱いする問題、複数行 JSON を出力する async フックの出力無視、Grep の `-l`/`-c`/`-r` フラグ付き呼び出し失敗**。Ctrl+C（アタッチ済みバックグラウンドセッションのアイドルプロンプト）は保留 `/loop` wakeup を残し2度押しでデタッチ・Esc で停止に変更。ドキュメント改訂: env-vars に `CLAUDE_CODE_RETRY_WATCHDOG_MAX_WAIT_MS` 収載（hooks ページの `onFailure` は本巡回時点で未収載＝changelog 先行）。Codex CLI は **0.162.0 安定版**（2026-10-08。managed worktree ツール、Command Center タスクピン留め、`/copy` トランスクリプトコピー、カスタムプロバイダの capability オーバーライド等。下記 specs/codex/changelog.md 参照）。前回2026-10-09の巡回要約は下記参照。）
 
+
+---
+
+## v2.1.316 (2026-10-31)
+
+**新環境変数 3 つ（ultrathink 無効化・サブエージェント effort 既定・クロス証明書保持）・Opus 4.8 fast mode 非推奨化・managed settings の無承認適用**
+
+※2.1.315 は公開リリースなし
+
+### 新機能
+
+- **`CLAUDE_CODE_DISABLE_ULTRATHINK`**: `ultrathink` キーワードを無効化
+- **`CLAUDE_CODE_SUBAGENT_EFFORT`**: 他で指定のないサブエージェントの実行 effort レベルを設定（従来はセッションの effort を継承）
+- **`CLAUDE_CODE_DISABLE_LOOPED_CROSS_CERT_DROP`**: ループ状に相互認証するシステムクロス証明書を保持（プライベート CA がそれを必要とするサーバー向け）
+- Claude apps gateway: `pooled_budget`（spend limits admin API。グループメンバーが共有する月次予算を各自の上限に加えて設定）、`managed.policy_mode: layered`（開発者にマッチした全ポリシーを下位から順にマージして適用。従来は最初の 1 つのみ）、Bedrock upstream の `guardrail.input_tagging`（Bedrock guardrail の prompt attacks フィルタが必要とする入力タグでプロンプトをラップ。`all_messages_and_system` はシステムプロンプトにもタグ付け）
+- [VSCode] チャットパネルから gateway にサインイン可能に（ターミナル不要）
+- [Cloud sessions] MCP サーバーが要求するフォームに応答できるフォームカード＋復帰時の「Catching up…」表示
+- [Code Review] アナリティクスページに重要度別 findings カード
+
+### 変更
+
+- **Opus 4.8 の fast mode を非推奨化（2026-10-30 付）**: 2026-11-30 に削除。削除後、Opus 4.8 での fast mode リクエストはエラーになり標準 Opus 4.8 へのフォールバックなし。スピードアップの継続には Opus 5.5 へ移行
+- **Team / Enterprise ログインの server-managed settings が承認プロンプトなしで適用に**（Anthropic API から取得した設定。検証できない保存コピーは拒否）
+- auto モード: `"$defaults"` なしの `autoMode.allow` リストがスケジュールタスクプロンプトの組み込みルールを除去しなくなった
+- [VSCode] `ultrathink` がターンを `xhigh` effort で実行し、端末同様チャットボックスでレインボー表示
+- [Cloud sessions] Enterprise メンバーが自分のクラウド環境の network secrets を追加・削除可能に（従来は閲覧のみ）
+- [Claude Tag] チャンネルの「Respond automatically」スイッチが「How Claude participates」選択に変更
+
+### 修正（ハーネス観点の重要なもの）
+
+- **Claude Code の自己終了時（認証拒否・クラウドセッションのアーカイブ等）に macOS / Linux でシェルコマンドが実行されたまま残る問題**
+- **`SHELLOPTS` が export されていると Bash ツール起動のスクリプトが最初のコマンドで停止する問題**＋値に改行を含む bash エイリアス / ダッシュ始まりの関数名が破損・喪失する問題（Git Bash 除く）
+- **PowerShell フックが型キャスト・`param`・`using`・属性で始まるコマンドで exit code 2 ブロックできない問題**
+- **親サブエージェントのモデルを継承したサブエージェントが、バックグラウンドジョブやメッセージで wake した際にメインモデルへ移動する問題**
+- **`--restricted` セッションが Read allow ルールのカバー範囲で作業ディレクトリ外のファイルをアップロードする問題**
+- Vertex / Bedrock で `sonnet` / `opus` / `haiku` の最新モデルがアカウント / リージョン未提供の場合、セッション途中エラーでなく旧モデルへ切替
+- gateway がリクエスト中の全モデル名を `availableModels` / `deniedModels` / `models` と照合していなかった問題（ブロック対象モデルを名指すリクエストはフィールド名入りの 400 に）
+- `claude auth login` が managed settings で gateway 必須の環境で実行拒否されていた問題（端末では gateway サインインを表示）
+- `CLAUDE_CODE_AUTO_MODE_SERVER=1` が、experimental betas 無効のプロキシ / LLM gateway 背後でホストアプリ（Claude Desktop 等）起動セッションで無視される問題
+- managed の `"$defaults"` なし `autoMode.allow` が、ホストアプリの `--settings` / `/permissions` の初回ルール追加 / `/auto-mode-setup` で組み込み例外を取り戻す問題
+- auto モードがサーバーの safety verdict 無応答でターンを停止した際、クラウドセッション / クラウドスケジュールタスクが failed にマークされない問題＋`claude -p` のテキスト出力が停止理由を表示しない問題
+- 不可視文字を含むプロンプトが送信に Enter 2 回必要だった問題（プレーンなプロンプトはクリーンして 1 回で送信、コマンドはレビュー待ち維持）
+- プラグイン MCP の `headersHelper` スクリプトが、認証情報風の名前の環境変数がスイッチ値（`1` 等）のときに破損した `CLAUDE_PLUGIN_ROOT` / サーバー URL を受け取る問題
+- SDK の `register_repo_root` が作業ディレクトリ外の CLAUDE.md をロードしない問題（`CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1` 時）
+- `/model <id>` が本バージョン未認識のモデルで「auto-compact は 200K ウィンドウを仮定する」警告を出さない問題
+- Grep / Glob が検索プロセスをタイムアウトで kill しても exit しない場合に戻らない問題（Windows で発生）
+- `/clear` / `/resume` が会話保存中に実行された場合、resume で plan が復元されないことがある問題
+- [VSCode] `opus[1m]` 等 `[1m]` タグ付きモデル設定で Effort スライダー / Ultracode スイッチ / モデル名が消える問題
+- Windows: rc ファイルが errexit / pipefail を設定し winpty エイリアスのみ（または無し）の Git Bash でエイリアス / 関数が失われる問題
+
+### ドキュメント
+
+- docs ページのレンダリング形式変更（タブ→`[tab]`・アコーディオン→`[accordion]` マーカー化）のみで実質的な仕様変更なし。新環境変数 3 つは env-vars ページ未収載＝changelog 先行
 
 ---
 
