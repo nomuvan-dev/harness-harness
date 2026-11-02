@@ -1,6 +1,6 @@
 # Claude Code ツール仕様書
 
-最終更新: 2026-10-07（巡回更新）
+最終更新: 2026-11-03（巡回更新）
 
 公式ドキュメント: https://code.claude.com/docs/en/tools-reference
 
@@ -18,6 +18,25 @@ Claude Code の組み込みツール一覧。**ここに書かれたツール名
 - 実セッションのツール構成はプロバイダ・プラットフォーム・設定で変わる。確認は Claude に「What tools do you have access to?」と聞く（MCP の正確なツール名は `/mcp`）
 - **Advisor はサーバーツール**（API 側が実行）であり Claude Code が実装するツールではない。権限ルールで参照できる名前を持たない
 
+### 1.1 権限ルールの specifier 形式（2026-11-03 ドキュメント改訂で「Configure tools」節として体系化）
+
+`ToolName(specifier)` 形式を複数ツールが共有する:
+
+| ルール形式 | 適用対象 | 備考 |
+|:--|:--|:--|
+| `Bash(npm run *)` | **Bash, Monitor** | コマンドパターン。Monitor のコマンドにも適用される |
+| `PowerShell(Get-ChildItem *)` | PowerShell | コマンドパターン |
+| `Read(~/secrets/**)` | **Read, Grep, Glob, LSP** | パスパターン。LSP も対象 |
+| `Edit(/src/**)` | Edit, Write, NotebookEdit | パスパターン |
+| `Skill(deploy *)` | Skill | スキル名 |
+| `Agent(Explore)` | Agent | サブエージェントタイプ |
+| `WebFetch(domain:example.com)` | WebFetch | ドメイン |
+| `WebSearch` | WebSearch | specifier なし |
+
+- 上記以外（`ExitPlanMode` / `ShareOnboardingGuide` 等）は裸のツール名のみ
+- **`Edit(...)` の allow ルールは同パスへの Read アクセスも付与する**（対応する `Read(...)` allow は不要）。逆に `Read(...)` の deny は同パスの Edit / Write（新規作成含む）も塞ぐ（Write への適用は v2.1.228+）
+- フックの `matcher` は裸のツール名（括弧付きルール形式は不可）。一方フックの **`if` 条件**は上記ルール形式を受け付ける
+
 ---
 
 ## 2. ツール一覧
@@ -28,7 +47,7 @@ Claude Code の組み込みツール一覧。**ここに書かれたツール名
 |:--|:--|:--|
 | `Agent` | No | サブエージェントを独立コンテキストで起動。Agent Teams 有効時、`name` 付き呼び出しはチームメイトを起動しうる |
 | `Artifact` | Yes | HTML / Markdown ファイルを claude.ai 上の非公開インタラクティブページ（Artifact）として公開 |
-| `AskUserQuestion` | No | 選択式の質問。既定では回答するまで開いたまま（`askUserQuestionTimeout` で自動継続可）。**バックグラウンドセッション / screen reader モード / Remote Control 接続中の質問ではタイマー自体が開始されない**（2026-10 ドキュメント改訂で明文化）。端末がフォーカス報告に対応していてウィンドウがフォーカス中の間はカウントダウンが進まない |
+| `AskUserQuestion` | No | 選択式の質問。既定では回答するまで開いたまま（`askUserQuestionTimeout` で自動継続可）。**バックグラウンドセッション / screen reader モード / Remote Control 接続中の質問ではタイマー自体が開始されない**（2026-10 ドキュメント改訂で明文化）。端末がフォーカス報告に対応していてウィンドウがフォーカス中の間はカウントダウンが進まない。**自由入力で答えると Claude Code が中立的な言い回しでリレーする**ため「先に説明して」等の指示にも従う（2026-11-03 ドキュメント改訂で確認） |
 | `Bash` | Yes | シェルコマンド実行 |
 | `PowerShell` | Yes | PowerShell をネイティブ実行 |
 | `CronCreate` / `CronDelete` / `CronList` | No | セッションスコープの定期・単発プロンプトのスケジュール。`--resume` / `--continue` で未期限のものは復元される |
@@ -39,7 +58,7 @@ Claude Code の組み込みツール一覧。**ここに書かれたツール名
 | `Glob` | No | ファイル名パターン検索。**v2.1.268 以降 macOS / Linux / WSL では既定セットに含まれない**（§3.4 参照） |
 | `Grep` | No | ファイル内容検索（ripgrep ベース）。**v2.1.268 以降 macOS / Linux / WSL では既定セットに含まれない**（§3.4 参照） |
 | `LSP` | No | 言語サーバー経由のコードインテリジェンス（定義ジャンプ・参照検索・型エラー報告等） |
-| `Monitor` | Yes | バックグラウンドでコマンドを走らせ出力行ごとに Claude へ返す。WebSocket を開いて各メッセージをイベント扱いすることも可能。**v2.1.271 以降、watch には常にデッドラインがある**: 既定5分・最大30分（単発 `-p` 実行では最大10分）。期限で watch は終了し Claude に通知が1回届くので必要なら再アームする。無期限の `persistent` オプションは廃止。`timeout_ms` は WebSocket watch にも適用され、`TaskStop` で早期キャンセル可 |
+| `Monitor` | Yes | バックグラウンドでコマンドを走らせ出力行ごとに Claude へ返す。WebSocket を開いて各メッセージをイベント扱いすることも可能。**v2.1.271 以降、watch には常にデッドラインがある**: 既定5分・最大30分（単発 `-p` 実行では最大10分）。期限で watch は終了し Claude に通知が1回届くので必要なら再アームする。無期限の `persistent` オプションは廃止。`timeout_ms` は WebSocket watch にも適用され、`TaskStop` で早期キャンセル可。**権限は Bash と同じルールを使う**が、auto モード中は `Monitor` 自体を名指しする allow ルールは脇に置かれ、分類器が Bash コマンドと同じ基準で審査する。**Bedrock / Claude Platform on AWS / Vertex / Foundry、または `DISABLE_TELEMETRY` / `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC` 設定時（= feature-flag fetching オフ）は v2.1.310+ が必要**。Windows は Git Bash 必須。**プラグインはアクティブ時に自動起動する monitor を宣言できる**。WebSocket は private / link-local / クラウドメタデータアドレス（解決先がそれらのホスト名含む）と `sandbox.network.deniedDomains` のホストを拒否し、`allowManagedDomainsOnly` 設定時は managed allowlist 外も拒否（2026-11-03 ドキュメント改訂で確認） |
 | `EnterPlanMode` | No | プランモードへ移行 |
 | `ExitPlanMode` | Yes | プランを提示して承認を求め、プランモードを抜ける |
 | `EnterWorktree` | Yes | 隔離 git worktree を作成して移動。`path` 指定で既存 worktree に入る |
@@ -52,7 +71,7 @@ Claude Code の組み込みツール一覧。**ここに書かれたツール名
 | `TaskStop` | No | バックグラウンドタスクを ID で停止。v2.1.198 以降はチームメイトや名前付きバックグラウンドエージェントも受け付ける |
 | `ListAgents` | No | `SendMessage` の宛先になりうるエージェント一覧（セッション内サブエージェント、チームメイト、他のローカルセッション、Remote Control 接続中は他マシン／クラウドのセッション） |
 | `SendMessage` | No | 他エージェント（チームメイト、agent ID / 名前で再開するサブエージェント、自分の他セッション）へメッセージ送信 |
-| `SubagentHandback` | No | **v2.1.271+**。サブエージェントの最終レポートを親会話へ納品するツール。**auto モード限定**で、Agent ツールがローカル実行する非フォークのサブエージェントに提供される（`tools` から外しても `disallowedTools` に入れても付与される）。このツール経由の納品では親の `tool_response.content` はレポートではなく短い注記になる。レポート本文はフック（`PreToolUse` / `PostToolUse` を `SubagentHandback` にマッチ）の `tool_input.message` で読める。端末 CLI / IDE 拡張 / クラウドセッションで利用可 |
+| `SubagentHandback` | No | **v2.1.271+**。サブエージェントの最終レポートを親会話へ納品するツール。**auto モード限定**で、Agent ツールがローカル実行する非フォークのサブエージェントに提供される（`tools` から外しても `disallowedTools` に入れても付与される）。このツール経由の納品では親の `tool_response.content` はレポートではなく短い注記になる。レポート本文はフック（`PreToolUse` / `PostToolUse` を `SubagentHandback` にマッチ）の `tool_input.message` で読める。端末 CLI / IDE 拡張 / クラウドセッション / **Agent SDK** で利用可。**納品前に auto モードの分類器がレポートをレビューする**（2026-11-03 ドキュメント改訂で確認） |
 | `SendUserFile` | No | セッションからユーザーへファイル送信（任意のキャプション付き）。v2.1.196 以降 `display` パラメータあり |
 | `PushNotification` | No | デスクトップ通知（Remote Control 接続時はスマートフォンへのプッシュも）を送る |
 | `ScheduleWakeup` | No | 自己ペースの `/loop` の次イテレーション時刻を 1 分〜1 時間の範囲で再スケジュール |
@@ -78,8 +97,8 @@ Claude Code の組み込みツール一覧。**ここに書かれたツール名
 - シェル起動ファイル（`~/.zshrc` / `~/.bashrc` / `~/.profile`）のエイリアス・関数はセッション開始時にキャプチャされ利用可能
 - タイムアウト: `BASH_DEFAULT_TIMEOUT_MS`（既定 2 分）と `BASH_MAX_TIMEOUT_MS`（既定 10 分の上限）。**per-command のタイムアウトは Claude が `timeout` 引数で指定する**ものでユーザーが個別設定するものではない
 - 出力: 実行中は作業ファイルへストリーム。**5 GB 超で kill**。成功時はおよそ 30,000 文字までインライン、超過分はセッションディレクトリのファイルパス（64 MiB で切り詰め）+ 冒頭プレビュー。失敗時はおよそ 10,000 文字までインライン。`BASH_MAX_OUTPUT_LENGTH` で読み戻し量を変更可（既定 30,000、上限 150,000）。**v2.1.261 以降は `bashOutputMaxChars` 設定（最大 128,000 文字）でインライン上限そのものを引き上げられる**（インライン上限と読み戻しウィンドウを同時に設定し、設定すると `BASH_MAX_OUTPUT_LENGTH` は無視される）。バックグラウンドタスクの出力は `taskOutputMaxChars`（同じく最大 128,000 文字）で設定する
-- **終了コード 1 が「正常な否定」として扱われるコマンド**: `grep`, `rg`, `egrep`, `fgrep`, `find`, `diff`, `test`, `[`, `git diff`, `git grep`
-- バックグラウンド化: `run_in_background: true`。タイムアウトに達したコマンドも自動でバックグラウンドへ移される。ただし **`sleep` 始まりのコマンド**は自動バックグラウンド化されず停止される（2026-09-13 時点のリファレンス改訂で、以前記載されていた「`git` を含む」「完全にパースできない複合コマンド」の除外条件は削除され、`sleep` のみになった）。**v2.1.285 以降はバックグラウンドコマンドにも時間制限が適用**され、`timeout`（既定30分・最大2時間）に達すると停止し Claude に通知される（Bash / PowerShell 共通）。**v2.1.288 以降、この時間制限は無人セッション（`-p` / Agent SDK / CI / クラウド）限定**になり、ローカルの端末・デスクトップアプリ・VS Code セッションには制限がない（v2.1.288 より前は全セッションに適用）。制限はバックグラウンドに入った時点から起算され、フォアグラウンドから移行したコマンド（タイムアウト移行等）は移行時点から30分。`BASH_DEFAULT_TIMEOUT_MS` を 1800000（30分）超に設定すると既定を、`BASH_MAX_TIMEOUT_MS` を 7200000（2時間）超に設定すると最大を引き上げられる（どちらも短縮は不可。2026-10-02 巡回で tools-reference に詳細節化を確認）
+- **終了コード 1 が「正常な否定」として扱われるコマンド**: `grep`, `rg`, `egrep`, `fgrep`, `find`, `diff`, `test`, `[`, `git diff`, `git grep`。**このリスト外は exit 1 が情報的な否定でも失敗扱い**（`pgrep` / `jq -e` の no match、`cmp` のファイル相違等。2026-11-03 ドキュメント改訂で明文化）
+- バックグラウンド化: `run_in_background: true`。タイムアウトに達したコマンドも自動でバックグラウンドへ移される。ただし **`sleep` 始まりのコマンド**は自動バックグラウンド化されず停止される（2026-09-13 時点のリファレンス改訂で、以前記載されていた「`git` を含む」「完全にパースできない複合コマンド」の除外条件は削除され、`sleep` のみになった）。**v2.1.285 以降はバックグラウンドコマンドにも時間制限が適用**され、`timeout`（既定30分・最大2時間）に達すると停止し Claude に通知される（Bash / PowerShell 共通）。**v2.1.288 以降、この時間制限は無人セッション（`-p` / Agent SDK / CI / クラウド）限定**になり、ローカルの端末・デスクトップアプリ・VS Code セッションには制限がない（v2.1.288 より前は全セッションに適用）。制限はバックグラウンドに入った時点から起算され、フォアグラウンドから移行したコマンド（タイムアウト移行等）は移行時点から30分。`BASH_DEFAULT_TIMEOUT_MS` を 1800000（30分）超に設定すると既定を、`BASH_MAX_TIMEOUT_MS` を 7200000（2時間）超に設定すると最大を引き上げられる（どちらも短縮は不可。2026-10-02 巡回で tools-reference に詳細節化を確認）。`CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1` または bare モードで自動バックグラウンド化自体を無効化できる（タイムアウト到達コマンドは停止）。テキストプロンプトの `-p` 実行では既定・移行時とも**10分**（`--input-format stream-json` なら30分）。バックグラウンドへ移されたコマンド内の `cd` / `pushd` / `popd` / `chdir` は**持ち越されず**、結果に `Session cwd remains <dir>` が明記される（2026-11-03 ドキュメント改訂で確認）
 - Linux / WSL では `CLAUDE_CODE_TOOL_MEMORY_LIMIT`（例 `4G`）で Bash / PowerShell、および **v2.1.246 以降は Monitor** ツールコマンド全体のメモリ上限を cgroup で設定できる。**セッション内の全コマンド合算**で、値変更の反映には再起動が必要（v2.1.246 より前は Monitor は上限外）
 - v2.1.246 以降、`CLAUDE_CODE_TOOL_MEMORY_CGROUP_EXCLUDE` で Claude Code が起動する他種別のプロセス（`mcp` / `lsp` / `hooks` / `plugin` / `helper` / `agent`）も同じ上限の対象にできる。列挙した種別が**除外**され、それ以外は上限対象。`none` で全種別対象、`all-new` で Bash / PowerShell / Monitor のみ対象。未設定時の対象集合はサーバー配信の構成に従って変動する。権限ゲート系フック（およびそれが呼ぶ MCP サーバー）は常に除外される
 
@@ -89,6 +108,8 @@ Claude Code の組み込みツール一覧。**ここに書かれたツール名
 - **フックでシェルコマンドを検査する場合は `Bash|PowerShell` でマッチすること。`Bash` だけでは不十分**
 - 関連設定は 3 系統: `defaultShell: "powershell"`（`!` コマンド）、コマンドフックの `shell: "powershell"`（ツール有効化に依存せず動く）、スキルフロントマターの `shell: powershell`（`` !`cmd` `` ブロック）
 - プレビュー中の制限: PowerShell プロファイルは読み込まれない / Windows ではサンドボックス非対応
+- PowerShell ツールの exit 1 正常扱いコマンド: `grep`, `rg`, `egrep`, `fgrep`, **`findstr`**, `git grep`, `git diff`（Bash 側のリストとは異なる）。`rg foo | Out-Null` のように複合すると `Error: Exit code 1` が表示されうるが失敗ではない。`where.exe` の no match、`fc.exe` / `diff.exe` の相違、`robocopy` の exit 1–7 も同様に失敗ではない
+- **v2.1.296 以降、フックが `CLAUDE_ENV_FILE` で永続化した環境変数を PowerShell コマンドも受け取る**（2026-11-03 ドキュメント改訂で確認）
 - **Bash の deny ルールは PowerShell ツールも無効化する（2026-10 ドキュメント改訂で明文化）**: Windows + Git Bash 環境では、設定ファイルや `--disallowedTools` の Bash deny ルール（`Bash(git push *)` のようなスコープ付きも、素の `Bash` も）が**セッションの PowerShell ツール自体を警告なしでオフにする**（`Bash` ルールは PowerShell ツールを制限しないため、deny の迂回を防ぐ措置）。PowerShell を残したまま Bash deny ルールを使うには、①`CLAUDE_CODE_USE_POWERSHELL_TOOL=1` を設定、または ②`PowerShell(git push *)` のようなスコープ付き `PowerShell` ルールを設定ファイルに追加する。ツール全体を外す Bash deny はセッションからシェルツールを失わせる
 
 ### 3.3 Read / Edit / Write
@@ -98,6 +119,8 @@ Claude Code の組み込みツール一覧。**ここに書かれたツール名
 - **`allow_large: true`（v2.1.296+）**: 既定の上限（1 回 25,000 トークン / ファイル全体 256 KB 拒否）を超えるテキストファイルを、`offset` / `limit` のページングなしで 1 回で読める。サイズはコンテキストウィンドウの残量に対して判定される。画像・PDF・ノートブックは従来の上限のまま（公式 tools-reference の「Large files」節に収載済み）
 - Edit は正規表現でもファジーでもない**完全一致置換**。`old_string` はファイル内に**ちょうど 1 回**出現する必要がある（複数なら文脈を足すか `replace_all: true`）
 - read-before-edit: Opus 4.6 / Haiku 4.5 以前は常に必須。新しいモデルは「読んでも権限プロンプトが不要」かつ「Read ツールが使える」場合に限り未読ファイルの上書きが可能（v2.1.228 以降。ノートブックと `PARTIAL view` は全モデルで必須）
+- **読んだ後にディスク上で変更されたファイルも、`old_string` が現在の内容に完全・一意にマッチし、かつプロンプトなしで読めるなら編集できる**（2026-11-03 ドキュメント改訂で明文化）。結果に「ファイルには他の変更がある」旨の注記が付くので、周辺内容に依存する後続編集の前に再読する。stale な `old_string` や `replace_all` なしの複数マッチは従来どおり再読が必要
+- Read は空ファイル・最終行超えの `offset` に対して通知を返す。**128 MB 超の画像は拒否**（リサイズして読み直す）。バイナリ扱いの拡張子（`.xlsx`, `.parquet`, `.heic`, `.zip` 等）は拒否し、対応スキルやシェルコマンドを提案する。`@` メンションされた拒否ファイルはパスのみ渡る
 - **Bash での閲覧も read-before-edit を満たす**: `cat`, `nl`, `bat`, `batcat`, `head`, `tail`, `sed -n 'X,Yp'`, `grep`, `egrep`, `fgrep`, `rg` を単一ファイルにパイプ・リダイレクトなしで使った場合
 - **`Read` の deny ルールにマッチするパスは Edit / Write も拒否される**（そこへの新規ファイル作成も含む）。Read / Edit の deny ルールは Claude Code が認識する Bash のファイルコマンド（`cat`, `head`, `tail`, `sed` 等）にも適用される。**2026-09-06 時点のリファレンスで `> file` / `< file` 等 Bash のリダイレクト先にも適用されることが明記された**。任意のサブプロセスには適用されないため、OS レベルで強制するにはサンドボックスを有効化する
 
@@ -110,13 +133,14 @@ Claude Code の組み込みツール一覧。**ここに書かれたツール名
   - サブエージェントが `tools` フィールドに `Glob` / `Grep` を列挙し `Bash` を持たない（そのサブエージェントのみ。`--agent` でメインセッションとして走る場合はセッション全体）
 - Glob は更新時刻順、**100 件で打ち切り**（切り詰めフラグが Claude に見える）。**既定で `.gitignore` を尊重しない**。変更用の環境変数は `CLAUDE_CODE_GLOB_NO_IGNORE`（`false` で `.gitignore` 尊重）と `CLAUDE_CODE_GLOB_HIDDEN`（`false` でドットファイル除外）。いずれも `@` 補完・Grep・Read には影響しない
 - Grep は ripgrep ベースで **POSIX grep ではなく ripgrep の正規表現構文**。`.gitignore` を尊重する（gitignore されたファイルはパスを直接指定すれば読める）
-- 出力モード: `files_with_matches`（既定） / `content` / `count`
+- 出力モード: `files_with_matches`（既定） / `content` / `count`。`content` でマッチありパターンの最終マッチを超える `offset` を指定すると `No entries at this offset` が返る（「マッチなし」と誤読しない）。`count` の合計は `head_limit` / `offset` による切り詰めに関係なく全マッチを数える（2026-11-03 ドキュメント改訂で確認）
 - **権限判定は探索ディレクトリの存在確認より前に行われる**（Glob / Grep 共通、公式ドキュメント明文化）。[作業ディレクトリ](https://code.claude.com/docs/en/permissions#working-directories)外の存在しない `path` に対しても読み取り権限チェックは走るため、**パスに対して権限プロンプトが出たことはそのパスが存在する証拠にはならない**（情報漏洩を避けるための挙動）
 - `pattern` / `path` に NUL バイトが含まれる場合はエラーを返し、Claude に除去を求める
 
 ### 3.5 WebFetch / WebSearch
 
 - WebFetch は取得したページを小型・高速モデルで抽出プロンプトに対して処理する。**設計上ロッシー**——「ページに書かれていない」という結果は「プロンプトが聞かなかっただけ」の可能性がある
+- **`localhost` やドットを含まないホスト名（イントラネットの裸の名前等）はリクエスト前に拒否**され、Bash の `curl` を案内するエラーが返る。1 回の呼び出しで読むのは**ページ内容の最大 100,000 文字**（v2.1.290 以降、超過時は未読量が結果に示され続きを取得できる）。`User-Agent` は `Claude-User` で始まり、`Accept` ヘッダーは Markdown を優先する（2026-11-03 ドキュメント改訂で確認）
 - HTTP は HTTPS に自動昇格。**別ホストへのリダイレクトは追わず**、元 URL とリダイレクト先を返すので Claude が 2 回目の呼び出しをする
 - レスポンスは既定 15 分キャッシュ（v2.1.233 以降 `CLAUDE_CODE_WEBFETCH_CACHE_TTL_MS` で変更可）
 - **v2.1.268 以降、ダウンロードに既定 5 分（300 秒）の期限**がある（リダイレクト追跡込み）。期限内に完了しないと deadline エラーで失敗する。`CLAUDE_CODE_WEBFETCH_DEADLINE_MS` で変更、`0` で無効化（数字のみ受け付け、それ以外の表記は既定値のまま）
@@ -137,6 +161,7 @@ Claude Code の組み込みツール一覧。**ここに書かれたツール名
 - `tools` / `disallowedTools` の解決順: 両方未設定 → サブエージェントに提供されうる全ツールを継承 / `tools` のみ → 列挙されたものだけ / `disallowedTools` のみ → 親のツールから除外 / **両方設定 → `disallowedTools` が優先**
 - **`disallowedTools` に specifier 付きエントリ（例 `Bash(git push *)`）を書いても、マッチするコマンドだけでなくツール全体が除去される**（2026-09-13 リファレンス改訂で明文化）。Bash を残して特定コマンドだけ塞ぎたい場合は settings の `permissions.deny` に Bash deny ルールを書く（メイン会話とサブエージェント双方に適用される）
 - いずれの場合も「サブエージェントに提供されうるツール」の範囲に制限される。`tools` に書いても提供対象外のツールは付与されない
+- **`tools` リストの全エントリが使用可能なツールにマッチしない場合、Agent ツールはサブエージェントを起動せずエントリ名入りのエラーを返す**（errors.md「Agent would be spawned with zero tools」参照。2026-11-03 ドキュメント改訂で確認）
 - **Agent 呼び出し自体は権限プロンプトを出さない**。サブエージェント側の個々のツール呼び出しが権限ルールで判定される
 - v2.1.186 以降、バックグラウンドサブエージェントの権限プロンプトもメインセッションに出る。どのサブエージェントの要求かが表示され、Esc はそのツール呼び出しだけを拒否する（サブエージェントは止まらない）。全停止ショートカット `Ctrl+X Ctrl+K`（3 秒以内に 2 回押しで確定）は、バックグラウンドサブエージェントの権限プロンプト表示中でも押せる（2026-10-06 ドキュメント改訂で明文化）
 - ターン数上限はサブエージェント定義の `maxTurns`
@@ -250,11 +275,15 @@ Claude がこのツールを使うのは 2 つの場合のみ:
 
 **ハーネス設計上の注意**: このツールは権限プロンプトを出さず、`PreToolUse` フックも走らない。
 他にツールが 1 つでも残っている限り **deny / ask ルールでブロックすることもできない**。
-サブエージェントには決して提供されない。
+例外: deny ルールが**他の全ツールを除去し、かつ `EndConversation` にもマッチする場合**（`"*"` 等）は、
+allow ルールで `EndConversation` を明示しない限りこのツールも除去される
+（他の全ツールを除去しても `EndConversation` にマッチしない deny はツールを残す。2026-11-03 ドキュメント改訂で明文化）。
+サブエージェントには決して提供されない。メイン会話のツールリストを共有するバックグラウンドタスクからは見えるが、
+そこで呼んでも何も終了しない。
 
 提供条件（すべて満たす場合のみ出現）: v2.1.213 以降 / モデルが Opus 4.8・Sonnet 5・Fable 5 かそれ以降の同系統 /
 対話ターミナルセッション（IDE 統合ターミナル内の `claude` を含む） / `--bare` でない /
-Bedrock・Claude Platform on AWS・Vertex・Foundry ではない。
+Bedrock・Claude Platform on AWS・Vertex・Foundry・**クラウドゲートウェイ経由サインインのセッション**ではない（2026-11-03 ドキュメント改訂でゲートウェイ除外を確認）。
 非対話 `-p`、Agent SDK、VS Code 拡張パネル、GitHub Actions、Claude Code on the web では提供されない。
 
 ---
