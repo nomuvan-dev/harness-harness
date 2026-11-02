@@ -1,5 +1,39 @@
 # harness-harness 更新履歴
 
+## 2026-11-03 — 公式ドキュメント巡回＋スキルエコシステム巡回
+
+### 検出・更新
+
+**Claude Code**: 新リリースなし（v2.1.316 のまま）。一方でドキュメント側の改訂が大規模:
+- **settings / settings-reference**: `permissions.blockWritesOutsideWorkingDirectories` が正式収載（スコープ・例外・fail-closed 挙動の詳細付き）、新キー `worktree.location`（Desktop SSH のリモート worktree 配置先）、`crossSessionInbound` / `remoteControlAtStartup` の解決順明文化、`/config key=value` ショートハンド・壊れた設定の `~/.claude/backups/` 自動復旧・クラウドセッションが読む設定の整理
+- **tools-reference**: 権限ルール specifier 形式の体系化（`Bash(...)` は Monitor にも、`Read(...)` は LSP にも適用、`Edit(...)` allow は同パス Read も付与）、Edit の「読了後にディスク変更されたファイルも一意マッチなら編集可」等
+- **commands**: `/import` に Cursor 追加（v2.1.265+）、**Claude Design スタンドアロンサイト閉鎖予告（2026-12-14）**、`/review` は `/code-review` の完全エイリアス、`/commit-push-pr` が公式リファレンスから消失（次回巡回で要確認）
+- **best-practices の再全面改訂**: 「デフォルトで十分、設定するのは Claude に見えないものだけ」枠組み、決定論的 vs 非決定論的指示の対比、検証の4段階ラダー、無人実行前の5つの質問等
+- claude-apps-gateway-on-aws: エンタープライズ AWS デプロイ手順のみでハーネス設計に関わる内容なし（spec 対応不要）
+
+**Codex CLI**: 安定版・SDK とも新リリースなし（0.166.0 のまま、プレリリースは 0.167.0-alpha.3 まで進行）。公式 changelog・アナウンスとも新着なし。
+
+### Phase 3.5 スキルエコシステム
+
+- **anthropics/skills**: スキル増減なし（19 スキル据え置き）。186.7K stars（+3.0K）。2026-10-28 の #2087 で **mcp-builder が MCP TypeScript SDK v2 対応に改訂**（v1/v2 選択ガイド・移行 codemod・self-check スクリプト。v1 はバグ/セキュリティ修正のみ）
+- **claude.com/plugins**: 528 プラグイン（前回 549 から微減、掲載整理とみられる）。上位の顔ぶれ変化なし
+- **openai/skills**: deprecated 継続、デフォルトブランチにコミット増なし（28.5K stars）
+- **Codex Skills Docs**: 308 リダイレクト・仕様とも変更なし（`agents/openai.yaml` のメタデータ構成を sources.md に追記）
+- **agentskills.io**: 仕様変更なし。clients.md は JS レンダリングで実カウント不能のため 46 プラットフォーム据え置き
+- **skills.sh**: find-skills 4.2M でトップ継続。**agent-browser 1.3M / 5 位** — 前回予告どおりルーブリック採点し **Tier A 昇格**（関連性 2 + 互換性 3 + 採用 2 + 鮮度 2 + リスク -1 = 8 点）。reddit-automation 1.2M / 9 位で継続性確認（リスク -2 のため Tier B 据え置き）
+
+### 更新ファイル
+
+- `specs/claude/changelog.md` — 2026-11-03 巡回ノート（リリースなし・ドキュメント改訂の要約）
+- `specs/claude/configuration.md` — `blockWritesOutsideWorkingDirectories` 正式収載反映、`worktree.location` 追加、設定解決順・バックアップ復旧等
+- `specs/claude/tools.md` — 権限ルール specifier 体系、Monitor / Edit / WebFetch / EndConversation 等の挙動詳細
+- `specs/claude/skills-and-commands.md` — `/import` Cursor、Claude Design 閉鎖予告、`/review` エイリアス等
+- `specs/claude/best-practices.md` — 新ページ構成を反映（+164 行）
+- `specs/codex/changelog.md` — 2026-11-03 巡回ノート（リリースなし）
+- `kb/skills/_index.md` — last_patrol 2026-11-03、各参照先の最新状況、Tier A/B 一覧（12/10）
+- `kb/skills/recommended.md` — agent-browser を Tier A へ昇格、分野カバレッジ表更新、installs 更新
+- `kb/skills/sources.md` — last_checked、openai/skills stars、Codex Skills 仕様注記、agentskills.io 注記
+
 ## 2026-11-01 — 公式ドキュメント巡回
 
 ### 検出・更新

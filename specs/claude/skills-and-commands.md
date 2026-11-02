@@ -1,6 +1,6 @@
 # Claude Code Skills & コマンド仕様書
 
-最終更新: 2026-10-07（巡回更新）
+最終更新: 2026-11-03（巡回更新）
 
 公式ドキュメント: https://code.claude.com/docs/en/skills / https://code.claude.com/docs/en/commands / https://code.claude.com/docs/en/sub-agents / https://code.claude.com/docs/en/scheduled-tasks / https://code.claude.com/docs/en/web-scheduled-tasks / https://code.claude.com/docs/en/plugins/install（2026-09-25 のドキュメント再編で discover-plugins から移動。プラグイン関連は https://code.claude.com/docs/en/plugins/overview 以下の約20ページ構成に分割された）
 
@@ -288,14 +288,14 @@ Claude Code に同梱されるスキル:
 | `/clear` (`/reset`, `/new`) | 会話履歴クリア |
 | `/compact [instructions]` | 会話コンパクション |
 | `/resume [session]` (`/continue`) | セッション再開。**v2.1.285 以降、実行中のバックグラウンドセッションもピッカー / ID / 名前で resume 可能**: 現在の会話がバックグラウンドへ移り、この端末が実行中セッションにアタッチされる（空プロンプトで `←` を押すと agent view に戻る）。それ以前は実行中セッションの resume は拒否され `claude attach` を案内していた |
-| `/rename [name]` | セッション名変更 |
+| `/rename [name]` | セッション名変更（名前なしで会話履歴から自動生成。`-p` 非対話モードでも利用可）。claude.ai / デスクトップアプリ含む全リネーム経路で制御文字・不可視文字をスペースに置換し 200 文字で打ち切る。不可視文字除去後に空になる名前は拒否（置換・上限は v2.1.221 以降） |
 | `/rewind` (`/checkpoint`, `/undo`) | 会話/コードを前の状態に巻き戻し（v2.1.108 で `/undo` エイリアス追加。v2.1.191 で `/clear` 実行前からの会話再開に対応） |
 | `/cd <path>` | 会話を保ったままセッションのワーキングディレクトリを移動（v2.1.169）。v2.1.206 でパス補完対応。**v2.1.246 以降、移動と同時に移動先ディレクトリの project / local 設定、プロジェクトスキル、そのディレクトリの設定が有効化するプラグインの MCP サーバーを読み込む**（`/reload-plugins` 不要）。ファイルアクセス権だけを足したい場合は `/add-dir` を使う。`Cd` 権限ルールで移動先を制限・禁止できる |
 | `/branch [name]` (`/fork`) | 会話のブランチ作成。v2.1.212 で `/fork` は会話を新しいバックグラウンドセッション（`claude agents` に独立表示）へコピーする挙動に変更。v2.1.221 から fork セッションは元のチェックアウトを共有せず自前の worktree を作成 |
 | `/subtask` | 会話をコピーしたセッション内サブエージェントを起動（v2.1.212 で旧 `/fork` の挙動から改名） |
 | `/export [filename]` | 会話をテキストエクスポート |
 | `/exit` (`/quit`) | CLI終了 |
-| `/btw <question>` | コンテキストに残らないサイドクエスチョン。回答画面で `c` キーを押すと生 Markdown をクリップボードへコピー（v2.1.163） |
+| `/btw [question]` | コンテキストに残らないサイドクエスチョン。回答画面で `c` キーを押すと生 Markdown をクリップボードへコピー（v2.1.163）。**引数なしで実行すると直近のサイドクエスチョンを表示し、過去の回答をブラウズできる**（未質問なら usage 行を表示。2026-11 commands リファレンス改訂で明記） |
 
 ### 2.2 設定・情報
 
@@ -319,22 +319,22 @@ Claude Code に同梱されるスキル:
 | `/cost` | `/usage` のトークン使用量タブを開くショートカット。**v2.1.251 でセッション単位のプロンプトキャッシュ行を追加**（ヒット率・ミス・再キャッシュしたトークン数・warm/cold）。同じ情報はステータスラインスクリプト向けに `prompt_cache` オブジェクトとしても提供される |
 | `/stats` | `/usage` の日次使用量・セッション履歴タブを開くショートカット |
 | `/insights` | セッション分析レポート（プロジェクト領域、操作パターン、摩擦点） |
-| `/usage-credits` | 追加使用量情報（v2.1.113 で Remote Control クライアントからも利用可能に。v2.1.144 で `/extra-usage` から改名、旧名もエイリアスとして残存。v2.1.161 で Team / Enterprise admin に再ログインを開始する代わりに組織 usage settings ページへ案内するよう修正。v2.1.236 で `/usage` が Team / Enterprise メンバーにも usage-credits の消費行を表示するようになり、未消費時は 0% の行を表示） |
+| `/usage-credits` | 追加使用量情報（v2.1.113 で Remote Control クライアントからも利用可能に。v2.1.144 で `/extra-usage` から改名、旧名もエイリアスとして残存。v2.1.161 で Team / Enterprise admin に再ログインを開始する代わりに組織 usage settings ページへ案内するよう修正。v2.1.236 で `/usage` が Team / Enterprise メンバーにも usage-credits の消費行を表示するようになり、未消費時は 0% の行を表示）。billing 権限のない Team / Enterprise メンバーは、ブラウザで課金設定を開く代わりに CLI から admin へ usage-credits リクエストを送信する（admin に通知される旨をダイアログで確認後）。SSH 等でブラウザを開けない場合は URL をテキスト表示（v2.1.205 以降。それ以前は何も表示されなかった） |
 | `/tui` | フリッカーフリー・フルスクリーン描画の切り替え（v2.1.110） |
-| `/focus` | フォーカスモード切替（v2.1.110。brief・focus モードは v2.1.101 で改善） |
+| `/focus` | フォーカスビュー切替（v2.1.110。brief・focus モードは v2.1.101 で改善）。直近プロンプト＋ツール呼び出し1行サマリ（編集 diffstat・ターン内に起動したサブエージェント数・完了済みバックグラウンドタスク通知の集約カウント）＋最終応答のみ表示。選択はセッションをまたいで保持され、settings の `viewMode` で上書き可。フルスクリーン描画時のみ利用可。**Remote Control クライアントからは `/focus [on\|off]` で保存済み選択を変えずに現セッションのみ切替（v2.1.281 以降）**。VS Code 拡張は `viewMode` と独立した拡張設定の Focus ビューを持つ |
 
 ### 2.3 開発ワークフロー
 
 | コマンド | 説明 |
 |:--|:--|
-| `/init` | CLAUDE.md の自動生成 |
+| `/init` | CLAUDE.md の自動生成。`CLAUDE_CODE_NEW_INIT=1` でスキル・フック・個人メモリファイルも案内するインタラクティブフローに切替。OpenAI Codex / Google Gemini CLI の設定を検出した場合は `/import` での取り込みを提案する |
 | `/diff` | ワーキングツリーの変更（Claude の編集を含む）をレビューする。フルスクリーンレンダリング時は会話の横に **diff パネル**を開き、Claude の編集に追随して更新され続ける（`/diff` 再実行かヘッダの `✕` で閉じる）。要件はフルスクリーン・git リポジトリ・端末幅 110 桁以上・**v2.1.287 以降**（v2.1.260 で導入後、公式ドキュメントが要件バージョンを v2.1.287 に引き上げ）で、満たさない場合は従来の diff ビューア（プロンプト位置に開き Esc で閉じる）にフォールバックする。端末幅 144 桁以上なら Claude がファイル編集を始めた時点で自動的に開く。パネルでは行をマウス選択して次のプロンプトに添付でき、`Ctrl+X B`（`app:cycleDiffBase`）で比較基準を「今セッションの変更 → 未コミット全体 → 既定ブランチからの分岐点以降」と巡回する（プロジェクトごとに記憶）。テスト・生成ファイルと当セッション以前の変更は折りたたまれる |
 | `/plan` | プランモード開始 |
 | `/powerup` | Claude Code機能のインタラクティブレッスン＋アニメーションデモ |
 | `/security-review` | セキュリティ脆弱性分析 |
-| `/review <pr>` | PRレビュー。v2.1.186 で `/code-review medium` と同じエンジンに変更されたが、v2.1.202 で高速な単一パスレビューに回帰（多段レビューは `/code-review <level> <pr#>` を使用） |
+| `/review [effort] [flags] [target]` | **v2.1.223 以降は `/code-review` のエイリアス**（同じ effort レベル・フラグ・ターゲットを受け付け、レベル省略時は最後にタイプした low〜max レベルを再利用）。それ以前は独立コマンドで、GitHub PR の単一パス読み取り専用レビュー（引数なしでオープン PR 一覧から選択。v2.1.186〜v2.1.201 は `/code-review medium` と同じマルチエージェントエンジン） |
 | `/dataviz` | チャート・ダッシュボード設計ガイダンススキル（カラーパレットバリデータ付き）（v2.1.198） |
-| `/commit-push-pr` | commit→push→PR作成。v2.1.206 でリポジトリの push remote（`remote.pushDefault` または唯一のremote）への `git push` を自動許可。v2.1.229 で `--force`/`--amend`/`--no-verify` 等の危険フラグを含む git/gh コマンドは自動承認しないよう変更 |
+| `/commit-push-pr` | **2026-11-03 時点の公式 commands リファレンスには収載されていない**（一覧から削除済み。削除済みコマンド表にも履歴記載なし）。commit→push→PR作成。v2.1.206 でリポジトリの push remote（`remote.pushDefault` または唯一のremote）への `git push` を自動許可。v2.1.229 で `--force`/`--amend`/`--no-verify` 等の危険フラグを含む git/gh コマンドは自動承認しないよう変更 |
 | `/release-notes` | インタラクティブバージョンピッカー付き変更ログ表示 |
 | `/sandbox` | サンドボックスモード切替 |
 | `/schedule [description]` | クラウドスケジュールタスクの作成・管理 |
@@ -400,28 +400,28 @@ MCPサーバーが公開するプロンプトは `/mcp__<server>__<prompt>` 形�
 | `/background [prompt]` | 現在のセッションをバックグラウンドエージェントとしてデタッチし端末を解放。プロンプトを渡すとデタッチ前に最後の指示を送る |
 | `/stop` | バックグラウンドセッションを停止（アタッチ中のみ表示）。トランスクリプトと worktree は保持。停止せずデタッチするには `/exit` |
 | `/artifacts` | 自分が所有する、または共有された Artifact 一覧を表示し、セッションへの添付・ブラウザで開く・リンクのコピーを行う。Artifact が利用可能な環境でのみ使用可（v2.1.208 以降。`Enter` での添付は v2.1.216 以降） |
-| `/auto-mode-setup` | プロジェクトと直近セッションから `autoMode.environment` エントリのドラフトを生成し、レビューしてユーザー設定へ保存する。Pro / Max / Team プランかつ v2.1.228 以降（ネイティブ Windows は v2.1.233 以降） |
+| `/auto-mode-setup` | プロジェクトと直近セッションから `autoMode.environment` エントリのドラフトを生成し、レビューしてユーザー設定へ保存する。Pro / Max / Ultra / Team プランかつ v2.1.228 以降（ネイティブ Windows は v2.1.233 以降）。**Enterprise プランまたは Claude Console API キーでは v2.1.283 以降**（2026-11 commands リファレンス改訂で収載） |
 | `/advisor [model\|off]` | Advisor ツール（タスク中の要所で第2のモデルに助言を求める）の有効化 / 無効化。`fable` / `opus` / `sonnet` / 完全なモデル ID を受け付ける。引数なしではピッカーが開く。**v2.1.260 以降はターミナルのピッカーが無い環境でも動作する** — `-p` の非対話モード、Agent SDK、デスクトップアプリ、Remote Control 経由。これらの環境では引数なしの `/advisor` が現在の advisor とエイリアス一覧をテキストで表示し、`/advisor <model>` で設定、`/advisor off` で無効化する。Remote Control クライアントやリモートワーカーに接続したセッションでの選択は**そのセッション限定**で `advisorModel` 設定は書き換えない |
 | `/autocompact [auto\|<tokens>]` | 自動コンパクション発動のコンテキスト使用量を設定（例 `500k`、`auto` でモデル既定に戻す） |
 | `/deep-research <question>` | **バンドルワークフロー**。Web 検索を fan-out し、ソースを取得・相互検証して引用付きレポートを合成 |
 | `/run` | **バンドルスキル**。テストだけでなく実アプリを起動・操作して変更の動作を確認 |
 | `/run-skill-generator` | **バンドルスキル**。プロジェクト固有のビルド / 起動 / 操作手順をスキルとして生成し、`/run` と `/verify` に教える |
-| `/design [brief]` | **バンドルスキル**（リサーチプレビュー、v2.1.234 以降）。Claude Design のアートボードワークフローを CLI / Claude Code Desktop に持ち込み、Artifacts 基盤で編集可能なアートボードのキャンバスを公開する。ブリーフを渡すと UI 案を複数生成し、ユーザーが選んだ案を Claude に実装させる流れ。Pro / Max / Team / Enterprise、かつ [Artifacts が利用可能なセッション](https://code.claude.com/docs/en/artifacts#availability)で利用可。アカウントで保存が有効ならキャンバス上でアートボードを編集して新バージョンを公開でき、無効ならドラフトの閲覧と PNG / PDF エクスポートのみ。2026-09-01 巡回で公式 commands リファレンスに収載されたことを確認。2026-09-30 の commands リファレンス改訂で「Design artifact」の呼称が「**Claude Design** artifact」に変更 |
+| `/design [brief]` | **バンドルスキル**（リサーチプレビュー、v2.1.234 以降）。Claude Design のアートボードワークフローを CLI / Claude Code Desktop に持ち込み、Artifacts 基盤で編集可能なアートボードのキャンバスを公開する。ブリーフを渡すと UI 案を複数生成し、ユーザーが選んだ案を Claude に実装させる流れ。Pro / Max / Team / Enterprise、かつ [Artifacts が利用可能なセッション](https://code.claude.com/docs/en/artifacts#availability)で利用可。アカウントで保存が有効ならキャンバス上でアートボードを編集して新バージョンを公開でき、無効ならドラフトの閲覧と PNG / PDF エクスポートのみ。2026-09-01 巡回で公式 commands リファレンスに収載されたことを確認。2026-09-30 の commands リファレンス改訂で「Design artifact」の呼称が「**Claude Design** artifact」に変更。**2026-11 commands リファレンス改訂で要件が「v2.1.265 以降＋[Design テンプレートが利用可能なアカウント](https://code.claude.com/docs/en/artifacts#start-from-a-slides-design-or-docs-template)」に変更**: 組織が Design テンプレートをオフにしていると `/design` はデザインを作らない。Artifacts が無い Bedrock / Vertex / Foundry / AWS 上の Claude Platform では利用不可 |
 | `/slides [brief]` | **バンドルスキル**。ブリーフから新規プレゼンテーションを **Claude Slides** [artifact](https://code.claude.com/docs/en/artifacts#make-a-slide-deck) として作成する（例: `/slides a quarterly review of the platform team`）。要 v2.1.265 以降＋Artifacts が利用可能なセッション＋Slides テンプレートが利用可能なアカウント。2026-09-30 巡回で公式 commands リファレンスへの収載を確認 |
-| `/design-sync [hint]` | **バンドルスキル**。リポジトリの React デザインシステムを変換して Claude Design にアップロードし、生成デザインに実コンポーネントを使わせる |
-| `/design-login` | claude.ai アカウントで `/design-sync` のデザインシステムアクセスを認可 |
+| `/design-sync [hint]` | **バンドルスキル**。リポジトリの React デザインシステムを変換して Claude Design にアップロードし、生成デザインに実コンポーネントを使わせる。claude.ai への接続が必要なため Bedrock / Vertex / Foundry / AWS 上の Claude Platform / Claude apps gateway 経由では利用不可。**アップロード先のスタンドアロン claude.ai/design サイトは 2026-12-14 までに閉鎖予定**（2026-11 commands リファレンス改訂で明記。[移行ガイド](https://support.claude.com/en/articles/17440474-migrate-from-standalone-claude-design-to-claude)参照） |
+| `/design-login` | claude.ai アカウントで `/design-sync` のデザインシステムアクセスを認可。このサインインはスタンドアロン claude.ai/design サイト向けで、**同サイトは 2026-12-14 までに閉鎖予定** |
 | `/fewer-permission-prompts` | **バンドルスキル**。トランスクリプトから頻出の読み取り専用 Bash / MCP 呼び出しを抽出し、プロジェクト `.claude/settings.json` に優先度付き allowlist を追加 |
-| `/import [codex\|gemini] [--dry-run] [--yes]` | 他のコーディングエージェント（OpenAI Codex / Google Gemini CLI）の設定（指示ファイル・MCP サーバー・コマンド・サブエージェント・スキル）を Claude Code に取り込む |
+| `/import [codex\|gemini\|cursor] [--dry-run] [--yes]` | 他のコーディングエージェント（OpenAI Codex / Google Gemini CLI / **Cursor**）の設定（指示ファイル・MCP サーバー・コマンド・サブエージェント・スキル）を Claude Code に取り込む。**Cursor からの取り込みは v2.1.265 以降**（2026-11 commands リファレンス改訂で収載）。`-p` の非対話モードでは検出結果と確認用コマンドを表示する。Bedrock / Vertex / Foundry / AWS 上の Claude Platform / Claude apps gateway 経由、および feature flag 取得を止めたセッションでは利用不可 |
 | `/statusline` | ステータスラインの設定。引数なしでシェルプロンプトから自動構成 |
 | `/keybindings` | キーボードショートカット設定ファイル（`~/.claude/keybindings.json`）を開く。キー名は**大文字小文字を区別しない**（`K` は `k` と同一。Shift 併用は `shift+k` と明記する必要がある）。`wheelup` / `wheeldown` がマウスホイールイベントとして指定でき、既定で `scroll:lineUp` / `scroll:lineDown` にバインドされている。未知のアクション名を指定したバインドは v2.1.246 からスキップされ（既定バインドが維持され `--debug` で警告）、以前はそのキーが無効化されていた。v2.1.247 で `chat:queueSubmit`（既定 `Ctrl+X Enter`。作業中でも割り込まずキューに積む送信。オートコンプリート表示中でも送信される）と `select:pageUp` / `select:pageDown` / `select:first` / `select:last`（PageUp / PageDown / Home / End。適用は `/skills` メニュー。`/model` 等では既定の PageUp / PageDown が使われ Home / End は無視）を追加。キー名に `pageup` / `pagedown` / `home` / `end` が使えるようになった。`ctrl+x` を単独キーとして奪うには `ctrl+x ctrl+k` / `ctrl+x ctrl+e` / `ctrl+x enter`（Chat）と `ctrl+x ctrl+b`（Task）を全て `null` にする。再バインド不可: `Ctrl+C` / `Ctrl+D` / `Ctrl+M`（Enter として届く）/ `Ctrl+[`（Escape として届く）/ `Ctrl+I`（Tab として届く）/ `Ctrl+H`（ASCII backspace）/ Caps Lock。非 Latin レイアウト（キリル等）では Kitty キーボードプロトコル対応端末なら US 配列の物理位置でマッチし、AZERTY 等の Latin 系再配置レイアウトでは「そのキーが打つ文字」でマッチする（v2.1.247 以前は Kitty プロトコル端末の非 Latin レイアウトで Ctrl ショートカットが発火しなかった）。**2026-09-10 時点のリファレンスで 2 つのコンテキストが追加**: `EffortSlider`（`/effort` を引数なしで実行したときのスライダ。`effortSlider:thisSessionOnly`、既定 `s` = 選択中の effort をそのセッションのみに適用。要 v2.1.257 以降。**v2.1.284 で `effortSlider:decreaseEffort`（既定 Left）/ `effortSlider:increaseEffort`（既定 Right）/ `effortSlider:toggleUltracode`（既定 Tab。ultracode が利用可能な場合のセッション単位トグル）が追加され矢印・Tab キーも再バインド可能に**。再バインド不可は Enter / Escape のみとなった）と `Agents`（`claude agents` のエージェントビュー。`agents:switchView` 既定 `Ctrl+S` = セッションのグルーピングを state / directory で切替、`agents:togglePin` 既定 `Ctrl+T` = 選択セッションのピン留め。要 v2.1.257 以降。**エージェントビュー表示中は `Agents` のバインドが `Chat` / `Global` の同一キーより優先**され、例えば `Ctrl+S` は `chat:stash` ではなくグルーピング切替になる。またエージェントビューでは単打のみ発火するため、`chat:externalEditor` の `Ctrl+X Ctrl+E` チョードは効かず `Ctrl+G` を使う） |
-| `/theme` | カラーテーマ変更（`auto`・light/dark・色覚多様性対応（daltonized）・ANSI テーマ等） |
+| `/theme` | カラーテーマ変更（`auto`・light/dark・色覚多様性対応（daltonized）・ANSI テーマ等）。**`~/.claude/themes/` またはプラグイン由来の[カスタムテーマ](https://code.claude.com/docs/en/terminal-config#create-a-custom-theme)も選択でき、「New custom theme…」から新規作成できる**（2026-11 commands リファレンス改訂で収載） |
 | `/scroll-speed` | マウスホイールのスクロール速度をインタラクティブ調整（フルスクリーン描画時） |
 | `/terminal-setup` | Shift+Enter 等の端末キーバインド設定（VS Code / Cursor / Alacritty / Zed 等、必要な端末でのみ表示） |
 | `/install-github-app` | リポジトリへの Claude GitHub App インストール（GitHub Actions ワークフロー・シークレット設定も任意で実施） |
 | `/install-slack-app` | Claude Slack アプリのインストール（ブラウザで OAuth フローを完了）。Slack 内の Claude は「**Claude Tag**」として claude.com/docs/claude-tag/ に本格的なドキュメント群が新設された（2026-10-07 巡回で確認。Claude Code docs の en/claude-tag はそちらへのリダイレクトに変わった） |
 | `/setup-bedrock` | Amazon Bedrock の認証・リージョン・モデルピンをウィザードで設定（`CLAUDE_CODE_USE_BEDROCK=1` 時のみ表示） |
 | `/setup-vertex` | Google Cloud Agent Platform の認証・プロジェクト・リージョン・モデルピンをウィザードで設定（`CLAUDE_CODE_USE_VERTEX=1` 時のみ表示） |
-| `/bug [report]` | バグ報告 / 会話共有。送信履歴の範囲を選択し同意画面で確認してから送信 |
+| `/bug [report]` | バグ報告 / 会話共有。送信履歴の範囲を選択し同意画面で確認してから送信。エイリアス `/share`（v2.1.212 より前は `/bug` / `/share` とも `/feedback` のエイリアスだった）。Anthropic ファーストパーティ認証時は Anthropic へ送信、**サードパーティプロバイダ経由や Anthropic 認証なしの場合は `~/.claude/feedback-bundles/` 配下のローカルアーカイブに書き出し**、ユーザーが自分で転送する。VS Code 拡張では拡張自身のフィードバックダイアログを開く（v2.1.229 以降）。応答中に実行するとダイアログが即座に開く（v2.1.232 より前はターン終了までキュー） |
 | `/feedback [report]` | Claude Code へのプロダクトフィードバック送信（`/bug` と同じダイアログ・同意フロー）。Claude 起草フィードバック（`SendFeedback` ツール）が有効なセッションでは、**引数なしの `/feedback` はドラフトキュー**を開き、Claude がキューしたドラフトのレビュー・編集・送信・破棄ができる（`w` で通常ダイアログ）。引数付き `/feedback` と `/bug` は常にダイアログを直接開く（v2.1.247） |
 | `/privacy-settings` | プライバシー設定の確認・更新（Pro / Max / Ultra プランのみ） |
 | `/restart` (`/update`) | **v2.1.288 で追加（2026-10-30 コマンドリファレンス収載）**。Claude Code を再起動して同セッションを再開する — インストール済みアップデートの適用用（アップデート完了後にフッターが促したときに実行）。Pro / Max / Ultra プラン＋macOS / Linux のネイティブインストールが必要（WSL 不可） |
@@ -429,7 +429,7 @@ MCPサーバーが公開するプロンプトは `/mcp__<server>__<prompt>` 形�
 | `/rate-limit-options` | claude.ai の利用上限でリクエストが止まった際の選択肢メニュー（リセットまで待って自動継続 / usage credits 追加 / プランのアップグレード）を開く。自分の端末で上限に達した場合は Claude Code 側から自動的に開くこともある。自動継続の ON/OFF は `autoContinueAtUsageLimit` 設定 |
 | `/passes` | Claude Code の1週間無料パスを友人に共有（対象アカウントのみ表示） |
 | `/mobile` | Claude モバイルアプリのダウンロード QR を表示。エイリアス `/ios`・`/android` |
-| `/heapdump` | JavaScript ヒープスナップショットとメモリ内訳を `~/Desktop`（Linux では home）に書き出す。メモリ使用量診断用 |
+| `/heapdump` | JavaScript ヒープスナップショットとメモリ内訳を `~/Desktop`（Linux では home）に書き出す。メモリ使用量診断用。報告時に添付するのは `-diagnostics.json` のみとし、**`.heapsnapshot` は会話全文と認証情報を含むため共有しない**（2026-11 commands リファレンス改訂で明記） |
 | `/help` | ヘルプと利用可能コマンド一覧 |
 | `/radio` | Claude FM（lo-fi ラジオ）をブラウザで開く。ブラウザが無い環境ではストリーム URL を表示。**v2.1.251 で Bedrock / Vertex AI / Microsoft Foundry / AWS 上の Claude Platform、およびテレメトリ無効時でも利用可能になった**（従来はこれらで利用不可） |
 | `/stickers` | Claude Code ステッカーの注文 |
