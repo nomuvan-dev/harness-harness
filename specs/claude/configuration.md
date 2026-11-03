@@ -181,7 +181,7 @@ Claude Code は設定ファイルを監視し、変更を検知するとセッ�
 | `permissions.additionalDirectories` | 追加ワーキングディレクトリ。**サンドボックス既定の書き込み可能パスにも含まれる**（2026-08-31 時点の公式ドキュメント改訂で明文化）: 既定では作業ディレクトリ・セッション一時ディレクトリ（`$TMPDIR`）・`--add-dir` / `/add-dir` で追加したディレクトリに加え、本キーのディレクトリにもサンドボックスコマンドが書き込める。ファイルアクセス権のみを与え skills / commands / subagents は読み込まない点は従来通り（`skills-and-commands.md` 参照） |
 | `permissions.blockWritesOutsideWorkingDirectories` | **v2.1.314 で追加**（2026-11-03 時点で settings-reference に正式収載）。`true` にすると Write / Edit / NotebookEdit が**全権限モードで**（bypassPermissions 含む）ワーキングディレクトリ外のパスを拒否する。シェルコマンド・MCP ツール・フックが起動するプログラムは制限しない（シェルの書き込み制限はサンドボックスを使う）。有効化すると `EnterWorktree` / `ExitWorktree` ツールも削除または拒否される。**スコープは `Any file`**で、`blockReads` 同様**いずれかのスコープの `true` が managed の `false` より優先**される（リポジトリは自分に対して有効化できるが解除はできない）。Claude Code 自身の一部ファイル（プランファイル・スクラッチパッド・バックグラウンドセッションの `tmp`・当該プロジェクトの auto memory の `.md`）は書き込み可能のまま。逆に**設定ファイルへの書き込みはワーキングディレクトリ内でも拒否**される（設定ファイルがブロック自体を解除できてしまうため。手で編集する）。リポジトリ設定（`.claude/settings.json`、git 追跡されている `settings.local.json`）だけが追加した `additionalDirectories`、ワーキングディレクトリ外に作られた `isolation: worktree` サブエージェントの worktree、リポジトリ設定が指定した `autoMemoryDirectory` への書き込みも拒否。通過させるには `/add-dir` / `--add-dir` / user・managed 設定の `additionalDirectories` でワーキングディレクトリとして追加する（**allow ルールでは通せない**。サブエージェント worktree はリポジトリルートの `.claude/worktrees` を `/add-dir` する）。クラウドセッションではコンテナ自体が境界のため適用されないことがある。managed 設定の `permissions` オブジェクトが読めない場合は fail-closed でブロックが有効になる |
 | `permissions.disableBypassPermissionsMode` | `bypassPermissions` モード無効化 |
-| `permissions.blockReadsOutsideWorkingDirectories` | （v2.1.257 で追加、**v2.1.260 で settings リファレンスに正式収載**）作業ディレクトリ外のファイル読み取りを **`bypassPermissions` を含む全権限モード**でブロックする（Read / Grep / Glob / LSP）。`cat` 等の認識済みファイルコマンドを使う Bash コマンドは、auto モードや `bypassPermissions` モードでも確認プロンプトが出る。**スコープは `Any file`**（いずれかの設定ソースが `true` なら有効。リポジトリのコミット済み設定でプロジェクト単位に有効化できるが、既に有効なブロックの解除はできない）。auto モードの初回の作業ディレクトリ外読み取りプロンプトで「ブロックする」を選ぶと Claude Code が本キーに `true` を書き込む。サンドボックス有効時は、サンドボックスコマンドからのホームディレクトリ・マウントボリュームルートの読み取りも拒否し、サンドボックス外での再試行は `bypassPermissions` モードでも承認を求める（`sandbox.filesystem.denyRead` にパスを列挙する代わりに使える）。`~/.claude/` 配下の skills / plugins / rules / agents / commands / `CLAUDE.md` は読める。リンクされた git worktree（セッション途中で入ったものを含む）では共通 `.git` ディレクトリは読み書き可能なまま。**いずれかのスコープの `true` は managed ソースの `false` よりも優先される**（2026-10-09 ドキュメント改訂で settings の優先規則表に明文化） |
+| `permissions.blockReadsOutsideWorkingDirectories` | （v2.1.257 で追加、**v2.1.260 で settings リファレンスに正式収載**）作業ディレクトリ外のファイル読み取りを **`bypassPermissions` を含む全権限モード**でブロックする（Read / Grep / Glob / LSP）。`cat` 等の認識済みファイルコマンドを使う Bash コマンドは、auto モードや `bypassPermissions` モードでも確認プロンプトが出る。**スコープは `Any file`**（いずれかの設定ソースが `true` なら有効。リポジトリのコミット済み設定でプロジェクト単位に有効化できるが、既に有効なブロックの解除はできない）。auto モードの初回の作業ディレクトリ外読み取りプロンプトで「ブロックする」を選ぶと Claude Code が本キーに `true` を書き込む。サンドボックス有効時は、サンドボックスコマンドからのホームディレクトリ・マウントボリュームルートの読み取りも拒否し、サンドボックス外での再試行は `bypassPermissions` モードでも承認を求める（`sandbox.filesystem.denyRead` にパスを列挙する代わりに使える）。`~/.claude/` 配下の skills / plugins / rules / agents / commands / `CLAUDE.md` は読める。リンクされた git worktree（セッション途中で入ったものを含む）では共通 `.git` ディレクトリは読み書き可能なまま。**いずれかのスコープの `true` は managed ソースの `false` よりも優先される**（2026-10-09 ドキュメント改訂で settings の優先規則表に明文化）。**セッション途中でキーを削除してもファイルツールのブロックは実行中セッションで継続**: 解除するには設定している全設定ファイルからキーを削除し、各実行中セッションを再起動する（2026-11-04 ドキュメント改訂で明文化） |
 | `hooks` | ライフサイクルフック設定 |
 | `disableAllHooks` | 全フック無効化 |
 | `allowManagedHooksOnly` | Managed フックのみ許可（Managed設定のみ） |
@@ -206,7 +206,7 @@ Claude Code は設定ファイルを監視し、変更を検知するとセッ�
 | `autoMode` | Auto Modeの分類器設定。`environment`, `allow`, `soft_deny`, `hard_deny` 配列で構成。共有プロジェクト設定からは読み込まれない。v2.1.118 で `"$defaults"` を配列に含めることで組み込みルールを置換せず追加可能。v2.1.136 で `hard_deny` 追加: ユーザー意図や allow 例外に関わらず無条件にマッチアクションをブロック |
 | （CLI）`--permission-prompts <host\|none>` | **v2.1.259**。print モードで権限プロンプトに誰が答えるかを指定する。既定の `host` は Agent SDK ホストまたは `--permission-prompt-tool` のツールへ転送、`none` は答える者がいない無人ホスト向けでプロンプトが出るはずの操作を自動的に拒否する。アクティブな権限モード（auto モードを含む）の判定自体は従来どおり働く。**2026-09-05 時点で公式 CLI リファレンスに収載済み** |
 | `disableAutoMode` | `"disable"` で Auto Mode の有効化を阻止。`Shift+Tab` サイクルから除外し `--permission-mode auto` を拒否。v2.1.207 で Bedrock / Vertex / Foundry の Auto mode がオプトイン不要になったため、無効化はこの設定で行う。同版から `autoMode` はリポジトリ内 `.claude/settings.local.json` から読み込まれなくなった（`~/.claude/settings.json` を使用） |
-| `useAutoModeDuringPlan` | プランモードで Auto Mode セマンティクスを使用（デフォルト: `true`）。共有プロジェクト設定からは読み込まれない |
+| `useAutoModeDuringPlan` | プランモードで Auto Mode セマンティクスを使用（デフォルト: `true`＝auto モードが利用可能なら分類器がプラン中のシェルコマンドをレビュー）。共有プロジェクト設定からは読み込まれない。**managed ソース・`--settings`・`~/.claude/settings.json`・`.claude/settings.local.json` のいずれかの `false` でオフ**（ただし `--setting-sources` 等でその user / local ファイルを除外した場合は効かない。2026-11-04 ドキュメント改訂で明文化） |
 | `defaultShell` | `!` コマンドのデフォルトシェル。`"bash"`（デフォルト）または `"powershell"`（Windows、`CLAUDE_CODE_USE_POWERSHELL_TOOL=1` 必要） |
 | `otelHeadersHelper` | 動的OpenTelemetryヘッダー生成スクリプト。起動時と定期的に実行 |
 | `apiKeyHelper` | カスタムAPIキー生成スクリプト。値はキャッシュされ、**①キャッシュ寿命（既定 5 分。`CLAUDE_CODE_API_KEY_HELPER_TTL_MS` で変更）経過後、②Anthropic API（LLM ゲートウェイ経由を含む）へのリクエストが `401` / `403` で失敗したとき**に再実行される。インタラクティブセッションで project / local 設定由来のコマンドは、ワークスペース信頼プロンプトを受け入れるまで実行されない |
@@ -280,6 +280,7 @@ Claude Code は設定ファイルを監視し、変更を検知するとセッ�
 | `sandbox.allowNestedUserNamespaces` | （Linux）サンドボックスコマンドにユーザー名前空間の作成を許可（Chromium / rootless podman 等が必要とする）。**サンドボックスのファイル保護を迂回し得る**ため注意（v2.1.305） |
 | `sandbox.network.deniedDomains` | サンドボックスでブロックするドメイン一覧。`allowedDomains` と併用可（v2.1.113） |
 | `sandbox.network.strictAllowlist` | サンドボックスコマンドで許可リスト外ホストをプロンプトなしで拒否（v2.1.219） |
+| `sandbox.network.allowMachLookup` | （macOS）サンドボックスがルックアップを許可する追加の XPC / Mach サービス名の配列（iOS Simulator・Playwright 等の XPC 通信ツールに必要）。各要素はサービス名で、**末尾 `*` でプレフィックスマッチ、`"*"` 単独で全サービス許可**。**列挙したサービスへはサンドボックスコマンドがサンドボックス外に到達でき、そのサービスが行う動作をサンドボックスは制限しない**点に注意（2026-11-04 ドキュメント改訂で挙動詳細が収載）。スコープは Any file（admin-required sandbox 下では project / local 設定に制限あり） |
 | `disableDeepLinkRegistration` | `claude-cli://` プロトコルハンドラ登録の無効化（v2.1.83） |
 | `allowedChannelPlugins` | （Managed のみ）チャンネルプラグイン許可リスト（v2.1.84）。型は `marketplace` / `plugin` の2フィールドを持つオブジェクトの配列。**v2.1.267 から `"plugin@marketplace"` の文字列形式も受け付ける**（例: `"telegram@claude-plugins-official"`。同等のオブジェクトとして扱われる）。**v2.1.266 以前は文字列が1つでも混ざると `allowedChannelPlugins` の値ごと拒否する**ため、旧バージョンが混在する環境ではオブジェクト形式を使う。不正値のときの挙動は v2.1.267 で変更され、キーごと破棄（＝全許可）ではなく**空の許可リストとして強制**するようになった（個別エントリのみ不正ならそのエントリだけ除去して残りを強制） |
 | `disableSkillShellExecution` | スキル・カスタムコマンド・プラグインコマンド内のインラインシェル実行（`` !`cmd` ``）を無効化（v2.1.91） |
@@ -526,12 +527,15 @@ paths:
 - 全APIエンドポイントに入力バリデーション必須
 ```
 
+パターンは**ベースディレクトリ（ルールファイルの置かれた `.claude/rules/` の親）基準**で解釈され、先頭に `/` を付けない限り**どの階層でもマッチする**（2026-11-04 ドキュメント改訂でセマンティクスが明確化。従来の「`*.md` はプロジェクトルートのみ」という記述は誤りで、実際はどこでもマッチ）:
+
 | パターン例 | マッチ対象 |
 |:--|:--|
-| `**/*.ts` | 全ディレクトリのTypeScriptファイル |
-| `src/**/*` | `src/` 配下の全ファイル |
-| `*.md` | プロジェクトルートのMarkdownファイル |
-| `src/components/*.tsx` | 特定ディレクトリのReactコンポーネント |
+| `**/*.ts` | ベースディレクトリ配下の全 `.ts` ファイル |
+| `src/**/*` | ベースディレクトリの `src/` 配下の全ファイル |
+| `*.md` | ベースディレクトリ配下の**どこでも** `.md` ファイル |
+| `/*.md` | ベースディレクトリ**直下のみ**の `.md` ファイル（サブフォルダは対象外） |
+| `src/components/*.tsx` | `src/components/` **直下のみ**の `.tsx` ファイル（サブフォルダは対象外） |
 
 ブレース展開もサポート: `"src/**/*.{ts,tsx}"`
 
