@@ -1,5 +1,34 @@
 # harness-harness 更新履歴
 
+## 2026-11-04 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code**: **v2.1.317**（2026-11-03）リリースを反映:
+- **Agent SDK フックコールバックに `onFailure: "block"`**（SDK フックの fail-closed 化）、アカウントメール送信前チェック、`CLAUDE_CODE_DISABLE_NESTED_SESSION_ID`（self-hosted runner のネストセッション ID 分離の旧挙動復帰用）
+- SendMessage が実行中コマンドを停止せずバックグラウンド化して早く届くように。メインと異なるモデルのサブエージェント / チームメイトはそのモデルの保存済み effort を使用（セッション effort 継承をやめた）
+- OTel に `anthropic.plan` / `seat_type` / `provider` / `custom_base_url`、gateway 管理 API にコストレポート `GET /v1/organizations/analytics/cost`
+- Read の「未変更スタブ」廃止、Ctrl+C での全バックグラウンドエージェント停止の修正、Grep/Glob タイムアウト部分結果の扱い修正ほか 62 件の修正
+
+**ドキュメント改訂**:
+- **mcp**: OAuth 401 時の再接続が refresh token の有無で二分化（なしの場合はトークンなし接続でサインアウト状態のままツール継続）、クラウドセッションの elicitation カード（Form / URL / Decline）収載
+- **interactive-mode / sub-agents**: `/btw` がサブエージェントのトランスクリプトを開いていればそこから回答（v2.1.314+）、usage limit 自動継続は 3 回連続で停止
+- **settings / managed-settings**: `useAutoModeDuringPlan` の `false` 適用元の明文化（`--setting-sources` 除外ファイルは効かない）、`blockReadsOutsideWorkingDirectories` のセッション途中削除はブロック継続
+- **sandboxing / settings-reference**: `sandbox.network.allowMachLookup` の挙動詳細（サンドボックス外到達・末尾 `*` プレフィックス・`"*"` 全許可）
+- **memory**: rules の `paths` glob 意味論を明確化（ベースディレクトリ基準でどこでもマッチ、先頭 `/` でルート直下限定）
+
+**Codex CLI**: 安定版・SDK とも新リリースなし（0.166.0 のまま、プレリリースは 0.167.0-alpha.4〔2026-11-03〕まで進行）。公式 changelog の掲載バージョンに変化なし。
+
+**Phase 3.5 スキルエコシステム**: `last_patrol: 2026-11-03` が 7 日以内のためスキップ。
+
+### 更新ファイル
+
+- `specs/claude/changelog.md` — v2.1.317 エントリ追加＋巡回ノート
+- `specs/claude/mcp.md` — OAuth 401 再接続の二分化、クラウドセッション elicitation カード
+- `specs/claude/configuration.md` — `useAutoModeDuringPlan` / `blockReadsOutsideWorkingDirectories` / `sandbox.network.allowMachLookup` / rules `paths` glob 意味論
+- `specs/claude/skills-and-commands.md` — `/btw` サブエージェントトランスクリプト回答、`/rate-limit-options` 自動継続 3 回制限
+- `specs/codex/changelog.md` — 巡回ノート（新リリースなし）
+
 ## 2026-11-03 — 公式ドキュメント巡回＋スキルエコシステム巡回
 
 ### 検出・更新

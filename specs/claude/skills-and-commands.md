@@ -295,7 +295,7 @@ Claude Code に同梱されるスキル:
 | `/subtask` | 会話をコピーしたセッション内サブエージェントを起動（v2.1.212 で旧 `/fork` の挙動から改名） |
 | `/export [filename]` | 会話をテキストエクスポート |
 | `/exit` (`/quit`) | CLI終了 |
-| `/btw [question]` | コンテキストに残らないサイドクエスチョン。回答画面で `c` キーを押すと生 Markdown をクリップボードへコピー（v2.1.163）。**引数なしで実行すると直近のサイドクエスチョンを表示し、過去の回答をブラウズできる**（未質問なら usage 行を表示。2026-11 commands リファレンス改訂で明記） |
+| `/btw [question]` | コンテキストに残らないサイドクエスチョン。回答画面で `c` キーを押すと生 Markdown をクリップボードへコピー（v2.1.163）。**引数なしで実行すると直近のサイドクエスチョンを表示し、過去の回答をブラウズできる**（未質問なら usage 行を表示。2026-11 commands リファレンス改訂で明記）。**サブエージェントのトランスクリプトを開いた状態の `/btw` はそのトランスクリプトから回答する**（v2.1.314+。そこからの後続 `/btw` は自分が尋ねたサイドクエスチョンのみ参照。agent team チームメイトのトランスクリプトからはメイン会話から回答。2026-11-04 ドキュメント改訂で収載）。ツールアクセスはなし |
 
 ### 2.2 設定・情報
 
@@ -426,7 +426,7 @@ MCPサーバーが公開するプロンプトは `/mcp__<server>__<prompt>` 形�
 | `/privacy-settings` | プライバシー設定の確認・更新（Pro / Max / Ultra プランのみ） |
 | `/restart` (`/update`) | **v2.1.288 で追加（2026-10-30 コマンドリファレンス収載）**。Claude Code を再起動して同セッションを再開する — インストール済みアップデートの適用用（アップデート完了後にフッターが促したときに実行）。Pro / Max / Ultra プラン＋macOS / Linux のネイティブインストールが必要（WSL 不可） |
 | `/upgrade` | 上位プランへのアップグレードページをブラウザで開く |
-| `/rate-limit-options` | claude.ai の利用上限でリクエストが止まった際の選択肢メニュー（リセットまで待って自動継続 / usage credits 追加 / プランのアップグレード）を開く。自分の端末で上限に達した場合は Claude Code 側から自動的に開くこともある。自動継続の ON/OFF は `autoContinueAtUsageLimit` 設定 |
+| `/rate-limit-options` | claude.ai の利用上限でリクエストが止まった際の選択肢メニュー（リセットまで待って自動継続 / usage credits 追加 / プランのアップグレード）を開く。自分の端末で上限に達した場合は Claude Code 側から自動的に開くこともある。自動継続の ON/OFF は `autoContinueAtUsageLimit` 設定。**自動継続は 3 回連続で停止**し `Automatic continue stopped after repeated usage-limit hits` 通知が表示される（`/rate-limit-options` で次の行動を選択。新しいプロンプト送信かメニューでの待機選択でカウントはリセット。`/goal` / セッションスコープのスケジュールタスクの継続も同じ 3 回制限。2026-11-04 ドキュメント改訂で収載）。待機のキャンセルは空プロンプトで `Esc` / `Ctrl+C`、またはメニューの Don't continue automatically |
 | `/passes` | Claude Code の1週間無料パスを友人に共有（対象アカウントのみ表示） |
 | `/mobile` | Claude モバイルアプリのダウンロード QR を表示。エイリアス `/ios`・`/android` |
 | `/heapdump` | JavaScript ヒープスナップショットとメモリ内訳を `~/Desktop`（Linux では home）に書き出す。メモリ使用量診断用。報告時に添付するのは `-diagnostics.json` のみとし、**`.heapsnapshot` は会話全文と認証情報を含むため共有しない**（2026-11 commands リファレンス改訂で明記） |

@@ -3,7 +3,9 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-11-03（**新リリースなし。v2.1.316 のまま**（公式 changelog ページも前回から変更なし）。一方で**ドキュメント側の改訂が大規模**: **(1) settings / settings-reference** — `permissions.blockWritesOutsideWorkingDirectories` が settings-reference に正式収載（スコープ・例外・fail-closed 挙動の詳細付き。従来は changelog 先行）、新キー `worktree.location`（Desktop SSH セッションのリモート worktree 配置先）、`crossSessionInbound` / `remoteControlAtStartup` の設定解決順の明文化、`/config key=value` ショートハンド・壊れた設定ファイルの `~/.claude/backups/` 自動バックアップ復旧・クラウドセッションが読む設定の整理（specs/claude/configuration.md に反映）、**(2) tools-reference** — 権限ルール specifier 形式の体系化（`Bash(...)` は Monitor にも適用、`Read(...)` は LSP にも適用、`Edit(...)` allow は同パス Read も付与）、Edit の「読了後にディスク変更されたファイルも一意マッチなら編集可」等（specs/claude/tools.md に反映）、**(3) commands** — `/import` に Cursor 追加（v2.1.265+）、**Claude Design スタンドアロンサイト閉鎖予告（2026-12-14）**、`/review` が `/code-review` の完全エイリアスである旨の明記、`/commit-push-pr` が公式リファレンスから消失（削除か整理か不明。次回巡回で要確認）（specs/claude/skills-and-commands.md に反映）、**(4) best-practices の再全面改訂** — 「デフォルトで十分、設定するのは Claude に見えないものだけ」枠組み・決定論的 vs 非決定論的指示の対比・検証の4段階ラダー・無人実行前の5つの質問等（specs/claude/best-practices.md に反映）。Codex CLI は新バージョンなし（0.166.0 のまま、プレリリースは 0.167.0-alpha.3 まで進行）。前回2026-11-01の巡回要約は下記参照。）
+最終更新: 2026-11-04（**v2.1.317**（2026-11-03）を反映。ハーネス観点の目玉は **(1) Agent SDK フックコールバックに `onFailure: "block"`**（失敗したコールバックがアクションを素通しせずブロック＝command / HTTP フック〔v2.1.295〕と同等の fail-closed 化が SDK でも可能に）、**(2) アカウントメール送信前の確認**（web / シェルツール呼び出しがアカウントのメールアドレスをネットワークへ送る前に確認を挟むチェックを追加）、**(3) `CLAUDE_CODE_DISABLE_NESTED_SESSION_ID`**（self-hosted runner 上でセッション内から起動した `claude -p` に親セッションの ID / トランスクリプトを共有させる旧挙動へ戻す。既定は分離＝「`claude -p` が親トランスクリプトへ書き込み・誤 resume」の修正とセット）、**(4) SendMessage の改善**（実行中バックグラウンドエージェントへのメッセージは実行中コマンドを停止せずバックグラウンド化して早く届く）＋**メインと異なるモデルのサブエージェント / チームメイトはそのモデルの保存済み effort（または既定）を使う**（従来はセッションの effort を継承）、**(5) OTel に `anthropic.plan` / `seat_type` / `provider` / `custom_base_url` 属性追加**＋gateway 管理 API にコスト レポート `GET /v1/organizations/analytics/cost`（期間指定で総額・開発者別・日別・IdP グループ別）、**(6) 重要修正: Claude Desktop の一部セッションで project / local MCP サーバーが初ターン後に切断、gateway ベース URL の server-side 安全チェックが 403/422 を返すと auto モードが毎ターン失敗、巨大 CLAUDE.md 変更後の自動 compaction 直後に "Prompt is too long"、compaction がリクエスト短縮時に過去サマリを喪失、Grep / Glob のタイムアウト時に部分結果を完全結果として扱う、Ctrl+C（プロンプトの入力クリア）で全バックグラウンドエージェント停止、`DISABLE_PROMPT_CACHING_OPUS` / `_SONNET` が `[1m]` 等の別表記モデルに無効、`--from-pr` が大量セッションのプロジェクトで "No conversations found"**。ドキュメント側の改訂: **(a) mcp** — OAuth 401 時の再接続が二分化（refresh token ありはリフレッシュ＋1回リトライ / なしはトークンなしで接続し応答すればサインアウト状態でツール継続＋拒否トークン削除）、クラウドセッションの elicitation カード（Form / URL モード・Decline）収載、**(b) interactive-mode** — `/btw` がサブエージェントのトランスクリプトを開いていればそこから回答（v2.1.314+。チームメイトのトランスクリプトはメイン会話から回答）、usage limit 自動継続は 3 回連続で停止し `/rate-limit-options` へ誘導、**(c) settings / managed-settings** — `useAutoModeDuringPlan` は user / local / `--settings` のいずれかの `false` でオフ（`--setting-sources` で除外したファイルは効かない）、`blockReadsOutsideWorkingDirectories` のセッション途中削除はブロック継続（解除は全設定ファイルから削除＋各セッション再起動）、**(d) sandboxing / settings-reference** — `sandbox.network.allowMachLookup` の挙動詳細（列挙したサービスへはサンドボックス外到達可・サービスの動作は無制限。値は末尾 `*` プレフィックス / `"*"` 全許可）、**(e) memory** — rules の `paths` glob 意味論を明確化（パターンはベースディレクトリ基準でどこでもマッチ、`/*.md` のように先頭 `/` でルート直下限定）（specs/claude/configuration.md・mcp.md・skills-and-commands.md に反映）。Codex CLI は新バージョンなし（0.166.0 のまま、プレリリースは 0.167.0-alpha.4〔2026-11-03〕まで進行）。前回2026-11-03の巡回要約は下記参照。）
+
+前回: 2026-11-03（**新リリースなし。v2.1.316 のまま**（公式 changelog ページも前回から変更なし）。一方で**ドキュメント側の改訂が大規模**: **(1) settings / settings-reference** — `permissions.blockWritesOutsideWorkingDirectories` が settings-reference に正式収載（スコープ・例外・fail-closed 挙動の詳細付き。従来は changelog 先行）、新キー `worktree.location`（Desktop SSH セッションのリモート worktree 配置先）、`crossSessionInbound` / `remoteControlAtStartup` の設定解決順の明文化、`/config key=value` ショートハンド・壊れた設定ファイルの `~/.claude/backups/` 自動バックアップ復旧・クラウドセッションが読む設定の整理（specs/claude/configuration.md に反映）、**(2) tools-reference** — 権限ルール specifier 形式の体系化（`Bash(...)` は Monitor にも適用、`Read(...)` は LSP にも適用、`Edit(...)` allow は同パス Read も付与）、Edit の「読了後にディスク変更されたファイルも一意マッチなら編集可」等（specs/claude/tools.md に反映）、**(3) commands** — `/import` に Cursor 追加（v2.1.265+）、**Claude Design スタンドアロンサイト閉鎖予告（2026-12-14）**、`/review` が `/code-review` の完全エイリアスである旨の明記、`/commit-push-pr` が公式リファレンスから消失（削除か整理か不明。次回巡回で要確認）（specs/claude/skills-and-commands.md に反映）、**(4) best-practices の再全面改訂** — 「デフォルトで十分、設定するのは Claude に見えないものだけ」枠組み・決定論的 vs 非決定論的指示の対比・検証の4段階ラダー・無人実行前の5つの質問等（specs/claude/best-practices.md に反映）。Codex CLI は新バージョンなし（0.166.0 のまま、プレリリースは 0.167.0-alpha.3 まで進行）。前回2026-11-01の巡回要約は下記参照。）
 
 前回: 2026-11-01（**v2.1.316**（2026-10-31）を反映（2.1.315 は公開リリースなし）。ハーネス観点の目玉は **(1) 新環境変数 3 つ**（`CLAUDE_CODE_DISABLE_ULTRATHINK`＝`ultrathink` キーワードの無効化、`CLAUDE_CODE_SUBAGENT_EFFORT`＝明示指定のないサブエージェントの effort レベル既定（従来はセッションの effort を継承）、`CLAUDE_CODE_DISABLE_LOOPED_CROSS_CERT_DROP`＝ループ相互認証のシステムクロス証明書を保持。いずれも env-vars ページ未収載＝changelog 先行）、**(2) Opus 4.8 の fast mode 非推奨化**（2026-10-30 付。2026-11-30 に削除、削除後はエラーで標準 Opus 4.8 へのフォールバックなし。スピードアップ継続には Opus 5.5 へ移行）、**(3) Team / Enterprise の server-managed settings が承認プロンプトなしで適用に**（検証できない保存コピーは拒否）、**(4) gateway 機能追加**（`pooled_budget`＝グループ共有の月次予算、`managed.policy_mode: layered`＝マッチした全ポリシーをマージ適用、Bedrock upstream の `guardrail.input_tagging`＝prompt attacks フィルタ用入力タグ付与）、**(5) 重要修正: Claude Code 自己終了時に macOS / Linux でシェルコマンドが残留、`SHELLOPTS` export 時に Bash スクリプトが最初のコマンドで停止、親サブエージェントのモデルを継承したサブエージェントが wake 時にメインモデルへ移動、`--restricted` セッションが Read allow ルール経由で作業ディレクトリ外ファイルをアップロード、Vertex / Bedrock の `sonnet` / `opus` / `haiku` エイリアスが未提供時にエラー（旧モデルへ切替に修正）、PowerShell フックが型キャスト / `param` / `using` / 属性開始コマンドで exit code 2 ブロック不能、`CLAUDE_CODE_AUTO_MODE_SERVER=1` がプロキシ / gateway 背後のホストアプリ起動セッションで無視**。ドキュメント側は docs ページのレンダリング形式変更（タブ→`[tab]`・アコーディオン→`[accordion]` マーカー）のみで実質的な仕様変更なし。Codex CLI は新バージョンなし（0.166.0 のまま）。前回2026-10-31の巡回要約は下記参照。）
 
@@ -19,6 +21,48 @@
 
 前回: 2026-10-10（**v2.1.295**（2026-10-08）を反映。ハーネス観点では **(1) command / HTTP フックに `onFailure: "block"` 追加（フックが起動不可・タイムアウト・想定外 exit code の場合にアクションを通さずブロック＝ポリシーフックの fail-closed 化が可能に。従来は非ブロッキング扱いで素通り）**、**(2) サブエージェントの `skills` フィールドからのプリロードが最大32スキル・各1回に制限（Skill ツールがあれば残りは呼び出し可能）**、**(3) tool search 経由でモデルがロードする MCP ツール説明の切り詰めが 2,048→16,384 文字に拡大**、**(4) `CLAUDE_CODE_RETRY_WATCHDOG_MAX_WAIT_MS`（永続リトライ時の 429/529 待機の上限）**、**(5) `forceLoginMethod: "gateway"` / `forceLoginGatewayUrl` が managed settings なしのユーザー settings でも設定可能に**、**(6) OSC 7501（Program Status Protocol）対応（対応端末に作業中/入力待ち/完了を表示）**、**(7) 重要修正: `[1m]` モデルで context-1m beta を拒否するゲートウェイ/Bedrock/Vertex/Foundry 宛リクエストが全失敗する問題（beta なしで再送）、`claude -p` のテキスト出力がバックグラウンド作業による別ターン開始時に前のレスポンスを落とす問題、スキルの `allowed-tools` / `effort` が `-p` で落ちて Bash が拒否される問題、リモート MCP の長時間断後の未再接続/タイトループ再接続（バックオフ化・最大30秒）、Edit が mtime 不変のまま内容が変わったファイルを既読扱いする問題、複数行 JSON を出力する async フックの出力無視、Grep の `-l`/`-c`/`-r` フラグ付き呼び出し失敗**。Ctrl+C（アタッチ済みバックグラウンドセッションのアイドルプロンプト）は保留 `/loop` wakeup を残し2度押しでデタッチ・Esc で停止に変更。ドキュメント改訂: env-vars に `CLAUDE_CODE_RETRY_WATCHDOG_MAX_WAIT_MS` 収載（hooks ページの `onFailure` は本巡回時点で未収載＝changelog 先行）。Codex CLI は **0.162.0 安定版**（2026-10-08。managed worktree ツール、Command Center タスクピン留め、`/copy` トランスクリプトコピー、カスタムプロバイダの capability オーバーライド等。下記 specs/codex/changelog.md 参照）。前回2026-10-09の巡回要約は下記参照。）
 
+
+---
+
+## v2.1.317 (2026-11-03)
+
+**SDK フックの fail-closed 化（`onFailure: "block"`）・メールアドレス送信前チェック・ネストセッション ID 分離・OTel 属性拡充・gateway コストレポート API**
+
+### 新機能
+
+- **Agent SDK フックコールバックに `onFailure: "block"`**: コールバック失敗時にアクションを実行させずブロック（command / HTTP フックの同名オプションと同等の fail-closed 化）
+- **アカウントメール送信前チェック**: web / シェルツール呼び出しがアカウントのメールアドレスをネットワークへ送る前に確認を求める
+- **`CLAUDE_CODE_DISABLE_NESTED_SESSION_ID`**: `1` で self-hosted runner 上のセッション内 `claude -p` が親セッションの ID / トランスクリプトを使う旧挙動に戻す（既定は分離）
+- `/schedule`: 新規クラウドスケジュールタスクに依頼していないコネクタが付いた場合に警告＋外し方を提示
+- OTel の metrics / events / spans に `anthropic.plan` / `anthropic.seat_type` / `anthropic.provider` / `anthropic.custom_base_url` を追加
+- gateway 管理 API にコストレポート `GET /v1/organizations/analytics/cost`（期間指定で総額・開発者別・日別・IdP グループ別。`admin:` 設定時は各開発者の IdP グループを日次記録、保持期間は `admin.identity_retention_days`）
+- auto モードのチェックがサブエージェントのツール呼び出しに無回答だった際の通知を追加（従来はメインビューに何も出なかった）
+- [Cloud sessions] MCP サーバーが開かせたいリンクをカードで表示（開く / 拒否を選択可能。従来はリクエストが見えないままだった）
+
+### 変更
+
+- **SendMessage**: 実行中バックグラウンドエージェントへのメッセージは、実行中コマンドを停止せずバックグラウンドへ移して早く届ける
+- **メイン会話と異なるモデルのサブエージェント / チームメイトは、そのモデルの保存済み effort レベル（または既定）を使用**（従来はセッションの effort を継承）
+- exit 時の「Background work is running」プロンプトをプラグインモニターではスキップ
+- Read ツールの「前回 Read から未変更」スタブを廃止（未変更ファイルの再読は内容を返す）
+- [Claude Tag] Slack に貼られたアーティファクトリンクは Open ボタン付きのシンプルカード表示に
+
+### 重要修正
+
+- Claude Desktop の一部セッションで project / local MCP サーバーが初ターン後に切断される問題
+- gateway ベース URL の server-side 安全チェックが 403 / 422 を返すと auto モードが毎ターン失敗する問題
+- 巨大 CLAUDE.md が変更された後の自動 compaction 直後に "Prompt is too long" になる問題
+- 非常に長い会話で compaction が自身のリクエストを短縮した際に過去サマリを失う問題
+- Grep / Glob がタイムアウトで打ち切られた部分結果を完全結果として扱う問題
+- プロンプトの入力テキストをクリアする Ctrl+C が全バックグラウンドエージェントを停止させる問題
+- `DISABLE_PROMPT_CACHING_OPUS` / `_SONNET` が `[1m]`・別リージョン・日付なし表記の既定モデルに効かない問題
+- `claude --from-pr` がセッション数の多いプロジェクトで "No conversations found" になる問題
+- `claude auth status` が遅いトークンリフレッシュの保存前に終了し、次回実行でサインアウトされ得る問題
+- セッション内から実行した `claude -p` が親セッションの ID / トランスクリプトを共有し、再起動時に誤った会話を resume し得る問題
+- プロジェクトの `effortLevel` 設定がアプリ事前起動セッション（Desktop の Code タブ等）で無視される問題
+- 停止したシェルコマンドの子プロセスに SIGTERM が二重送信され、クリーンアップがスキップされ得る問題
+- Windows: 一部ボリュームでネイティブパス解決の失敗により全ツール呼び出しが拒否される問題（フォルダ同一性で比較するよう修正）
+- [VSCode] フォーク会話のメッセージ喪失（並列ツール呼び出しの 1 つしか保持されない・compaction が残した末尾メッセージの喪失）
 
 ---
 
