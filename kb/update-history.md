@@ -1,5 +1,40 @@
 # harness-harness 更新履歴
 
+## 2026-11-05 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code**: **v2.1.318**（2026-11-04）リリースを反映:
+- **サブエージェント実行の安定化**: flagged メッセージの「Ask each time」設定時はモデル切替でなく停止、バックグラウンドサブエージェントのシェルコマンドを全プロバイダで3分後にバックグラウンド化（プロンプトキャッシュ失効防止）、Bedrock/Vertex/Foundry・テレメトリオフ時の進捗サマリはコールドキャッシュで最大5分待機
+- **mod の `$.model.fork` に `effort` オプション**（changelog 先行）、`prompt.submit` のアタッチ内容はユーザーターン内に留まる変更
+- **`deniedMcpServers` の URL エントリが Anthropic 提供サーバー・クラウド/self-hosted runner のコネクタもブロック**
+- 認証期限の可視化（`claude auth status` の `loginExpiresAt`、`claude -p` JSON の `credential_expires_at`、期限10日前 stderr 警告）
+- 共有ネットワークホームの堅牢化（settings / ログイン保存、非 JSON `~/.claude.json` の扱い変更）ほか改善15件・修正47件
+
+**ドキュメント改訂**（`.prev` キャッシュ不在のため全文突合。一部は本日以前の改訂分を含む）:
+- **hooks（大幅差分）**: FileChanged 入力は `event`（change/add/unlink）、CwdChanged は `old_cwd`/`new_cwd`、WorktreeCreate 入力は `name` のみ、PreCompact はブロック可、HTTP フック 2xx テキストボディは非ブロッキングエラー、`suppressOutput` 効果なし、Setup×`CLAUDE_ENV_FILE`、auto モード下の `updatedInput`、matcher 3分類＋プラグイン MCP スコープ付きツール名、terminalSequence allowlist、`team_name` 非推奨化等
+- **agent-teams / sub-agents**: チーム config・メールボックスの保存場所と検証仕様、`-p`/SDK ではチームメイト不可、計画自動承認の条件化（スポーン後に権限モード未変更の場合のみ）、チームメイト定義の `disallowedTools`/`effort`/`autoCompactWindow`、split-pane への `--disallowedTools` 伝播等
+- **env-vars / model-config / memory / settings-reference**: `FORCE_HYPERLINK` の挙動反転（v2.1.314）、CLAUDE.md のサイズ上限と警告（4 MiB スキップ・オンデマンドファイル文字数上限）、`deniedMcpServers` 詳細、`CLAUDE_CODE_SUBAGENT_EFFORT`（別モデルにはセッション effort 不適用）
+- **commands**: `/code-review ultra` が推奨呼称（`/ultrareview` はエイリアス、Pro/Max/Ultra 3回無料）、`/clear [name]`、`/simplify [target]`、**`/commit-push-pr` は2日連続収載なし＝削除と判断**（前回巡回の宿題を解消）
+- **best-practices**: `/context all`、`/batch` の計画承認→PR フロー、クラウドスケジュールの GitHub/API トリガー
+- **mods/reference**: `prompt.submit` の `next({...e, context})`、`agent.spawn` の resume 発火（v2.1.299+）
+
+**Codex CLI**: 安定版・SDK とも新リリースなし（0.166.0 のまま、プレリリースは 0.168.0-alpha.1〔2026-11-04〕まで進行）。公式 changelog の掲載内容に変化なし。
+
+**Phase 3.5 スキルエコシステム**: `last_patrol: 2026-11-03` が 7 日以内のためスキップ。
+
+**巡回対象の追加**: `plugins/mods/api.md` をキャッシュに追加（mods の `$.model` API 収載ページ）。
+
+### 更新ファイル
+
+- `specs/claude/changelog.md` — v2.1.318 エントリ追加＋巡回ノート
+- `specs/claude/hooks.md` — docs 大幅差分の反映（入力スキーマ修正・新規事項多数）
+- `specs/claude/agent-teams.md` — config/メールボックス仕様、計画承認条件、チームメイト定義フィールド等
+- `specs/claude/configuration.md` — `FORCE_HYPERLINK` / memory サイズ上限 / `deniedMcpServers` / `CLAUDE_CODE_SUBAGENT_EFFORT`
+- `specs/claude/skills-and-commands.md` — `/code-review ultra` 等コマンド改訂、mods reference 差分、`/commit-push-pr` 削除判断
+- `specs/claude/best-practices.md` — 小規模追補3点
+- `specs/codex/changelog.md` — 巡回ノート（新リリースなし）
+
 ## 2026-11-04 — 公式ドキュメント巡回
 
 ### 検出・更新

@@ -1,6 +1,6 @@
 # Claude Code Hooks 仕様書
 
-最終更新: 2026-10-28（巡回更新）
+最終更新: 2026-11-05（巡回更新）
 
 公式ドキュメント: https://code.claude.com/docs/en/hooks
 
@@ -27,7 +27,7 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 | `UserPromptExpansion` | ユーザーが打ったコマンドがプロンプトへ展開される時（Claude に届く前） | Yes | `command_name`（スキル名 / コマンド名）。matcher 省略で全 prompt 型コマンドに発火 |
 | `PreToolUse` | ツール実行前 | Yes | **`EndConversation` 以外の全ツール名**（`Bash` / `PowerShell` / `Edit` / `Write` / `Read` / `Glob` / `Grep` / `Agent` / `Workflow` / `WebFetch` / `WebSearch` / `AskUserQuestion` / `ExitPlanMode` 等の組み込みツールと MCP ツール名） |
 | `PermissionRequest` | ツール使用の権限ダイアログ表示時 | Yes | ツール名 |
-| `PostToolUse` | ツール成功後 | No | ツール名 |
+| `PostToolUse` | ツール成功後（`EndConversation` の呼び出しは PreToolUse 同様スキップ） | No | ツール名 |
 | `PostToolUseFailure` | ツール失敗後 | No | ツール名 |
 | `PostToolBatch` | 並列ツール呼び出しのバッチ全体が解決した後、次のモデル呼び出し前 | Yes | matcher非サポート（全バッチで発火） |
 | `Stop` | Claude の応答完了時 | Yes | - |
@@ -48,15 +48,15 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 
 | イベント | 発火タイミング | ブロック可能 | matcher対象 |
 |:--|:--|:--|:--|
-| `Notification` | 通知送信時 | No | `permission_prompt`（ツール承認に加え、**サンドボックスコマンドのネットワークリクエスト承認**も対象。ターミナルセッションでは v2.1.246 以降）, `idle_prompt`（応答完了約60秒後、未入力のとき。**バックグラウンドエージェント〔バックグラウンドサブエージェント等〕が実行中の間は発火しない**〈2026-10 ドキュメント改訂で明文化〉）, `auth_success`, `elicitation_dialog`, `agent_needs_input`（バックグラウンドエージェントが入力待ちになったとき。**v2.1.248 以降、agent team のチームメイト用ターミナル設定の質問**、さらに **auto mode の分類器リクエスト課金通知**〈2026-10 ドキュメント改訂〉に対しても、一定時間ユーザーが入力しないと発火する）, `agent_completed`（バックグラウンドエージェント通知、v2.1.198）, `elicitation_url_dialog`, `elicitation_complete`, `elicitation_response`, `quota_auto_resume_fired` / `quota_auto_resume_stale` / `quota_auto_resume_disabled`（利用上限リセット後の自動継続、v2.1.243 系） |
+| `Notification` | 通知送信時 | No | `permission_prompt`（ツール承認に加え、**サンドボックスコマンドのネットワークリクエスト承認**も対象。ターミナルセッションでは v2.1.246 以降）, `idle_prompt`（応答完了約60秒後、未入力のとき。**バックグラウンドエージェント〔バックグラウンドサブエージェント等〕が実行中の間は発火しない**〈2026-10 ドキュメント改訂で明文化〉）, `auth_success`, `elicitation_dialog`, `agent_needs_input`（バックグラウンドエージェントが入力待ちになったとき。**v2.1.248 以降、agent team のチームメイト用ターミナル設定の質問**、さらに **auto mode の分類器リクエスト課金通知**〈2026-10 ドキュメント改訂〉に対しても、一定時間ユーザーが入力しないと発火する）, `agent_completed`（バックグラウンドエージェント通知、v2.1.198）, `elicitation_url_dialog`, `elicitation_complete`, `elicitation_response`, `quota_auto_resume_fired` / `quota_auto_resume_stale` / `quota_auto_resume_disabled`（利用上限リセット後の自動継続、v2.1.243 系）, `plugin_notification`（mod が `$.ui.notify` で通知を出したとき。`title` は mod が設定しなければ mod 名。2026-11-05 巡回で反映）。`preferredNotifChannel`（`notifications_disabled` 含む）は通知の見せ方のみを変え、フックは常に発火する。canUseTool コールバックにプロンプトを送るセッション（Claude Desktop / VS Code 拡張）では `permission_prompt` は要求から約6秒後に発火し（タイプしても延期されない）、`CLAUDE_CODE_DISABLE_PERMISSION_PROMPT_NOTIFY_HOOKS=1` で無効化できる（2026-11-05 巡回で反映） |
 | `MessageDisplay` | アシスタントメッセージ表示時 | No（transform/hide可） | - | アシスタントメッセージのテキストを変換または非表示にできる（v2.1.152） |
 | `ConfigChange` | 設定ファイル変更時 | Yes | `user_settings`, `project_settings`, `local_settings`, `policy_settings`, `skills` |
 | `InstructionsLoaded` | CLAUDE.md/rules読み込み時 | No | `session_start`, `nested_traversal`, `path_glob_match`, `include`, `compact` |
 | `CwdChanged` | **メイン会話のシェルコマンド**がワーキングディレクトリを変更したとき | No | matcher非サポート（毎回発火）。`CLAUDE_ENV_FILE` に書いた変数は**次の CwdChanged イベントでクリアされる**（FileChanged で書いた変数も同様。2026-09-13 リファレンス改訂で明文化） |
-| `DirectoryAdded` | `/add-dir` または SDK `register_repo_root` でセッション途中に作業ディレクトリが登録された後 | No | -（v2.1.219） |
+| `DirectoryAdded` | `/add-dir` または SDK `register_repo_root` でセッション途中に作業ディレクトリが登録された後。`--add-dir` 起動フラグ・`/permissions` Workspace タブからの追加・既存作業ディレクトリ内の追加では発火しない。追加完了後にバックグラウンドで実行（追加はフックを待たない。ブロック不可） | No | `slash_command`（`/add-dir`）, `register_repo_root`（SDK control request）（matcher は 2026-11-05 巡回で反映。v2.1.219〜） |
 | `FileChanged` | 監視対象ファイルのディスク変更時 | No | ファイル名（basename）例: `.envrc`, `.env` |
 | `TaskCreated` | `TaskCreate` ツールでタスク作成時 | Yes | matcherなし |
-| `Setup` | **`claude --init-only` 起動時、または `-p` モードでの `--init` / `--maintenance` 時のみ**（通常起動では発火しない。2026-10 ドキュメントで明確化）。CI / スクリプトから明示的に起動する一度きりの準備・定期クリーンアップ用。matcher は起動フラグに対応（`init` = `--init-only` / `-p --init`、`maintenance` = `-p --maintenance`）。`--init-only` は Setup フックと `startup` matcher の SessionStart フックを実行して会話を開始せず終了する。セッションごとの初期化には `SessionStart` を使う | No | `init` / `maintenance` |
+| `Setup` | **`claude --init-only` 起動時、または `-p` モードでの `--init` / `--maintenance` 時のみ**（通常起動では発火しない。2026-10 ドキュメントで明確化）。CI / スクリプトから明示的に起動する一度きりの準備・定期クリーンアップ用。matcher は起動フラグに対応（`init` = `--init-only` / `-p --init`、`maintenance` = `-p --maintenance`）。`--init-only` は Setup フックと `startup` matcher の SessionStart フックを実行して会話を開始せず終了する。セッションごとの初期化には `SessionStart` を使う。**Setup フックも `CLAUDE_ENV_FILE` にアクセスでき、書いた変数はそのセッションの以後の Bash コマンドに引き継がれる**（SessionStart と同様。2026-11-05 巡回で反映。v2.1.318 でクラウドセッションにおいて Setup フックが書いた変数が Bash に届かないバグが修正された）。Setup で実行されるのは `type: "command"` フックのみ（`mcp_tool` は常にスキップ、`http` / `prompt` / `agent` は非サポート） | No | `init` / `maintenance` |
 
 > **`Setup` フックの出力の扱い（ドキュメント改訂）**: `Setup` はブロックできず、終了コードに関わらず処理が続く。**どの終了コードでも `systemMessage` / `continue` / `hookSpecificOutput.additionalContext` などの JSON 出力フィールドは破棄される**（以前は `additionalContext` で Claude のコンテキストへ情報を渡せると記載されていたが、現在は渡せない）。`-p` 実行では `--output-format stream-json --verbose` で起動した場合に限り、stdout / stderr / 終了コードが `hook_response` イベントとして出力に現れる。決定制御の分類も「Context only」から `WorktreeRemove` / `Notification` / `SessionEnd` などと同じ**決定制御なし**へ移動した。
 
@@ -66,7 +66,7 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 |:--|:--|:--|:--|
 | `WorktreeCreate` | ワークツリー作成時 | Yes | - |
 | `WorktreeRemove` | ワークツリー削除時 | **Yes（2026-09-13 リファレンス改訂）**: 非ゼロ終了コードで、削除後もディレクトリが残っている場合に削除を失敗させられる。worktree はディスクに残り、コマンドと stderr はデバッグログへ。バックグラウンドセッション削除中ならセッションも残り、agent view の拒否メッセージにフックの終了状態と stderr 冒頭が表示される。JSON 出力は破棄される（従来は「決定制御なし・失敗はデバッグログのみ」だった）。**クリーンアップ責務（2026-09-30 ドキュメント改訂で詳細化）**: WorktreeRemove フック未設定の場合、WorktreeCreate フックが返したパスに対し `git worktree remove --force` でフォールバック削除される（git が認識しない worktree はディスクに残る）。フックが exit 0 なら「削除済み」とみなされる（実際に削除したかは検証されないためフック側で確実に削除すること）。**WorktreeCreate フックが作ったブランチは Claude Code は削除しない**ため、ブランチ削除も WorktreeRemove フックで行う | - |
-| `PreCompact` | コンパクション前 | No | `manual`, `auto`（入力の `custom_instructions` は `manual` で `/compact` に引数が渡された場合のみ文字列。引数なし・`auto` では `null`。従来は空文字列と記載されていた） |
+| `PreCompact` | コンパクション前 | **Yes**（exit 2 または `decision: "block"` でコンパクションをブロック。`manual` では stderr がユーザーに表示される。自動コンパクションのブロックは、コンテキスト上限前の先行実行なら未圧縮のまま継続、API がコンテキスト上限エラーを返した後のリカバリ実行ならエラーが表面化しリクエスト失敗。`auto` matcher は idle compaction でも発火。2026-11-05 巡回で修正） | `manual`, `auto`（入力の `custom_instructions` は `manual` で `/compact` に引数が渡された場合のみ文字列。引数なし・`auto` では `null`。従来は空文字列と記載されていた） |
 | `PostCompact` | コンパクション後 | No | `manual`, `auto` |
 
 ### 2.5 MCP Elicitation イベント
@@ -75,6 +75,10 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 |:--|:--|:--|:--|
 | `Elicitation` | MCPサーバーがユーザー入力を要求 | Yes | MCPサーバー名 |
 | `ElicitationResult` | ユーザーがMCP入力に回答 | Yes | MCPサーバー名 |
+
+- `Elicitation` フックは `hookSpecificOutput` の `action`（`accept`＋`content` / `decline` / `cancel`）でダイアログを出さずに代理回答・拒否できる（出力なし exit 0 でダイアログに委ねる）。exit 2 またはトップレベル `decision: "block"` も decline として扱われ、同一出力内の `action` を上書きする。複数フックが競合した場合 decline が accept / cancel に優先。stderr や `reason` はユーザーにもサーバーにも表示されない
+- `ElicitationResult` フックはユーザー回答の素通し / `content` の書き換え（`accept`、`content` は丸ごと置換） / ブロック（`decline`）/ `cancel`（ユーザーの送信値を伴う。値を渡したくなければ `decline`）を選べる。ユーザーが decline / cancel した場合も発火し、フックの `action` がユーザーの選択を置き換えるため、`accept` を返す前に入力の `action` を確認すること
+- **v2.1.105〜v2.1.284 の間、Elicitation / ElicitationResult のトップレベル `decision` は無視されていた**（v2.1.284 で修正。2026-11-05 巡回で反映）
 
 ### 2.6 モデル切替イベント（v2.1.251+）
 
@@ -171,6 +175,13 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 
 ## 3. ハンドラタイプ
 
+**イベント別のハンドラタイプ対応（2026-11-05 巡回で反映）**:
+
+- **全5タイプ（command / http / mcp_tool / prompt / agent）対応**: `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `PostToolBatch`, `PermissionDenied`, `Stop`, `SubagentStop`, `UserPromptSubmit`, `UserPromptExpansion`, `TaskCreated`, `TaskCompleted`, `TeammateIdle`
+- **`PermissionRequest`**: agent 以外の4タイプ（agent フックはスキップされ権限フローは変わらない）
+- **command / http / mcp_tool のみ**: `ConfigChange`, `CwdChanged`, `DirectoryAdded`, `Elicitation`, `ElicitationResult`, `FileChanged`, `InstructionsLoaded`, `MessageDisplay`, `Notification`, `PreCompact`, `PostCompact`, `PreModelSwitch`, `PostModelSwitch`, `SessionEnd`, `StopFailure`, `SubagentStart`, `WorktreeCreate`, `WorktreeRemove`
+- **`SessionStart` / `Setup`**: command と mcp_tool のみ（http / prompt / agent 非サポート。Setup の mcp_tool は常にスキップ、起動時 SessionStart の mcp_tool もスキップ — §3.5 参照）
+
 ### 3.1 Command ハンドラ
 
 シェルコマンドを実行。JSON を stdin で受け取り、終了コードと stdout で結果を返す。
@@ -200,6 +211,21 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 - `0`: 成功（stdout の JSON をパース）
 - `2`: ブロッキングエラー（stderr がエラーメッセージ）
 - その他: 非ブロッキングエラー
+
+**終了コード × stdout の判定マトリクス（2026-11-05 巡回で反映）**:
+
+| stdout | exit 0 | exit 2 | その他 |
+|:--|:--|:--|:--|
+| スキーマ検証を通る JSON | 成功（フィールド適用） | ブロック（フィールドは読むがブロックを覆せない。`permissionDecision: "allow"` でも通らない） | **成功扱い**（exit code は無視されフィールドだけで決まる。`onFailure: "block"` のフックでは失敗扱い） |
+| パース/検証失敗の JSON | 非ブロッキングエラー | ブロック（stderr が理由） | 非ブロッキングエラー |
+| プレーンテキスト / 無出力 | 成功 | ブロック（stderr が理由） | 非ブロッキングエラー |
+
+**例外的な終了コード挙動（2026-11-05 巡回で反映）**:
+- `Stop` / `SubagentStop` / `TaskCompleted` / プラグインの `UserPromptSubmit`: exit 2 で stdout 無し・stderr が `No such file or directory` 等のファイル欠落メッセージの場合は**非ブロッキングエラー**として扱われる（存在しないスクリプトのフックが永遠にブロックし続けるのを防ぐ）
+- `PermissionRequest`: exit 2 は無効（`decision` オブジェクトで deny する）
+- `Elicitation` / `ElicitationResult`: `hookSpecificOutput` は exit 0 のときのみ適用
+- **バックグラウンドプロセスを起動するフック**: 判定はバックグラウンド起動**前に** stdout へ出力し、バックグラウンドプロセスの stdout/stderr はリダイレクトすること。allow を出した後に未リダイレクトのバックグラウンドプロセスを残すと、Claude Code は `refusing to honor the suspect capture` エラーでツール呼び出しをブロックする
+- **Windows（Git Bash 不在）**: シェル形式の `PreToolUse` / `PermissionRequest` command フックは 0 / 2 以外の exit code を verdict と見なさず、`onFailure` 未設定でも失敗がツール呼び出しをブロックしうる（エラーに `blocking because Git Bash wasn't found...` を含む。v2.1.309 でメッセージ改訂）
 
 > **stdout を JSON と読むかプレーンテキストと読むかの判定（ドキュメント明文化）**: 前後の空白を無視して、
 > - **`{` で始まり `}` で終わる**: JSON としてパースする。ただし出力が複数行で各行が単独で JSON としてパースでき、かつどの行も JSON 出力オブジェクトのフィールドを設定していない場合は、全体をプレーンテキストとして扱う。いずれかの行がフィールドを設定している場合は全体を JSON として扱う
@@ -234,9 +260,11 @@ JSON POST リクエストをURLエンドポイントに送信。
 
 **レスポンス処理**:
 - `2xx` 空ボディ: 成功
-- `2xx` テキストボディ: 成功 + コンテキスト
-- `2xx` JSONボディ: 判定としてパース
-- 非2xx: 非ブロッキングエラー
+- `2xx` JSONボディ: 判定としてパース（スキーマ検証失敗は非ブロッキングエラー）
+- `2xx` その他ボディ（プレーンテキスト等）: **非ブロッキングエラー**。テキストは Claude のコンテキストに追加されない（従来「成功 + コンテキスト」と記載していたが、現行 docs では非2xx と同じ扱い。2026-11-05 巡回で修正）
+- 非2xx / 接続失敗: 非ブロッキングエラー
+
+**HTTP フックの allowlist 設定（2026-11-05 巡回で反映）**: 設定の `allowedHttpHookUrls` が（どのレベルでも）定義されていると、URL がマージ済み allowlist にマッチする HTTP フックのみ実行される。`httpHookAllowedEnvVars` が定義されていると、ヘッダへ補間できる環境変数はそのリスト上のものに限定される。両者は managed policy settings を含む全ソースのフックに適用される。
 
 ### 3.3 Prompt ハンドラ
 
@@ -251,6 +279,21 @@ Claude モデルにプロンプトを送信して評価。`model` 省略時の�
 }
 ```
 
+`$ARGUMENTS` はフック入力 JSON のプレースホルダ（無い場合は入力 JSON がプロンプト末尾に付加される）。リテラルの `$` はバックスラッシュでエスケープ（`\$1.00`）。
+
+**応答スキーマ**: モデルは `{"ok": true|false, "reason": "...", "impossible": true|false}` を返す。`ok: false` 時の挙動はイベント依存（2026-11-05 巡回で反映）:
+
+- `Stop` / `SubagentStop`: `reason` が次の指示として Claude に戻りターン継続。`impossible: true` 付きなら「条件は満たしえない」と判断し停止を許可
+- `PreToolUse`: ツール呼び出しを拒否。既定ではターン終了＋警告表示、`continueOnBlock: true` で reason をツールエラーとして Claude に返しターン継続
+- `PostToolUse`: 既定でターン終了＋警告、`continueOnBlock: true` でフィードバックとして継続
+- `PostToolBatch` / `UserPromptSubmit` / `UserPromptExpansion`: ターン終了＋警告（`continueOnBlock` 無効）
+- `PostToolUseFailure` / `TaskCreated`: 常にツールエラーとして返りターン継続
+- `TaskCompleted`: TaskUpdate 起因なら常にツールエラーで継続、teammate 停止起因なら TeammateIdle と同様に既定で停止
+- `TeammateIdle`: 既定で teammate 停止、`continueOnBlock: true` で働き続けさせる
+- `PermissionRequest` / `PermissionDenied`: `ok: false` は無効（command フックを使うこと）
+
+`impossible` は prompt フック専用（agent フックは非対応）。
+
 ### 3.4 Agent ハンドラ
 
 サブエージェントを起動して条件を検証。
@@ -263,7 +306,7 @@ Claude モデルにプロンプトを送信して評価。`model` 省略時の�
 }
 ```
 
-設定フィールドは prompt ハンドラと同じだが、**agent ハンドラは既定タイムアウトが 60 秒と長く、`continueOnBlock` を持たない**。`$ARGUMENTS` はフック入力 JSON のプレースホルダ。
+設定フィールドは prompt ハンドラと同じだが、**agent ハンドラは既定タイムアウトが 60 秒と長く、`continueOnBlock` を持たない**。`$ARGUMENTS` はフック入力 JSON のプレースホルダ。サブエージェントは Read / Grep / Glob 等のツールを使い**最大 50 ターン**で `{"ok": true/false}` を返す。`ok: false` 時は**そのイベントで prompt フックが `continueOnBlock: true` の場合と同じ扱い**になる（`impossible` フィールドは非サポート）。agent フックは実験的機能（2026-11-05 巡回で反映）。
 
 **同時実行上限（v2.1.312+）**: prompt / agent フックはサブエージェント分も含めセッションあたり最大 24 並列。イベントのタイムアウトを超えて待機しているものは最大 12。また `timeout` の 1 秒未満指定は 1 秒として扱われる（※公式 hooks ページ未収載＝changelog 先行）。
 
@@ -276,9 +319,13 @@ MCP サーバーのツールを直接呼び出す。シェル経由のラッパ�
   "type": "mcp_tool",
   "server": "my-server",
   "tool": "validate_change",
+  "input": { "file_path": "${tool_input.file_path}" },
   "timeout": 30
 }
 ```
+
+- `input`（任意）: ツールに渡す引数。文字列値はフック入力 JSON からの `${path}` 置換をサポート（例 `"${tool_input.file_path}"`）（2026-11-05 巡回で反映）
+- `server`: プラグイン同梱サーバーはスコープ付き名 `plugin:<plugin-name>:<server-name>` で指定する（素のサーバーキーではない）
 
 **結果の読み取り**: ツールのテキスト出力は command フックの stdout と同じルール（exit code 0 のパースルール）で読まれる。ツールが `isError: true` を返した場合は非ブロッキングエラーとなり実行は継続する。
 
@@ -310,6 +357,8 @@ MCP サーバーのツールを直接呼び出す。シェル経由のラッパ�
 | プラグイン `hooks/hooks.json` | プラグイン有効時 | Yes |
 | スキル/エージェントフロントマター | コンポーネントのライフタイム | Yes |
 | Managed policy settings | 組織全体 | Yes |
+
+> **クラウドセッション / self-hosted 環境のフック（2026-11-05 巡回で反映)**: クラウドセッションはローカルの `~/.claude/settings.json` を読まない。self-hosted 環境では、オペレーターが runner ホストの `~/.claude/` からシードしたフックも実行され、runner イメージの managed settings ファイルのフックは「Claude Code が適用する managed ソース」に含まれる場合（既定ではサーバー管理設定も MDM 配布ポリシーも managed 層を供給していない場合のみ）に実行される。どの設定ファイル・プラグイン（＝どのフック）がクラウドセッションに届くかは cloud-environments ドキュメントの "what carries over from your setup" を参照。
 
 ### 4.2 設定構造
 
@@ -343,11 +392,21 @@ MCP サーバーのツールを直接呼び出す。シェル経由のラッパ�
 
 Managed フックはユーザー/プロジェクト/ローカル設定からは無効化できない。
 
+- `disableAllHooks` は settings precedence 適用後の値が読まれる: プロジェクトの `.claude/settings.json` の `false` はユーザー設定の `true` を上書きする。1回の実行だけ無効化するには `--settings '{"disableAllHooks": true}'`（project / local 設定に優先）。個別フックだけを無効化する手段は無い（2026-11-05 巡回で反映）
+- 管理者は managed settings の `allowManagedHooksOnly` で user / project / local / プラグインフックをブロックできる（managed settings の `enabledPlugins` で強制有効化されたプラグインのフックは例外。`statusLine` / `fileSuggestion` / `subagentStatusLine` も managed 設定のものに絞られる）（2026-11-05 巡回で反映）
+- フック設定は settings レベル間で**マージ**される（置換ではない）。settings ファイルの直接編集はファイルウォッチャーで自動反映される
+
 ---
 
 ## 5. Matcher
 
-Matcher はフック発火条件をフィルタリングする正規表現文字列。省略または `"*"` で全対象。
+Matcher はフック発火条件をフィルタリングする文字列。省略・`""`・`"*"` で全対象。
+
+**評価ルール（2026-11-05 巡回で反映）**: matcher に含まれる文字で評価方法が決まる。
+
+- **英数字・`_`・`-`・スペース・`,`・`|` のみ**: 完全一致文字列、または `|` / `,` 区切りの完全一致リスト（`Edit|Write`、`Edit, Write`）。`code-reviewer` はそのエージェントタイプのみに一致
+- **それ以外の文字を含む**: JavaScript 正規表現（アンカーなし、部分一致）。`Edit.*` は `NotebookEdit` にも一致するため、完全一致には `^Edit$` のように `^` `$` で囲む
+- **`FileChanged` / `StopFailure`** は完全一致文字セットが英数字・`_`・`|` のみとさらに狭く、区切りも `|` のみ（ハイフン・スペース・カンマは正規表現パスに乗る）
 
 ### 5.1 MCPツールマッチング
 
@@ -358,6 +417,8 @@ MCPツールは `mcp__<server>__<tool>` パターンに従う:
   "matcher": "mcp__memory__.*"
 }
 ```
+
+サーバーの全ツールに一致させるには `.*` が**必須**: `mcp__memory` や `mcp__brave-search` は完全一致文字のみで構成されるため完全一致文字列として比較され、どのツールにも一致しない。**プラグイン同梱 MCP サーバーのツール名はスコープ付き** `mcp__plugin_<plugin-name>_<server-name>__<tool>` となり、素のサーバーキーで書いた matcher は発火しない（例: プラグイン `my-plugin` のサーバー `db` の全ツールは `mcp__plugin_my-plugin_db__.*`。`if` フィールドでも同じスコープ付きツール名を使う）（2026-11-05 巡回で反映）。
 
 ### 5.2 複数ツールのマッチング
 
@@ -383,6 +444,7 @@ MCPツールは `mcp__<server>__<tool>` パターンに従う:
 ```json
 {
   "session_id": "abc123",
+  "prompt_id": "550e8400-e29b-41d4-a716-446655440000",
   "transcript_path": "/path/to/transcript.jsonl",
   "cwd": "/current/working/directory",
   "permission_mode": "default",
@@ -391,7 +453,10 @@ MCPツールは `mcp__<server>__<tool>` パターンに従う:
 }
 ```
 
+- `prompt_id`: 処理中のユーザープロンプトを識別する UUID。OpenTelemetry イベントの `prompt.id` 属性と一致し、フック出力とテレメトリを単一プロンプト単位で突合できる。最初のユーザー入力までは存在しない（2026-11-05 巡回で反映）
 - `scratchpad_dir`: セッションのスクラッチパッドディレクトリ（Claude が一時作業ファイルを置く場所）へのパス。**v2.1.257 以降**。セッションがスクラッチパッドを持たない場合や temp ディレクトリが使えない場合は**キー自体が存在しない**
+- `permission_mode`: `"default"` / `"plan"` / `"acceptEdits"` / `"auto"` / `"dontAsk"` / `"bypassPermissions"`。UI で **Manual** と表示されるモードは常に `"default"` として届く（`"manual"` にはならない）。全イベントが受け取るわけではない
+- `transcript_path`: トランスクリプトファイルは非同期書き込みのため、フック発火時点では現在ターンの最新メッセージを含まないことがある。現在ターンの最終応答テキストが必要なら `Stop` / `SubagentStop` の `last_assistant_message` を使う
 
 サブエージェント内では追加:
 
@@ -439,25 +504,26 @@ v2.1.133 以降、ツール実行コンテキストを持つイベント（`PreT
 | （注: Bash の `bashEditDiff`） | **v2.1.269+、パブリックベータ**。Bash コマンドが Git リポジトリ内のファイルを変更した場合、`tool_response.bashEditDiff` に変更ファイル一覧が入る。記録条件: [`bashEditDiffEnabled`](configuration.md) が `true` なら全権限モードで記録、未設定なら auto モード / `bypassPermissions` で Claude Code が Bash 経由編集を指示した場合のみ。`false` で無効化（環境変数 `CLAUDE_CODE_BASH_EDIT_DIFF` がセッション単位で優先）。フィールド: `changedFiles`（絶対パス最大200件）/ `files`（表示用 diff 最大5件、`created` / `deleted` フラグ付き）/ `moreFiles`（diff なし変更ファイル数）/ `unavailable`（diff 不完全）/ `skipped`（`git checkout` / `git stash` 等ワーキングツリーを動かす Git コマンド）/ `shared`（同一リポジトリで別の Bash 呼び出しが並走し混入の可能性あり）。gitignore 対象とサブモジュール内は載らない。**ベストエフォート**であり、レビュー対象の発見用でポリシー強制には使わないこと |
 | （注: `SubagentHandback` 経由のレポート） | **v2.1.271+**。auto モードでローカル実行される非フォークのサブエージェントは、最終レポートをテキストではなく `SubagentHandback` ツールで納品する。この場合フォアグラウンド Agent 完了時の `tool_response.content` はハンドバック済みを示す短い注記になり、`SubagentStop` の `last_assistant_message` もレポートではない。**レポート本文は `SubagentHandback` にマッチした `PreToolUse` / `PostToolUse` フックの `tool_input.message` で読む** |
 | `PostToolBatch` | `tool_calls`（各要素は `tool_name`, `tool_input`, `tool_use_id`, `tool_response`）。`tool_response` は `PostToolUse` と形が異なりモデルが見る `tool_result` のシリアライズ |
-| `PermissionDenied` | `tool_name`, `tool_input`, `tool_use_id`, `reason`。`reason` の形式が改訂され、**分類器の判定はマッチしたルール名を角括弧で示す**（例 `[Data Exfiltration]`、`[Irreversible Local Destruction]`）。従来の固定文言 `Blocked by classifier` ではなくなった。no-verdict 拒否は従来どおり `Auto mode could not evaluate this action and is blocking it for safety` で始まる |
-| `Stop` | `stop_hook_active`, `last_assistant_message`, `background_tasks`, `session_crons`（v2.1.145+） |
+| `PermissionDenied` | `tool_name`, `tool_input`, `tool_use_id`, `reason`。`reason` の形式が改訂され、**分類器の判定はマッチしたルール名を角括弧で示す**（例 `[Data Exfiltration]`、`[Irreversible Local Destruction]`）。従来の固定文言 `Blocked by classifier` ではなくなった。no-verdict 拒否は従来どおり `Auto mode could not evaluate this action and is blocking it for safety` で始まる。**分類器モデルが利用不能だった拒否は固定文言 `Classifier unavailable`**（2026-11-05 巡回で反映） |
+| `Stop` | `stop_hook_active`, `last_assistant_message`, `background_tasks`, `session_crons`（v2.1.145+）。`background_tasks` の各要素は `id` / `type`（`shell`, `subagent`, `monitor`, `workflow`, `teammate`, `cloud session`, `MCP task` 等のラベル） / `status` / `description`（1000字上限） / `command`（shell のみ） / `agent_type`（subagent のみ） / `server`・`tool`（monitor / MCP task のみ） / `name`（workflow のみ）。`session_crons` の各要素は `id` / `schedule`（cron 式） / `recurring` / `prompt`（1000字上限）。「セッション完了」と「バックグラウンド作業の起床待ち」を区別できる（2026-11-05 巡回でフィールド詳細を反映） |
 | `StopFailure` | `error`（`rate_limit` / `overloaded` / `authentication_failed` / `oauth_org_not_allowed` / `account_on_hold` / `billing_error` / `invalid_request` / `model_not_found` / `server_error` / `cloud_credential_error` / `max_output_tokens` / `unknown`）, `error_details`, `last_assistant_message` |
 | `Notification` | `message`, `title`, `notification_type` |
 | `SubagentStart` | `agent_id`, `agent_type` |
 | `SubagentStop` | `stop_hook_active`, `agent_id`, `agent_type`, `agent_transcript_path`, `last_assistant_message`, `background_tasks`, `session_crons`（v2.1.145+）。**内部エージェントでも発火**（2026-09-22 ドキュメント改訂で明文化）: prompt suggestions や `/btw` 等の Claude Code 内部機能のエージェント完了時にも発火し、その場合 `agent_type` はセッション自身のエージェント名（`--agent` / `agent` 設定。未設定なら空文字列）。エージェントタイプを名指しする matcher は空 `agent_type` にマッチしない（matcher 省略 / `""` / `"*"` / 空文字にマッチする正規表現は発火する） |
 | `InstructionsLoaded` | `file_path`, `memory_type`, `load_reason`, `globs`(opt), `trigger_file_path`(opt), `parent_file_path`(opt)。**Project instructions 設定経由で AGENTS.md を直接読む場合（v2.1.277+）は発火しない**。CLAUDE.md が AGENTS.md をインポートする場合は `load_reason: include` で、symlink の場合は通常の CLAUDE.md ロードとして発火する |
-| `CwdChanged` | `cwd` |
-| `FileChanged` | `file_path`, `change_type` (`created`/`modified`/`deleted`) |
-| `TaskCreated` | `task_id`, `task_subject`, `task_description`(opt), `teammate_name`, `team_name` |
+| `CwdChanged` | `old_cwd`, `new_cwd`（従来記載の `cwd` のみではなく変更前後のパスを受け取る。2026-11-05 巡回で修正）。出力で `watchPaths`（絶対パス配列）を返すと FileChanged の動的監視リストを**置換**できる（空配列でクリア。matcher 由来のパスは常に監視） |
+| `DirectoryAdded` | `directory`（追加されたディレクトリの絶対パス）, `source`（`"slash_command"` / `"register_repo_root"`）。`slash_command` では `systemMessage` が次ターンのコンテキストとして Claude に届く（ユーザーには出ない）、`register_repo_root` ではデバッグログのみ（2026-11-05 巡回で反映） |
+| `FileChanged` | `file_path`, `event`（`"change"`=変更 / `"add"`=作成 / `"unlink"`=削除。従来記載の `change_type` (`created`/`modified`/`deleted`) は現行 docs に無く、フィールド名・値とも `event` 形式が正（2026-11-05 巡回で修正））。出力で `watchPaths` を返し監視リストを動的更新可能。matcher は「監視リストの構築（`\|` 区切りのリテラルファイル名）」と「発火フィルタ（basename に対する標準 matcher 規則）」の二役を持つ。ウォッチャーは何かがファイルを指名して初めて起動するため、動的パス用グループは matcher 省略にする（`"*"` はリテラル `*` というファイルを監視登録してしまう） |
+| `TaskCreated` | `task_id`, `task_subject`, `task_description`(opt), `teammate_name`(opt), `team_name`（**非推奨: 将来のリリースで削除予定**。2026-11-05 巡回で反映）, `agent_id`(opt, v2.1.290+ タスクを作成したサブエージェント / in-process teammate を識別) |
 | `ConfigChange` | `source`, `file_path` |
-| `WorktreeCreate` | `worktree_path`, `isolation_level` |
+| `WorktreeCreate` | `name`（新ワークツリーのスラグ識別子。ユーザー指定または自動生成）。従来記載の `worktree_path` / `isolation_level` は現行 docs に無い（2026-11-05 巡回で修正） |
 | `WorktreeRemove` | `worktree_path` |
 | `PreCompact` | `trigger`, `custom_instructions` |
 | `PostCompact` | `trigger`, `compact_summary` |
 | `PreModelSwitch` / `PostModelSwitch` | `from_model`, `to_model`, `requested_model`, `source`, `context_tokens`, `prompt_cache_warm`, `cache_ttl`, `estimated_cache_write_usd`, `pricing`（§2.6 参照、v2.1.251+） |
 | `Elicitation` | `mcp_server_name`, `message`, `mode`(opt), `url`(opt), `elicitation_id`, `requested_schema` |
-| `TeammateIdle` | `teammate_name`, `team_name` |
-| `TaskCompleted` | `task_id`, `task_subject`, `task_description`(opt), `teammate_name`, `team_name` |
+| `TeammateIdle` | `teammate_name`, `team_name`（**非推奨: 将来のリリースで削除予定**）, `agent_id`(opt, v2.1.290+) |
+| `TaskCompleted` | `task_id`, `task_subject`, `task_description`(opt), `teammate_name`(opt), `team_name`（**非推奨: 将来のリリースで削除予定**）, `agent_id`(opt, v2.1.290+) |
 
 ### 6.3 JSON 出力フォーマット
 
@@ -494,7 +560,11 @@ v2.1.133 以降、ツール実行コンテキストを持つイベント（`PreT
 - `permissions.disableBypassPermissionsMode` で無効化されている場合、および restricted モードで起動したセッションでも no-op
 - **`bypassPermissions` は `destination` の指定に関わらず `defaultMode` として設定ファイルに永続化されない**
 
-`terminalSequence`（v2.1.141+）: 制御端末を持たない hook からデスクトップ通知・ウィンドウタイトル・ベル等の端末シーケンスを発行できる。例: `"\u0007"`（ベル）、`"\u001b]0;title\u0007"`（ウィンドウタイトル設定）。バックグラウンド hooks や HTTP hooks から端末 UX を制御する用途に有効。
+`terminalSequence`（v2.1.141+）: 制御端末を持たない hook からデスクトップ通知・ウィンドウタイトル・ベル等の端末シーケンスを発行できる。例: `"\u0007"`（ベル）、`"\u001b]0;title\u0007"`（ウィンドウタイトル設定）。バックグラウンド hooks や HTTP hooks から端末 UX を制御する用途に有効。`StopFailure` / `Notification` など他の出力を破棄するイベントでも機能する。
+
+**terminalSequence の allowlist（2026-11-05 巡回で反映）**: 許可されるのは OSC `0`/`1`/`2`（ウィンドウ・アイコンタイトル）、OSC `9`（iTerm2 / ConEmu / Windows Terminal / WezTerm 通知。`9;4` タスクバー進捗含む）、OSC `99`（Kitty）、OSC `777`（urxvt / Ghostty / Warp）、裸の BEL のみ（終端は BEL または ST）。CSI カーソル/色、OSC パレット、OSC 8 ハイパーリンク、OSC 52 クリップボード、OSC 1337 など allowlist 外を含む値は**フィールドごと無視される**。対話セッションで UI が画面に出ている間のみ書き込まれる（`-p` / Agent SDK では無視）。`WorktreeCreate` の command フックは stdout がパスとして読まれるため使えない（HTTP フックなら可）。
+
+**`suppressOutput` は効果なし（2026-11-05 巡回で修正）**: Claude Code はフィールドを受理するが動作しない。成功したフックの stdout はもともとトランスクリプトに表示されずデバッグログに記録される。
 
 ### 6.4 主要イベントの出力詳細
 
@@ -515,6 +585,12 @@ v2.1.133 以降、ツール実行コンテキストを持つイベント（`PreT
 > `updatedInput` はツール入力を**丸ごと置換**するため、変更しないフィールドも含めて返す必要がある。**Claude Code は権限ルールの評価と Bash コマンドの[自動バックグラウンド化の可否判定](https://code.claude.com/docs/en/tools-reference#background-commands)を、Claude が送った入力ではなくフックが返した入力に対して行う**（`"defer"` の場合は無視される）。
 >
 > v2.1.300 から、PreToolUse / PermissionRequest フックの `updatedInput` はモデル入力と同様に検証される: 未知のキーは除去され、ツールが拒否する入力はその呼び出しを deny する。
+
+**auto モードでの `updatedInput`（2026-11-05 巡回で反映）**: auto モードで `permissionDecision` なしに `updatedInput` だけを返すと、分類器サーバーは Claude が書いた入力をレビューしておりフック変更後の入力を見ていないため、Claude Code がその呼び出しを拒否しうる（対話ターミナル / VS Code の Anthropic API 直結セッションでは拒否文言に `a hook changed this call's input after auto mode reviewed it` を含む）。拒否後に Claude が変更済み入力をそのまま再発行するとサーバーがレビューした上でフックが再実行される（この再実行で返した `updatedInput` は破棄される）。この拒否が出ないツールもある: 当該セッションでは settings / プラグイン hooks ファイルの command フックは **Bash / PowerShell / Monitor / Edit / Write / NotebookEdit** の呼び出しを拒否なしに変更できる（同一応答内で先行呼び出しをフックが変更していた場合やサンドボックス外実行要求では拒否されうる）。
+
+**`@` 参照はフックを通らない（2026-11-05 巡回で反映）**: プロンプトで `@` 参照したファイルはツール呼び出しなしでプロンプト構築時に挿入されるため、`Read` matcher を含むどの PreToolUse フックも発火しない。特定パスは `Read` の deny ルールでブロックでき、`CLAUDE_CODE_DISABLE_FILE_MENTIONS=1`（v2.1.299+。シェル / user settings / managed settings のみ有効）で挿入自体を無効化するとパスのみが渡され、Claude がファイルツールで読む際に PreToolUse フックが走る。
+
+**ファイルパスの正規化（2026-11-05 巡回で反映）**: `Write` / `Edit` / `Read` の `tool_input.file_path` は常に絶対パス（`~` や相対パスはフック実行前に展開済みのためパスマッチングを回避できない）。Windows ではバックスラッシュ区切りで届く（Git Bash 下でも）ため、`/src/` のようなスラッシュ前提の比較は一致しない。比較前に区切りを正規化すること。
 >
 > `permissionDecisionReason` の扱い（2026-09-30 ドキュメント改訂）: `"ask"` はユーザーに表示（Claude には非表示）、`"deny"` は Claude に表示、**`"allow"` と `"defer"` はデバッグログ（`--debug`）にのみ書かれる**（従来は `"allow"` もユーザーに表示されるとされていた）。誰もプロンプトに答えられない `-p` 実行で Claude Code が呼び出しを自動拒否した場合、`"ask"` の理由は代わりにツール結果として Claude に渡る（2026-10 ドキュメント改訂で明文化）。
 
@@ -544,6 +620,8 @@ v2.1.133 以降、ツール実行コンテキストを持つイベント（`PreT
   }
 }
 ```
+
+`updatedMCPToolOutput` は MCP ツール専用の出力差し替えフィールド（全ツール対応の `updatedToolOutput` を推奨）。組み込みツールでは出力スキーマに合わない差し替え値は無視され元の出力が使われるが、MCP ツール出力はスキーマ検証なしで通る（2026-11-05 巡回で反映）。
 
 `classifierContext`（v2.1.236+）: `hookSpecificOutput.classifierContext` で auto mode 分類器宛ての注記をツール結果に添付できる（**1ツール呼び出しあたり 2,000 文字上限**）。設定元により重み付けが異なり、Claude Code 設定由来は未検証コンテキスト扱い、in-process Agent SDK コールバック由来はユーザー意図として扱われうる。async フックでは無視、読み取り専用呼び出しでは破棄。`updatedToolOutput` と同時返却可。
 
@@ -625,10 +703,15 @@ fi
 exit 0
 ```
 
-**v2.1.152 追加機能**:
+**SessionStart の出力フィールド（2026-11-05 巡回で整理）**:
 
-- `hookSpecificOutput.reloadSkills: true` を返すと、フックでインストールしたスキルディレクトリを同一セッション内で再スキャンしてサーフェスできる
-- `hookSpecificOutput.sessionTitle` で起動・再開時のセッションタイトルを設定できる
+- `additionalContext`: 会話冒頭（最初のプロンプトの前）に追加されるコンテキスト。プレーンテキスト stdout でも同じ効果
+- `initialUserMessage`: **`-p` 非対話モードで最初のユーザーメッセージとして使われる文字列**。プロンプトを渡さなくても最初のターンになる（渡したプロンプトは次のターン）（2026-11-05 巡回で反映）
+- `sessionTitle`: セッションタイトルを設定（`/rename` と同じ効果）。`source` が `startup` / `resume` / `fork` のとき適用（v2.1.152）
+- `watchPaths`: このセッションで `FileChanged` が監視する絶対パスの配列（2026-11-05 巡回で反映）
+- `reloadSkills: true`: フックでインストールしたスキルディレクトリを同一セッション内で再スキャンしてサーフェスできる（v2.1.152）
+
+プラグインの SessionStart フックが `initialUserMessage` / `sessionTitle` を返す場合、SessionStart フック実行後にインストールが完了したプラグインの両フィールドは無視される。
 
 ```json
 {
@@ -642,13 +725,21 @@ exit 0
 
 #### WorktreeCreate
 
-Command フック: stdout にワークツリーの絶対パスを出力。
+Command フック: stdout にワークツリーの絶対パスを出力（**最後の非空行**が読まれる。ANSI エスケープは除去されるため起動バナーは無視される。その他の出力は stderr へ）。
 HTTP フック (`type: "http"`): レスポンスJSON の `hookSpecificOutput.worktreePath` でパスを返す。
+
+**パス検証と発火条件の注意（2026-11-05 巡回で反映）**:
+
+- 相対パスはフック実行ディレクトリ基準で解決（`.` / `..` は折りたたみ）。**`.` / `..` セグメントを含む絶対パス、およびリポジトリルート以下で symlink を通過するパスは拒否される**（リポジトリにコミットされた symlink によるワークツリー外リダイレクト対策）
+- Bash 経由の `git worktree add` では発火しない（検査・ブロックは `Bash` matcher の PreToolUse で行う）
+- `--worktree` と `--tmux` の併用時はプラグイン読み込み前にワークツリーが作られるため、**プラグイン提供の WorktreeCreate フックは走らない**（settings ファイルに定義すれば走る）。v2.1.300 より前は `--worktree` 単独でもプラグインのフックは走らなかった
+- 入力は `worktree_path` ではなく **`name`**（ユーザー指定または自動生成のスラグ、例 `bold-oak-a3f2`）
 
 ```bash
 #!/bin/bash
-WORKTREE_PATH=$(jq -r .worktree_path)
-echo "$WORKTREE_PATH"
+NAME=$(jq -r .name)
+DIR="$HOME/.claude/worktrees/$NAME"
+svn checkout https://svn.example.com/repo/trunk "$DIR" >&2 && echo "$DIR"
 ```
 
 ---
@@ -719,7 +810,8 @@ echo "$WORKTREE_PATH"
 | フィールド | 説明 | デフォルト |
 |:--|:--|:--|
 | `timeout` | タイムアウト（秒）。**`async: true` の command フックには適用されない**（バックグラウンドに入った後は Claude Code が強制終了しない）。`asyncRewake` のフックには引き続き適用される。`UserPromptSubmit` / **`PreModelSwitch`（v2.1.251+）** では command / http / mcp_tool の既定が 30 に、`MessageDisplay` では 10 に下がる。**`UserPromptSubmit` のタイムアウト時はフックがキャンセルされ出力は破棄、プロンプトは素通りする（Agent SDK コールバックフックのみブロック。§6.4 参照）**。`SessionEnd` は全フックで 1.5 秒の共通予算（予算は settings 内の最大 per-hook `timeout` まで自動で引き上がる・上限60秒。プラグイン提供フックの `timeout` は予算を上げない。`CLAUDE_CODE_SESSIONEND_HOOKS_TIMEOUT_MS` で明示上書き可能で、**この値は `timeout` 未指定の各フックのタイムアウトにもなる**。v2.1.268 より前は予算のみ上がり個別フックは1.5秒のままだった） | command / http / mcp_tool: 600, prompt: 30, agent: 60 |
-| `async` | バックグラウンド実行（command のみ） | `false` |
+| `async` | バックグラウンド実行（command のみ）。決定系フィールド（`decision` / `permissionDecision` / `continue`）は無効。完了後の `additionalContext` / `systemMessage` は次の会話ターンで Claude に届く（ユーザーには表示されない）。JSON 応答は stdout 単独（複数行可、v2.1.295+）か単独の1行で出力し、型が合わないフィールドは破棄される。`-p` セッション終了時に実行中の async フックは kill され `cancelled` 扱い（2026-11-05 巡回で詳細反映） | `false` |
+| `asyncRewake` | バックグラウンド実行し、**exit 2 で Claude を起床させる**（セッションがアイドルでも即時）。stderr（空なら stdout）が system reminder として Claude に表示される。長時間バックグラウンド処理の失敗に反応させる用途。`timeout` は適用される（2026-11-05 巡回で反映） | `false` |
 | `once` | **初回の成功実行後**にフックを取り除く。失敗・exit code 2 によるブロック・タイムアウトの場合はフックが残り、次の一致イベントで再実行される。スキル frontmatter で宣言したフックのみ有効（settings ファイルとエージェント frontmatter では無視） | `false` |
 | `statusMessage` | スピナーメッセージ | - |
 | `if` | ツールイベント専用の条件フィルタ（permission rule構文） | - |
@@ -731,6 +823,7 @@ echo "$WORKTREE_PATH"
 - **スキルフックの上限**: 1 ソース（リポジトリ / 自分のフォルダ / プラグイン）のスキル群はセッションあたり最大 1,024 フック・16,384 matcher 文字まで登録可能（v2.1.304）
 - **プラグインフックがブロック可能なアクションは、フックにイベントを渡せない / 回答を受け取れない場合に素通りでなく拒否される**（実行済みツールは結果が差し止められる）（v2.1.299）
 - プラグインフック・ワークフロースクリプトが返す値は 28,000 レベル超のネストを拒否（v2.1.299）
+- **観測性（v2.1.296+、2026-11-05 巡回で反映）**: command フックは完了時にデバッグログへ `Hooks: PostToolUse:Write [.claude/hooks/log-write.sh] finished with status 0 (31ms)` 形式の行を残す（`timed out after <N>ms` / `cancelled` / `moved to the background` / `failed to start` もあり）。遅いフックの特定には `Hooks:` 行を検索する。`CLAUDE_CODE_DEBUG_LOG_LEVEL=verbose` で matcher マッチングの詳細も出力される。スキルフックが上限超過で登録されなかった場合はデバッグログに `registers none of its hooks` が出る
 
 ### 8.1 `if` 条件フィールド（v2.1.85）
 

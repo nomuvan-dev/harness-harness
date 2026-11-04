@@ -1,6 +1,6 @@
 # Claude Code 設定仕様書
 
-最終更新: 2026-11-03（巡回更新）
+最終更新: 2026-11-05（巡回更新）
 
 公式ドキュメント: https://code.claude.com/docs/en/settings / https://code.claude.com/docs/en/memory
 
@@ -49,6 +49,14 @@ See @README.md for project overview and @package.json for available npm commands
 - **構造**: Markdownの見出しと箇条書きでグループ化
 - **具体性**: 検証可能な具体的指示を書く（例: 「2スペースインデント」）
 - **一貫性**: 矛盾する指示がないか定期的に見直す
+
+#### サイズ上限と警告（2026-11-05 巡回で memory ページから反映）
+
+- **4 MiB 超のファイルはスキップ**される（読み込まれない）
+- 推奨長（200行）超の指示ファイルは起動時と `/status` で警告。各ファイルが推奨長以内でも**合計が上限を超えるとセッション開始時に警告**（CLAUDE.md・rules ファイル・`@path` インポートはそれぞれ別ファイルとして数える）
+- **オンデマンド読み込みファイルのファイル単位上限（v2.1.309 以降適用）**: サブディレクトリの `CLAUDE.md` / `CLAUDE.local.md` とその `@path` インポート、サブディレクトリの `.claude/rules/`、パススコープ付き rules（プロジェクト / `~/.claude/rules/`）が対象。上限超過時は**先頭部分のみが Claude に渡り**、末尾に「残りは Read ツールで読め」という注記が付く（Claude が読むまで後半の指示はコンテキストに入らない）。上限はコンテキストウィンドウ依存: **200K = 40,000 文字**、**1M = Opus 4.6 / Sonnet 4.6 は 200,000 文字、以降のモデルは 150,000 文字**。確認は `wc -m <file>`
+- `@path` インポートへの分割は整理には有効だがコンテキスト削減にはならない（インポート元と一緒に読み込まれるため）。削減にはパススコープ付き rules を使う
+- `/doctor` はコミット済み CLAUDE.md のトリム案を提示する（ディレクトリ構成・依存リスト・アーキテクチャ概要などコードベースから導出可能な内容を削り、落とし穴・理由付け・ツール既定と異なる規約は残す）
 
 ### 1.5 CLAUDE.md の除外
 
@@ -206,7 +214,7 @@ Claude Code は設定ファイルを監視し、変更を検知するとセッ�
 | `autoMode` | Auto Modeの分類器設定。`environment`, `allow`, `soft_deny`, `hard_deny` 配列で構成。共有プロジェクト設定からは読み込まれない。v2.1.118 で `"$defaults"` を配列に含めることで組み込みルールを置換せず追加可能。v2.1.136 で `hard_deny` 追加: ユーザー意図や allow 例外に関わらず無条件にマッチアクションをブロック |
 | （CLI）`--permission-prompts <host\|none>` | **v2.1.259**。print モードで権限プロンプトに誰が答えるかを指定する。既定の `host` は Agent SDK ホストまたは `--permission-prompt-tool` のツールへ転送、`none` は答える者がいない無人ホスト向けでプロンプトが出るはずの操作を自動的に拒否する。アクティブな権限モード（auto モードを含む）の判定自体は従来どおり働く。**2026-09-05 時点で公式 CLI リファレンスに収載済み** |
 | `disableAutoMode` | `"disable"` で Auto Mode の有効化を阻止。`Shift+Tab` サイクルから除外し `--permission-mode auto` を拒否。v2.1.207 で Bedrock / Vertex / Foundry の Auto mode がオプトイン不要になったため、無効化はこの設定で行う。同版から `autoMode` はリポジトリ内 `.claude/settings.local.json` から読み込まれなくなった（`~/.claude/settings.json` を使用） |
-| `useAutoModeDuringPlan` | プランモードで Auto Mode セマンティクスを使用（デフォルト: `true`＝auto モードが利用可能なら分類器がプラン中のシェルコマンドをレビュー）。共有プロジェクト設定からは読み込まれない。**managed ソース・`--settings`・`~/.claude/settings.json`・`.claude/settings.local.json` のいずれかの `false` でオフ**（ただし `--setting-sources` 等でその user / local ファイルを除外した場合は効かない。2026-11-04 ドキュメント改訂で明文化） |
+| `useAutoModeDuringPlan` | プランモードで Auto Mode セマンティクスを使用（デフォルト: `true`＝auto モードが利用可能なら分類器がプラン中のシェルコマンドをレビュー）。共有プロジェクト設定からは読み込まれない。**managed ソース・`--settings`・`~/.claude/settings.json`・`.claude/settings.local.json` のいずれかの `false` でオフ**（ただし `--setting-sources` 等でその user / local ファイルを除外した場合は効かない。2026-11-04 ドキュメント改訂で明文化、**除外ファイルの無視は v2.1.314 以降**＝2026-11-05 巡回で版数要件を反映） |
 | `defaultShell` | `!` コマンドのデフォルトシェル。`"bash"`（デフォルト）または `"powershell"`（Windows、`CLAUDE_CODE_USE_POWERSHELL_TOOL=1` 必要） |
 | `otelHeadersHelper` | 動的OpenTelemetryヘッダー生成スクリプト。起動時と定期的に実行 |
 | `apiKeyHelper` | カスタムAPIキー生成スクリプト。値はキャッシュされ、**①キャッシュ寿命（既定 5 分。`CLAUDE_CODE_API_KEY_HELPER_TTL_MS` で変更）経過後、②Anthropic API（LLM ゲートウェイ経由を含む）へのリクエストが `401` / `403` で失敗したとき**に再実行される。インタラクティブセッションで project / local 設定由来のコマンドは、ワークスペース信頼プロンプトを受け入れるまで実行されない |
@@ -223,7 +231,7 @@ Claude Code は設定ファイルを監視し、変更を検知するとセッ�
 | `disabledMcpjsonServers` | 拒否するMCPサーバーリスト |
 | `allowManagedMcpServersOnly` | Managed MCPサーバーのみ許可 |
 | `allowedMcpServers` | MCPサーバー許可リスト。**v2.1.259 以降、ユーザーが自分で追加したサーバーのみを対象とする**（`managed-mcp.json` / `managedMcpServers` 由来のサーバーは allowlist に載っていなくてもロードされる。止めるには `deniedMcpServers` を使う） |
-| `deniedMcpServers` | MCPサーバー拒否リスト |
+| `deniedMcpServers` | MCPサーバー拒否リスト。定義場所を問わず一致するサーバーのロードを拒否する — プラグインのサーバー、`--mcp-config` で渡したサーバー、`managed-mcp.json` / `managedMcpServers` 由来のサーバー、Claude Code 自身が取得する claude.ai コネクタも対象（イン・プロセス `type: "sdk"` サーバーのみ除外）。エントリは `serverName`（claude.ai コネクタの表示名 `"claude.ai Slack"` 等も可）/ `serverCommand`（コマンド＋引数の完全一致）/ `serverUrl`（`*` ワイルドカード可）のいずれか1キー。全スコープのエントリがマージされ（`allowManagedMcpServersOnly` でも変わらず）、denylist は `allowedMcpServers` より優先。空配列は何もブロックしない（2026-11-05 巡回で settings-reference の記述を反映） |
 | `managedMcpServers` | （Managed のみ、**v2.1.259**）組織が HTTP / SSE の MCP サーバーを全ユーザーへ配布する。エントリの形は `.mcp.json` と同じだが、**ローカルコマンドを起動する `command` 形式のエントリはスキップされる**。**2026-09-10 時点で公式 settings リファレンス / managed MCP ページに正式収載**（要 v2.1.259 以降）。スコープは Managed のみ（user / project / local に書くと警告付きで無視される）。ユーザーは自分で追加したサーバーを保持したまま、組織提供分は編集・削除できない。managed ソースが複数ある場合はサーバー名を全ソースから合成し、**同名は上位ソースのエントリ全体**が採用される。`allowedMcpServers` の allowlist からは除外される（`deniedMcpServers` は効く） |
 | `statusLine` | カスタムステータスライン設定。v2.1.153 でステータスラインコマンドに `COLUMNS` / `LINES` 環境変数（端末サイズ）が渡されるようになった |
 | `fileSuggestion` | `@` ファイル補完カスタムコマンド |
@@ -737,7 +745,7 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 | `CLAUDE_CODE_OTEL_CONTENT_MAX_LENGTH` | OpenTelemetry コンテンツ属性の切り詰め上限（デフォルト 60KB）を設定（v2.1.214） |
 | `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS` | 同時実行サブエージェント数の上限（デフォルト 20）。1メッセージからの無制限 fan-out 対策（v2.1.217） |
 | `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` | サブエージェントのネスト起動深度。v2.1.217 で既定無効化 → v2.1.219 で既定深度3に変更。`=1` でネスト無効化 |
-| `FORCE_HYPERLINK` | `0` でフッター PR バッジ等のハイパーリンク強制をオプトアウト（ssh/tmux 等の端末サポート未検出時もリンク化される挙動、v2.1.217） |
+| `FORCE_HYPERLINK` | `1` で、端末が OSC 8 ハイパーリンク対応なのに自動検出されない場合にクリック可能リンクを有効化（未設定時は端末サポート検出時のみ大半をリンク化。フッター PR / MR バッジと長いサインイン URL は検出に関わらず常にリンク）。`0` / `false` / `no` / `off` で全てプレーンテキスト表示。**v2.1.314 で挙動変更**: それ以前は `false` / `no` / `off` が逆にハイパーリンクを有効化していた（2026-11-05 巡回で env-vars ページの記述刷新を反映。初出 v2.1.217） |
 | `CLAUDE_CODE_WORKFLOW_PREFIX_STAGGER_MS` | ワークフロー fan-out で同一 prompt prefix の兄弟エージェントを時間差起動し、後続がキャッシュ済み prefix を再利用してコストを削減。`0` で無効化（v2.1.229） |
 | `CLAUDE_CODE_MESSAGING_SOCKET` | Claude Code が各セッションの受信箱 Unix ドメインソケットのパスを hooks / Bash コマンドに自動エクスポート。`SessionStart` を含む全 hook より前に設定される（機能フラグ取得前に起動したセッションでは取得完了後に設定されるため、それ以前に起動したプロセスでは未設定）。各セッションは自身のソケットのみをエクスポートし、親セッションから継承しない |
 | `CLAUDE_CODE_MESSAGING_TOKEN` | 上記ソケットへ投函するスクリプト用のセッション単位トークン。接続の最初の行に `{"type":"auth","token":"<token>"}` を送ることで「自セッションの子プロセスからの投函」として検証される（macOS でプロセス終了後、および Claude Code が PID 1 のコンテナでは、プロセス証跡が取れないためこのトークンが唯一の検証手段） |
@@ -767,9 +775,9 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 | `CLAUDE_CODE_DISABLE_REFUSAL_FALLBACK` | `1` で、安全性分類器がリクエストをフラグした際の自動モデル切替（`switchModelsOnFlag` 設定が制御する挙動）を無効化。v2.1.312 以降は切替対象にカスタムデプロイ名等の未認識モデル名も含まれる |
 | `CLAUDE_CODE_EVEN_MORE_DANGEROUSLY_SKIP_PERMISSIONS` | `1` で、`bypassPermissions` モードにおける危険な `rm`（critical-path 削除）の確認プロンプトを省略して無確認実行。**起動環境からのみ有効**（settings の `env` ブロックでは無視）。v2.1.311 以降 |
 | `CLAUDE_CODE_GZIP_REQUEST_BODIES` | `0` で `api.anthropic.com` への Claude API・テレメトリ・artifact 公開リクエストボディの gzip 圧縮を無効化。既定では直接接続時に大きなボディを圧縮し、プロキシ経由・クライアント証明書設定時・`NODE_EXTRA_CA_CERTS` 設定時は圧縮しない。検出できない TLS 検査プロキシが圧縮リクエストを壊す場合に `0` を使う |
-| `CLAUDE_CODE_DISABLE_ULTRATHINK` | `ultrathink` キーワードを無効化（v2.1.316。env-vars ページ未収載＝changelog 先行） |
-| `CLAUDE_CODE_SUBAGENT_EFFORT` | 他で effort レベルの指定がないサブエージェントの実行 effort レベルを設定。未設定時はセッションの effort を継承（v2.1.316。env-vars ページ未収載＝changelog 先行） |
-| `CLAUDE_CODE_DISABLE_LOOPED_CROSS_CERT_DROP` | ループ状に相互認証するシステムクロス証明書の除去を無効化して保持。プライベート CA がそれを必要とするサーバー向け（v2.1.316。env-vars ページ未収載＝changelog 先行） |
+| `CLAUDE_CODE_DISABLE_ULTRATHINK` | `ultrathink` キーワードを無効化（v2.1.316。env-vars ページ未収載＝changelog 先行、2026-11-05 時点も未収載） |
+| `CLAUDE_CODE_SUBAGENT_EFFORT` | 他で effort レベルの指定がないサブエージェントの実行 effort レベルを設定。未設定時はセッションの effort を継承（v2.1.316。env-vars ページ未収載＝changelog 先行、2026-11-05 時点も未収載）。なお model-config の「Effort level of subagents and teammates」節（2026-11-05 巡回で反映）によれば、`effort` 未指定のサブエージェント / チームメイトがセッション選択・`--effort` のレベルを継承するのは**メイン会話と同一モデルで実行される場合のみ**で、別モデルではそのレベルは適用されない（レベルを与えるには定義側の `effort` を使う） |
+| `CLAUDE_CODE_DISABLE_LOOPED_CROSS_CERT_DROP` | ループ状に相互認証するシステムクロス証明書の除去を無効化して保持。プライベート CA がそれを必要とするサーバー向け（v2.1.316。env-vars ページ未収載＝changelog 先行、2026-11-05 時点も未収載） |
 | `CLAUDE_CODE_GATEWAY_HINT_HEADERS` | `1` でゲートウェイヒントヘッダ（`x-claude-code-request-class` / `x-claude-code-compaction` 等）をカスタムプロキシや Bedrock / Claude Platform on AWS などサードパーティプロバイダにも送信。`0` で（既定で送信する Anthropic API 直結を含め）全接続で送信を停止。v2.1.273 以降 |
 | `CLAUDE_CODE_EMIT_SESSION_STATE_EVENTS` | `1` でセッション状態を運ぶ `session_state_changed` メッセージをメッセージストリームに追加。Agent SDK か、`--print` ＋ `--output-format stream-json` ＋ `--verbose` が必要 |
 | `OTEL_LOG_MANAGED_SETTINGS` | `1` で `managed_settings_resolved` OTEL ログイベントに redact 済み managed 設定と redact 前設定の SHA-256 ダイジェストを付加。既定は無効。シェル・user 設定・managed 設定で設定する（project / local では有効化できない）。v2.1.274 以降 |
