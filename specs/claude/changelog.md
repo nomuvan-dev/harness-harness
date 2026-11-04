@@ -3,7 +3,9 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-11-04（**v2.1.317**（2026-11-03）を反映。ハーネス観点の目玉は **(1) Agent SDK フックコールバックに `onFailure: "block"`**（失敗したコールバックがアクションを素通しせずブロック＝command / HTTP フック〔v2.1.295〕と同等の fail-closed 化が SDK でも可能に）、**(2) アカウントメール送信前の確認**（web / シェルツール呼び出しがアカウントのメールアドレスをネットワークへ送る前に確認を挟むチェックを追加）、**(3) `CLAUDE_CODE_DISABLE_NESTED_SESSION_ID`**（self-hosted runner 上でセッション内から起動した `claude -p` に親セッションの ID / トランスクリプトを共有させる旧挙動へ戻す。既定は分離＝「`claude -p` が親トランスクリプトへ書き込み・誤 resume」の修正とセット）、**(4) SendMessage の改善**（実行中バックグラウンドエージェントへのメッセージは実行中コマンドを停止せずバックグラウンド化して早く届く）＋**メインと異なるモデルのサブエージェント / チームメイトはそのモデルの保存済み effort（または既定）を使う**（従来はセッションの effort を継承）、**(5) OTel に `anthropic.plan` / `seat_type` / `provider` / `custom_base_url` 属性追加**＋gateway 管理 API にコスト レポート `GET /v1/organizations/analytics/cost`（期間指定で総額・開発者別・日別・IdP グループ別）、**(6) 重要修正: Claude Desktop の一部セッションで project / local MCP サーバーが初ターン後に切断、gateway ベース URL の server-side 安全チェックが 403/422 を返すと auto モードが毎ターン失敗、巨大 CLAUDE.md 変更後の自動 compaction 直後に "Prompt is too long"、compaction がリクエスト短縮時に過去サマリを喪失、Grep / Glob のタイムアウト時に部分結果を完全結果として扱う、Ctrl+C（プロンプトの入力クリア）で全バックグラウンドエージェント停止、`DISABLE_PROMPT_CACHING_OPUS` / `_SONNET` が `[1m]` 等の別表記モデルに無効、`--from-pr` が大量セッションのプロジェクトで "No conversations found"**。ドキュメント側の改訂: **(a) mcp** — OAuth 401 時の再接続が二分化（refresh token ありはリフレッシュ＋1回リトライ / なしはトークンなしで接続し応答すればサインアウト状態でツール継続＋拒否トークン削除）、クラウドセッションの elicitation カード（Form / URL モード・Decline）収載、**(b) interactive-mode** — `/btw` がサブエージェントのトランスクリプトを開いていればそこから回答（v2.1.314+。チームメイトのトランスクリプトはメイン会話から回答）、usage limit 自動継続は 3 回連続で停止し `/rate-limit-options` へ誘導、**(c) settings / managed-settings** — `useAutoModeDuringPlan` は user / local / `--settings` のいずれかの `false` でオフ（`--setting-sources` で除外したファイルは効かない）、`blockReadsOutsideWorkingDirectories` のセッション途中削除はブロック継続（解除は全設定ファイルから削除＋各セッション再起動）、**(d) sandboxing / settings-reference** — `sandbox.network.allowMachLookup` の挙動詳細（列挙したサービスへはサンドボックス外到達可・サービスの動作は無制限。値は末尾 `*` プレフィックス / `"*"` 全許可）、**(e) memory** — rules の `paths` glob 意味論を明確化（パターンはベースディレクトリ基準でどこでもマッチ、`/*.md` のように先頭 `/` でルート直下限定）（specs/claude/configuration.md・mcp.md・skills-and-commands.md に反映）。Codex CLI は新バージョンなし（0.166.0 のまま、プレリリースは 0.167.0-alpha.4〔2026-11-03〕まで進行）。前回2026-11-03の巡回要約は下記参照。）
+最終更新: 2026-11-05（**v2.1.318**（2026-11-04）を反映。ハーネス観点の目玉は **(1) サブエージェント実行の安定化**（「Switch models when a message is flagged」=「Ask each time」時はモデル切替でなく停止 / バックグラウンドサブエージェントのシェルコマンドを全プロバイダで3分後にバックグラウンド化〔プロンプトキャッシュ失効防止〕/ Bedrock・Vertex・Foundry・テレメトリオフの進捗サマリはコールドキャッシュ時に最大5分待機）、**(2) mod の `$.model.fork` に `effort` オプション**（軽い副作業を low 等で実行。mods/api docs は型定義へのポインタのみ＝changelog 先行）＋ mod が `prompt.submit` でアタッチする内容は system メッセージでなくユーザーターン内に留まる変更、**(3) `deniedMcpServers` の URL エントリが upstream URL 一致の Anthropic 提供サーバー・クラウド/self-hosted runner のコネクタもブロック**、**(4) 認証期限の可視化**（`claude auth status` に `loginExpiresAt`、`claude -p` JSON に `credential_expires_at`、期限10日前からテキスト出力の stderr に警告）、**(5) 共有ネットワークホームディレクトリの堅牢化**（`~/.claude.json`・settings・保存済みログインの保存時消失/空化/巻き戻りの抑止、非 JSON `~/.claude.json` をデフォルトで置換せず起動失敗＋復元案内に変更等、関連修正多数）、**(6) 重要修正: `--continue` が不正ツール呼び出しのリトライ切れ後に会話を失う（2.1.314 リグレッション）、macOS で大量 Bash 実行中のストール/メモリ増、メッセージ送信直後のキー入力が権限プロンプトに回答、idle compaction が非サマリ返信で会話置換、workflows が usage limit 後の resume で完了エージェント再実行、`NODE_EXTRA_CA_CERTS` 破損時の全接続失敗**。ドキュメント側の改訂: **(a) hooks（大幅差分を反映）** — FileChanged 入力は `event`（`change`/`add`/`unlink`）、CwdChanged は `old_cwd`/`new_cwd`、WorktreeCreate 入力は `name` のみ、PreCompact はブロック可、HTTP フックの 2xx テキストボディは非ブロッキングエラー、`suppressOutput` は効果なし、Setup フックの `CLAUDE_ENV_FILE`（v2.1.318 でクラウドセッションのバグ修正）、auto モード下の `updatedInput` 挙動、matcher の3分類ルール＋プラグイン同梱 MCP のスコープ付きツール名 `mcp__plugin_<plugin>_<server>__<tool>`、terminalSequence の allowlist、`team_name` 非推奨化・`agent_id` 追加等、**(b) agent-teams / sub-agents** — チーム config（`session-`+セッションID先頭8文字、手編集不可）とメールボックス `inboxes/*.json` の検証仕様、`-p`/SDK ではチームメイト不可（通常サブエージェント化）、計画自動承認は「スポーン後に権限モード未変更」の場合のみ（実行中に plan へ切替時はリードがレビュー）、チームメイト定義に `disallowedTools`/`effort`/`autoCompactWindow`、split-pane への `--disallowedTools`/`--tools` 伝播（v2.1.309+）等、**(c) configuration 系** — `FORCE_HYPERLINK` の挙動反転（v2.1.314 以前は `false`/`no`/`off` が有効化だった）、memory のサイズ上限と警告（4 MiB 超スキップ・オンデマンド読み込みファイルの文字数上限 v2.1.309+）、`deniedMcpServers` の詳細（managed-mcp.json / コネクタも対象、allowlist より優先）、`CLAUDE_CODE_SUBAGENT_EFFORT`（セッション effort の継承は同一モデル実行時のみ）、**(d) commands** — `/code-review ultra` が推奨呼称に（`/ultrareview` はエイリアス。Pro/Max/Ultra は 3 回無料後 usage credits）、`/clear [name]`（直前会話にラベル付与）、`/simplify [target]`、`/commit-push-pr` は2日連続で収載なし＝削除と判断、**(e) best-practices** — `/context all`、`/batch` の計画承認→PR フロー、クラウドスケジュールの GitHub イベント / API トリガー追補。v2.1.318 の auth 期限表示・`CLAUDE_CODE_DISABLE_NESTED_SESSION_ID`、v2.1.316 の 3 env 変数（`DISABLE_ULTRATHINK` 等)は依然 docs 未収載＝changelog 先行。Codex CLI は新バージョンなし（0.166.0 のまま、プレリリースは 0.168.0-alpha.1〔2026-11-04〕まで進行。公式 changelog ページの実質変更なし）。前回2026-11-04の巡回要約は下記参照。）
+
+前回: 2026-11-04（**v2.1.317**（2026-11-03）を反映。ハーネス観点の目玉は **(1) Agent SDK フックコールバックに `onFailure: "block"`**（失敗したコールバックがアクションを素通しせずブロック＝command / HTTP フック〔v2.1.295〕と同等の fail-closed 化が SDK でも可能に）、**(2) アカウントメール送信前の確認**（web / シェルツール呼び出しがアカウントのメールアドレスをネットワークへ送る前に確認を挟むチェックを追加）、**(3) `CLAUDE_CODE_DISABLE_NESTED_SESSION_ID`**（self-hosted runner 上でセッション内から起動した `claude -p` に親セッションの ID / トランスクリプトを共有させる旧挙動へ戻す。既定は分離＝「`claude -p` が親トランスクリプトへ書き込み・誤 resume」の修正とセット）、**(4) SendMessage の改善**（実行中バックグラウンドエージェントへのメッセージは実行中コマンドを停止せずバックグラウンド化して早く届く）＋**メインと異なるモデルのサブエージェント / チームメイトはそのモデルの保存済み effort（または既定）を使う**（従来はセッションの effort を継承）、**(5) OTel に `anthropic.plan` / `seat_type` / `provider` / `custom_base_url` 属性追加**＋gateway 管理 API にコスト レポート `GET /v1/organizations/analytics/cost`（期間指定で総額・開発者別・日別・IdP グループ別）、**(6) 重要修正: Claude Desktop の一部セッションで project / local MCP サーバーが初ターン後に切断、gateway ベース URL の server-side 安全チェックが 403/422 を返すと auto モードが毎ターン失敗、巨大 CLAUDE.md 変更後の自動 compaction 直後に "Prompt is too long"、compaction がリクエスト短縮時に過去サマリを喪失、Grep / Glob のタイムアウト時に部分結果を完全結果として扱う、Ctrl+C（プロンプトの入力クリア）で全バックグラウンドエージェント停止、`DISABLE_PROMPT_CACHING_OPUS` / `_SONNET` が `[1m]` 等の別表記モデルに無効、`--from-pr` が大量セッションのプロジェクトで "No conversations found"**。ドキュメント側の改訂: **(a) mcp** — OAuth 401 時の再接続が二分化（refresh token ありはリフレッシュ＋1回リトライ / なしはトークンなしで接続し応答すればサインアウト状態でツール継続＋拒否トークン削除）、クラウドセッションの elicitation カード（Form / URL モード・Decline）収載、**(b) interactive-mode** — `/btw` がサブエージェントのトランスクリプトを開いていればそこから回答（v2.1.314+。チームメイトのトランスクリプトはメイン会話から回答）、usage limit 自動継続は 3 回連続で停止し `/rate-limit-options` へ誘導、**(c) settings / managed-settings** — `useAutoModeDuringPlan` は user / local / `--settings` のいずれかの `false` でオフ（`--setting-sources` で除外したファイルは効かない）、`blockReadsOutsideWorkingDirectories` のセッション途中削除はブロック継続（解除は全設定ファイルから削除＋各セッション再起動）、**(d) sandboxing / settings-reference** — `sandbox.network.allowMachLookup` の挙動詳細（列挙したサービスへはサンドボックス外到達可・サービスの動作は無制限。値は末尾 `*` プレフィックス / `"*"` 全許可）、**(e) memory** — rules の `paths` glob 意味論を明確化（パターンはベースディレクトリ基準でどこでもマッチ、`/*.md` のように先頭 `/` でルート直下限定）（specs/claude/configuration.md・mcp.md・skills-and-commands.md に反映）。Codex CLI は新バージョンなし（0.166.0 のまま、プレリリースは 0.167.0-alpha.4〔2026-11-03〕まで進行）。前回2026-11-03の巡回要約は下記参照。）
 
 前回: 2026-11-03（**新リリースなし。v2.1.316 のまま**（公式 changelog ページも前回から変更なし）。一方で**ドキュメント側の改訂が大規模**: **(1) settings / settings-reference** — `permissions.blockWritesOutsideWorkingDirectories` が settings-reference に正式収載（スコープ・例外・fail-closed 挙動の詳細付き。従来は changelog 先行）、新キー `worktree.location`（Desktop SSH セッションのリモート worktree 配置先）、`crossSessionInbound` / `remoteControlAtStartup` の設定解決順の明文化、`/config key=value` ショートハンド・壊れた設定ファイルの `~/.claude/backups/` 自動バックアップ復旧・クラウドセッションが読む設定の整理（specs/claude/configuration.md に反映）、**(2) tools-reference** — 権限ルール specifier 形式の体系化（`Bash(...)` は Monitor にも適用、`Read(...)` は LSP にも適用、`Edit(...)` allow は同パス Read も付与）、Edit の「読了後にディスク変更されたファイルも一意マッチなら編集可」等（specs/claude/tools.md に反映）、**(3) commands** — `/import` に Cursor 追加（v2.1.265+）、**Claude Design スタンドアロンサイト閉鎖予告（2026-12-14）**、`/review` が `/code-review` の完全エイリアスである旨の明記、`/commit-push-pr` が公式リファレンスから消失（削除か整理か不明。次回巡回で要確認）（specs/claude/skills-and-commands.md に反映）、**(4) best-practices の再全面改訂** — 「デフォルトで十分、設定するのは Claude に見えないものだけ」枠組み・決定論的 vs 非決定論的指示の対比・検証の4段階ラダー・無人実行前の5つの質問等（specs/claude/best-practices.md に反映）。Codex CLI は新バージョンなし（0.166.0 のまま、プレリリースは 0.167.0-alpha.3 まで進行）。前回2026-11-01の巡回要約は下記参照。）
 
@@ -23,6 +25,50 @@
 
 
 ---
+
+## v2.1.318 (2026-11-04)
+
+**サブエージェント実行の安定化（flagged 時は停止・シェルコマンド3分でバックグラウンド化）・mod `$.model.fork` に `effort`・`deniedMcpServers` の URL ブロック拡大・認証期限の可視化・共有ネットワークホームの堅牢化**
+
+### 新機能
+
+- **mod の `$.model.fork` に `effort` オプション**: セッションの effort に関わらず軽い副作業を `low` 等で実行可能（結果に送信 effort を報告）
+- **`claude auth status` に `loginExpiresAt`**: 保存済み claude.ai サインインの期限日を表示。`claude -p` の JSON 結果にも `credential_expires_at` を追加、テキスト出力には期限10日前から stderr に1行警告
+- セッション内で Claude Code が書いた mod の有効化を尋ねた際の回答を記録
+- gateway: `mantle` upstream に `assume_role`（別 AWS アカウントのロール利用・開発者別 AWS コスト配賦）、federation（`external_account`）クレデンシャルの Google アクセストークン期限切れ間近のログ警告
+- self-hosted runner: orchestrator の spawn-runner フック環境に `CLAUDE_RUNNER_SPAWN_REASON`（Anthropic がリクエストを送った理由。例 `runner_lost` / `resumed`）
+- [Cloud sessions] リポジトリなしでクラウドセッションを開始できる「No repository」オプション、内蔵 Chromium を `google-chrome` / `CHROME_PATH` で発見可能に（Playwright 以外のツールでも利用可）
+
+### 変更
+
+- **サブエージェントは「Switch models when a message is flagged」が「Ask each time」のときモデル切替でなく停止**
+- **バックグラウンドサブエージェントは全プロバイダでシェルコマンドを3分後にバックグラウンドへ移動**（実行中のプロンプトキャッシュ失効を防止）。Bedrock / Vertex / Foundry・テレメトリオフ時のサブエージェント進捗サマリは、コールドキャッシュ時に保留レスポンスを最大5分待機
+- **`deniedMcpServers` の URL エントリが upstream URL の一致する Anthropic 提供サーバーもブロック**。クラウドセッション / self-hosted runner のコネクタ（セッションにコネクタ自身の URL が渡る場合）も対象。それ以外のコネクタは名前で deny
+- mod が `prompt.submit` でアタッチする内容は system メッセージでなくユーザーターン内に留まる
+- IDE ターミナル内で起動した Claude Code は IDE 拡張のインストール / 更新をしない（外側のターミナルで `/ide` か、エディタの拡張ビューを使用）
+- `/permissions` のルール詳細・組み込みルール・削除確認ビューを標準ダイアログ化（Ctrl+C 二度押しは終了でなく戻る / キャンセル）
+- `/claude-api managed-agents-onboard` は新規エージェントの組み込みツール・クイックスタートテンプレートの MCP ツールに既定で `auto` 権限ポリシーを付与（Console と同じ。「run without asking」でオプトアウト）
+- 2.1.288 の「2.1.286 以前に開始した会話の resume 時に以前の thinking を保持する」修正を削除（thinking は破棄され得る）
+
+### 改善（抜粋）
+
+- **共有ネットワークホームディレクトリの堅牢化**: `~/.claude.json`・settings・保存済みログインが保存時に削除・空化・古いコピーで置換されにくく。設定ファイルが誤って「存在しない」と報告された際の再確認も追加
+- 未ロードの MCP ツールを呼んだ際に入力スキーマを返す
+- macOS 内蔵 `/bin/bash` 使用時の git commit / PR 作成の信頼性向上
+- 無人実行（`claude -p` / SDK）が変更のない `~/.claude.json` を毎回書き換えない
+
+### 重要修正
+
+- `--continue` が不正なツール呼び出しのリトライ切れ後に以前の会話を失うことがある問題（2.1.314 リグレッション）
+- macOS で多数の Bash コマンド実行中にセッションがストールしメモリが増加する問題
+- メッセージ送信直後・遅い権限プロンプト表示前のキー入力が権限プロンプトに回答してしまう問題
+- 共有ネットワークホームで設定ファイル更新に失敗しても `/logout` / `claude auth logout` / `claude mcp remove` が成功と報告、trust / consent / MCP 設定の変更が無言で消失する問題
+- idle compaction がサマリでない返信で会話を置換する問題
+- `NODE_EXTRA_CA_CERTS` ファイルが空・非 PEM・先頭破損のとき全接続が失敗する問題（読める証明書を使用し stderr に警告）
+- workflows が usage limit 後の resume で完了済みエージェントを再実行する問題
+- 非対話起動が JSON として不正な `~/.claude.json` をデフォルトで置換する問題（起動を失敗させ復元方法を提示、ファイルは保持。anthropics/claude-code#87551）
+- バージョンクリーンアップが別ユーザー所有の実行中プロセス（`sudo claude` の残り等）を死んだものと扱いバイナリを削除し得る問題、更新後に remote-control ホスト / デーモン / self-hosted runner が新セッションを起動できない（`spawn ENOENT`）問題
+- self-hosted runner / クラウドセッション再起動後に承認されたシェルコマンドが依頼されたフォルダでなくセッション開始フォルダで実行される問題
 
 ## v2.1.317 (2026-11-03)
 

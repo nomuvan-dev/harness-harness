@@ -1,6 +1,6 @@
 # Claude Code Skills & コマンド仕様書
 
-最終更新: 2026-11-03（巡回更新）
+最終更新: 2026-11-05（巡回更新）
 
 公式ドキュメント: https://code.claude.com/docs/en/skills / https://code.claude.com/docs/en/commands / https://code.claude.com/docs/en/sub-agents / https://code.claude.com/docs/en/scheduled-tasks / https://code.claude.com/docs/en/web-scheduled-tasks / https://code.claude.com/docs/en/plugins/install（2026-09-25 のドキュメント再編で discover-plugins から移動。プラグイン関連は https://code.claude.com/docs/en/plugins/overview 以下の約20ページ構成に分割された）
 
@@ -230,17 +230,17 @@ Claude Code に同梱されるスキル:
 | `/artifact-diagramming` | artifact 内のダイアグラム作成ガイダンス読み込み（ライト / ダーク両対応のインライン SVG 等） |
 | `/claude-in-chrome [task]` | Claude in Chrome でブラウザタスクを実行（ページテスト・フォーム入力・コンソールログ読み取り等）。Chrome 拡張接続時に利用可 |
 | `/debug [description]` | セッションデバッグログの解析 |
-| `/loop [interval] <prompt>` (`/proactive`) | プロンプトを定期的に繰り返し実行（v2.1.105 で `/proactive` エイリアス追加） |
-| `/code-review [effort] [--fix]` | 変更ファイルのコード品質レビューと修正（3エージェント並列）。`/code-review high` のように effort level を指定可能。v2.1.147 で `/simplify` からリネーム。v2.1.152 で `--fix` フラグ追加（レビュー結果をワーキングツリーに直接適用）。v2.1.215 で Claude による自動起動が廃止され、ユーザーの明示的な呼び出しのみに。**GitHub PR に加えて GitLab のマージリクエストにも投稿可能（v2.1.257 以降）**。`--post` で投稿を事前選択（`--post` は v2.1.227 以降）。**v2.1.288 で `--max-findings <n>|all` 追加**（通常上限より多く / 少なく指摘を報告。選択は `--max-findings default` を渡すまで再利用。エイリアス `/review` も同フラグ対応） |
+| `/loop [interval] [prompt]` (`/proactive`) | プロンプトを定期的に繰り返し実行（v2.1.105 で `/proactive` エイリアス追加）。interval 省略で Claude がイテレーション間隔を自己調整、**prompt も省略すると組み込みのメンテナンスプロンプト（または自作の `loop.md`）を実行**（2026-11-05 commands リファレンスで確認） |
+| `/code-review [low〜max\|ultra] [--fix] [--comment] [--max-findings n\|all\|default] [pr#\|branch\|path]` | 現在の diff、または指定した PR 番号 / ブランチ / パスを正確性バグ中心にレビュー。`/code-review high` のように effort level を指定可能。**`--comment` で GitHub PR / GitLab MR に指摘をコメント投稿**、**`ultra` レベルでクラウドの深層レビュー（ultrareview）を起動**（2026-11-05 commands リファレンスで確認。`/code-review ultra` が推奨呼び出しで `/ultrareview` はそのエイリアス扱いに）。v2.1.147 で `/simplify` からリネーム。v2.1.152 で `--fix` フラグ追加（レビュー結果をワーキングツリーに直接適用）。v2.1.215 で Claude による自動起動が廃止され、ユーザーの明示的な呼び出しのみに。**GitHub PR に加えて GitLab のマージリクエストにも投稿可能（v2.1.257 以降）**。`--post` で投稿を事前選択（`--post` は v2.1.227 以降）。**v2.1.288 で `--max-findings <n>|all` 追加**（通常上限より多く / 少なく指摘を報告。選択は `--max-findings default` を渡すまで再利用。エイリアス `/review` も同フラグ対応） |
 | `/verify` | コード変更が実際に意図通り動くかをエンドツーエンドで検証（テストや型チェックだけでなく対象フローを実際に動かす）。v2.1.215 で Claude による自動起動が廃止され、ユーザーの明示的な呼び出しのみに |
-| `/simplify` | v2.1.152 で `/code-review --fix` のエイリアスとして復活。v2.1.154 でクリーンアップ専用レビュー（reuse / simplification / efficiency / altitude）に変更され、`/code-review --fix` のバグハンティングは行わなくなった |
+| `/simplify [target]` | v2.1.152 で `/code-review --fix` のエイリアスとして復活。v2.1.154 でクリーンアップ専用レビュー（reuse / simplification / efficiency / altitude の**4エージェント並列**）に変更され、`/code-review --fix` のバグハンティングは行わなくなった。パスまたは PR 参照を渡して対象を指定可能（2026-11-05 commands リファレンスで確認） |
 | `/workflows` | Dynamic workflows の実行状況表示（v2.1.154）。Claude にワークフロー作成を依頼するとバックグラウンドで数十〜数百のエージェントを跨いだ作業をオーケストレーション。v2.1.160 でトリガーキーワードが `workflow` → `ultracode` にリネーム |
 | `/workflow-authoring` | 動的ワークフロースクリプト作成のリファレンスをロード（スクリプト API・再開挙動・品質パターン・実例）。通常は Claude がスクリプトを書く前に自動ロードするので、手で呼ぶのは保存済みスクリプトを手編集する前など。**動的ワークフローが有効な場合のみ利用可、要 v2.1.248 以降** |
 | `/less-permission-prompts` | 読み取り専用 bash/MCP 呼び出しを検出し許可リスト追加を提案（v2.1.111） |
 | `/team-onboarding` | 新メンバー向けのプロジェクトオンボーディング資料生成（v2.1.101） |
 | `/build-eval` | Claude を使ったアプリ向けの eval セットを構築する（**v2.1.259 以降**） |
 | `/hillclimb` | 既存の eval に対してアプリを反復的に改善する（**v2.1.259 以降**） |
-| `/ultrareview` | クラウドベースの包括的コードレビュー。並列チェック・diffstat 表示（v2.1.111、v2.1.113 で改善）。CLI でも `claude ultrareview [target]` 非インタラクティブサブコマンドで CI/スクリプトから実行可能（`--json` 対応、終了コード 0/1、v2.1.120）。`--timeout <分>` で既定値を上書きできる。**既定タイムアウトは 45 分**（公式ドキュメント上、従来記載の 30 分から改訂）。`github.com` の PR をターゲットにした場合は `--post` で結果を PR に単一のプレーンコメントとして自分の GitHub アカウントから投稿できる（既定は `--no-post`。`--post` / `--no-post` は v2.1.227 以降） |
+| `/ultrareview [PR\|branch]` | クラウドベースの包括的コードレビュー。**2026-11-05 commands リファレンスで「推奨呼び出しは `/code-review ultra`、`/ultrareview` はエイリアス」と位置づけが変更**。Pro / Max / Ultra では 3 回まで無料、以降は usage credits が必要。並列チェック・diffstat 表示（v2.1.111、v2.1.113 で改善）。CLI でも `claude ultrareview [target]` 非インタラクティブサブコマンドで CI/スクリプトから実行可能（`--json` 対応、終了コード 0/1、v2.1.120）。`--timeout <分>` で既定値を上書きできる。**既定タイムアウトは 45 分**（公式ドキュメント上、従来記載の 30 分から改訂）。`github.com` の PR をターゲットにした場合は `--post` で結果を PR に単一のプレーンコメントとして自分の GitHub アカウントから投稿できる（既定は `--no-post`。`--post` / `--no-post` は v2.1.227 以降） |
 
 ---
 
@@ -285,13 +285,13 @@ Claude Code に同梱されるスキル:
 
 | コマンド | 説明 |
 |:--|:--|
-| `/clear` (`/reset`, `/new`) | 会話履歴クリア |
+| `/clear [name]` (`/reset`, `/new`) | 会話履歴クリア。**名前を渡すと直前の会話に `/resume` ピッカー用のラベルを付けられる**（2026-11-05 commands リファレンスで確認）。同一プロセス内なら rewind メニューの previous-session エントリからも復元可 |
 | `/compact [instructions]` | 会話コンパクション |
 | `/resume [session]` (`/continue`) | セッション再開。**v2.1.285 以降、実行中のバックグラウンドセッションもピッカー / ID / 名前で resume 可能**: 現在の会話がバックグラウンドへ移り、この端末が実行中セッションにアタッチされる（空プロンプトで `←` を押すと agent view に戻る）。それ以前は実行中セッションの resume は拒否され `claude attach` を案内していた |
 | `/rename [name]` | セッション名変更（名前なしで会話履歴から自動生成。`-p` 非対話モードでも利用可）。claude.ai / デスクトップアプリ含む全リネーム経路で制御文字・不可視文字をスペースに置換し 200 文字で打ち切る。不可視文字除去後に空になる名前は拒否（置換・上限は v2.1.221 以降） |
 | `/rewind` (`/checkpoint`, `/undo`) | 会話/コードを前の状態に巻き戻し（v2.1.108 で `/undo` エイリアス追加。v2.1.191 で `/clear` 実行前からの会話再開に対応） |
 | `/cd <path>` | 会話を保ったままセッションのワーキングディレクトリを移動（v2.1.169）。v2.1.206 でパス補完対応。**v2.1.246 以降、移動と同時に移動先ディレクトリの project / local 設定、プロジェクトスキル、そのディレクトリの設定が有効化するプラグインの MCP サーバーを読み込む**（`/reload-plugins` 不要）。ファイルアクセス権だけを足したい場合は `/add-dir` を使う。`Cd` 権限ルールで移動先を制限・禁止できる |
-| `/branch [name]` (`/fork`) | 会話のブランチ作成。v2.1.212 で `/fork` は会話を新しいバックグラウンドセッション（`claude agents` に独立表示）へコピーする挙動に変更。v2.1.221 から fork セッションは元のチェックアウトを共有せず自前の worktree を作成 |
+| `/branch [name]` (`/fork [prompt]`) | 会話のブランチ作成。v2.1.212 で `/fork` は会話を新しいバックグラウンドセッション（`claude agents` に独立表示）へコピーする挙動に変更。v2.1.221 から fork セッションは元のチェックアウトを共有せず自前の worktree を作成。`/fork` にプロンプトを渡すとコピーが即座に作業開始（なしなら agent view で初回プロンプト待ち）。**agent view を無効化している場合は `/fork` が forked サブエージェント（旧 `/subtask` 相当）を起動し、`/subtask` は利用不可になる**（2026-11-05 commands リファレンスで確認） |
 | `/subtask` | 会話をコピーしたセッション内サブエージェントを起動（v2.1.212 で旧 `/fork` の挙動から改名） |
 | `/export [filename]` | 会話をテキストエクスポート |
 | `/exit` (`/quit`) | CLI終了 |
@@ -320,7 +320,7 @@ Claude Code に同梱されるスキル:
 | `/stats` | `/usage` の日次使用量・セッション履歴タブを開くショートカット |
 | `/insights` | セッション分析レポート（プロジェクト領域、操作パターン、摩擦点） |
 | `/usage-credits` | 追加使用量情報（v2.1.113 で Remote Control クライアントからも利用可能に。v2.1.144 で `/extra-usage` から改名、旧名もエイリアスとして残存。v2.1.161 で Team / Enterprise admin に再ログインを開始する代わりに組織 usage settings ページへ案内するよう修正。v2.1.236 で `/usage` が Team / Enterprise メンバーにも usage-credits の消費行を表示するようになり、未消費時は 0% の行を表示）。billing 権限のない Team / Enterprise メンバーは、ブラウザで課金設定を開く代わりに CLI から admin へ usage-credits リクエストを送信する（admin に通知される旨をダイアログで確認後）。SSH 等でブラウザを開けない場合は URL をテキスト表示（v2.1.205 以降。それ以前は何も表示されなかった） |
-| `/tui` | フリッカーフリー・フルスクリーン描画の切り替え（v2.1.110） |
+| `/tui [default\|fullscreen]` | 端末 UI レンダラーを設定し会話を保ったまま再起動（v2.1.110。`fullscreen` でフリッカーフリーの alt-screen レンダラー）。引数なしで現在のレンダラーを表示（2026-11-05 commands リファレンスで確認） |
 | `/focus` | フォーカスビュー切替（v2.1.110。brief・focus モードは v2.1.101 で改善）。直近プロンプト＋ツール呼び出し1行サマリ（編集 diffstat・ターン内に起動したサブエージェント数・完了済みバックグラウンドタスク通知の集約カウント）＋最終応答のみ表示。選択はセッションをまたいで保持され、settings の `viewMode` で上書き可。フルスクリーン描画時のみ利用可。**Remote Control クライアントからは `/focus [on\|off]` で保存済み選択を変えずに現セッションのみ切替（v2.1.281 以降）**。VS Code 拡張は `viewMode` と独立した拡張設定の Focus ビューを持つ |
 
 ### 2.3 開発ワークフロー
@@ -329,15 +329,15 @@ Claude Code に同梱されるスキル:
 |:--|:--|
 | `/init` | CLAUDE.md の自動生成。`CLAUDE_CODE_NEW_INIT=1` でスキル・フック・個人メモリファイルも案内するインタラクティブフローに切替。OpenAI Codex / Google Gemini CLI の設定を検出した場合は `/import` での取り込みを提案する |
 | `/diff` | ワーキングツリーの変更（Claude の編集を含む）をレビューする。フルスクリーンレンダリング時は会話の横に **diff パネル**を開き、Claude の編集に追随して更新され続ける（`/diff` 再実行かヘッダの `✕` で閉じる）。要件はフルスクリーン・git リポジトリ・端末幅 110 桁以上・**v2.1.287 以降**（v2.1.260 で導入後、公式ドキュメントが要件バージョンを v2.1.287 に引き上げ）で、満たさない場合は従来の diff ビューア（プロンプト位置に開き Esc で閉じる）にフォールバックする。端末幅 144 桁以上なら Claude がファイル編集を始めた時点で自動的に開く。パネルでは行をマウス選択して次のプロンプトに添付でき、`Ctrl+X B`（`app:cycleDiffBase`）で比較基準を「今セッションの変更 → 未コミット全体 → 既定ブランチからの分岐点以降」と巡回する（プロジェクトごとに記憶）。テスト・生成ファイルと当セッション以前の変更は折りたたまれる |
-| `/plan` | プランモード開始 |
+| `/plan [description]` | プランモード開始。説明を渡すとそのタスクで即座に開始（例: `/plan fix the auth bug`。2026-11-05 commands リファレンスで確認） |
 | `/powerup` | Claude Code機能のインタラクティブレッスン＋アニメーションデモ |
 | `/security-review` | セキュリティ脆弱性分析 |
 | `/review [effort] [flags] [target]` | **v2.1.223 以降は `/code-review` のエイリアス**（同じ effort レベル・フラグ・ターゲットを受け付け、レベル省略時は最後にタイプした low〜max レベルを再利用）。それ以前は独立コマンドで、GitHub PR の単一パス読み取り専用レビュー（引数なしでオープン PR 一覧から選択。v2.1.186〜v2.1.201 は `/code-review medium` と同じマルチエージェントエンジン） |
 | `/dataviz` | チャート・ダッシュボード設計ガイダンススキル（カラーパレットバリデータ付き）（v2.1.198） |
-| `/commit-push-pr` | **2026-11-03 時点の公式 commands リファレンスには収載されていない**（一覧から削除済み。削除済みコマンド表にも履歴記載なし）。commit→push→PR作成。v2.1.206 でリポジトリの push remote（`remote.pushDefault` または唯一のremote）への `git push` を自動許可。v2.1.229 で `--force`/`--amend`/`--no-verify` 等の危険フラグを含む git/gh コマンドは自動承認しないよう変更 |
+| `/commit-push-pr` | **2026-11-05 巡回で再確認: 公式 commands リファレンスに引き続き収載なし**（2026-11-03 に一覧から消失、削除済みコマンド表＝`/pr-comments` / `/vim` / `/ultraplan` にも履歴記載なし。2日連続の不在のため整理ミスではなく削除とみなす）。commit→push→PR作成。v2.1.206 でリポジトリの push remote（`remote.pushDefault` または唯一のremote）への `git push` を自動許可。v2.1.229 で `--force`/`--amend`/`--no-verify` 等の危険フラグを含む git/gh コマンドは自動承認しないよう変更 |
 | `/release-notes` | インタラクティブバージョンピッカー付き変更ログ表示 |
 | `/sandbox` | サンドボックスモード切替 |
-| `/schedule [description]` | クラウドスケジュールタスクの作成・管理 |
+| `/schedule [description]` | クラウドスケジュールタスク（旧称 routines）の作成・更新・一覧・実行。直近の実行履歴も対話で確認可。エイリアス `/routines`（2026-11-05 commands リファレンスで確認） |
 | `/autofix-pr [prompt]` | 現在のブランチのPRを監視するクラウドセッション（Claude Code on the web）を起動し、CI失敗・レビューコメントに自動で修正pushする Auto-fix を有効化。`gh pr view` でPRを検出。プロンプトで対応方針を指定可（例: `/autofix-pr only fix lint and type errors`）。`gh` CLI とweb版アクセスが必要 |
 
 ### 2.4 環境・インテグレーション
@@ -362,7 +362,7 @@ Claude Code に同梱されるスキル:
 | `/remote-env` | クラウドセッションのデフォルト環境をピッカーで選択（ユーザー設定 `remote.defaultEnvironmentId` に保存） |
 | `/ide` | IDE連携管理 |
 | `/chrome` | Chrome設定。v2.1.154 で "Select browser…" を選択することで複数接続済みブラウザから使用ブラウザを指定可能（チャット内でも実行時に選択可） |
-| `/voice` | 音声入力トグル |
+| `/voice [hold\|tap\|off]` | 音声入力トグル。モード（ホールド / タップ）指定での有効化も可。要 claude.ai アカウント（2026-11-05 commands リファレンスで確認） |
 | `/color` | プロンプトバー色変更 |
 | `/copy [N]` | レスポンスのコピー（インタラクティブピッカー。Nで直接指定。`w`キーでファイル書き出し） |
 | `/login` / `/logout` | 認証 |
@@ -377,7 +377,7 @@ MCPサーバーが公開するプロンプトは `/mcp__<server>__<prompt>` 形�
 
 | コマンド | 説明 |
 |:--|:--|
-| `/goal [condition\|clear]` | ゴールを設定し、条件を満たす（または別の理由でクリアされる）までターンをまたいで作業を継続。引数なしで現在のゴールを表示。`CLAUDE_CODE_GOAL_CHECKIN_MINUTES` で停滞時の自動チェックイン間隔を制御 |
+| `/goal [condition\|clear]` | ゴールを設定し、条件を満たす（または別の理由でクリアされる）までターンをまたいで作業を継続。引数なしで現在（または直近に達成した）ゴールを表示。クリアは `clear` のほか `stop` / `off` / `reset` / `none` / `cancel` も受理（2026-11-05 commands リファレンスで確認）。`CLAUDE_CODE_GOAL_CHECKIN_MINUTES` で停滞時の自動チェックイン間隔を制御 |
 
 **`/goal` がクリアされる条件**: ①条件達成、②評価モデルが「条件は達成不能」と判断（トランスクリプトに理由付きで failed 記録）、③**ユーザーが直さない限り解消しないエラーでターンが失敗**、④`/goal clear`。③は `Goal cleared after an unrecoverable error` で始まり `Run /goal again to continue` で終わる警告を表示し、以下の4種のみが該当する:
 
@@ -397,7 +397,7 @@ MCPサーバーが公開するプロンプトは `/mcp__<server>__<prompt>` 形�
 
 いずれの状態でもユーザーがメッセージを送れば即座に次のターンが開始される。`CLAUDE_CODE_GOAL_CHECKIN_MINUTES=0` はチェックインに加えて**自動リトライも無効化**する。
 | `/recap` | 現在のセッションの1行サマリをオンデマンド生成（離席後に自動表示されるリキャップの手動版）。v2.1.236 で 400 文字・語境界で打ち切り |
-| `/background [prompt]` | 現在のセッションをバックグラウンドエージェントとしてデタッチし端末を解放。プロンプトを渡すとデタッチ前に最後の指示を送る |
+| `/background [prompt]` | 現在のセッションをバックグラウンドエージェントとしてデタッチし端末を解放。プロンプトを渡すとデタッチ前に最後の指示を送る。エイリアス `/bg`（2026-11-05 commands リファレンスで確認） |
 | `/stop` | バックグラウンドセッションを停止（アタッチ中のみ表示）。トランスクリプトと worktree は保持。停止せずデタッチするには `/exit` |
 | `/artifacts` | 自分が所有する、または共有された Artifact 一覧を表示し、セッションへの添付・ブラウザで開く・リンクのコピーを行う。Artifact が利用可能な環境でのみ使用可（v2.1.208 以降。`Enter` での添付は v2.1.216 以降） |
 | `/auto-mode-setup` | プロジェクトと直近セッションから `autoMode.environment` エントリのドラフトを生成し、レビューしてユーザー設定へ保存する。Pro / Max / Ultra / Team プランかつ v2.1.228 以降（ネイティブ Windows は v2.1.233 以降）。**Enterprise プランまたは Claude Console API キーでは v2.1.283 以降**（2026-11 commands リファレンス改訂で収載） |
@@ -406,7 +406,7 @@ MCPサーバーが公開するプロンプトは `/mcp__<server>__<prompt>` 形�
 | `/deep-research <question>` | **バンドルワークフロー**。Web 検索を fan-out し、ソースを取得・相互検証して引用付きレポートを合成 |
 | `/run` | **バンドルスキル**。テストだけでなく実アプリを起動・操作して変更の動作を確認 |
 | `/run-skill-generator` | **バンドルスキル**。プロジェクト固有のビルド / 起動 / 操作手順をスキルとして生成し、`/run` と `/verify` に教える |
-| `/design [brief]` | **バンドルスキル**（リサーチプレビュー、v2.1.234 以降）。Claude Design のアートボードワークフローを CLI / Claude Code Desktop に持ち込み、Artifacts 基盤で編集可能なアートボードのキャンバスを公開する。ブリーフを渡すと UI 案を複数生成し、ユーザーが選んだ案を Claude に実装させる流れ。Pro / Max / Team / Enterprise、かつ [Artifacts が利用可能なセッション](https://code.claude.com/docs/en/artifacts#availability)で利用可。アカウントで保存が有効ならキャンバス上でアートボードを編集して新バージョンを公開でき、無効ならドラフトの閲覧と PNG / PDF エクスポートのみ。2026-09-01 巡回で公式 commands リファレンスに収載されたことを確認。2026-09-30 の commands リファレンス改訂で「Design artifact」の呼称が「**Claude Design** artifact」に変更。**2026-11 commands リファレンス改訂で要件が「v2.1.265 以降＋[Design テンプレートが利用可能なアカウント](https://code.claude.com/docs/en/artifacts#start-from-a-slides-design-or-docs-template)」に変更**: 組織が Design テンプレートをオフにしていると `/design` はデザインを作らない。Artifacts が無い Bedrock / Vertex / Foundry / AWS 上の Claude Platform では利用不可 |
+| `/design [brief]` | **バンドルスキル**（リサーチプレビュー、v2.1.234 以降）。Claude Design のアートボードワークフローを CLI / Claude Code Desktop に持ち込み、Artifacts 基盤で編集可能なアートボードのキャンバスを公開する。ブリーフを渡すと UI 案を複数生成し、ユーザーが選んだ案を Claude に実装させる流れ。Pro / Max / Team / Enterprise、かつ [Artifacts が利用可能なセッション](https://code.claude.com/docs/en/artifacts#availability)で利用可。アカウントで保存が有効ならキャンバス上でアートボードを編集して新バージョンを公開でき、無効ならドラフトの閲覧と PNG / PDF エクスポートのみ。2026-09-01 巡回で公式 commands リファレンスに収載されたことを確認。2026-09-30 の commands リファレンス改訂で「Design artifact」の呼称が「**Claude Design** artifact」に変更。**2026-11 commands リファレンス改訂で要件が「v2.1.265 以降＋[Design テンプレートが利用可能なアカウント](https://code.claude.com/docs/en/artifacts#start-from-a-slides-design-or-docs-template)」に変更**: 組織が Design テンプレートをオフにしていると `/design` はデザインを作らない。Artifacts が無い Bedrock / Vertex / Foundry / AWS 上の Claude Platform では利用不可。**サブコマンド `/design consent` / `/design revoke`**: Claude Design へのアクセスを許可 / 取り消す。Claude の応答が `/design consent` の実行を求めてきたら自分でタイプする（2026-11-05 commands リファレンスで確認） |
 | `/slides [brief]` | **バンドルスキル**。ブリーフから新規プレゼンテーションを **Claude Slides** [artifact](https://code.claude.com/docs/en/artifacts#make-a-slide-deck) として作成する（例: `/slides a quarterly review of the platform team`）。要 v2.1.265 以降＋Artifacts が利用可能なセッション＋Slides テンプレートが利用可能なアカウント。2026-09-30 巡回で公式 commands リファレンスへの収載を確認 |
 | `/design-sync [hint]` | **バンドルスキル**。リポジトリの React デザインシステムを変換して Claude Design にアップロードし、生成デザインに実コンポーネントを使わせる。claude.ai への接続が必要なため Bedrock / Vertex / Foundry / AWS 上の Claude Platform / Claude apps gateway 経由では利用不可。**アップロード先のスタンドアロン claude.ai/design サイトは 2026-12-14 までに閉鎖予定**（2026-11 commands リファレンス改訂で明記。[移行ガイド](https://support.claude.com/en/articles/17440474-migrate-from-standalone-claude-design-to-claude)参照） |
 | `/design-login` | claude.ai アカウントで `/design-sync` のデザインシステムアクセスを認可。このサインインはスタンドアロン claude.ai/design サイト向けで、**同サイトは 2026-12-14 までに閉鎖予定** |
@@ -727,11 +727,11 @@ first-mod/
 | グループ | 主なイベント |
 |:--|:--|
 | ツール | `tool.call`（実行前に deny / 結果差し替え可）、`tool.check`（allow / ask / deny 判定の上書き。**v2.1.290+ で `e.agentId`**（サブエージェント / インプロセスのチームメイトの呼び出しで設定され、メイン会話では欠落）**と `e.ceiling`**（組織が ask に設定した connector ツールで `"ask"`）、**v2.1.304+ で `e.isReadOnly`**（ツールがその呼び出しを読み取り専用と報告した場合に `true`。それ以外は `false` ではなく欠落））、`tool.describe`（説明の書き換え・tool search 背後へのディファー指定） |
-| プロンプト | `prompt.submit`（書き換え / drop）、`prompt.fill` / `prompt.suggest` / `prompt.edit`、`prompt.compose` / `prompt.section`（システムプロンプトのセクション書き換え・削除）、`prompt.context`、`prompt.attachment`（リマインダー等の書き換え・抑止）、`skill.prompt`（スキル本文展開の書き換え。**v2.1.299+ で `e.source`**（enterprise / personal / project 配置なら `policySettings` / `userSettings` / `projectSettings`、他は `plugin` / `mcp` / `syncedSkills` / `built-in` 等）**・`e.pluginName`・`e.path`・`e.frontmatter`・`e.frontmatterProblem`**（frontmatter が欠落している理由）を提供。フックは変更した `text` / `frontmatter` を `next` に渡せるが、**それ以外のフィールドを変更するとフック自体が失敗**する）、`attribution.text`（コミット / PR 帰属テキスト）、`prompt.autocomplete`（プロンプト欄のオートコンプリート一覧に mod 独自の行を追加。v2.1.292）、**`prompt.mention`（v2.1.290+）**: プロンプトで @-mention されたファイルを Claude Code が読む直前に発火。`next({...e, path})` で別ファイルへリダイレクト、`{deny: reason}` で拒否可 |
+| プロンプト | `prompt.submit`（`next({...e, text})` で書き換え / **`next({...e, context})` で添付コンテキストを付与** / `{drop: reason}` で破棄。2026-11-05 リファレンス改訂で `context` 返却を明記。v2.1.318 changelog によれば mod が `prompt.submit` でアタッチした内容は system メッセージではなくユーザーターン内に留まる）、`prompt.fill` / `prompt.suggest` / `prompt.edit`、`prompt.compose` / `prompt.section`（システムプロンプトのセクション書き換え・削除）、`prompt.context`、`prompt.attachment`（リマインダー等の書き換え・抑止）、`skill.prompt`（スキル本文展開の書き換え。**v2.1.299+ で `e.source`**（enterprise / personal / project 配置なら `policySettings` / `userSettings` / `projectSettings`、他は `plugin` / `mcp` / `syncedSkills` / `built-in` 等）**・`e.pluginName`・`e.path`・`e.frontmatter`・`e.frontmatterProblem`**（frontmatter が欠落している理由）を提供。フックは変更した `text` / `frontmatter` を `next` に渡せるが、**それ以外のフィールドを変更するとフック自体が失敗**する）、`attribution.text`（コミット / PR 帰属テキスト）、`prompt.autocomplete`（プロンプト欄のオートコンプリート一覧に mod 独自の行を追加。v2.1.292）、**`prompt.mention`（v2.1.290+）**: プロンプトで @-mention されたファイルを Claude Code が読む直前に発火。`next({...e, path})` で別ファイルへリダイレクト、`{deny: reason}` で拒否可 |
 | コマンド・設定 | `command.run` / `command.describe`、`config.set` / `config.describe`、**`settings.read`**: mod が `$.settings.read` を呼んだ時、または Claude Code がセッションのマージ済み設定を構築する時に発火（**後者での発火と `e.layers` は v2.1.304+**）。`e.layers` は設定を持つソースごとの `{source, settings}` オブジェクト（precedence の低い順）。`e.source` は mod が単一ソースを指定して読んだ場合のみ設定される |
 | ターン | `turn.start`、`turn.step`（モデル / effort の差し替え。async generator）、`turn.complete`（回答下に1行表示可） |
 | セッション | `session.start` / `session.end` / `session.compact`（skip 可）/ `session.receive` / `session.send` / `session.append`（保存行の書き換え）/ `session.attach` / `session.detach` / `session.measure` |
-| サブエージェント | `agent.offer`（タイプの提示を抑止）、`agent.spawn`（モデル差し替え / deny。チームメイトは `e.isTeammate`。v2.1.292 からワークフローエージェントも run・index 付きで渡り拒否可能） |
+| サブエージェント | `agent.offer`（タイプの提示を抑止）、`agent.spawn`（モデル差し替え / deny。チームメイトは `e.isTeammate`。v2.1.292 からワークフローエージェントも run・index 付きで渡り拒否可能。**v2.1.299+ は完了 / 停止済みサブエージェントの再実行（`SendMessage` による resume 等）でも発火し `e.resume = {agentId}` が設定される**。resume の deny は可能（Claude には `a plugin declined the resume:` ＋理由が返る）だが `model` 等の変更は無視される。サブエージェント数をカウントする hook は `e.resume` 付きイベントをスキップすること） |
 | UI | `ui.render`（render site の描画）、`ui.resolve`、`ui.press` / `ui.input` / `ui.select`、`ui.focus` / `ui.scroll` / `ui.close`、`ui.message`、`ui.fault`（v2.1.289+） |
 | 他の mod | `plugin.register`（ロード拒否可。`e.uses` に validate と同じ hooks / calls 一覧）、`engine.create`（mods API の加工） |
 | テレメトリ | `telemetry.log` / `telemetry.mark`（インストール mod は `{ to: 'collector' }` フィルタ必須） |
