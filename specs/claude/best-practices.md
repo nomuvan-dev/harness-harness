@@ -467,7 +467,7 @@ claude -p "このログファイルを分析" --output-format stream-json
 
 スクリプトでの推奨フラグ（2026-11 追記）:
 - **`--bare`** — hooks / skills / plugins / MCP / CLAUDE.md（リポジトリ・マシン両方）をスキップし、どこで実行しても同じ挙動に。claude.ai ログインには触れず、認証は `ANTHROPIC_API_KEY`・`--settings` の `apiKeyHelper`・クラウドプロバイダ資格情報から
-- `--append-system-prompt` / `--mcp-config` / `--settings` — 実行に必要なものだけを明示的に渡す
+- `--append-system-prompt` / `--mcp-config` / `--settings` — 実行に必要なものだけを明示的に渡す。ただし **`--settings` で渡した hooks は `--bare` 下では実行されない**（hooks が必要な実行に `--bare` は使わない。2026-11-06 best-practices 改訂で明文化）
 - `--allowedTools` + `--permission-mode dontAsk` — 事前承認＋それ以外は拒否
 - `--max-turns` / `--max-budget-usd` — 暴走の上限
 - auto mode も `-p` で使用可（`--permission-mode auto`）。非対話実行では分類器ブロックはその1アクションの拒否のみで続行し、連続ブロックでも停止しない
