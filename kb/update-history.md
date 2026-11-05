@@ -1,5 +1,27 @@
 # harness-harness 更新履歴
 
+## 2026-11-06 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code**: 新リリースなし（v2.1.318 のまま、公式 changelog ページも変更なし）。ドキュメント側の実質的改訂は小粒で3点:
+- **env-vars**: `CLAUDE_CODE_DISABLE_BG_STABLE_PATH` 収載（macOS ネイティブインストーラのバックグラウンドセッションのホストプロセスを `ClaudeCode.app` でなくインストール済みバイナリから起動。v2.1.295+、settings / MDM の `env` ブロックに設定）
+- **best-practices**: `--settings` で渡した hooks は `--bare` 下では実行されない旨の注記
+- **settings-reference**: Anthropic が server-managed settings を必須指定でき、その場合 `forceRemoteSettingsRefresh` 未設定でも取得まで起動ブロック
+
+文言調整のみ（specs 反映不要と判断）: settings の `~/.claude.json` 破損時挙動の記述整理、`defaultMode` の表現変更、desktop-ios-simulator のアプリ起動が permission mode 対象に、claude-projects トラブルシュート手順、skills の `effort` リンク追加。
+
+**Codex CLI**: 安定版・SDK とも新リリースなし（0.166.0 のまま、プレリリースは 0.168.0-alpha.3〔2026-11-05〕まで進行。公式 changelog ページも実質変更なし）。
+
+**スキルエコシステム（Phase 3.5）**: last_patrol 2026-11-03 が7日以内のためスキップ。
+
+### 更新ファイル
+
+- specs/claude/configuration.md（env var 1件追加、`forceRemoteSettingsRefresh` 注記）
+- specs/claude/best-practices.md（`--bare` × hooks 注記）
+- specs/claude/changelog.md（2026-11-06 巡回ヘッダ）
+- specs/codex/changelog.md（2026-11-06 巡回ヘッダ）
+
 ## 2026-11-05 — 公式ドキュメント巡回
 
 ### 検出・更新
