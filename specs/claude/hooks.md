@@ -48,7 +48,7 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 
 | イベント | 発火タイミング | ブロック可能 | matcher対象 |
 |:--|:--|:--|:--|
-| `Notification` | 通知送信時 | No | `permission_prompt`（ツール承認に加え、**サンドボックスコマンドのネットワークリクエスト承認**も対象。ターミナルセッションでは v2.1.246 以降）, `idle_prompt`（応答完了約60秒後、未入力のとき。**バックグラウンドエージェント〔バックグラウンドサブエージェント等〕が実行中の間は発火しない**〈2026-10 ドキュメント改訂で明文化〉）, `auth_success`, `elicitation_dialog`, `agent_needs_input`（バックグラウンドエージェントが入力待ちになったとき。**v2.1.248 以降、agent team のチームメイト用ターミナル設定の質問**、さらに **auto mode の分類器リクエスト課金通知**〈2026-10 ドキュメント改訂〉に対しても、一定時間ユーザーが入力しないと発火する）, `agent_completed`（バックグラウンドエージェント通知、v2.1.198）, `elicitation_url_dialog`, `elicitation_complete`, `elicitation_response`, `quota_auto_resume_fired` / `quota_auto_resume_stale` / `quota_auto_resume_disabled`（利用上限リセット後の自動継続、v2.1.243 系）, `plugin_notification`（mod が `$.ui.notify` で通知を出したとき。`title` は mod が設定しなければ mod 名。2026-11-05 巡回で反映）。`preferredNotifChannel`（`notifications_disabled` 含む）は通知の見せ方のみを変え、フックは常に発火する。canUseTool コールバックにプロンプトを送るセッション（Claude Desktop / VS Code 拡張）では `permission_prompt` は要求から約6秒後に発火し（タイプしても延期されない）、`CLAUDE_CODE_DISABLE_PERMISSION_PROMPT_NOTIFY_HOOKS=1` で無効化できる（2026-11-05 巡回で反映） |
+| `Notification` | 通知送信時 | No | `permission_prompt`（ツール承認に加え、**サンドボックスコマンドのネットワークリクエスト承認**も対象。ターミナルセッションでは v2.1.246 以降）, `idle_prompt`（応答完了約60秒後、未入力のとき。**バックグラウンドエージェント〔バックグラウンドサブエージェント等〕が実行中の間は発火しない**〈2026-10 ドキュメント改訂で明文化〉）, `auth_success`, `elicitation_dialog`, `agent_needs_input`（バックグラウンドエージェントが入力待ちになったとき。**v2.1.248 以降、agent team のチームメイト用ターミナル設定の質問**、さらに **auto mode の分類器リクエスト課金通知**〈2026-10 ドキュメント改訂〉に対しても、一定時間ユーザーが入力しないと発火する）, `agent_completed`（バックグラウンドエージェント通知、v2.1.198）, `elicitation_url_dialog`, `elicitation_complete`, `elicitation_response`, `quota_auto_resume_fired` / `quota_auto_resume_stale` / `quota_auto_resume_disabled`（利用上限リセット後の自動継続、v2.1.243 系）, `auth_storage_failure`（サインインは完了したが新しい credential を credential storage に保存できなかったとき。v2.1.288+。2026-11-07 巡回で反映）, `plugin_notification`（mod が `$.ui.notify` で通知を出したとき。`title` は mod が設定しなければ mod 名。2026-11-05 巡回で反映）。`preferredNotifChannel`（`notifications_disabled` 含む）は通知の見せ方のみを変え、フックは常に発火する。canUseTool コールバックにプロンプトを送るセッション（Claude Desktop / VS Code 拡張）では `permission_prompt` は要求から約6秒後に発火し（タイプしても延期されない）、`CLAUDE_CODE_DISABLE_PERMISSION_PROMPT_NOTIFY_HOOKS=1` で無効化できる（2026-11-05 巡回で反映） |
 | `MessageDisplay` | アシスタントメッセージ表示時 | No（transform/hide可） | - | アシスタントメッセージのテキストを変換または非表示にできる（v2.1.152） |
 | `ConfigChange` | 設定ファイル変更時 | Yes | `user_settings`, `project_settings`, `local_settings`, `policy_settings`, `skills` |
 | `InstructionsLoaded` | CLAUDE.md/rules読み込み時 | No | `session_start`, `nested_traversal`, `path_glob_match`, `include`, `compact` |
@@ -66,7 +66,7 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 |:--|:--|:--|:--|
 | `WorktreeCreate` | ワークツリー作成時 | Yes | - |
 | `WorktreeRemove` | ワークツリー削除時 | **Yes（2026-09-13 リファレンス改訂）**: 非ゼロ終了コードで、削除後もディレクトリが残っている場合に削除を失敗させられる。worktree はディスクに残り、コマンドと stderr はデバッグログへ。バックグラウンドセッション削除中ならセッションも残り、agent view の拒否メッセージにフックの終了状態と stderr 冒頭が表示される。JSON 出力は破棄される（従来は「決定制御なし・失敗はデバッグログのみ」だった）。**クリーンアップ責務（2026-09-30 ドキュメント改訂で詳細化）**: WorktreeRemove フック未設定の場合、WorktreeCreate フックが返したパスに対し `git worktree remove --force` でフォールバック削除される（git が認識しない worktree はディスクに残る）。フックが exit 0 なら「削除済み」とみなされる（実際に削除したかは検証されないためフック側で確実に削除すること）。**WorktreeCreate フックが作ったブランチは Claude Code は削除しない**ため、ブランチ削除も WorktreeRemove フックで行う | - |
-| `PreCompact` | コンパクション前 | **Yes**（exit 2 または `decision: "block"` でコンパクションをブロック。`manual` では stderr がユーザーに表示される。自動コンパクションのブロックは、コンテキスト上限前の先行実行なら未圧縮のまま継続、API がコンテキスト上限エラーを返した後のリカバリ実行ならエラーが表面化しリクエスト失敗。`auto` matcher は idle compaction でも発火。2026-11-05 巡回で修正） | `manual`, `auto`（入力の `custom_instructions` は `manual` で `/compact` に引数が渡された場合のみ文字列。引数なし・`auto` では `null`。従来は空文字列と記載されていた） |
+| `PreCompact` | コンパクション前 | **Yes**（exit 2 または `decision: "block"` でコンパクションをブロック。`manual` では stderr がユーザーに表示される。自動コンパクションのブロックは、コンテキスト上限前の先行実行なら未圧縮のまま継続、API がコンテキスト上限エラーを返した後のリカバリ実行ならエラーが表面化しリクエスト失敗。`auto` matcher は idle compaction でも発火。2026-11-05 巡回で修正。**stdout の扱い（2026-11-07 巡回で反映）**: exit 0 でブロックしない場合、フックの stdout は**コンパクション要約への指示**として使われる。フックあたり 10,000 文字以内に収めること（超過分はカットされマーカーが付く）。大出力をファイルに退避する通常の仕組みも PreCompact stdout には適用されない） | `manual`, `auto`（入力の `custom_instructions` は `manual` で `/compact` に引数が渡された場合のみ文字列。引数なし・`auto` では `null`。従来は空文字列と記載されていた） |
 | `PostCompact` | コンパクション後 | No | `manual`, `auto` |
 
 ### 2.5 MCP Elicitation イベント
@@ -432,6 +432,15 @@ MCPツールは `mcp__<server>__<tool>` パターンに従う:
 
 - **カンマ区切りmatcher修正（v2.1.191）**: `"Bash,PowerShell"` のようなカンマ区切りmatcherが silent に発火しないバグが修正された
 - **ハイフン識別子の完全一致化（v2.1.195、破壊的変更）**: `code-reviewer` や `mcp__brave-search` のようなハイフンを含む識別子が部分文字列マッチしてしまう挙動を修正し、**完全一致**になった。ハイフン入りMCPサーバーの全ツールにマッチさせるには `mcp__brave-search__.*` のように明示的な正規表現を使う
+
+### 5.4 Monitor コマンドのマッチング（v2.1.314+、2026-11-07 巡回で反映）
+
+`Bash` matcher の `PreToolUse` / `PermissionRequest` フックは、**Monitor ツールが起動するシェルコマンドでも発火する**（`Bash|PowerShell`・`^Bash$`・`Bash.*` も「Bash matcher」扱い）。ただしこの経路では `allow` と `updatedInput` は無効（deny / ask は可能）。WebSocket watch では発火せず、`PostToolUse` の Bash matcher は Monitor では発火しない。
+
+Monitor コマンドを allow / 書き換えしたい場合は matcher を Monitor を含むものに切り替える:
+
+- **Monitor を含む matcher**（`Bash|Monitor`・`.*`・matcher なし）: フックは Monitor 呼び出し自体の入力を受け取り、`allow` / `updatedInput` が効く。`if` では `Monitor(tail *)` のように Monitor を名指しする（マッチ規則は `Bash(tail *)` と同じ）。`if` で Bash を名指しすると入力は Monitor のものだが `allow` / `updatedInput` は無効
+- **`Bash` matcher**: フックは Bash 呼び出しとして入力を受け取り、`if` では `Bash(tail *)` と書く。`if` で Monitor を名指しするとフック自体が発火しない
 
 ---
 
