@@ -1,5 +1,26 @@
 # harness-harness 更新履歴
 
+## 2026-11-07 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code**: 新リリースなし（v2.1.318 のまま、公式 changelog ページも変更なし）。ドキュメント側の実質的改訂は3点:
+- **hooks**: 新セクション「Match Monitor commands」（v2.1.314+。`Bash` matcher の PreToolUse / PermissionRequest は Monitor コマンドでも発火するが allow / updatedInput 無効。allow・書き換えには `Bash|Monitor` 等へ切り替え）、Notification タイプ `auth_storage_failure` 追加（v2.1.288+）、新セクション「PreCompact output」（exit 0 時の stdout がコンパクション要約への指示になる。10,000 文字上限、ファイル退避の対象外）
+- **model-config**: 新セクション「Subagents switch or fail without asking」（v2.1.318。サブエージェント内の flagged リクエストは確認なしでフォールバック再実行 or `Agent terminated early due to an API error` で失敗）
+- **settings-reference**: fast mode の対応モデルを Opus 5.5 / Opus 5 / Opus 4.8 と明記、`/fast` を他モデルから実行すると Opus に切替（specs は反映済みだった）、`autoInstallIdeExtension` が VS Code / JetBrains ターミナル内では `/config` に表示
+
+文言調整のみ（specs 反映不要と判断）: env-vars の `CLAUDE_CODE_EXTRA_BODY` 適用範囲明確化（会話外リクエストには非適用）、cloud-environments のシークレット UI 文言、claude-projects の Auto-continue 設定行追加（Projects は specs 対象外）、desktop-ios-simulator のセッション別シミュレータ廃止、agent-teams 微修正。`commands`（.md なし）と `claude-tag.md` は非 .md パスが HTML SPA シェルを返すようになっただけで実質変更なし。
+
+**Codex CLI**: **0.167.0 安定版**（2026-11-06）リリースを反映: `codex agents --no-daemon`、バックエンド切り替え（ドラフト保持）、ローカル画像添付プレビュー、`gcp_setup_wizard`（Vertex AI セットアップ）、`/experimental` のシステムプロキシオプトイン、承認中のパッチ詳細展開ほか。hooks ドキュメントは「Hooks with cloud orchestration」「Managed hooks in local Codex」に再構成されたが内容は specs 反映済みの範囲内。
+
+**スキルエコシステム（Phase 3.5）**: last_patrol 2026-11-03 が7日以内のためスキップ。
+
+### 更新ファイル
+
+- specs/claude/hooks.md（5.4 Monitor マッチング新設、`auth_storage_failure`、PreCompact stdout 仕様）
+- specs/claude/configuration.md（`switchModelsOnFlag` のサブエージェント挙動 v2.1.318）
+- specs/codex/changelog.md（0.167.0 安定版）
+
 ## 2026-11-06 — 公式ドキュメント巡回
 
 ### 検出・更新
