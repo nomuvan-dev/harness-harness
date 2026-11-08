@@ -218,6 +218,8 @@ Skills は両プラットフォームで最も互換性の高い概念の一つ:
 
 > **2026-03-24 更新**: Codex CLI が Hooks を実験的サポート開始。3 イベント・command ハンドラのみだが、共通概念として扱えるようになった。
 > **2026-09-03 更新（Codex 0.153.0）**: `Interrupt` が公式 hooks ドキュメントに収載され、Codex の対応イベントは 12 種になった。
+>
+> **2026-11-09 更新**: Codex に診断専用の `PreModelRequest` / `PostModelRequest` が加わり 14 種に（Claude Code に対応イベントなし）。
 > **2026-08-20 更新（Codex 0.148.0）**: Codex が 11 イベント・`mcp_tool` ハンドラ・非同期実行に対応。イベント構造（イベント → matcher グループ → ハンドラ配列）も Claude と同型になり、**Hooks は「Claude 固有」から「ほぼ共通概念」へ格上げ**された。
 
 | 概念 | Claude Code | Codex CLI | 抽象化の方針 |

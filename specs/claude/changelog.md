@@ -3,7 +3,9 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-11-07（**新リリースなし。v2.1.318 のまま**（公式 changelog ページも前回から変更なし）。ドキュメント側の実質的改訂は3点: **(1) hooks に「Match Monitor commands」新設**（v2.1.314+。`Bash` matcher の PreToolUse / PermissionRequest は Monitor ツールのシェルコマンドでも発火するが `allow` / `updatedInput` は無効〔deny / ask は可〕。allow・書き換えには `Bash|Monitor` 等 Monitor を含む matcher へ切り替え、`if` では `Monitor(tail *)` と名指しする。WebSocket watch・PostToolUse は対象外）＋ Notification タイプ **`auth_storage_failure`** 追加（サインイン完了後に credential storage へ保存できなかったとき。v2.1.288+）＋**「PreCompact output」新設**（exit 0 でブロックしない場合の stdout はコンパクション要約への指示になる。フックあたり 10,000 文字上限・超過はカット＋マーカー。大出力のファイル退避の対象外）、**(2) model-config に「Subagents switch or fail without asking」新設**（v2.1.318 の挙動明文化。Agent ツール起動のサブエージェント内で flagged されたリクエストは確認なしに、「自動切替」ならフォールバックモデルで再実行〔セッションのモデル不変〕、「Ask each time」なら `Agent terminated early due to an API error` で失敗。フォールバックなしならどちらも失敗。v2.1.318 以前は常にフォールバック再実行）、**(3) settings-reference — fast mode の対応モデルを Opus 5.5 / Opus 5 / Opus 4.8 と明記**（他モデルからの `/fast` は Opus へ切替、非対応モデルへの切替で OFF。specs は既反映）＋ `autoInstallIdeExtension` が VS Code / JetBrains ターミナル内では `/config` の **Auto-install IDE extension** に表示される旨追記。その他は文言調整のみ（env-vars の `CLAUDE_CODE_EXTRA_BODY` は会話外リクエスト〔`/model` チェック等〕には非適用の明確化、desktop-ios-simulator のセッション別シミュレータ廃止〔プロンプトで指定なければ起動中のものを使用〕、cloud-environments のシークレット UI 文言、claude-projects に Auto-continue when usage limits reset 設定行、agent-teams 微修正）。specs/claude/hooks.md・configuration.md に反映。Codex CLI は **0.167.0 安定版**（2026-11-06）リリース（specs/codex/changelog.md 参照）。前回2026-11-06の巡回要約は下記参照。）
+最終更新: 2026-11-09（**v2.1.319**（2026-11-06）を反映。ハーネス観点の目玉は **(1) MCPタスクのターミナル対応**（タスク実行のツール呼び出しを即バックグラウンド化・完了時に結果通知。feature-flag 取得なしでも動作＝Bedrock / Vertex / Foundry / LLM gateway / `DISABLE_TELEMETRY` 下でも有効。`CLAUDE_CODE_DISABLE_MCP_TASK_BACKGROUND=1` で待機、`CLAUDE_CODE_DISABLE_MCP_TASKS=1` で無効化）、**(2) `permissions.denyInsteadOfPrompting`**（権限プロンプト待ちになる呼び出しを拒否してターン継続。ターミナル・サブエージェント・チームメイト）、**(3) auto モードのサーバーチェック厳格化**（テレメトリ / フラグオフ時はローカル分類器へのフォールバックなし＝確認か拒否。`CLAUDE_CODE_AUTO_MODE_SERVER=0` で旧挙動。プロジェクト settings / プラグインからの再有効化不可）、**(4) セキュリティ修正多数**（Bash 権限バイパス〔環境変数プレフィックスでコマンド隠蔽〕、worktree 作成時サンドボックス脱出、`sed` の権限チェックスキップ、quoted words の deny/ask ルールすり抜け、`/rewind` の symlink 越し復元等）、**(5) 自己ペース `/loop` の終了挙動変更**（再スケジュールなしのターン終了でループ終了。`CLAUDE_CODE_LOOP_KEEPALIVE=1` で旧挙動）、**(6) `CLAUDE_CODE_DISABLE_FEATURE_FLAGS`**（テレメトリを切らずフラグ取得のみ停止）。ドキュメント側の改訂: **(a) hooks（実質差分11件を反映）** — PostToolUse の割り込み後実行（10秒猶予・timeout 無視で kill・async 回避、v2.1.319 新設節）、deferred ツール利用不能時の挙動変更（pending 中はプロンプト不達・exit 1。破棄は `CLAUDE_CODE_DROP_UNAVAILABLE_DEFERRED_TOOL=1`。旧記述は陳腐化していたため修正）、PermissionRequest の decision 制御表（`interrupt`・allow は deny ルールを上書き不可・`updatedInput` 再評価）＋プロンプト不可セッションでの発火とデフォルト deny＋permission update エントリ型6種 / destination 4値表、ユーザー操作必須ツール（AskUserQuestion / ExitPlanMode は allow+`updatedInput` 必須、`requiresUserInteraction` ツールはフック allow でスキップ不可）、`if` 単一セグメントパターンは cwd 直下のみ、PostToolUse の `Edit|Write` matcher は Bash / 外部書き換えで非発火（FileChanged を使う）、Stop はユーザー割り込みで非発火、timeout 既定30秒対象に PostModelSwitch 追加、**(b) configuration / mcp / tools** — 上記 (1)(2)(3)(5)(6) の変数・設定キーを反映＋`CLAUDE_CODE_CONFIG_LOCK_WAIT_MS`、MCP タスクの時間制限と `outcome unknown.`（再呼び出しで二重実行リスク）、`/context` テーブル短縮、`CLAUDE_CODE_AUTO_MODE_SERVER` の版数を公式記載（v2.1.271+ / direct API v2.1.281+）に整合。desktop-ios-simulator はデスクトップ UI 挙動2点（同意拒否時はデバイス非アタッチ・非起動に変更、ペイン最小化 / クローズの新セクション）のみで specs 本文反映不要、commands / claude-tag ページはノイズのみ。**Codex 側も公式 hooks ドキュメント拡充を反映**: 新イベント `PreModelRequest` / `PostModelRequest`（12→14種）、PreToolUse `updatedInput`、PermissionRequest 出力契約（deny 優先・fail closed）、共通入力 `permission_mode`、SessionStart `fork` ソース、SessionEnd 発火条件（30分アイドル等・同期3秒上限）、async 同時実行上限8、code mode への適用表、app-server のリモート TUI / WS 認証 / `networkApprovalContext`（specs/codex/configuration.md・commands.md に反映）。Codex CLI は新安定版なし（0.167.0 のまま、プレリリースは 0.169.0-alpha.3〔2026-11-07〕まで進行）。前回2026-11-07の巡回要約は下記参照。）
+
+前回: 2026-11-07（**新リリースなし。v2.1.318 のまま**（公式 changelog ページも前回から変更なし）。ドキュメント側の実質的改訂は3点: **(1) hooks に「Match Monitor commands」新設**（v2.1.314+。`Bash` matcher の PreToolUse / PermissionRequest は Monitor ツールのシェルコマンドでも発火するが `allow` / `updatedInput` は無効〔deny / ask は可〕。allow・書き換えには `Bash|Monitor` 等 Monitor を含む matcher へ切り替え、`if` では `Monitor(tail *)` と名指しする。WebSocket watch・PostToolUse は対象外）＋ Notification タイプ **`auth_storage_failure`** 追加（サインイン完了後に credential storage へ保存できなかったとき。v2.1.288+）＋**「PreCompact output」新設**（exit 0 でブロックしない場合の stdout はコンパクション要約への指示になる。フックあたり 10,000 文字上限・超過はカット＋マーカー。大出力のファイル退避の対象外）、**(2) model-config に「Subagents switch or fail without asking」新設**（v2.1.318 の挙動明文化。Agent ツール起動のサブエージェント内で flagged されたリクエストは確認なしに、「自動切替」ならフォールバックモデルで再実行〔セッションのモデル不変〕、「Ask each time」なら `Agent terminated early due to an API error` で失敗。フォールバックなしならどちらも失敗。v2.1.318 以前は常にフォールバック再実行）、**(3) settings-reference — fast mode の対応モデルを Opus 5.5 / Opus 5 / Opus 4.8 と明記**（他モデルからの `/fast` は Opus へ切替、非対応モデルへの切替で OFF。specs は既反映）＋ `autoInstallIdeExtension` が VS Code / JetBrains ターミナル内では `/config` の **Auto-install IDE extension** に表示される旨追記。その他は文言調整のみ（env-vars の `CLAUDE_CODE_EXTRA_BODY` は会話外リクエスト〔`/model` チェック等〕には非適用の明確化、desktop-ios-simulator のセッション別シミュレータ廃止〔プロンプトで指定なければ起動中のものを使用〕、cloud-environments のシークレット UI 文言、claude-projects に Auto-continue when usage limits reset 設定行、agent-teams 微修正）。specs/claude/hooks.md・configuration.md に反映。Codex CLI は **0.167.0 安定版**（2026-11-06）リリース（specs/codex/changelog.md 参照）。前回2026-11-06の巡回要約は下記参照。）
 
 前回: 2026-11-06（**新リリースなし。v2.1.318 のまま**（公式 changelog ページも前回から変更なし）。ドキュメント側の実質的改訂は小粒で3点: **(1) env-vars に `CLAUDE_CODE_DISABLE_BG_STABLE_PATH` 収載**（macOS ネイティブインストーラでバックグラウンドセッションのホストプロセスを `~/.local/share/claude/ClaudeCode.app` でなくインストール済みバイナリから起動。v2.1.295+、user/managed settings か MDM の `env` ブロックに設定）、**(2) best-practices — `--settings` で渡した hooks は `--bare` 下では実行されない**旨の注記追加、**(3) settings-reference — Anthropic が server-managed settings を必須指定でき、その場合 `forceRemoteSettingsRefresh` 未設定でも取得まで起動ブロック**の明文化（specs/claude/configuration.md・best-practices.md に反映）。その他は文言調整のみ: settings の `~/.claude.json` 破損時挙動の記述整理（`-p` はファイル無変更で終了・空ファイル＋バックアップなしは既定設定で起動）、settings-reference の `defaultMode` が「開始モード」→「新規セッションの既定モード」表現に、desktop-ios-simulator でアプリのインストール・起動が one-time consent でなく permission mode 対象に（2→3アクション）、claude-projects のトラブルシュート手順更新（修正後は同作業の新スレッド開始を依頼）、skills の `effort` に別モデル fork 時の解決順リンク追加。Codex CLI は新バージョンなし（0.166.0 のまま、プレリリースは 0.168.0-alpha.3〔2026-11-05〕まで進行。公式 changelog ページの実質変更なし）。前回2026-11-05の巡回要約は下記参照。）
 
@@ -30,7 +32,56 @@
 
 ---
 
-## v2.1.318 (2026-11-04)
+## v2.1.319 (2026-11-06)
+
+**MCPタスクのターミナル対応・`permissions.denyInsteadOfPrompting`・auto モードのサーバーチェック厳格化・セキュリティ修正多数（Bash権限バイパス・worktree作成時サンドボックス脱出等）**
+
+### 新機能
+
+- **MCPタスクのターミナル対応**: MCPサーバーがツール呼び出しをタスクとして実行する場合、即座にバックグラウンド化し完了時に結果をClaudeへ通知。feature-flag取得なしでも動作（Bedrock / Vertex / Foundry / LLM gateway / `DISABLE_TELEMETRY` 下でも有効）。`CLAUDE_CODE_DISABLE_MCP_TASK_BACKGROUND=1` でツール呼び出し内での待機に戻す、`CLAUDE_CODE_DISABLE_MCP_TASKS=1` で機能ごと無効化
+- **`permissions.denyInsteadOfPrompting` 設定**: 権限プロンプトで待つはずのツール呼び出しを拒否してターンを継続（ターミナルセッション・サブエージェント・チームメイトで有効）
+- **`CLAUDE_CODE_DISABLE_FEATURE_FLAGS`**: テレメトリを切らずに feature-flag 取得だけ停止（全フラグが組み込みデフォルトに）
+- `/claude-api latency-optimize`: Claude API コードの待ち時間ボトルネックを特定し高速設定を eval で検証
+- `/tasks` に「Earlier in this session」行: 終了済みサブエージェントを一覧から消えた後や再起動後も再度開いてメッセージ可能
+- `ant auth login` のサインインで継続する際の警告と課金先 Console organization 名の起動時表示
+- gateway: `login_notice`（検証ページ・サインイン画面へのオペレーターメッセージ）、`CLAUDE_GATEWAY_LOG_FORMAT=json`、pooled budget の優先順設定（`admin.pooled_conflict_rule` / `admin.pooled_priority_order`）、`/usage` に日/週/月の spend 表示等
+
+### 変更
+
+- **auto モードのサーバーチェック厳格化**: テレメトリ / feature flag オフ時（LLM gateway 含む）、サーバーが確認できない呼び出しは確認プロンプトか拒否になり、組み込み分類器へのフォールバックなし。`CLAUDE_CODE_AUTO_MODE_SERVER=0` で旧挙動（Bedrock / Vertex / Foundry は変更なし）。`=1` は `CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS` 下でもサーバーチェックを有効化（managed settings で後者を設定するなら `1` も明示要）。プロジェクトの settings / プラグインは、プロジェクト外で切ったサーバーチェックを再有効化できない
+- **Monitor の WebSocket watch が全 Bash ルールに従う**: deny ルールは拒否、ask ルール下では Monitor の allow・bypass モード・auto モードでもプロンプトをスキップしない
+- **自己ペース `/loop` はターンが再スケジュールせず終了したらループ終了**（従来はフォールバック wakeup をスケジュール）。`CLAUDE_CODE_LOOP_KEEPALIVE=1` で旧挙動
+- PostToolUse フックは新メッセージの割り込み後に完了したツール呼び出しでも実行される（最大10秒）
+- セッションの Bash / PowerShell の exact ask ルールは、より広い deny ルールがカバーする場合は確認でなく拒否
+- Bash ツールは lookup/display 以外のフラグ付き `which` に権限確認
+- `--add-dir` ディレクトリのプラグインマーケットプレース登録はそのディレクトリの trust ダイアログ承諾後のみ
+- Bash サンドボックス有効時、開始フォルダより下の `.claude/skills` のネストスキルは、そこで起動するか `/cd` した場合のみロード
+- safeguards がサブエージェントを停止した後の指示変更: 自分で作業を引き取るのでなく、狭いプロンプトで再試行かユーザーへ報告
+- Chrome 組み込みツールから `shortcuts_list` / `shortcuts_execute` を削除
+- `CLAUDE_CODE_PROXY_RESOLVES_HOSTS` はホスト管理ネットワーク下では settings ファイルから設定不可（プロセス環境で設定）
+
+### 改善（抜粋）
+
+- Windows の config 保存が他プログラムの開いているファイルを長めに待機（kill 時の `~/.claude.json` 空化リスク減）
+- `/context` のテーブルを短縮（各リスト上位10行・オンデマンドMCPツールはサーバー毎に1行）＋ `/context` がフルの視覚グリッドを毎ターンClaudeに送らない修正
+- `/model` ピッカーで旧モデルは「More models」行にグループ化
+- Claude in Chrome: 短い切断後にセッション自身のブラウザを最大6秒待つ、`javascript_tool` 結果は60,000文字まで会話内に保持
+
+### セキュリティ・重要修正
+
+- **Bash 権限バイパス修正**: 細工された環境変数プレフィックスでコマンドの一部を権限チェックから隠せた問題
+- **worktree 作成時のサンドボックス脱出を修正**
+- `sed` コマンドが accept-edits / auto モードで権限チェックをスキップし得る問題、quoted words で書かれたコマンドを Bash deny / ask ルールが見逃す問題
+- `/rewind` がディレクトリ symlink 越しにファイルを復元・削除し得る問題
+- 401 が続くリクエストがリトライ毎にログインをリフレッシュし他セッションに 401 を波及させる問題
+- `claude -p` が auto モードで安全チェック不可により拒否されても exit 0 だった問題（text / JSON 出力は exit 1 に）
+- 旧ハンドシェイクの MCP サーバーが接続失敗・空結果になる問題、claude.ai コネクタの長時間 MCP ツール呼び出しが `--resume` 後に結果を報告しない問題
+- `HEAD` という名前のファイル / フォルダがあると diff が読めない問題（claude.ai / モバイル / `/diff`）
+- 設定ファイルを Claude Code の書き込み直後数秒以内に編集すると無視される問題、レガシー名の config ファイルが設定を無言で隠す問題（stderr で警告）
+- plain `timeout DURATION` でラップされた読み取り専用コマンドへの不要な権限プロンプト
+- self-hosted runner: `--trust-workspace false` がリポジトリ settings のフックとスキルの実行も停止するように
+
+
 
 **サブエージェント実行の安定化（flagged 時は停止・シェルコマンド3分でバックグラウンド化）・mod `$.model.fork` に `effort`・`deniedMcpServers` の URL ブロック拡大・認証期限の可視化・共有ネットワークホームの堅牢化**
 
