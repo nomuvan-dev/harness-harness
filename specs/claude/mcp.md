@@ -501,18 +501,20 @@ MCP サーバー自身がレポートエクスポートやビルドのような�
 
 - サーバーがタスクをサポートしている
 - HTTP / stdio / claude.ai コネクタのサーバーで、プロトコルリビジョン 2026-07-28 で接続している（`MCP_SDK_GENERATION=v1` / `MCP_PROTOCOL_NEGOTIATION=legacy` では不可）
-- セッションが機能フラグを取得している（Bedrock 等のサードパーティプロバイダ、テレメトリ/フラグ取得オフでは不可）
+- セッションが機能フラグを取得している — **ただし v2.1.319 以降、ターミナル CLI では feature-flag 取得不要になった**（Bedrock / Vertex / Foundry / LLM gateway / `DISABLE_TELEMETRY` 下でも動作。changelog 由来、公式 mcp ページは旧条件のまま未追随）。`CLAUDE_CODE_DISABLE_MCP_TASKS=1` で機能ごと無効化できる
 - Anthropic がそのサーフェスで MCP タスクを有効化している（v2.1.304 時点: ターミナル CLI・Agent SDK・GitHub Actions。VS Code 拡張や Desktop アプリは対象外）
 - メイン会話からの呼び出し（サブエージェントは不可）
 - 対話セッションであるか、Agent SDK / `--input-format stream-json` の `claude -p` で `CLAUDE_AUTO_BACKGROUND_TASKS=1`、かつ `CLAUDE_CODE_DISABLE_MCP_TASK_BACKGROUND` が `1` でなく、`CLAUDE_CODE_MCP_AUTO_BACKGROUND_MS` が `0` でないこと（ワンショットの `claude -p "<prompt>"` は MCP タスクを得られない）
 
 **非対話セッションでの入力要求**: 実行中タスクが elicitation で入力を求めた場合、非対話セッションでは **`Elicitation` フックの実行も Agent SDK の `onElicitation` 呼び出しも行わずに**サーバーへタスクのキャンセルを要求する。
 
+**時間制限とステータス（2026-11-09 巡回で反映)**: バックグラウンド化したタスクに Claude Code 側の時間制限はない（待機時はツール呼び出しの制限が全期間に適用される）。切断時は `reconnecting…` → 300 秒以内に再接続できなければ `did not reconnect within 300s` 等のステータスで報告され、**`outcome unknown.` で終わったタスクは再呼び出しすると二重実行のリスク**がある点に注意。
+
 **待機させたい場合**: `CLAUDE_CODE_MCP_AUTO_BACKGROUND_MS=0`（全 MCP ツール呼び出しを待つ）、または `CLAUDE_CODE_DISABLE_MCP_TASK_BACKGROUND=1`（タスク結果を待つ。自動バックグラウンド化が有効なら 2 分で通常のバックグラウンド呼び出しに移行し、その場合セッション終了を生き延びない）。待機中の `Esc` やタイムアウト到達は呼び出しを終了させ、サーバーへキャンセルを要求する。
 
 ### 8.13.2 `anthropic/requiresUserInteraction` アノテーション（毎回承認を要求）
 
-サーバー側で、ツールの `tools/list` エントリの `_meta["anthropic/requiresUserInteraction"]` に **JSON の Boolean `true`** を設定すると（他の値は無視）、そのツールは**毎回明示的な承認が必要**になる。同意取得やアクセス付与のように「権限プロンプト自体が目的」のツール向け。
+サーバー側で、ツールの `tools/list` エントリの `_meta["anthropic/requiresUserInteraction"]` に **JSON の Boolean `true`** を設定すると（他の値は無視）、そのツールは**毎回明示的な承認が必要**になる。**PreToolUse フックの `allow` では承認プロンプトをスキップできない**（`updatedInput` の有無を問わず。2026-11-09 巡回で反映）。同意取得やアクセス付与のように「権限プロンプト自体が目的」のツール向け。
 
 - `acceptEdits` / `auto` / `bypassPermissions` の各権限モードでも**毎回プロンプトが出る**。「don't ask again」の選択肢は提示されず、マッチする allow ルールでもプロンプトはスキップされない
 - プロンプトを出せない `dontAsk` モードでは呼び出しは**拒否**される

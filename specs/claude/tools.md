@@ -74,7 +74,7 @@ Claude Code の組み込みツール一覧。**ここに書かれたツール名
 | `SubagentHandback` | No | **v2.1.271+**。サブエージェントの最終レポートを親会話へ納品するツール。**auto モード限定**で、Agent ツールがローカル実行する非フォークのサブエージェントに提供される（`tools` から外しても `disallowedTools` に入れても付与される）。このツール経由の納品では親の `tool_response.content` はレポートではなく短い注記になる。レポート本文はフック（`PreToolUse` / `PostToolUse` を `SubagentHandback` にマッチ）の `tool_input.message` で読める。端末 CLI / IDE 拡張 / クラウドセッション / **Agent SDK** で利用可。**納品前に auto モードの分類器がレポートをレビューする**（2026-11-03 ドキュメント改訂で確認） |
 | `SendUserFile` | No | セッションからユーザーへファイル送信（任意のキャプション付き）。v2.1.196 以降 `display` パラメータあり |
 | `PushNotification` | No | デスクトップ通知（Remote Control 接続時はスマートフォンへのプッシュも）を送る |
-| `ScheduleWakeup` | No | 自己ペースの `/loop` の次イテレーション時刻を 1 分〜1 時間の範囲で再スケジュール |
+| `ScheduleWakeup` | No | 自己ペースの `/loop` の次イテレーション時刻を 1 分〜1 時間の範囲で再スケジュール。**v2.1.319 以降、ターンが再スケジュールせずに終了したらループ終了**（従来はフォールバック wakeup をスケジュール。`CLAUDE_CODE_LOOP_KEEPALIVE=1` で旧挙動） |
 | `RemoteTrigger` | No | claude.ai 上の Routines の作成・更新・実行・列挙。`/schedule` コマンドの実体 |
 | `SendFeedback` | No | Claude Code へのフィードバックレポート（製品不具合／Claude 自身の挙動）を起草し、ローカルにキューする。送信はユーザーの操作を待つ。v2.1.238+（§6 参照） |
 | `ReportFindings` | No | コードレビュー指摘を構造化リスト（file / summary / failure scenario）として報告し、Claude Code 側でレンダリングさせる |

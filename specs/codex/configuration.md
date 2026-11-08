@@ -382,6 +382,8 @@ default_permissions = "restricted"
 
 0.125.0 以降、permission プロファイルは TUI セッション、ユーザーターン、MCP サンドボックス状態、シェルエスカレーション、app-server API を横断して永続化される（プロセスや接続をまたいで設定が保持される）。
 
+managed ネットワーク制約下の承認は app-server のワイヤ仕様で `item/commandExecution/requestApproval` に `networkApprovalContext` が付き（v2 スキーマは対象 host / protocol を公開。`command` をシェルプレビューとして使わない指針）、**承認プロンプトは宛先（host・protocol・port）単位でグルーピング**され同一宛先の複数リクエストを1プロンプトで解除できる（0.167.0 の並行リクエスト逐次プロンプト化修正の仕様側裏付け。2026-11-09 巡回で反映）。`[permissions.<name>.network]` の managed 制約と execpolicy の `prompt-user` ルール（承認持ち越し不可・毎回人間承認）は GitHub の app-server README に記述があり、次回巡回で README を取得してから本節へ反映予定。
+
 ### 5.4 OpenTelemetry 監視（オプトイン）
 
 ```toml
@@ -618,7 +620,10 @@ matcher = "shell"
 
 - ツール系イベント（`PreToolUse` / `PostToolUse` / `PermissionRequest`）: ツール名と**マッチャーエイリアス**
 - `PreCompact` / `PostCompact`: 発動契機（`manual` / `auto`）
-- `SessionStart`: セッションの起点（`startup` / `resume` / `clear` / `compact`）
+- `SessionStart`: セッションの起点（`startup` / `resume` / `clear` / `compact` / **`fork`**（2026-11-09 巡回で反映））
+- `SessionEnd`: `reason`（現状 `other` のみ）
+- `SubagentStart` / `SubagentStop`: `agent_type`
+- `UserPromptSubmit` / `Stop` / `Interrupt`: matcher は無視される。`PreModelRequest` / `PostModelRequest`: matcher 非対応
 
 **ツール名の正規形とエイリアス（tool coverage）**:
 
@@ -634,7 +639,7 @@ matcher = "shell"
 
 **プラグインバンドル hooks の環境変数**: プラグイン由来のフックコマンドには `PLUGIN_ROOT`（インストール済みプラグインルート）と `PLUGIN_DATA`（プラグインの書き込み可能データディレクトリ）が渡される。Claude Code のプラグインフックとの互換のため **`CLAUDE_PLUGIN_ROOT` / `CLAUDE_PLUGIN_DATA` も同時に設定される**（Claude⇔Codex でフックスクリプトを共用しやすい）。マニフェストの hooks パスはプラグインルート相対で、ルート外は不可。インストール／有効化しただけではフックは信頼されず、レビューして信頼するまでスキップされる。
 
-### 7.4 対応イベント（0.150.0 時点で 12 種）
+### 7.4 対応イベント（2026-11-09 時点で 14 種）
 
 | イベント | スコープ | 説明 |
 |----------|----------|------|
@@ -647,11 +652,23 @@ matcher = "shell"
 | `SubagentStop` | ターン | サブエージェント終了時（0.133.0+） |
 | `Stop` | ターン | ターン終了時 |
 | `SessionStart` | セッション | セッション開始時 |
-| `SessionEnd` | セッション | セッション終了時 |
+| `SessionEnd` | セッション | セッション終了時。発火条件は開いている会話の archive / delete、通常終了、**接続クライアントなしで30分アイドル**（`thread/unsubscribe` や会話切替では即終了しない）。matcher は `reason`（現状 `other` のみ）。**常に同期・タイムアウト上限3秒**（2026-11-09 巡回で反映） |
+| `PreModelRequest` | ターン | モデルリクエスト試行ごと（リトライ含む）に発火。**診断専用**でコンテキスト変更・ブロック不可。matcher 非対応（2026-11-09 巡回で公式 hooks ドキュメントから反映。収載リリースは未確認） |
+| `PostModelRequest` | ターン | モデルリクエスト完了ごとに発火。`status`（`completed` / `failed` / `cancelled`）/ `error` / `token_usage` を受け取る。診断専用・matcher 非対応（同上） |
 | `SubagentStart` | セッション | サブエージェント起動時（0.133.0+） |
 | `Interrupt` | ターン | **メインスレッドの**アクティブなターンが中断されたとき（**0.150.0+**。2026-09-03 に公式 hooks ドキュメントへ収載）。中断の記録や、フックが始めた作業の後始末に使う。**アイドルスレッドとサブエージェントでは走らない**。`matcher` を書いても無視される。共通入力フィールドに加え `turn_id`（中断されたターンのID）と `permission_mode` を受け取る。**`command` ハンドラの既定タイムアウトは 1 秒、設定可能な範囲は 1〜3 秒**。フック出力で中断を阻止したりターンを再開したりはできない。出力は「終了コード `0` かつ無出力」か「任意の `systemMessage` を含む JSON」のみで、**プレーンテキスト出力は不正**。async 実行時も同じタイムアウトが適用される |
 
-> **比較**: Claude Code は 17 以上のイベントをサポート。Codex は 0.133.0 で 6 → 0.148.0 で 11 → 0.150.0 で 12 イベント。`Notification` 系や `PreCompact` 以外の UI 系イベントは引き続き未対応。
+> **比較**: Claude Code は 17 以上のイベントをサポート。Codex は 0.133.0 で 6 → 0.148.0 で 11 → 0.150.0 で 12 → 2026-11 時点で 14 イベント（`PreModelRequest` / `PostModelRequest` 追加）。`Notification` 系や UI 系イベントは引き続き未対応。
+
+**共通入力 `permission_mode`（2026-11-09 巡回で反映）**: `SessionStart` / `PreToolUse` / `PermissionRequest` / `PostToolUse` / `UserPromptSubmit` / `SubagentStart` / `SubagentStop` / `Stop` / `Interrupt` の入力に `permission_mode`（`default` / `acceptEdits` / `plan` / `dontAsk` / `bypassPermissions`）が付く。
+
+**PreToolUse の `updatedInput`（2026-11-09 巡回で反映）**: `permissionDecision: "allow"` ＋ `updatedInput` でツール呼び出しを書き換えられる（Bash / apply_patch は文字列 `command` 必須、MCP / function tool は引数オブジェクトを差し替え）。`permissionDecision: "ask"`・legacy `decision: "approve"`・`continue: false` 等は parsed-but-unsupported で、**フック失敗扱いのままツールは続行**する。
+
+**PermissionRequest の出力契約（2026-11-09 巡回で反映）**: `hookSpecificOutput.decision.behavior: "allow" / "deny"` を返す。複数フック時は **deny 優先**、どのフックも決定しなければ通常の承認フローへ。`updatedInput` / `updatedPermissions` / `interrupt` は予約済みで fail closed。
+
+**SessionStart の `compact` ソース**: ターン途中の自動コンパクション直後、継続リクエストの前に走り、`continue: false` でターンを終了できる。
+
+**code mode（ネスト JS ツール呼び出し）への適用**: PreToolUse の block は promise reject、`updatedInput` は書き換え結果で resolve、PostToolUse の block / exit 2 は実行後に promise reject、`continue: false` はモデル向け結果のみ差し替え。なお `Stop` / `SubagentStop` は **JSON 出力必須（プレーンテキストは不正）**、PostToolUse の `continue: false` はツール結果をフィードバックで置換して継続、`updatedMCPToolOutput` は parsed-but-unsupported。大出力のスピル先は `<temp_dir>/hook_outputs/<session_id>/<uuid>.txt`。プラグイン更新で同梱スクリプトが変わると、フック定義が不変でも再レビューが要求される。
 >
 > 別枠として `MITM` hook（0.133.0+）がランタイム enforcement 用に存在する（named MITM permissions config と組み合わせて使用）。
 
@@ -703,7 +720,7 @@ matcher = "shell"
 
 `async = true` を指定した `command` ハンドラはバックグラウンドで走る。
 
-- セッション単位の同時実行上限あり
+- セッション単位の同時実行上限は **8**（2026-11-09 巡回で明確化）。完了順序は起動順と異なりうる。セッション終了時に未完了分はキャンセルされ未配送出力は破棄
 - **起動元の操作をブロック・停止・書き換え・制御できない**（同期フックのような decision 制御は効かない）
 - 警告や `additionalContext` は安全なターン境界で配送される: 実行中のターンにはサンプリング後に注入、アイドル時は次のユーザープロンプトの直前までバッファされる
 - 設定リロードをまたいで実行中のフックは維持され、セッション終了時に中断される

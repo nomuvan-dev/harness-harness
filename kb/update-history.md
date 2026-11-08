@@ -1,5 +1,32 @@
 # harness-harness 更新履歴
 
+## 2026-11-09 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code**: **v2.1.319**（2026-11-06）リリースを反映。目玉は MCPタスクのターミナル対応（即バックグラウンド化・feature-flag 不要化。`CLAUDE_CODE_DISABLE_MCP_TASK_BACKGROUND` / `CLAUDE_CODE_DISABLE_MCP_TASKS`）、`permissions.denyInsteadOfPrompting`、auto モードのサーバーチェック厳格化（ローカル分類器フォールバック廃止。`CLAUDE_CODE_AUTO_MODE_SERVER=0` で旧挙動）、セキュリティ修正多数（Bash 権限バイパス、worktree 作成時サンドボックス脱出、`sed` 権限スキップ等）、自己ペース `/loop` の終了挙動変更（`CLAUDE_CODE_LOOP_KEEPALIVE`）、`CLAUDE_CODE_DISABLE_FEATURE_FLAGS`。
+
+ドキュメント側の実質改訂:
+- **hooks（実質差分11件）**: PostToolUse の割り込み後実行（10秒猶予・timeout 無視で kill、v2.1.319 新設節）、deferred ツール利用不能時の挙動変更（specs の旧挙動記述を修正。`CLAUDE_CODE_DROP_UNAVAILABLE_DEFERRED_TOOL`）、PermissionRequest の decision 制御表・プロンプト不可セッションでのデフォルト deny・permission update エントリ型表、ユーザー操作必須ツール（AskUserQuestion / ExitPlanMode は allow+updatedInput 必須）、`if` 単一セグメントパターンは cwd 直下のみ、PostToolUse matcher の Bash / 外部書き換え非発火、Stop の割り込み非発火、timeout 30秒対象に PostModelSwitch
+- **mcp / configuration / tools**: MCP タスクの時間制限と `outcome unknown.` の二重実行リスク、新環境変数5点収載、`CLAUDE_CODE_AUTO_MODE_SERVER` の版数整合（v2.1.271+ / v2.1.281+）、ScheduleWakeup の終了挙動
+
+ノイズ / specs 反映不要: commands・claude-tag ページ（HTML 配信化の見かけ差分のみ）、desktop-ios-simulator のデスクトップ UI 挙動2点（同意拒否時はデバイス非アタッチ・非起動に変更、ペイン最小化 / クローズ新セクション — CLI ハーネス非影響のため記録のみ）。
+
+**Codex CLI**: 新安定版なし（0.167.0 のまま、プレリリースは 0.169.0-alpha.3〔2026-11-07〕まで進行）。公式 hooks ドキュメントの拡充を反映: 新イベント `PreModelRequest` / `PostModelRequest`（12→14種）、PreToolUse `updatedInput` によるツール書き換え、PermissionRequest 出力契約（deny 優先・fail closed）、共通入力 `permission_mode`、SessionStart `fork`、SessionEnd 発火条件（30分アイドル・同期3秒上限）、async 同時実行上限8、code mode 適用表。app-server ページからリモート TUI 接続・WS 認証・`networkApprovalContext`（承認の宛先単位グルーピング）を反映。`[permissions.network]` / `prompt-user` は GitHub README が根拠のため次回巡回で README 取得後に反映予定。
+
+**スキルエコシステム（Phase 3.5）**: last_patrol 2026-11-03 が7日以内のためスキップ。
+
+### 更新ファイル
+
+- specs/claude/changelog.md（v2.1.319）
+- specs/claude/hooks.md（11件反映）
+- specs/claude/configuration.md（新設定キー・環境変数、`requireCoworkFullVmSandbox` 補記）
+- specs/claude/mcp.md（MCP タスク条件更新・時間制限・requiresUserInteraction とフックの関係）
+- specs/claude/tools.md（ScheduleWakeup）
+- specs/codex/changelog.md（新リリースなしの記録）
+- specs/codex/configuration.md（hooks 14種化ほか）
+- specs/codex/commands.md（app-server 加筆）
+
 ## 2026-11-07 — 公式ドキュメント巡回
 
 ### 検出・更新

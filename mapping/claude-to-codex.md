@@ -145,6 +145,8 @@ model_reasoning_effort = "high"
 > **2026-03-24 更新**: Codex CLI が Hooks を実験的にサポート開始。
 > **2026-05-21 更新（Codex 0.133.0）**: `SubagentStart` / `SubagentStop` / compact `SessionStart` / `MITM` を追加し対応イベントは 6 種に拡張。
 > **2026-09-03 更新（Codex 0.150.0 / 0.153.0）**: `Interrupt` が加わり対応イベントは **12 種**。0.153.0 で公式 hooks ドキュメントに収載された。
+>
+> **2026-11-09 更新**: 診断専用の `PreModelRequest` / `PostModelRequest`（モデルリクエスト試行ごとに発火・ブロック不可・matcher 非対応）が加わり対応イベントは **14 種**。Claude Code 側に直接の対応イベントはない（最も近いのは `PostModelSwitch` だが意味が異なる）。
 > **2026-08-20 更新（Codex 0.148.0）**: 対応イベントが **11 種**に拡張され、`PreToolUse` / `PostToolUse` / `PermissionRequest` / `PreCompact` / `PostCompact` / `SessionEnd` が**直接対応**に昇格。ハンドラも `mcp_tool` が追加され、`command` は `async` 実行に対応。変換可能性が大きく改善したため、以下の代替パターンの多くは不要になった。
 
 | Claude Code | Codex CLI | 備考 |

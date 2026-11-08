@@ -250,7 +250,7 @@ max_bytes = 1048576        # 最大サイズ（超過時は自動コンパクシ
 | `codex completion <shell>` | シェル補完スクリプトの生成（bash / zsh / fish / power-shell / elvish） |
 | `codex app` | デスクトップアプリを起動（macOS のみ） |
 | `codex mcp-server` | Codex 自体を MCP サーバーとして起動（他エージェントからの利用向け）。**0.149.1 (2026-08-24) で非推奨** → `codex app-server` を使う。Claude Code から使う場合は公式プラグイン [codex-plugin-cc](https://github.com/openai/codex-plugin-cc) |
-| `codex app-server` | プロダクト組み込み向けの JSON-RPC 2.0 サーバー。`--listen stdio://`（既定）/ `ws://` / `unix://`。`thread/*`・`turn/*`・`model/list`・`command/exec`・`fs/*` などを提供し、認証・履歴・承認・ストリーミングイベントを扱える。`codex mcp-server` の後継 |
+| `codex app-server` | プロダクト組み込み向けの JSON-RPC 2.0 サーバー。`--listen stdio://`（既定）/ `ws://` / `unix://`。`thread/*`・`turn/*`・`model/list`・`command/exec`・`fs/*` などを提供し、認証・履歴・承認・ストリーミングイベントを扱える。`codex mcp-server` の後継。`--listen off` も指定可。リモート TUI 接続（`codex app-server --listen ws://` ＋ `codex --remote wss://... --remote-auth-token-env CODEX_REMOTE_TOKEN`）、WebSocket 認証（`--ws-auth capability-token\|signed-bearer-token`、`--ws-token-file` / `--ws-token-sha256` / `--ws-shared-secret-file` / `--ws-issuer` 等、`/readyz`・`/healthz` プローブ、過負荷時 JSON-RPC `-32001`）、`--code-mode-host`（リモート Code Mode ホストの gRPC エンドポイント共有）に対応（2026-11-09 巡回で反映） |
 | `codex cloud` | クラウドタスク管理（`--env`, `--attempts` オプション） |
 | `codex apply <TASK_ID>` | Codex Cloud タスクの差分を適用 |
 | `codex execpolicy check` | ポリシー評価（プレビュー機能） |

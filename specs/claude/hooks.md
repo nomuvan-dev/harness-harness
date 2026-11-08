@@ -30,7 +30,7 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 | `PostToolUse` | ツール成功後（`EndConversation` の呼び出しは PreToolUse 同様スキップ） | No | ツール名 |
 | `PostToolUseFailure` | ツール失敗後 | No | ツール名 |
 | `PostToolBatch` | 並列ツール呼び出しのバッチ全体が解決した後、次のモデル呼び出し前 | Yes | matcher非サポート（全バッチで発火） |
-| `Stop` | Claude の応答完了時 | Yes | - |
+| `Stop` | Claude の応答完了時（**ユーザー割り込みによる停止では発火しない**。API エラーは `StopFailure`） | Yes | - |
 | `StopFailure` | APIエラー発生時 | No | `rate_limit`, `overloaded`, `authentication_failed`, `oauth_org_not_allowed`, `account_on_hold`, `billing_error`, `invalid_request`, `model_not_found`, `server_error`, `cloud_credential_error`, `max_output_tokens`, `unknown`（`account_on_hold` は 2026-09-02 の公式ドキュメント改訂で追加） |
 | `PermissionDenied` | Auto Mode分類器が拒否した後（verdict なしの拒否を含む） | No | ツール名 |
 | `SessionEnd` | セッション終了時 | No | `clear`, `resume`, `logout`, `prompt_input_exit`, `other`（**v2.1.234 で `bypass_permissions_disabled` を廃止**。Claude Code は送出しなくなったため matcher から削除すること） |
@@ -507,7 +507,21 @@ v2.1.133 以降、ツール実行コンテキストを持つイベント（`PreT
 >
 > **`mcp_server` オブジェクト（v2.1.274+、2026-09-18 ドキュメント改訂で明文化）**: MCP ツールの場合、`PreToolUse` / `PermissionRequest` / `PostToolUse` / `PostToolUseFailure` / `PermissionDenied` の入力に `mcp_server` オブジェクトが加わる。サーバーの `name` と、定義の提供元を示す `source`（`plugin`, `sdk`, `user` / `project` 等の設定スコープ。全列挙は Agent SDK リファレンスの `McpServerProvenance`）を持つ。**信頼判断は `name` や `mcp__<server>__` プレフィックスではなく `source` に基づくこと**（名前は偽装可能なため）。
 >
-> `permission_suggestions`（2026-09-05 時点の公式記述で明確化）: `PreToolUse` と同じ `tool_name` / `tool_input` を受け取るが `tool_use_id` は無い。`permission_suggestions` には Claude Code がその要求に対して提案する**権限更新（allow ルールの追加、権限モードの変更など）**が入る。**権限ダイアログの「always allow」選択肢はこの配列から作られるが、配列＝表示される選択肢そのものではない**（`allowManagedPermissionRulesOnly` などの理由で、配列に残ったまま選択肢が表示されないことがある）。フックは受け取った `permission_suggestions` の 1 つをそのまま `updatedPermissions` として出力できる。
+> `permission_suggestions`（2026-11-09 巡回で改訂）: `PreToolUse` と同じ `tool_name` / `tool_input` を受け取るが `tool_use_id` は無い。`permission_suggestions` には Claude Code がその要求に対して提案する**権限更新（allow ルールの追加、権限モードの変更など）**が入る。**各権限ダイアログは自前で選択肢を構築する**: ファイル編集のダイアログなどは配列を一切読まず要求自体から選択肢を導出し、suggestion エントリを持たない選択肢（「Yes, and switch to auto mode」等、permission update を介さずモードを直接変えるもの）も提示されうる。フックは受け取った `permission_suggestions` の 1 つをそのまま `updatedPermissions` として出力できる。
+>
+> **プロンプトを出せないセッションでの発火とデフォルト deny（2026-11-09 巡回で反映）**: プロンプトを表示できないセッション（非対話モードのバックグラウンドサブエージェント等）でも `PermissionRequest` フックは実行される。発火タイミングは「権限を尋ねる直前、またはプロンプトを出せず auto-deny する直前」で、**どのフックも decision を返さなければそのツール呼び出しは deny される**。
+>
+> **decision オブジェクトの仕様（PermissionRequest decision control、2026-11-09 巡回で反映）**: `hookSpecificOutput.decision` のフィールドは以下。decision なしの exit 2 は権限フローを変えず **stderr も破棄される**。
+>
+> | フィールド | 制約 | 説明 |
+> |:--|:--|:--|
+> | `behavior` | 必須 | `allow` / `deny`。**allow でも deny / ask ルールは評価され、マッチする deny ルールを上書きできない** |
+> | `updatedInput` | allow 専用 | ツール入力を丸ごと置換。**変更後の入力は deny / ask ルールで再評価される**。`AskUserQuestion` / `ExitPlanMode` では必須 |
+> | `updatedPermissions` | allow 専用 | 権限更新（下記エントリ型参照） |
+> | `message` | deny 専用 | Claude に渡す拒否理由 |
+> | `interrupt` | deny 専用 | `true` で Claude を停止する |
+>
+> **Permission update エントリ型（`updatedPermissions` / `permission_suggestions` 共通、2026-11-09 巡回で反映）**: `type` は `addRules` / `replaceRules` / `removeRules`（`rules` 配列＋`behavior`）、`setMode`（`mode`）、`addDirectories` / `removeDirectories`（`directories` 配列）の6種。各エントリの `destination` は `session`（メモリのみ・セッション限り）/ `localSettings`（`.claude/settings.local.json`）/ `projectSettings`（`.claude/settings.json`）/ `userSettings`（`~/.claude/settings.json`）の4値。
 | `PostToolUse` | `tool_name`, `tool_input`, `tool_response`, `tool_use_id`, `duration_ms`（v2.1.119+。権限プロンプトと PreToolUse 時間を除いたツール実行時間）。Bash では条件付きで `tool_response.bashEditDiff`（下記注参照） |
 | `PostToolUseFailure` | `tool_name`, `tool_input`, `tool_use_id`, `error`, `is_interrupt`, `duration_ms`（v2.1.119+） |
 | （注: Bash の `bashEditDiff`） | **v2.1.269+、パブリックベータ**。Bash コマンドが Git リポジトリ内のファイルを変更した場合、`tool_response.bashEditDiff` に変更ファイル一覧が入る。記録条件: [`bashEditDiffEnabled`](configuration.md) が `true` なら全権限モードで記録、未設定なら auto モード / `bypassPermissions` で Claude Code が Bash 経由編集を指示した場合のみ。`false` で無効化（環境変数 `CLAUDE_CODE_BASH_EDIT_DIFF` がセッション単位で優先）。フィールド: `changedFiles`（絶対パス最大200件）/ `files`（表示用 diff 最大5件、`created` / `deleted` フラグ付き）/ `moreFiles`（diff なし変更ファイル数）/ `unavailable`（diff 不完全）/ `skipped`（`git checkout` / `git stash` 等ワーキングツリーを動かす Git コマンド）/ `shared`（同一リポジトリで別の Bash 呼び出しが並走し混入の可能性あり）。gitignore 対象とサブモジュール内は載らない。**ベストエフォート**であり、レビュー対象の発見用でポリシー強制には使わないこと |
@@ -611,11 +625,13 @@ v2.1.133 以降、ツール実行コンテキストを持つイベント（`PreT
 
 - フックが `"defer"` を返すとツールは実行されず、ターンが `stop_reason: "tool_deferred"` の結果で終了する（pending のツール呼び出しはトランスクリプトに残る）。結果の `deferred_tool_use` オブジェクトにツールの `id` / `name` / `input`（実行前に Claude が生成したパラメータ）が入る
 - 呼び出し側は `claude -p --resume <session-id>` で再開する。同じツール呼び出しで `PreToolUse` が**再発火**するので、`"allow"`＋`updatedInput` で回答を渡してツールを実行させる（答えがまだ無ければ再度 `"defer"` も可。プロンプト無しで再開し続け、`"allow"` / `"deny"` でループを抜ける）
-- **再開時にツールが利用不能**（提供元 MCP サーバーが再開セッションで未接続等）の場合、再開の最初の結果は `stop_reason: "tool_deferred_unavailable"`＋`is_error: true` となり、**フックは発火しない**（`deferred_tool_use` は含まれるのでどのツールかは特定できる）。プロンプト無しの再開なら呼び出しは pending のまま残り、プロンプト付きで再開するとツール結果なしで回答され deferred 呼び出しは破棄される
+- **再開時にツールが利用不能**（提供元 MCP サーバーが再開セッションで未接続等）の場合、再開の最初の結果は `stop_reason: "tool_deferred_unavailable"`＋`is_error: true` となり、**フックは発火しない**（`deferred_tool_use` は含まれるのでどのツールかは特定できる）。**v2.1.319 以降**、呼び出しが pending の間はどのプロンプトも Claude に届かず、run は exit code 1 で終了する（`result` は `<tool> isn't available, so its deferred call didn't run.` で始まる）。解消は①ツールを利用可能にして再開、②`CLAUDE_CODE_DROP_UNAVAILABLE_DEFERRED_TOOL=1` を付けてプロンプト付きで再開（呼び出しにはエラーが結果として渡り Claude がプロンプトに回答。空 `result` の `tool_deferred_unavailable` 結果→回答結果の2件が出力され、回答がエラーでなければ exit 0。変数のみでプロンプト無しなら drop して exit 1）。v2.1.319 より前はプロンプト付き再開でツール結果なしに回答し呼び出しを破棄していた
 - **ターン内のツール呼び出しが 1 つの場合のみ**有効。複数同時呼び出し（バッチ）では警告付きで無視され、通常の権限フローへ流れる（resume が再実行できるのは 1 ツールだけのため）
 - **タイムアウト・リトライ上限は無い**。セッションは再開までディスクに残るが、`cleanupPeriodDays`（既定 30 日）の保持スイープの対象
 - プランモードの deferred セッションを再開するには `--resume` に加えて `--permission-prompt-tool` が必要（v2.1.246+）。また `-p` での再開は保存済み権限モードを復元しない（新規 `claude -p` と同じモードで開始）ため、必要なら `--permission-mode` / `--dangerously-skip-permissions` を再指定する
 - 複数の PreToolUse フックが異なる決定を返した場合の優先順位は `deny` > `defer` > `ask` > `allow`。`"defer"` では `updatedInput` / `additionalContext` は無視され、`permissionDecisionReason` はデバッグログにのみ書かれる
+
+**ユーザー操作が必要なツール（AskUserQuestion / ExitPlanMode、2026-11-09 巡回で反映）**: `-p` 非対話モードでは両ツールは permission host（`--permission-prompt-tool` / SDK の `canUseTool`）がある場合のみ提供される。PreToolUse フックがユーザーの代わりに回答するには `permissionDecision: "allow"` に加えて**回答を入れた `updatedInput` が必須**（`allow` 単独では不十分）。`AskUserQuestion` では元の `questions` 配列をそのまま返しつつ `answers`（質問文→回答のマップ）を追加する。なお **`_meta["anthropic/requiresUserInteraction"]` 付きの MCP ツールは、フックの `allow` では承認プロンプトをスキップできない**（`updatedInput` の有無を問わず）。
 
 #### PostToolUse
 
@@ -633,6 +649,10 @@ v2.1.133 以降、ツール実行コンテキストを持つイベント（`PreT
 `updatedMCPToolOutput` は MCP ツール専用の出力差し替えフィールド（全ツール対応の `updatedToolOutput` を推奨）。組み込みツールでは出力スキーマに合わない差し替え値は無視され元の出力が使われるが、MCP ツール出力はスキーマ検証なしで通る（2026-11-05 巡回で反映）。
 
 `classifierContext`（v2.1.236+）: `hookSpecificOutput.classifierContext` で auto mode 分類器宛ての注記をツール結果に添付できる（**1ツール呼び出しあたり 2,000 文字上限**）。設定元により重み付けが異なり、Claude Code 設定由来は未検証コンテキスト扱い、in-process Agent SDK コールバック由来はユーザー意図として扱われうる。async フックでは無視、読み取り専用呼び出しでは破棄。`updatedToolOutput` と同時返却可。
+
+**割り込み後の PostToolUse（v2.1.319+）**: ツール実行中にメッセージ送信・割り込みをした場合の挙動がキー別に規定された。`Ctrl+Enter`（ターン終了）ではツールが完走すれば PostToolUse フックはその結果に対して実行され、**10秒以内に完了する猶予**を持つ（ただし `!` コマンドをキュー済み・`CLAUDE_CODE_DISABLE_BACKGROUND_TASKS` でバックグラウンドタスク無効の場合は Esc と同じ扱い）。`Enter`（キュー送信）はターンを中断しないためフックは通常の `timeout` のまま。`Esc` ではフックは即座にキャンセルされる。10秒を過ぎると実行中の command フックは **`timeout` 設定に関わらず kill** される。長いフックは `async: true` で実行する（ただしブロック・出力書き換えは不可）。v2.1.319 より前は、メッセージでターンを中断するとフックはそもそも開始されず、実行中のフックも停止されていた。
+
+**matcher 選択の注意（2026-11-09 巡回で反映）**: `Edit|Write` matcher の PostToolUse フックは **Bash コマンドや外部プロセスが同じファイルを書き換えた場合は発火しない**（その用途は `FileChanged`）。全ツール対象なら matcher 省略＋`git status --porcelain` で自力検出する。
 
 `continueOnBlock`（v2.1.139+）: PostToolUse フックがブロック判定を出した際、拒否理由を Claude に戻してターンを継続させる（従来はターン停止）。
 
@@ -818,7 +838,7 @@ svn checkout https://svn.example.com/repo/trunk "$DIR" >&2 && echo "$DIR"
 
 | フィールド | 説明 | デフォルト |
 |:--|:--|:--|
-| `timeout` | タイムアウト（秒）。**`async: true` の command フックには適用されない**（バックグラウンドに入った後は Claude Code が強制終了しない）。`asyncRewake` のフックには引き続き適用される。`UserPromptSubmit` / **`PreModelSwitch`（v2.1.251+）** では command / http / mcp_tool の既定が 30 に、`MessageDisplay` では 10 に下がる。**`UserPromptSubmit` のタイムアウト時はフックがキャンセルされ出力は破棄、プロンプトは素通りする（Agent SDK コールバックフックのみブロック。§6.4 参照）**。`SessionEnd` は全フックで 1.5 秒の共通予算（予算は settings 内の最大 per-hook `timeout` まで自動で引き上がる・上限60秒。プラグイン提供フックの `timeout` は予算を上げない。`CLAUDE_CODE_SESSIONEND_HOOKS_TIMEOUT_MS` で明示上書き可能で、**この値は `timeout` 未指定の各フックのタイムアウトにもなる**。v2.1.268 より前は予算のみ上がり個別フックは1.5秒のままだった） | command / http / mcp_tool: 600, prompt: 30, agent: 60 |
+| `timeout` | タイムアウト（秒）。**`async: true` の command フックには適用されない**（バックグラウンドに入った後は Claude Code が強制終了しない）。`asyncRewake` のフックには引き続き適用される。`UserPromptSubmit` / **`PreModelSwitch`（v2.1.251+）/ `PostModelSwitch`** では command / http / mcp_tool の既定が 30 に、`MessageDisplay` では 10 に下がる。**`UserPromptSubmit` のタイムアウト時はフックがキャンセルされ出力は破棄、プロンプトは素通りする（Agent SDK コールバックフックのみブロック。§6.4 参照）**。`SessionEnd` は全フックで 1.5 秒の共通予算（予算は settings 内の最大 per-hook `timeout` まで自動で引き上がる・上限60秒。プラグイン提供フックの `timeout` は予算を上げない。`CLAUDE_CODE_SESSIONEND_HOOKS_TIMEOUT_MS` で明示上書き可能で、**この値は `timeout` 未指定の各フックのタイムアウトにもなる**。v2.1.268 より前は予算のみ上がり個別フックは1.5秒のままだった） | command / http / mcp_tool: 600, prompt: 30, agent: 60 |
 | `async` | バックグラウンド実行（command のみ）。決定系フィールド（`decision` / `permissionDecision` / `continue`）は無効。完了後の `additionalContext` / `systemMessage` は次の会話ターンで Claude に届く（ユーザーには表示されない）。JSON 応答は stdout 単独（複数行可、v2.1.295+）か単独の1行で出力し、型が合わないフィールドは破棄される。`-p` セッション終了時に実行中の async フックは kill され `cancelled` 扱い（2026-11-05 巡回で詳細反映） | `false` |
 | `asyncRewake` | バックグラウンド実行し、**exit 2 で Claude を起床させる**（セッションがアイドルでも即時）。stderr（空なら stdout）が system reminder として Claude に表示される。長時間バックグラウンド処理の失敗に反応させる用途。`timeout` は適用される（2026-11-05 巡回で反映） | `false` |
 | `once` | **初回の成功実行後**にフックを取り除く。失敗・exit code 2 によるブロック・タイムアウトの場合はフックが残り、次の一致イベントで再実行される。スキル frontmatter で宣言したフックのみ有効（settings ファイルとエージェント frontmatter では無視） | `false` |
@@ -849,6 +869,8 @@ matcher と組み合わせた2段階フィルタリング:
 - `"Edit(*.ts)"` — TypeScriptファイルへの編集
 - `"Bash(git push *)"` — git push コマンド
 - `"Write(**/config.json)"` — config.json への書き込み
+
+ファイルツールの `if` で `"Edit(src/**)"` のような**単一セグメントのディレクトリパターンはワーキングディレクトリ直下の `src` のみ**に一致する。任意の深さの `src` に一致させるには `"Edit(**/src/**)"` と書く（2026-11-09 巡回で反映）。
 
 ```json
 {
