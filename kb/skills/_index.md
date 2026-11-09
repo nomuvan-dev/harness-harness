@@ -1,6 +1,6 @@
 ---
 title: Agent Skills エコシステム
-last_patrol: "2026-11-03"
+last_patrol: "2026-11-10"
 standard: agentskills.io (46 platforms confirmed)
 tracked_skills: 22  # recommended.md の行数（Tier A 12 / Tier B 10）
 patrol_schedule: weekly (月曜)
@@ -16,15 +16,15 @@ Claude Code / Codex CLI で活用できる公式・コミュニティスキル�
 
 | サイト | 種別 | 役割 |
 |--------|------|------|
-| [claude.com/plugins](https://claude.com/plugins) | Anthropic公式 | プラグイン/スキルディレクトリ（**2026-11-03 確認: Claude Code 向け 528 プラグイン**（前回 549 から微減、掲載整理とみられる）。上位は Frontend Design・Superpowers・Code Review・Context7・Code Simplifier・Playwright の順で顔ぶれ変化なし。Anthropic 検証バッジ継続） |
-| [anthropics/skills](https://github.com/anthropics/skills) | Anthropic公式 | 公式スキル実装例（**186.7K stars**（+3.0K）。最終 push 2026-10-28。**2026-11-03 巡回: スキル追加・削除なし（19 スキル据え置き）**。唯一の変更は 2026-10-28 の #2087 で **mcp-builder が MCP TypeScript SDK v2 対応に改訂**（v1/v2 選択ガイド、v2 移行 codemod、self-check スクリプト追加。v1 はバグ/セキュリティ修正のみ）— MCP サーバー構築系ハーネスに mcp-builder を組み込む際は改訂後版を取得すること） |
+| [claude.com/plugins](https://claude.com/plugins) | Anthropic公式 | プラグイン/スキルディレクトリ（**2026-11-10 確認: Claude Code 向け 530 プラグイン**（前回 528 から微増）。Anthropic 検証バッジ継続） |
+| [anthropics/skills](https://github.com/anthropics/skills) | Anthropic公式 | 公式スキル実装例（**190.6K stars**（+3.9K）。最終 push 2026-11-06。**2026-11-10 巡回: スキル追加・削除なし（19 スキル据え置き）**。期間中の変更は 2026-11-06 の #2146 で **Office 系スキル（docx/pptx/xlsx 等）のライセンスが Apache 2.0 に変更**（商用再利用・ハーネスへの組み込み配布がしやすくなった）のみ。2026-10-28 の #2087 では **mcp-builder が MCP TypeScript SDK v2 対応に改訂**（v1/v2 選択ガイド、v2 移行 codemod、self-check スクリプト追加。v1 はバグ/セキュリティ修正のみ）— MCP サーバー構築系ハーネスに mcp-builder を組み込む際は改訂後版を取得すること） |
 | [developers.openai.com/codex/skills](https://developers.openai.com/codex/skills) | OpenAI公式 | Codex Skills仕様（learn.chatgpt.com/docs/build-skills へ 308 恒久リダイレクト） |
 | [learn.chatgpt.com/docs/build-plugins](https://learn.chatgpt.com/docs/build-plugins) | OpenAI公式 | **skill-only プラグイン作成の一次情報**（`.codex-plugin/plugin.json` + `skills/`、`@plugin-creator`）。GitHub カタログ停止後の実質的な正典 |
 | [openai/skills](https://github.com/openai/skills) | OpenAI公式 | **deprecated 継続**（28.5K stars、2026-11-03 確認。デフォルトブランチへのコミットは増えておらず、カタログ変更なし）。README が 2026-09-08 に更新され、後継案内が「**復活した openai/plugins**」＋ build-plugins ガイドに差し替わった（`$skill-installer` の手順は維持）。「二重の行き止まり」は解消 |
 | [openai/plugins](https://github.com/openai/plugins) | OpenAI公式 | **archive 解除（復活）を 2026-10-06 に確認**（7.3K stars、最終更新 2026-09-28、`isArchived: false`）。Codex プラグイン実例の公式キュレーションカタログとして再始動: `plugins/<name>/` + `.codex-plugin/plugin.json`、figma / notion / build-ios-apps / build-macos-apps / build-web-apps / expo / netlify / remotion / google-slides 等。マーケットプレイスは `.agents/plugins/marketplace.json`（API キーログイン用は `api_marketplace.json` で別） |
-| [skills.sh](https://skills.sh/) | コミュニティ | スキルディレクトリ兼リーダーボード（**2026-11-03 確認**: find-skills **4.2M** installs でトップ継続。grill-me **1.5M** で 2 位維持。heygen-com/hyperframes クラスタ（hyperframes-cli 1.4M / hyperframes 1.3M / media-use 1.3M）が 3・4・7 位を占有、agent-browser **1.3M** で 5 位。mattpocock 系（grill-with-docs 1.3M / improve-codebase-architecture 1.2M / tdd 1.2M）が中位継続。reddit-automation **1.2M** で 9 位（継続性確認済み）。frontend-design はトップ 10 圏外のまま） |
+| [skills.sh](https://skills.sh/) | コミュニティ | スキルディレクトリ兼リーダーボード（**2026-11-10 確認**: find-skills **4.3M** installs でトップ継続。grill-me **1.5M** で 2 位維持。heygen-com/hyperframes クラスタ（hyperframes-cli 1.5M / hyperframes 1.4M / media-use 1.4M）が 3・4・6 位、agent-browser **1.4M** で 5 位。**新顔: design-mobile-apps（designed-by-ai/skills）1.3M で 7 位**（初観測。継続性未確認のため次回巡回で推移を見る）。reddit-automation **1.3M** で 8 位（継続）。mattpocock 系（grill-with-docs 1.3M / improve-codebase-architecture 1.2M / tdd 1.2M）中位継続。frontend-design は 15 位（1.1M）でトップ 10 圏外のまま） |
 | [agentskills.io](https://agentskills.io/) | オープン標準 | Agent Skills仕様（SKILL.mdフォーマット）。仕様変更なし、Client Showcase 掲載プラットフォームは **46 で据え置き**（2026-10-06 にエントリ実カウントで再確認） |
-| [openai/codex-plugin-cc](https://github.com/openai/codex-plugin-cc) | OpenAI公式 | **新規追跡（2026-08-25）**。Claude Code から Codex を呼ぶ公式プラグイン（**34.6K stars**（2026-10-26 確認）、archive されておらず現役。最終 push 2026-07-08 のまま）。2026-08-24 の公式 changelog が `codex mcp-server` 非推奨の移行先として明示的に案内 |
+| [openai/codex-plugin-cc](https://github.com/openai/codex-plugin-cc) | OpenAI公式 | **新規追跡（2026-08-25）**。Claude Code から Codex を呼ぶ公式プラグイン（**35.0K stars**（2026-11-10 確認）、archive されておらず現役。最終 push 2026-07-08 のまま）。2026-08-24 の公式 changelog が `codex mcp-server` 非推奨の移行先として明示的に案内 |
 
 ## 推薦スキル概要
 

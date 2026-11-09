@@ -1,5 +1,27 @@
 # harness-harness 更新履歴
 
+## 2026-11-10 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code**: 新リリースなし（v2.1.319 のまま、公式 changelog ページも変更なし）。ドキュメント側の実質改訂は **settings-reference のみ**: sandbox の詳細キー 9 件の収載を確認し specs/claude/configuration.md の sandbox テーブルに追記 — `sandbox.network.allowUnixSockets` / `allowAllUnixSockets`（WSL2 では Windows interop ソケットも再開通する点に注意）/ `allowLocalBinding` / `tlsTerminate`（実験的 TLS 終端。`mask` 認証情報置換の前提。User or managed のみ）、`sandbox.credentials.allowPlaintextInject`、`sandbox.ignoreViolations`（違反レポートのみ抑止、ブロックは維持）、`sandbox.enableWeakerNestedSandbox`（非特権 Docker 内 bubblewrap 用）、`sandbox.enableWeakerNetworkIsolation`（macOS trustd 到達許可）、`sandbox.filesystem.allowManagedReadPathsOnly`（Managed のみ）。commands / claude-tag ページの差分は HTML 配信ノイズのみ。
+
+**Codex CLI**: 安定版・SDK とも新リリースなし（0.167.0 のまま、プレリリースも 0.169.0-alpha.3〔2026-11-07〕から進行なし）。hooks / build-plugins / app-server / changelog ページのハッシュ変化はビルド ID 等のノイズで、hooks の 14 イベント構成・Plain-text aliases 等は 2026-11-09 反映済みの内容と一致。codex-plugin-cc も push なし（stars 35.0K に増のみ）。
+
+**スキルエコシステム（Phase 3.5、前回 2026-11-03 から7日経過で実施）**:
+- anthropics/skills: 190.6K stars（+3.9K）。スキル追加・削除なし（19 据え置き）。#2146（2026-11-06）で **Office 系スキルのライセンスが Apache 2.0 に変更**（ハーネスへの組み込み配布がしやすくなった）
+- openai/skills: コミットなし（deprecated 継続）
+- claude.com/plugins: 530 プラグイン（前回 528）
+- skills.sh: find-skills 4.3M でトップ継続。**新顔 design-mobile-apps（designed-by-ai/skills）1.3M で 7 位初観測**（継続性未確認のため推薦見送り、次回巡回で推移確認）。agent-browser 1.4M で 5 位安定（Tier A 維持）
+- agentskills.io: 仕様変更なし
+
+### 更新ファイル
+
+- specs/claude/changelog.md（巡回ヘッダ更新）
+- specs/claude/configuration.md（sandbox 詳細キー 9 件追記）
+- specs/codex/changelog.md（新リリースなしの記録）
+- kb/skills/_index.md（last_patrol 2026-11-10、stars / トレンド / ライセンス変更反映）
+
 ## 2026-11-09 — 公式ドキュメント巡回
 
 ### 検出・更新
