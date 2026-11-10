@@ -3,7 +3,9 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-11-10（**新リリースなし。v2.1.319 のまま**（公式 changelog ページも前回から変更なし）。ドキュメント側の実質的改訂は settings-reference のみ: **sandbox の詳細キー 9 件の収載を確認し specs/claude/configuration.md に反映** — `sandbox.network.allowUnixSockets` / `allowAllUnixSockets` / `allowLocalBinding` / `tlsTerminate`（実験的 TLS 終端。`mask` の前提）、`sandbox.credentials.allowPlaintextInject`、`sandbox.ignoreViolations`、`sandbox.enableWeakerNestedSandbox` / `enableWeakerNetworkIsolation`、`sandbox.filesystem.allowManagedReadPathsOnly`。commands / claude-tag ページの変更はノイズのみ。Codex CLI も新安定版なし（0.167.0 のまま、プレリリースは 0.169.0-alpha.3〔2026-11-07〕から進行なし。公式 changelog ページ・hooks / build-plugins / app-server ドキュメントとも実質差分なし）。前回2026-11-09の巡回要約は下記参照。）
+最終更新: 2026-11-11（**v2.1.321**（2026-11-09）と **v2.1.322**（2026-11-10）を反映。ハーネス観点の目玉は **(1) Claude Fable 5.2 追加**（`claude-fable-5-2`。1Mコンテキスト・$8/$40 per Mtok・キャッシュ読み $0.20/Mtok。`fable` エイリアスの既定解決先に〔gateway セッションは Fable 5 のまま〕、保存済み Fable 5.1 選択は `fable` へ自動移行〔Pro/Max 即時・Team/Enterprise は組織許可後。戻すには `/model claude-fable-5-1`〕、fast mode 対応〔保存済み `fastMode: true` の自動 ON は Fable 5.2 使用中に `/fast` した場合のみ〕、advisor ペアに追加〔Fable 5.2 メインは Fable 5.2 のみ〕、`best` エイリアスは `opus` と同じ解決に変更）、**(2) mods の権限挙動変更**（Claude が書いた mod は auto / bypass モードで確認なしに有効化〔managed `allowUnsandboxedCommands: false` / `allowManagedDomainsOnly` 下でも。`dontAsk` ではロードされない〕＋ mod 自身のツール呼び出し `$.tool.call` / `$.mcp.call` は ask ルール・`dontAsk`・`-p` でも権限プロンプトを出さない〔deny ルールと組織ポリシーは引き続き適用〕＋ `breakPromptCache: true` で実行中会話のシステムプロンプトセクション / ツール説明を変更可能に）、**(3) `claude remote-control` に `--settings <file>`**（起動する全セッションに設定ファイル適用。ファイル変更時は再起動まで新セッション開始せず）、**(4) セキュリティ修正多数**（MCP OAuth リダイレクトで refresh token 等が別ホストへ送られる問題、読み取り専用 Bash コマンドのサンドボックス外実行、`cp`/`mv` のディレクトリ書き込み先への deny ルール / protected-file プロンプト不適用等）、**(5) ネストスキルのロード変更**（`~/.claude/plugins` 内の `.claude/skills` は非ロード・headless セッションは `.claude/skills` の変更を再読込〔`CLAUDE_CODE_PLUGIN_DIR_WATCH=0` でオフ〕）、**(6) v2.1.322 で Vertex の fast mode**（global/us/eu。拒否時は標準速度にフォールバック）。ドキュメント側の改訂: settings-reference に `permissions.denyInsteadOfPrompting` 正式収載（User or managed。managed の `false` より user の `true` が優先）＋ fast mode 対応モデルに Fable 5.2、hooks に MCP ツール巨大結果の「verdict なし」挙動（PreToolUse は呼び出し拒否・他イベントは非ブロッキング。16MiB 超の答えはスキップ→拒否に修正）と長時間プログラムのバックグラウンド起動ガイド、model-config の fable/best エイリアス刷新、advisor ペア表に Fable 5.2、workflows の usage-limit 一時停止が Desktop Code タブ対応＋「Failed at a usage limit」(v2.1.318+) の再実行細則、interactive-mode に Ctrl+R のペースト内容検索（v2.1.314+）、cli-reference に `claude rc` エイリアス、sandboxing にサブディレクトリ起動時の `index.lock` エラー対処、mods/reference に `breakPromptCache`。specs/claude/configuration.md・hooks.md・skills-and-commands.md に反映。Codex CLI は新安定版なし（0.167.0 のまま。プレリリースは 0.169.0-alpha.7〔2026-11-09〕＋ 0.167.0-alpha.4.1 まで進行。公式 changelog ページ・hooks / build-plugins / app-server ドキュメントの差分は特集記事差し替えのみ）。前回2026-11-10の巡回要約は下記参照。）
+
+前回: 2026-11-10（**新リリースなし。v2.1.319 のまま**（公式 changelog ページも前回から変更なし）。ドキュメント側の実質的改訂は settings-reference のみ: **sandbox の詳細キー 9 件の収載を確認し specs/claude/configuration.md に反映** — `sandbox.network.allowUnixSockets` / `allowAllUnixSockets` / `allowLocalBinding` / `tlsTerminate`（実験的 TLS 終端。`mask` の前提）、`sandbox.credentials.allowPlaintextInject`、`sandbox.ignoreViolations`、`sandbox.enableWeakerNestedSandbox` / `enableWeakerNetworkIsolation`、`sandbox.filesystem.allowManagedReadPathsOnly`。commands / claude-tag ページの変更はノイズのみ。Codex CLI も新安定版なし（0.167.0 のまま、プレリリースは 0.169.0-alpha.3〔2026-11-07〕から進行なし。公式 changelog ページ・hooks / build-plugins / app-server ドキュメントとも実質差分なし）。前回2026-11-09の巡回要約は下記参照。）
 
 前回: 2026-11-09（**v2.1.319**（2026-11-06）を反映。ハーネス観点の目玉は **(1) MCPタスクのターミナル対応**（タスク実行のツール呼び出しを即バックグラウンド化・完了時に結果通知。feature-flag 取得なしでも動作＝Bedrock / Vertex / Foundry / LLM gateway / `DISABLE_TELEMETRY` 下でも有効。`CLAUDE_CODE_DISABLE_MCP_TASK_BACKGROUND=1` で待機、`CLAUDE_CODE_DISABLE_MCP_TASKS=1` で無効化）、**(2) `permissions.denyInsteadOfPrompting`**（権限プロンプト待ちになる呼び出しを拒否してターン継続。ターミナル・サブエージェント・チームメイト）、**(3) auto モードのサーバーチェック厳格化**（テレメトリ / フラグオフ時はローカル分類器へのフォールバックなし＝確認か拒否。`CLAUDE_CODE_AUTO_MODE_SERVER=0` で旧挙動。プロジェクト settings / プラグインからの再有効化不可）、**(4) セキュリティ修正多数**（Bash 権限バイパス〔環境変数プレフィックスでコマンド隠蔽〕、worktree 作成時サンドボックス脱出、`sed` の権限チェックスキップ、quoted words の deny/ask ルールすり抜け、`/rewind` の symlink 越し復元等）、**(5) 自己ペース `/loop` の終了挙動変更**（再スケジュールなしのターン終了でループ終了。`CLAUDE_CODE_LOOP_KEEPALIVE=1` で旧挙動）、**(6) `CLAUDE_CODE_DISABLE_FEATURE_FLAGS`**（テレメトリを切らずフラグ取得のみ停止）。ドキュメント側の改訂: **(a) hooks（実質差分11件を反映）** — PostToolUse の割り込み後実行（10秒猶予・timeout 無視で kill・async 回避、v2.1.319 新設節）、deferred ツール利用不能時の挙動変更（pending 中はプロンプト不達・exit 1。破棄は `CLAUDE_CODE_DROP_UNAVAILABLE_DEFERRED_TOOL=1`。旧記述は陳腐化していたため修正）、PermissionRequest の decision 制御表（`interrupt`・allow は deny ルールを上書き不可・`updatedInput` 再評価）＋プロンプト不可セッションでの発火とデフォルト deny＋permission update エントリ型6種 / destination 4値表、ユーザー操作必須ツール（AskUserQuestion / ExitPlanMode は allow+`updatedInput` 必須、`requiresUserInteraction` ツールはフック allow でスキップ不可）、`if` 単一セグメントパターンは cwd 直下のみ、PostToolUse の `Edit|Write` matcher は Bash / 外部書き換えで非発火（FileChanged を使う）、Stop はユーザー割り込みで非発火、timeout 既定30秒対象に PostModelSwitch 追加、**(b) configuration / mcp / tools** — 上記 (1)(2)(3)(5)(6) の変数・設定キーを反映＋`CLAUDE_CODE_CONFIG_LOCK_WAIT_MS`、MCP タスクの時間制限と `outcome unknown.`（再呼び出しで二重実行リスク）、`/context` テーブル短縮、`CLAUDE_CODE_AUTO_MODE_SERVER` の版数を公式記載（v2.1.271+ / direct API v2.1.281+）に整合。desktop-ios-simulator はデスクトップ UI 挙動2点（同意拒否時はデバイス非アタッチ・非起動に変更、ペイン最小化 / クローズの新セクション）のみで specs 本文反映不要、commands / claude-tag ページはノイズのみ。**Codex 側も公式 hooks ドキュメント拡充を反映**: 新イベント `PreModelRequest` / `PostModelRequest`（12→14種）、PreToolUse `updatedInput`、PermissionRequest 出力契約（deny 優先・fail closed）、共通入力 `permission_mode`、SessionStart `fork` ソース、SessionEnd 発火条件（30分アイドル等・同期3秒上限）、async 同時実行上限8、code mode への適用表、app-server のリモート TUI / WS 認証 / `networkApprovalContext`（specs/codex/configuration.md・commands.md に反映）。Codex CLI は新安定版なし（0.167.0 のまま、プレリリースは 0.169.0-alpha.3〔2026-11-07〕まで進行）。前回2026-11-07の巡回要約は下記参照。）
 
@@ -33,6 +35,48 @@
 
 
 ---
+
+## v2.1.322 (2026-11-10)
+
+- **Vertex で fast mode が利用可能に**: global / us / eu リージョン。Vertex が拒否した場合は標準速度へフォールバック
+
+## v2.1.321 (2026-11-09)
+
+**Claude Fable 5.2 追加（`fable` エイリアスの既定解決先に）・mods の権限挙動変更（auto/bypass で自動有効化・mod のツール呼び出しは権限プロンプトなし・`breakPromptCache`）・`claude remote-control --settings`・セキュリティ修正多数（MCP OAuth トークン流出・サンドボックス外実行・`cp`/`mv` の deny 迂回）**
+
+### 新機能
+
+- **Claude Fable 5.2（`claude-fable-5-2`）**: Fable の新既定モデル。1M コンテキスト、$8/$40 per Mtok、キャッシュ読み $0.20/Mtok
+- **`claude remote-control --settings <file>`**: 起動する全セッションに設定ファイルを適用。ファイルが変更されると `claude remote-control` を再起動するまで新セッションを開始しない
+- [VSCode] auth token と API キーが両方設定されている場合、プロンプト欄上に警告を表示（ターミナルの起動時警告と同等）
+
+### 変更
+
+- **保存済みの Fable 5.1 モデル選択は `fable` エイリアスへ移行**: Pro / Max は即時、Team / Enterprise は組織の許可後。Fable 5.1 に戻すには `/model claude-fable-5-1`
+- **Claude が書いた mod は auto / bypass モードで確認なしに有効化**（managed `allowUnsandboxedCommands: false` / `allowManagedDomainsOnly` 下でも）。`dontAsk` モードではロードされない
+- **mod 自身のツール呼び出し（`$.tool.call` / `$.mcp.call`）は権限プロンプトを出さない**: 自分の ask ルール下・`dontAsk`・`-p` 実行でも。deny ルールと組織ポリシーは引き続き適用
+- **ネストスキルのロード変更**: `~/.claude/plugins` 内の `.claude/skills` フォルダは、そこで作業していてもロードされない。headless セッションは `.claude/skills` のファイル変更で mod を再読込（`CLAUDE_CODE_PLUGIN_DIR_WATCH=0` でオフ）
+- `/fast`・`/config`・`/model` の fast mode ラベルが現在のモデル名を表示（対応モデル時）。VS Code の「(Opus only)」表記を削除
+- managed `extraKnownMarketplaces`: 宣言された名前は他ソースから追加不可・他所由来のエントリは非表示・宣言マーケットプレースのプラグインはそこから再インストール。未宣言ソースによる乗っ取りは保存データを `cleanupPeriodDays` の間退避（`claude plugin restore-set-aside` で復元）
+- `AskUserQuestion` の `claude -p` / SDK セッションで、ホストの権限回答が未文書化の `afkTimeoutMs` 入力フィールドを設定する場合は拒否
+- Claude in Chrome ツールをホストアプリ（Desktop の Code タブ等）が提供する場合も組織の Claude in Chrome ポリシーに従う
+- バックグラウンドコマンド通知と TaskStop 結果は 1,000 文字超のコマンドを先頭と末尾のみ表示（コンテキスト節約）
+- アカウントメールのチェックは「メールアドレスを含み User-Agent を名指しするシェルコマンド」のみを確認なしで拒否する形に変更（他のコマンド・スケジュール実行がプロンプトで止まらなくなった）
+- Remote Control セッションは開始フォルダを維持（接続クライアントから別フォルダへの移動不可）
+- Cowork クラウドセッション: PostToolUse フックが AskUserQuestion の回答や ExitPlanMode の計画を差し替え不可に（Claude は原本を読む）
+- `/model` ピッカー: 「More models」は全行の下の無番号行になり、旧モデルを開いても他の番号が振り直されない
+
+### セキュリティ・重要修正
+
+- **MCP OAuth リクエストがリダイレクト時に refresh token 等のシークレットを別ホストへ送っていた問題**
+- **読み取り専用 Bash コマンドが権限プロンプトなしでサンドボックス外実行されるケース**、**Bash 権限チェックが誤ったフォルダ基準でファイル書き込みを判定しプロンプトを出さないケース**
+- **`cp` / `mv` のディレクトリへの書き込み先ファイルに deny ルール / protected-file プロンプトが適用されない問題**（パス表記の `/bin/cp` 等も同じチェック対象に）
+- fallback モデルが最初のモデルのブロック時に拒否や「停止した応答」への言及を返すことがある問題
+- `--continue` 系: 大型ファイルの単一行読み込み繰り返しによる長セッションの高メモリ使用、TLS ハンドシェイク途中断での「API Error: EPROTO」ターン終了（部分返信保持 / リトライに修正）
+- fast mode がレート制限・過負荷時に返信喪失・モデル切替・数分リトライしていた問題（同一モデルの標準速度を先に試行）
+- Bash コマンドが複数同時送信時に誤ったフォルダで実行されることがある問題（先行コマンドの `cd` の影響）
+- `PreToolUse` `mcp_tool` フック: stdio / HTTP MCP サーバーで答えが 16 MiB 超のときスキップされていた問題（ツール呼び出し拒否に修正）
+- 起動時 git status が失敗時に「クリーン」と読める問題（「利用不可」表示に修正）、最初のファイルが未ステージでもステージ済みと表示される問題
 
 ## v2.1.319 (2026-11-06)
 

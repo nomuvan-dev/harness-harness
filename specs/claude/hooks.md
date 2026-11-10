@@ -224,7 +224,7 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 - `Stop` / `SubagentStop` / `TaskCompleted` / プラグインの `UserPromptSubmit`: exit 2 で stdout 無し・stderr が `No such file or directory` 等のファイル欠落メッセージの場合は**非ブロッキングエラー**として扱われる（存在しないスクリプトのフックが永遠にブロックし続けるのを防ぐ）
 - `PermissionRequest`: exit 2 は無効（`decision` オブジェクトで deny する）
 - `Elicitation` / `ElicitationResult`: `hookSpecificOutput` は exit 0 のときのみ適用
-- **バックグラウンドプロセスを起動するフック**: 判定はバックグラウンド起動**前に** stdout へ出力し、バックグラウンドプロセスの stdout/stderr はリダイレクトすること。allow を出した後に未リダイレクトのバックグラウンドプロセスを残すと、Claude Code は `refusing to honor the suspect capture` エラーでツール呼び出しをブロックする
+- **バックグラウンドプロセスを起動するフック**: 判定はバックグラウンド起動**前に** stdout へ出力し、バックグラウンドプロセスの stdout/stderr はリダイレクトすること。allow を出した後に未リダイレクトのバックグラウンドプロセスを残すと、Claude Code は `refusing to honor the suspect capture` エラーでツール呼び出しをブロックする。dev サーバー等の**長時間動くプログラムをフックから起動してセッション継続中も走らせ続けること自体は可能**（2026-11-11 巡回で公式ドキュメントに明文化を確認）: スクリプト / シェル形式コマンド内でバックグラウンド実行し、stdout / stderr をリダイレクトする（例 `npm run dev > dev-server.log 2>&1 &`）。リダイレクトしないと、`async` でないフックは自身のプロセス終了後も最大10秒完了扱いにならない
 - **Windows（Git Bash 不在）**: シェル形式の `PreToolUse` / `PermissionRequest` command フックは 0 / 2 以外の exit code を verdict と見なさず、`onFailure` 未設定でも失敗がツール呼び出しをブロックしうる（エラーに `blocking because Git Bash wasn't found...` を含む。v2.1.309 でメッセージ改訂）
 
 > **stdout を JSON と読むかプレーンテキストと読むかの判定（ドキュメント明文化）**: 前後の空白を無視して、
@@ -328,6 +328,8 @@ MCP サーバーのツールを直接呼び出す。シェル経由のラッパ�
 - `server`: プラグイン同梱サーバーはスコープ付き名 `plugin:<plugin-name>:<server-name>` で指定する（素のサーバーキーではない）
 
 **結果の読み取り**: ツールのテキスト出力は command フックの stdout と同じルール（exit code 0 のパースルール）で読まれる。ツールが `isError: true` を返した場合は非ブロッキングエラーとなり実行は継続する。
+
+**巨大な結果で verdict が読めない場合（v2.1.321 / 2026-11-11 巡回で反映）**: MCP サーバーからのメッセージが大きすぎて答えを読めなかった場合（`gave no answer that could be read, because a message from the server was too large` / `answered without its text, which happens when a result is too large`）、フックは **verdict なし**となる。`PreToolUse` ではチェック対象のツール呼び出しが**拒否**され（v2.1.321 以前はフックがスキップされて素通りだった）、`UserPromptSubmit` / `PostToolUse` / `Stop` 等の他イベントでは非ブロッキングエラー。恒常的に起きる場合はツールの返すデータを減らすか、フックの `tool` / `input` を変えて答えを小さくする。なお stdio / HTTP MCP サーバー上の `PreToolUse` `mcp_tool` フックは、答えが 16 MiB 超のときスキップされていたのが v2.1.321 で拒否に修正された。
 
 **サーバー接続待機（2026-09-28 リファレンス改訂で明文化）**: 以前は「サーバーが接続済みでなければならない」とされていたが、接続中のサーバーを待つ動作に改訂された。
 
