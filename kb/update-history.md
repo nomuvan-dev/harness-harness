@@ -1,5 +1,24 @@
 # harness-harness 更新履歴
 
+## 2026-11-11 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code**: **v2.1.321**（2026-11-09）・**v2.1.322**（2026-11-10）の2リリースを反映。目玉は (1) **Claude Fable 5.2 追加**（`fable` エイリアスの新既定解決先。1Mコンテキスト・$8/$40 per Mtok。保存済み Fable 5.1 選択の自動移行、fast mode 対応、advisor ペア追加、`best` エイリアスは `opus` 解決に変更）、(2) **mods の権限挙動変更**（auto/bypass で Claude 作成 mod の自動有効化、mod ツール呼び出しの権限プロンプト省略、`breakPromptCache` による実行中会話のシステムプロンプト/ツール説明変更）、(3) `claude remote-control --settings`、(4) セキュリティ修正多数（MCP OAuth トークン流出・サンドボックス外実行・`cp`/`mv` の deny 迂回）、(5) v2.1.322 で Vertex の fast mode。ドキュメント側: settings-reference に `permissions.denyInsteadOfPrompting` 正式収載、hooks に MCP ツール巨大結果の「verdict なし」挙動＋長時間プログラムのバックグラウンド起動ガイド、model-config の fable/best エイリアス刷新、advisor 表に Fable 5.2、workflows の usage-limit 一時停止の Desktop Code タブ対応、interactive-mode の Ctrl+R ペースト内容検索、cli-reference の `claude rc` エイリアス、sandboxing の `index.lock` 対処、mods/reference の `breakPromptCache`。claude-tag ページは SPA シェル化によるノイズのみ。
+
+**Codex CLI**: 安定版・SDK とも新リリースなし（0.167.0 のまま。プレリリースは 0.169.0-alpha.7 / 0.167.0-alpha.4.1〔いずれも 2026-11-09〕まで進行）。changelog / hooks / build-plugins / app-server ページの差分は特集記事差し替えのみ。
+
+**スキルエコシステム（Phase 3.5）**: 前回巡回 2026-11-10 から7日以内のためスキップ。
+
+### 更新ファイル
+
+- specs/claude/changelog.md（v2.1.321 / v2.1.322 セクション追加・巡回ヘッダ更新）
+- specs/claude/configuration.md（denyInsteadOfPrompting 正式収載、fable/best エイリアス解決、fastMode の Fable 5.2 / Vertex 対応、advisor ペア表）
+- specs/claude/hooks.md（MCP ツール巨大結果の verdict なし挙動、長時間プログラムのバックグラウンド起動ガイド）
+- specs/claude/skills-and-commands.md（mods の `breakPromptCache`）
+- specs/codex/changelog.md（巡回ヘッダ更新）
+- kb/update-history.md（本記録）
+
 ## 2026-11-10 — 公式ドキュメント巡回
 
 ### 検出・更新
