@@ -4,7 +4,9 @@
 公式: https://learn.chatgpt.com/docs/changelog
 （2026-08-15 時点で `https://developers.openai.com/codex/changelog` は上記へ 308 恒久リダイレクト）
 
-最終更新: 2026-11-11（安定版・SDK とも新リリースなし。安定版 CLI は 0.167.0 のまま、GitHub リリースタグは 0.169.0-alpha.7（2026-11-09）と 0.167.0-alpha.4.1（2026-11-09）までプレリリースのみ進行。公式 changelog ページ・hooks / build-plugins / app-server ドキュメントの差分は特集記事の差し替え（Astra → ModRetro Chromatic）のみで実質変更なし。前回2026-11-10の巡回要約は下記参照。）
+最終更新: 2026-11-12（**安定版 CLI 0.167.1**（2026-11-10）リリース。差分はコミット2件のみ: 通常の OpenAI Responses への opt-in incremental tools 追加（#59832）とレガシー incremental tools の Amazon Bedrock プロバイダ限定化（#60040）。GitHub リリースノート本文は空（compare リンクのみ）、公式 changelog ページには 0.167.1 掲載済み（記載は「bug fixes and improvements」のみ）。GitHub プレリリースは 0.169.0-alpha.11（2026-11-11）まで進行。hooks ドキュメントはクラウドオーケストレーション節の見出し再構成（Hooks with cloud orchestration / Managed hooks in local Codex に分割、ハンドラは workspace admin が Agent Security で設定という表現追加）のみで新事実なし、build-plugins / app-server / codex-plugin-cc はノイズ。前回2026-11-11の巡回要約は下記参照。）
+
+前回: 2026-11-11（安定版・SDK とも新リリースなし。安定版 CLI は 0.167.0 のまま、GitHub リリースタグは 0.169.0-alpha.7（2026-11-09）と 0.167.0-alpha.4.1（2026-11-09）までプレリリースのみ進行。公式 changelog ページ・hooks / build-plugins / app-server ドキュメントの差分は特集記事の差し替え（Astra → ModRetro Chromatic）のみで実質変更なし。前回2026-11-10の巡回要約は下記参照。）
 
 前回: 2026-11-10（安定版・SDK とも新リリースなし。安定版 CLI は 0.167.0 のまま、GitHub リリースタグも 0.169.0-alpha.3（2026-11-07）から進行なし。公式 changelog ページの最新エントリも 0.167.0（2026-11-06）で変わらず。hooks / build-plugins / app-server ドキュメントのハッシュ変化はビルド ID 等のノイズのみ（hooks の 14 イベント・Plain-text aliases 等は 2026-11-09 反映済み内容と一致）。前回2026-11-09の巡回要約は下記参照。）
 

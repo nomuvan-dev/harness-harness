@@ -1,5 +1,25 @@
 # harness-harness 更新履歴
 
+## 2026-11-12 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code**: 本体の新リリースなし（v2.1.322 のまま、changelog ページも変更なし）。代わりにドキュメント側の実質改訂が広範囲に検出され、矛盾3件を修正＋積み残し多数を反映。(1) **model-config**: `claude-fable-5` プレフィックスが Fable 5.2 も許可（specs は 5/5.1 のみで矛盾→修正）、**Mantle model IDs** 節新設、**Fable usage credits 同意フロー**（Remote Control/バックグラウンド/チームメイトでは dialogExpiry まで保留、`-p`/SDK は無確認課金）、Fable 5.1→`fable` 自動移行の詳細（Ultra 含む対象プラン・`(auto-updated)` 表示・effort リセット・適用除外）、組織 effort 上限の警告出力先（対話セッションは debug log 行き。specs が逆で矛盾→修正）、Foundry の opus→Opus 4.6 解決。(2) **cloud-environments**: 「API credentials」が **Network secrets** に改名され Pro/Max/Ultra/Team/Enterprise 全プラン対応（specs は Pro/Max 限定で矛盾→修正）、Secret type 拡張・`Not sent` マーカー、リソース上限（4 vCPU/16GB/30GB）と時間上限の整理。(3) **memory**: MEMORY.md 読み込み上限が「200行または25KBの早い方」に、オートメモリ frontmatter（`type` 4種・`modified` 自動記録）、rules symlink の外部インポート承認とネットワークパス（UNC 等）拒否、rule frontmatter は `paths` のみ解釈。(4) **tools-reference**: 非 UTF-8 ファイルの Edit/NotebookEdit 不可・Write の U+FFFD 拒否挙動。(5) **hooks**: `shell` 既定値の Windows 例外（Git Bash 無→powershell）、Notification の約6秒ゲートがターミナルにも適用、**ワークスペース信頼**（-p/SDK はダイアログなしで未信頼リポジトリのフックが走る）、MessageDisplay の入出力仕様、Agent 完了時 tool_response テレメトリ、permission update の rules エントリ型、exec form の Windows .cmd/.bat 制約ほか14件。(6) **sandbox/managed 積み残し**: `sandbox.credentials.envVars`・`filesystem.denyWrite` キー収載、`filesystem.disabled` のソース制限と残存保護、managed fail-closed 細則、managed-settings.d/ マージ規則、auto モードのコマンド単位許可ドメイン（v2.1.271+）、ローカルアドレス解決拒否・Seatbelt 等の実挙動。(7) **mods reference**: `Text` の typography props 4種（v2.1.299+）と `bold` 非推奨。(8) **docs 構造変化**: /code-review が6ページに分割、claude-tag が claude.com/docs/claude-tag/ へ移設、whats-new/* が llms.txt から消滅、新規ページ（auto-mode-classifier-billing、hipaa-setup 等）13件を次回巡回対象に登録。
+
+**Codex CLI**: **安定版 0.167.1**(2026-11-10) リリース。差分はコミット2件のみ（通常の OpenAI Responses への opt-in incremental tools 追加 #59832、レガシー incremental tools の Bedrock 限定化 #60040）。プレリリースは 0.169.0-alpha.11（2026-11-11）まで進行。hooks ドキュメントはクラウドオーケストレーション節の見出し再構成のみで新事実なし、build-plugins / app-server / codex-plugin-cc はノイズ。
+
+**スキルエコシステム（Phase 3.5）**: 前回巡回 2026-11-10 から7日以内のためスキップ。
+
+### 更新ファイル
+
+- specs/claude/configuration.md（矛盾3件修正、Mantle/usage credits/クラウド環境上限/オートメモリ/rules symlink/sandbox・managed 積み残し）
+- specs/claude/hooks.md（shell 既定値、Notification 6秒ゲート、ワークスペース信頼、MessageDisplay ほか）
+- specs/claude/tools.md（非 UTF-8 ファイルの Edit/Write 挙動）
+- specs/claude/skills-and-commands.md（mods Text typography props、/code-review 6ページ分割注記）
+- specs/claude/changelog.md（巡回ヘッダ更新）
+- specs/codex/changelog.md（0.167.1 反映）
+- kb/update-history.md（本記録）
+
 ## 2026-11-11 — 公式ドキュメント巡回
 
 ### 検出・更新
