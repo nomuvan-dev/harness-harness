@@ -4,7 +4,9 @@
 公式: https://learn.chatgpt.com/docs/changelog
 （2026-08-15 時点で `https://developers.openai.com/codex/changelog` は上記へ 308 恒久リダイレクト）
 
-最終更新: 2026-11-12（**安定版 CLI 0.167.1**（2026-11-10）リリース。差分はコミット2件のみ: 通常の OpenAI Responses への opt-in incremental tools 追加（#59832）とレガシー incremental tools の Amazon Bedrock プロバイダ限定化（#60040）。GitHub リリースノート本文は空（compare リンクのみ）、公式 changelog ページには 0.167.1 掲載済み（記載は「bug fixes and improvements」のみ）。GitHub プレリリースは 0.169.0-alpha.11（2026-11-11）まで進行。hooks ドキュメントはクラウドオーケストレーション節の見出し再構成（Hooks with cloud orchestration / Managed hooks in local Codex に分割、ハンドラは workspace admin が Agent Security で設定という表現追加）のみで新事実なし、build-plugins / app-server / codex-plugin-cc はノイズ。前回2026-11-11の巡回要約は下記参照。）
+最終更新: 2026-11-13（**安定版 CLI 0.167.2**（2026-11-11）リリース。内容は1件のみ: **Google Cloud Vertex AI でツール更新のインクリメンタル送信が既定有効に**（opt-out は `config.toml` の `[features]` に `incremental_tools_legacy_gcp = false`。#60617 / #60848）。公式 changelog ページにも 0.167.2 掲載済み。あわせて **ChatGPT for iOS 1.2026.307**（2026-11-10）掲載: フルスクリーンコンポーザーへの画像・ファイルのペースト、送信済みプロンプトからのファイル添付オープン、Windows ホストのフォルダピッカーでのドライブ切り替え、注釈メモの音声入力、iPhone Duo でタスクリスト非表示のまま現在タスク継続等。GitHub プレリリースは 0.170.0-alpha.2（2026-11-12）まで進行。前回2026-11-12の巡回要約は下記参照。）
+
+前回: 2026-11-12（**安定版 CLI 0.167.1**（2026-11-10）リリース。差分はコミット2件のみ: 通常の OpenAI Responses への opt-in incremental tools 追加（#59832）とレガシー incremental tools の Amazon Bedrock プロバイダ限定化（#60040）。GitHub リリースノート本文は空（compare リンクのみ）、公式 changelog ページには 0.167.1 掲載済み（記載は「bug fixes and improvements」のみ）。GitHub プレリリースは 0.169.0-alpha.11（2026-11-11）まで進行。hooks ドキュメントはクラウドオーケストレーション節の見出し再構成（Hooks with cloud orchestration / Managed hooks in local Codex に分割、ハンドラは workspace admin が Agent Security で設定という表現追加）のみで新事実なし、build-plugins / app-server / codex-plugin-cc はノイズ。前回2026-11-11の巡回要約は下記参照。）
 
 前回: 2026-11-11（安定版・SDK とも新リリースなし。安定版 CLI は 0.167.0 のまま、GitHub リリースタグは 0.169.0-alpha.7（2026-11-09）と 0.167.0-alpha.4.1（2026-11-09）までプレリリースのみ進行。公式 changelog ページ・hooks / build-plugins / app-server ドキュメントの差分は特集記事の差し替え（Astra → ModRetro Chromatic）のみで実質変更なし。前回2026-11-10の巡回要約は下記参照。）
 

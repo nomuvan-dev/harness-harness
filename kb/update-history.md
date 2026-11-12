@@ -1,5 +1,22 @@
 # harness-harness 更新履歴
 
+## 2026-11-13 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code**: 本体の新リリースなし（v2.1.322 のまま、changelog ページも変更なし）。ドキュメント側の実質差分は skills / commands ページの1点のみ: **`/claude-api` に新サブコマンド `latency-optimize`**（v2.1.319+。既存の Claude API コードの時間消費箇所を特定し、待ち時間を減らす変更を提案）。前回巡回で登録した新規ページ群（code-review-* 6ページ、plugins/mods/* 5ページ、claude-tag、auto-mode-classifier-billing、hipaa-setup）はハッシュ不一致を示したが、前回はページ本体未保存（fetch 経路差）で、本体保存済みの34ページが全一致していることから false positive と判断。今回ページ本体を保存し次回から差分検出可能に。
+
+**Codex CLI**: **安定版 0.167.2**（2026-11-11）リリース。内容は Google Cloud Vertex AI でのツール更新インクリメンタル送信の既定有効化1件のみ（opt-out: `[features]` の `incremental_tools_legacy_gcp = false`）。ChatGPT for iOS 1.2026.307（2026-11-10）も changelog 掲載。プレリリースは 0.170.0-alpha.2（2026-11-12）まで進行。
+
+**スキルエコシステム（Phase 3.5）**: 前回巡回 2026-11-10 から7日以内のためスキップ。
+
+### 更新ファイル
+
+- specs/claude/skills-and-commands.md（/claude-api に latency-optimize 追加）
+- specs/claude/changelog.md（巡回ヘッダ更新）
+- specs/codex/changelog.md（0.167.2 反映）
+- kb/update-history.md（本記録）
+
 ## 2026-11-12 — 公式ドキュメント巡回
 
 ### 検出・更新
