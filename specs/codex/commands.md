@@ -112,6 +112,7 @@ codex -q "タスクの説明"
 | `--output-last-message, -o <path>` | 最終アシスタントメッセージをファイルに書き出し |
 | `--output-schema <path>` | ツール出力を検証する JSON Schema |
 | `--skip-git-repo-check` | Git リポジトリ外での実行を許可 |
+| `--trust` | プロジェクト信頼を明示的に保存（0.169.0+。`codex review` でも可）。**0.169.0 以降、未信頼ディレクトリでは `--sandbox workspace-write` でもプロジェクト設定と MCP サーバーは無効のまま**で、信頼付与には本フラグが必要 |
 
 ### 2.3 グローバルフラグ（全サブコマンド共通）
 

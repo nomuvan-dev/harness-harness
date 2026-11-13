@@ -546,7 +546,7 @@ claude plugin init my-plugin    # .claude/skills/my-plugin/ を生成
 
 ### 4.2.2 プラグイン同梱の `settings.json`
 
-プラグインルートに `settings.json` を置くと、プラグイン有効時にデフォルト設定を適用できる。**サポートされるキーは `agent` と `subagentStatusLine` のみ**（未知のキーは黙って無視）。`agent` を設定するとプラグイン同梱のカスタムエージェントがメインスレッドとして起動し、そのシステムプロンプト・ツール制限・モデルが適用される（プラグインを有効にするだけで Claude Code の既定挙動を変えられる）。`settings.json` の値は `plugin.json` 内の `settings` 宣言より優先される。
+プラグインルートに `settings.json` を置くと、プラグイン有効時にデフォルト設定を適用できる。かつてサポートされたキーは `agent` と `subagentStatusLine` だったが、**v2.1.323 で `subagentStatusLine` 設定自体が削除され、`agent` は非推奨化**（引き続き適用されるが、起動時・`claude plugin list`・`claude plugin validate` で警告が出る）。`agent` を設定するとプラグイン同梱のカスタムエージェントがメインスレッドとして起動し、そのシステムプロンプト・ツール制限・モデルが適用される。`settings.json` の値は `plugin.json` 内の `settings` 宣言より優先される。公式 docs の components ページからは「Default settings」節自体が削除された（2026-11-14 巡回）。
 
 また、プラグインルートの `bin/` ディレクトリに置いた実行ファイルは、プラグイン有効中 **Bash ツールの `PATH` に追加**される（claude.ai 組織設定経由で配布するプラグインではトップレベル `bin/` は使用不可）。
 

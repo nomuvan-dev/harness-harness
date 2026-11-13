@@ -1,5 +1,28 @@
 # harness-harness 更新履歴
 
+## 2026-11-14 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code**: **v2.1.323**（2026-11-12）リリース（大型）。目玉: Code Mode（実験的 opt-in、docs ページは未公開404のため次回巡回対象に登録）、`plugin.json` の `engines["claude-code"]`、`subagentStatusLine` 設定削除＋プラグイン `agent` 設定の非推奨化、`claude plugin validate` の TS フック型チェック、セッション間メッセージ上限 20→100,000、未知モデルIDのコンテキスト既定 200K→1M、権限・サンドボックス硬化多数（sudo/env ラッパー迂回修正等）、PreToolUse allow 後の権限チェック失敗時の再判定、managed プラグインの PreModelSwitch ロード失敗時は拒否→許可に変更。ドキュメント側も追随（ConfigChange の発火しない変更の明文化、components の Default settings 節削除、sandbox denyWrite の Linux/WSL2 未存在パス無効等）。
+
+**Codex CLI**: **安定版 0.168.0 / 0.169.0 が同日リリース**（2026-11-13）。0.168.0: `features.tui_workspace`（サイド会話）、モデルプロバイダ閲覧・既定選択、録音添付、`features.image_generation_animation`、`tui.notification_method = "osc777"`、`features.multi_agent` 明示設定に警告（`agents.enabled` へ移行）。0.169.0: 複数サイドチャットタブ、command center タスク検索、Collapse turn details、ターミナルからのカスタムプロバイダ追加、`codex exec` の未信頼ディレクトリ硬化と `--trust` フラグ。プレリリースは 0.171.0-alpha.2 まで進行。
+
+**スキルエコシステム（Phase 3.5）**: 前回巡回 2026-11-10 から7日以内のためスキップ。
+
+**巡回メモ**: llms.txt の全URL（約155件）を巡回対象に自動登録してしまったため登録を取り消し、従来の選別スコープ（69件）に復元。llms.txt 本文の実差分は説明文の文言調整のみで新規ページなし。learn.chatgpt.com 系と codex-plugin-cc のハッシュ変化はビルドID・feature flag のノイズのみ。
+
+### 更新ファイル
+
+- specs/claude/changelog.md（v2.1.323 エントリ追加・巡回ヘッダ更新）
+- specs/claude/configuration.md（subagentStatusLine 削除、denyWrite の Linux/WSL2 注記）
+- specs/claude/skills-and-commands.md（プラグイン settings.json の agent 非推奨化）
+- specs/claude/hooks.md（ConfigChange 発火条件、PreModelSwitch managed 失敗時挙動、権限チェック失敗時のフック再判定）
+- specs/codex/changelog.md（0.168.0 / 0.169.0 反映）
+- specs/codex/configuration.md（tui_workspace / image_generation_animation / agents.enabled / notification_method）
+- specs/codex/commands.md（codex exec --trust と未信頼ディレクトリ挙動）
+- kb/update-history.md（本記録）
+
 ## 2026-11-13 — 公式ドキュメント巡回
 
 ### 検出・更新

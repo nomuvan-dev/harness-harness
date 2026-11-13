@@ -103,6 +103,8 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 
 **`PostModelSwitch` が発火する変更**: 上記の明示的切替に加え、自動モデルフォールバック、`opusplan` のような設定によるプランモード出入り、セッション再開時のモデル復元。**フォールバックモデルチェーンの代替モデルが1ターンだけ応答した場合は発火しない**（セッションのモデルが変わらないため）。
 
+**managed プラグインの PreModelSwitch フックがロードに失敗した場合（v2.1.323 で挙動変更）**: 以前は組織の managed プラグインが届ける PreModelSwitch フックを確認できないと切替自体を拒否していた（`so organization-managed PreModelSwitch hooks could not be checked`）。v2.1.323 以降は**切替を許可**する — 失敗したプラグインのフックは走らないため、それがブロックしたはずの切替も通る（ロード済みの他の PreModelSwitch フックは引き続き実行・ブロック可能）。失敗原因は `/plugin` の **Errors** タブ、または `claude --debug` のデバッグログで確認し、修正後に `/reload-plugins`（2026-11-14 巡回で反映）。
+
 **入力フィールド**（`PreModelSwitch` / `PostModelSwitch` 共通、共通入力フィールドに加えて）:
 
 | フィールド | 型 | 説明 |
@@ -397,7 +399,7 @@ MCP サーバーのツールを直接呼び出す。シェル経由のラッパ�
 Managed フックはユーザー/プロジェクト/ローカル設定からは無効化できない。
 
 - `disableAllHooks` は settings precedence 適用後の値が読まれる: プロジェクトの `.claude/settings.json` の `false` はユーザー設定の `true` を上書きする。1回の実行だけ無効化するには `--settings '{"disableAllHooks": true}'`（project / local 設定に優先）。個別フックだけを無効化する手段は無い（2026-11-05 巡回で反映）
-- 管理者は managed settings の `allowManagedHooksOnly` で user / project / local / プラグインフックをブロックできる（managed settings の `enabledPlugins` で強制有効化されたプラグインのフックは例外。`statusLine` / `fileSuggestion` / `subagentStatusLine` も managed 設定のものに絞られる）（2026-11-05 巡回で反映）
+- 管理者は managed settings の `allowManagedHooksOnly` で user / project / local / プラグインフックをブロックできる（managed settings の `enabledPlugins` で強制有効化されたプラグインのフックは例外。`statusLine` / `fileSuggestion` も managed 設定のものに絞られる。`subagentStatusLine` は v2.1.323 で設定ごと削除）（2026-11-05 巡回で反映、2026-11-14 更新）
 - フック設定は settings レベル間で**マージ**される（置換ではない）。settings ファイルの直接編集はファイルウォッチャーで自動反映される
 - managed 設定 `strictPluginOnlyCustomization` でフックを**プラグイン＋managed 設定のみ**にロックできる（スキル frontmatter フックはプラグインスキル / bundled skill / managed settings ディレクトリのスキルのみ存続。自分の settings ファイルのフックも走らない）。確認は `/status` の `Setting sources` 行（2026-11-12 巡回で反映）
 - 未信頼環境では `command` ソースのプラグイン（managed settings の `enabledPlugins` で強制有効化された分も含む）とマーケットプレイスの `headersHelper` コマンドは、`disableCommandPluginSources: false` の明示設定まで無効（managed settings 自身が宣言するマーケットプレイスの headersHelper は例外）（2026-11-12 巡回で反映）
@@ -519,6 +521,8 @@ v2.1.133 以降、ツール実行コンテキストを持つイベント（`PreT
 >
 > `PermissionRequest` は **サンドボックスコマンドのネットワークリクエスト**の権限プロンプトでは発火しない（ツール使用の権限要求のみ）。ネットワークリクエスト側のシグナルが必要な場合は `Notification` の `permission_prompt` タイプを使う（ただし約 6 秒の待機後に発火）。
 >
+> **フック決定後の権限チェック失敗時の挙動（v2.1.323 で変更）**: `PreToolUse` フックが `allow` を返した後にツールの権限チェックがエラーで失敗した場合、Claude Code は**フックが答えなかったものとして**その呼び出しを判定する。`PermissionRequest` フックが書き換えた入力で権限チェックが失敗した場合は**再度ユーザーに確認**する（誰にも確認できない環境では呼び出しを拒否）（2026-11-14 巡回で反映）。
+>
 > **`mcp_server` オブジェクト（v2.1.274+、2026-09-18 ドキュメント改訂で明文化）**: MCP ツールの場合、`PreToolUse` / `PermissionRequest` / `PostToolUse` / `PostToolUseFailure` / `PermissionDenied` の入力に `mcp_server` オブジェクトが加わる。サーバーの `name` と、定義の提供元を示す `source`（`plugin`, `sdk`, `user` / `project` 等の設定スコープ。全列挙は Agent SDK リファレンスの `McpServerProvenance`）を持つ。**信頼判断は `name` や `mcp__<server>__` プレフィックスではなく `source` に基づくこと**（名前は偽装可能なため）。
 >
 > `permission_suggestions`（2026-11-09 巡回で改訂）: `PreToolUse` と同じ `tool_name` / `tool_input` を受け取るが `tool_use_id` は無い。`permission_suggestions` には Claude Code がその要求に対して提案する**権限更新（allow ルールの追加、権限モードの変更など）**が入る。**各権限ダイアログは自前で選択肢を構築する**: ファイル編集のダイアログなどは配列を一切読まず要求自体から選択肢を導出し、suggestion エントリを持たない選択肢（「Yes, and switch to auto mode」等、permission update を介さずモードを直接変えるもの）も提示されうる。フックは受け取った `permission_suggestions` の 1 つをそのまま `updatedPermissions` として出力できる。
@@ -553,7 +557,7 @@ v2.1.133 以降、ツール実行コンテキストを持つイベント（`PreT
 | `DirectoryAdded` | `directory`（追加されたディレクトリの絶対パス）, `source`（`"slash_command"` / `"register_repo_root"`）。`slash_command` では `systemMessage` が次ターンのコンテキストとして Claude に届く（ユーザーには出ない）、`register_repo_root` ではデバッグログのみ（2026-11-05 巡回で反映） |
 | `FileChanged` | `file_path`, `event`（`"change"`=変更 / `"add"`=作成 / `"unlink"`=削除。従来記載の `change_type` (`created`/`modified`/`deleted`) は現行 docs に無く、フィールド名・値とも `event` 形式が正（2026-11-05 巡回で修正））。出力で `watchPaths` を返し監視リストを動的更新可能。matcher は「監視リストの構築（`\|` 区切りのリテラルファイル名）」と「発火フィルタ（basename に対する標準 matcher 規則）」の二役を持つ。ウォッチャーは何かがファイルを指名して初めて起動するため、動的パス用グループは matcher 省略にする（`"*"` はリテラル `*` というファイルを監視登録してしまう） |
 | `TaskCreated` | `task_id`, `task_subject`, `task_description`(opt), `teammate_name`(opt), `team_name`（**非推奨: 将来のリリースで削除予定**。2026-11-05 巡回で反映）, `agent_id`(opt, v2.1.290+ タスクを作成したサブエージェント / in-process teammate を識別) |
-| `ConfigChange` | `source`, `file_path` |
+| `ConfigChange` | `source`, `file_path`。発火するのは設定ファイル・managed ポリシーファイル（`managed-settings.json` / `managed-settings.d/` 内）・スキルファイルの変更時。**発火しない変更**（フックなしで適用のみ）: 「Yes, and don't ask again」/`/permissions`/`/model` で保存した当のセッション（同じファイルを読む別セッションでは発火する）、server-managed settings / macOS managed preferences / Windows レジストリポリシーの更新、WSL の `wslInheritsWindowsSettings` 経由で取り込む Windows 側 managed settings（2026-11-14 巡回で反映） |
 | `WorktreeCreate` | `name`（新ワークツリーのスラグ識別子。ユーザー指定または自動生成）。従来記載の `worktree_path` / `isolation_level` は現行 docs に無い（2026-11-05 巡回で修正） |
 | `WorktreeRemove` | `worktree_path` |
 | `PreCompact` | `trigger`, `custom_instructions` |
