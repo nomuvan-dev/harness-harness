@@ -3,7 +3,9 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-11-13（**Claude Code 本体の新バージョンなし。v2.1.322 まで反映済みのまま**（公式 changelog ページも前回から変更なし）。ドキュメント側の実質的差分は skills / commands ページの1点のみ: **`/claude-api` に新サブコマンド `latency-optimize`**（v2.1.319+。既存の Claude API コードのどこで時間を消費しているかを特定し、待ち時間を減らす変更を提案。specs/claude/skills-and-commands.md に反映）。スキルエコシステム巡回（Phase 3.5）は前回から7日以内のためスキップ。Codex CLI は **0.167.2 安定版**（2026-11-11。specs/codex/changelog.md 参照）。前回2026-11-12の巡回要約は下記参照。）
+最終更新: 2026-11-14（**v2.1.323**（2026-11-12）を反映。大型リリース。ハーネス観点の目玉は **(1) Code Mode（実験的 opt-in。Claude が JavaScript を書いてツールを呼ぶ。docs/en/code-mode で有効化・組織単位の無効化。ページ自体は本巡回時点で404＝未公開）**、**(2) `plugin.json` に `engines["claude-code"]`（バージョン範囲外のプラグインはインストール・更新・ロードされず、インストール/更新は範囲に合う最新版を選ぶ）**、**(3) `subagentStatusLine` 設定の削除**と**プラグイン `agent` 設定の非推奨化**、**(4) `claude plugin validate` の強化（TypeScript フックモジュールの型チェック〔警告、`--strict` で fail〕、mod の `engine.create` が足す/除く `$` 名詞の表示）**、**(5) セッション間メッセージ上限が約20→100,000 に大幅緩和**、**(6) 未知モデルIDのコンテキストウィンドウ既定が 200K→1M に変更（`CLAUDE_CODE_DISABLE_1M_CONTEXT=1` で 200K 維持）**、**(7) 権限・サンドボックス硬化多数（sudo/env ラッパー経由の deny/ask すり抜け修正、`Bash(ls*)` 型 allow ルールの抜け修正、symlink 経由の書き込み許可無効化、worktree の git 操作制限、秘密らしき allow ルールはセッション限り等）**、**(8) PreToolUse が allow 後に権限チェックが失敗した場合は「フック未回答」として再判定、PermissionRequest の書き換え入力での失敗は再確認**、**(9) managed プラグインの PreModelSwitch フックロード失敗時は切替拒否→許可に変更**。ドキュメント側も追随（subagentStatusLine 削除、components の Default settings 節削除、ConfigChange の発火しない変更の明文化、sandbox denyWrite の Linux/WSL2 未存在パス無効、keybindings に `ctrl+x =` 系チャットチョード追加等）。スキルエコシステム巡回（Phase 3.5）は前回 2026-11-10 から7日以内のためスキップ。Codex CLI は **0.168.0 / 0.169.0 安定版**（ともに 2026-11-13。specs/codex/changelog.md 参照）。前回2026-11-13の巡回要約は下記参照。）
+
+前回: 2026-11-13（**Claude Code 本体の新バージョンなし。v2.1.322 まで反映済みのまま**（公式 changelog ページも前回から変更なし）。ドキュメント側の実質的差分は skills / commands ページの1点のみ: **`/claude-api` に新サブコマンド `latency-optimize`**（v2.1.319+。既存の Claude API コードのどこで時間を消費しているかを特定し、待ち時間を減らす変更を提案。specs/claude/skills-and-commands.md に反映）。スキルエコシステム巡回（Phase 3.5）は前回から7日以内のためスキップ。Codex CLI は **0.167.2 安定版**（2026-11-11。specs/codex/changelog.md 参照）。前回2026-11-12の巡回要約は下記参照。）
 
 前回: 2026-11-12（**Claude Code 本体の新バージョンなし。v2.1.322 まで反映済みのまま**。一方で**ドキュメント側の更新多数** — model-config（`claude-fable-5` プレフィックスが 5.2 を含む旨を明記、Mantle model IDs 節、Fable usage credits の同意フロー）、cloud-environments（API credentials → **Network secrets** 改名・全プラン対応、リソース / 時間上限）、memory（**MEMORY.md 25KB 上限**）、tools-reference（**非 UTF-8 ファイルの Edit / Write 挙動**）、hooks（shell 既定値・workspace trust 等）、mods reference（**Text の typography props**、`bold` prop 非推奨）。**/code-review ドキュメントが6ページに分割**（code-review-setup / -local / -pull-requests / -customize / -costs / -troubleshooting）、claude-tag docs は claude.com/docs/claude-tag/ へ移設、whats-new/* ページ群は llms.txt から消滅。詳細は各 specs ファイルに反映。Codex CLI は **0.167.1 安定版**（2026-11-10。specs/codex/changelog.md 参照）。前回2026-11-11の巡回要約は下記参照。）
 
@@ -39,6 +41,61 @@
 
 
 ---
+
+## v2.1.323 (2026-11-12)
+
+### 新機能
+
+- **Code Mode（実験的 opt-in）**: Claude が JavaScript を書いてツールを呼ぶモード。組織単位での無効化も可能（docs ページは公開準備中）
+- **`plugin.json` の `engines["claude-code"]`**: 宣言した Claude Code バージョン範囲外ではプラグインをインストール・更新・ロードしない。インストール/更新は範囲に合う最新版を選択
+- **`claude plugin validate` 強化**: プラグインの TypeScript フックモジュールを型チェック（警告。`--strict` で fail）。mod の `engine.create` フックが追加・保留・置換する `$` 名詞も表示
+- `CLAUDE_CODE_AUTO_MODE_MODEL` が managed settings でサードパーティプロバイダ上の Claude Desktop セッションに対応
+- `claude -p` / SDK セッションでフックが長時間走る間、30秒ごとの進捗ハートビートを送出（ホストがターンをハング扱いしない）
+- `CLAUDE_CODE_DISABLE_AGENT_PROGRESS_SUMMARIES=1`（v2.1.318+）: サブエージェント進捗サマリーとその生成リクエストを無効化
+- `CLAUDE_CODE_RESUME_HINT_COMMAND`: 起動元プログラムが終了ヒントの resume コマンド名を差し替え可能
+- Artifact ツールのアセットアップロードが `.docx` に対応
+- `Bash(PORT=* npm run dev)` のような変数値 `*` を含む allow ルールに起動時警告
+- [VSCode] 未信頼フォルダで初回セッション前に信頼プロンプト（拒否するとフォルダの settings / MCP サーバーは不使用）
+
+### 変更
+
+- **`subagentStatusLine` 設定を削除**: サブエージェント行は常に既定表示。キーが残る設定ファイルは従来どおりロードされる
+- **プラグインの `agent` 設定を非推奨化**: 引き続き適用されるが、起動時・`claude plugin list`・`claude plugin validate` で警告
+- **セッション間メッセージ上限を約20→100,000 に緩和**（同一マシンのセッション間、Claude Desktop Code タブも同様）
+- **未知モデルIDのコンテキストウィンドウ既定を 200K→1M に変更**: `/autocompact` で早めに圧縮、または `CLAUDE_CODE_DISABLE_1M_CONTEXT=1` で 200K 維持。小さいウィンドウの他ベンダーモデルでは満杯後 `/clear` まで毎ターン失敗しうるため事前設定を推奨
+- `/security-review` は実行前に確認を取るように。スキルのインライン git コマンドは bare-repository worktree 等で許可まで停止（auto / bypass 以外）
+- `MCP_SDK_GENERATION=v1` は v2 MCP クライアントの互換モードに（v1 クライアントは削除）
+- MCP サーバーサインイン完了ツールは bypass / auto モードでも確認を要求（`dontAsk` 等では `/mcp` を使用）
+- Artifact 更新は組織外に見えるページ（または確認不能時）では allow ルール下でも確認を要求
+- 「don't ask again」: 秘密を含むらしき allow ルール、git 管理下の `settings.local.json` に保存されるルールはセッション限りで保存しない
+- macOS / Linux サンドボックス: `git worktree add` / `move` / `remove` は read-only 失敗に。セッション開始時のものでない worktree でのコミットも同様
+- 書き込み可能フォルダ内の symlink 経由で他所に向く書き込み許可を無視（実体パスを許可すること）
+- `PreToolUse` が allow を返した後に権限チェックがエラーで失敗 → フック未回答として再判定。`PermissionRequest` の書き換え入力で失敗 → 再確認（確認不能環境では拒否）
+- mods: `engine.create` への `*` / namespace / 否定フックは観察のみに。`$` 名詞の追加・保留は名前指定フックで
+- マーケットプレイス / プラグインインストール: git submodule が記録コミットと不一致なら失敗
+- `.mcp.json` の MCP サーバー承認はサーバー名の完全一致に（別表記の承認エントリは再確認）
+- `tool.list` プラグインフックの追加・削除ツールがモデルと全エージェントに適用
+- split-pane の agent teammate はリクエスト元がチームリードか検証。`/clear` / `/resume` 後はプラン承認の再送が必要
+- `--settings` ファイルが不正 JSON で `sandbox` キーを含む場合は起動を停止
+- `CLAUDE_CODE_OVERLOADED_RETRY_MAX_DELAY_MS` の上限が 64000→300000 に
+- `/logout` がバックグラウンドセッションでも全セッションサインアウト・MCP ログイン / プラグインシークレット削除・セッション終了を実行
+- self-hosted runner: 作業が superseded されたオンデマンドランナーの exit code を 1 に戻す（2.1.321 / 322 は 0 だった）
+
+### セキュリティ・重要修正（抜粋、195 修正から）
+
+- **Bash deny / ask ルールが `sudo` / `env` 等のラッパー経由コマンドを見逃す問題を修正**。結合 `sudo` フラグの allow ルールすり抜けも修正
+- **`Bash(ls*)` のような接尾ワイルドカード allow ルールが一部ケースで権限プロンプトをスキップする問題を修正**（`Bash(NODE_ENV*)` のような変数名ルールは確認するように）
+- **`sandbox.excludedCommands` が指名しないコマンドをサンドボックス外で実行しうる問題を修正**
+- Write / Edit が `Read` deny ルール対象パスに書き込めるケースを修正
+- `rm` の判定フォルダ誤りで危険削除プロンプトがスキップされる問題（bypass / allow ルール下）を修正
+- サンドボックスがセッション中にオフに切り替わるケース、zsh の非既定シェルオプションでプロンプトなし実行されるケースを修正
+- Claude Code 自身の ripgrep・内部 git コマンドからサインイントークン / API キーの大半を除去（credential helper やフックから見えない）
+- 組織設定・ポリシーリクエストが `ALL_PROXY` 単独設定のプロキシを使わないように（必要なら `HTTPS_PROXY`）
+- プロジェクト設定が symlink 経由で別フォルダから読まれるケース、`plansDirectory` でプラン外部書き込みのケースを修正
+- `/compact` の再実行が未回答メッセージを要約で消す問題、resume 時の旧中断メッセージ結合、巨大ファイル変更後のメモリスパイクを修正
+- バックグラウンドセッションのサインイン混線（別プロファイルへの移動・資格情報残留）を多数修正
+- Windows: `.exe` の隣の `.cmd` / `.bat` ラッパーを実行してしまう問題、ワイルドカード付きファイル読みコマンドのプロンプトなし実行を修正
+- `PreCompact` / `PostCompact` / 圧縮後 `SessionStart` フックにサブエージェント圧縮時の `agent_id` / `agent_type` が渡らない問題を修正
 
 ## v2.1.322 (2026-11-10)
 

@@ -72,7 +72,9 @@ max_bytes = 1048576       # 最大サイズ（バイト）、超過時は自動�
 [features]
 shell_snapshot = true                    # コマンド実行の高速化
 smart_approvals = false                  # ガーディアンレビュアー経由の承認
-multi_agent = true                       # サブエージェント機能
+multi_agent = true                       # サブエージェント機能（0.168.0+ で明示設定に警告。無効化は `agents.enabled` へ移行）
+tui_workspace = false                    # terminal workspace（0.168.0+ opt-in。メインチャット横のサイド会話。0.169.0 で複数サイドチャットタブ対応）
+image_generation_animation = false       # アニメGIF生成・編集（0.168.0+ opt-in。フレーム数・タイミング制御）
 unified_exec = true                      # PTY実行（stable、Windows除く）
 undo = false                             # Undo 機能
 web_search = true                        # Web 検索
@@ -103,6 +105,7 @@ update_plan.enabled = true   # プランニングツール。0.152.0 で既定 f
 
 ```toml
 [agents]
+enabled = true               # サブエージェントツールの有効/無効（0.168.0+ はこちらが正。`features.multi_agent` の明示設定は警告が出る）
 max_threads = 6              # 最大同時エージェントスレッド数
 max_depth = 3                # エージェントネスト最大深度
 
@@ -120,6 +123,7 @@ notifications = true         # 通知の有効化
 status_line = ["model", "context", "git"]  # フッターステータスライン項目
 auto_recap = false           # 自動リキャップを無効化（0.153.0+。手動 `/recap` は引き続き使える）
 disable_paste_burst = true   # ペーストバースト検出の無効化（0.153.0 でトップレベル設定から `[tui]` 配下へ移動。旧トップレベルキーもフォールバックとして有効）
+notification_method = "osc777"  # ターミナル通知方式（0.168.0+。承認通知は長いコマンドプレビュー付きでターミナル入力とネットワークアクセス要求を区別）
 ```
 
 #### 承認粒度（Granular Approval）
