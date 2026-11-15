@@ -506,6 +506,8 @@ MCP サーバー自身がレポートエクスポートやビルドのような�
 - メイン会話からの呼び出し（サブエージェントは不可）
 - 対話セッションであるか、Agent SDK / `--input-format stream-json` の `claude -p` で `CLAUDE_AUTO_BACKGROUND_TASKS=1`、かつ `CLAUDE_CODE_DISABLE_MCP_TASK_BACKGROUND` が `1` でなく、`CLAUDE_CODE_MCP_AUTO_BACKGROUND_MS` が `0` でないこと（ワンショットの `claude -p "<prompt>"` は MCP タスクを得られない）
 
+**タスクからの質問に後で答える（v2.1.324+、2026-11-15 巡回で反映）**: 実行中タスクが elicitation ダイアログで入力を求めた場合（`/tasks` を開いている間はダイアログが隠れるので閉じて答える）、結果を待機させる設定にしていなければ**ダイアログで `Esc` を押して後で回答できる**。質問を再表示するには `/tasks` でタスクの詳細を開いて `Enter`。Decline はサーバーへの回答であり、タスクを続けるかはサーバーが決める。
+
 **非対話セッションでの入力要求**: 実行中タスクが elicitation で入力を求めた場合、非対話セッションでは **`Elicitation` フックの実行も Agent SDK の `onElicitation` 呼び出しも行わずに**サーバーへタスクのキャンセルを要求する。
 
 **時間制限とステータス（2026-11-09 巡回で反映)**: バックグラウンド化したタスクに Claude Code 側の時間制限はない（待機時はツール呼び出しの制限が全期間に適用される）。切断時は `reconnecting…` → 300 秒以内に再接続できなければ `did not reconnect within 300s` 等のステータスで報告され、**`outcome unknown.` で終わったタスクは再呼び出しすると二重実行のリスク**がある点に注意。

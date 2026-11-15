@@ -1,6 +1,6 @@
 # Claude Code ツール仕様書
 
-最終更新: 2026-11-03（巡回更新）
+最終更新: 2026-11-15（巡回更新。v2.1.325 時点: Skill ツールの権限列「Some skills」化、Monitor の WebSocket watch への Bash deny/ask ルール適用とプロキシ解決（v2.1.319）、Workflow のランタイム制約・ストール再起動・利用上限一時停止を反映）
 
 公式ドキュメント: https://code.claude.com/docs/en/tools-reference
 
@@ -58,12 +58,12 @@ Claude Code の組み込みツール一覧。**ここに書かれたツール名
 | `Glob` | No | ファイル名パターン検索。**v2.1.268 以降 macOS / Linux / WSL では既定セットに含まれない**（§3.4 参照） |
 | `Grep` | No | ファイル内容検索（ripgrep ベース）。**v2.1.268 以降 macOS / Linux / WSL では既定セットに含まれない**（§3.4 参照） |
 | `LSP` | No | 言語サーバー経由のコードインテリジェンス（定義ジャンプ・参照検索・型エラー報告等） |
-| `Monitor` | Yes | バックグラウンドでコマンドを走らせ出力行ごとに Claude へ返す。WebSocket を開いて各メッセージをイベント扱いすることも可能。**v2.1.271 以降、watch には常にデッドラインがある**: 既定5分・最大30分（単発 `-p` 実行では最大10分）。期限で watch は終了し Claude に通知が1回届くので必要なら再アームする。無期限の `persistent` オプションは廃止。`timeout_ms` は WebSocket watch にも適用され、`TaskStop` で早期キャンセル可。**権限は Bash と同じルールを使う**が、auto モード中は `Monitor` 自体を名指しする allow ルールは脇に置かれ、分類器が Bash コマンドと同じ基準で審査する。**Bedrock / Claude Platform on AWS / Vertex / Foundry、または `DISABLE_TELEMETRY` / `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC` 設定時（= feature-flag fetching オフ）は v2.1.310+ が必要**。Windows は Git Bash 必須。**プラグインはアクティブ時に自動起動する monitor を宣言できる**。WebSocket は private / link-local / クラウドメタデータアドレス（解決先がそれらのホスト名含む）と `sandbox.network.deniedDomains` のホストを拒否し、`allowManagedDomainsOnly` 設定時は managed allowlist 外も拒否（2026-11-03 ドキュメント改訂で確認） |
+| `Monitor` | Yes | バックグラウンドでコマンドを走らせ出力行ごとに Claude へ返す。WebSocket を開いて各メッセージをイベント扱いすることも可能。**v2.1.271 以降、watch には常にデッドラインがある**: 既定5分・最大30分（単発 `-p` 実行では最大10分）。期限で watch は終了し Claude に通知が1回届くので必要なら再アームする。無期限の `persistent` オプションは廃止。`timeout_ms` は WebSocket watch にも適用され、`TaskStop` で早期キャンセル可。**権限は Bash と同じルールを使う**が、auto モード中は `Monitor` 自体を名指しする allow ルールは脇に置かれ、分類器が Bash コマンドと同じ基準で審査する。**Bedrock / Claude Platform on AWS / Vertex / Foundry、または `DISABLE_TELEMETRY` / `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC` 設定時（= feature-flag fetching オフ）は v2.1.310+ が必要**。Windows は Git Bash 必須。**プラグインはアクティブ時に自動起動する monitor を宣言できる**。WebSocket は private / link-local / クラウドメタデータアドレス（解決先がそれらのホスト名含む）と `sandbox.network.deniedDomains` のホストを拒否し、`allowManagedDomainsOnly` 設定時は managed allowlist 外も拒否（2026-11-03 ドキュメント改訂で確認）。**プロキシ背後では Claude Code はプロキシの解決先アドレスを検査しない**（プロキシ側でブロックしない限り private 等へ到達しうる）。プロキシ背後の watch が `could not resolve <host>` で失敗する場合は `CLAUDE_CODE_PROXY_RESOLVES_HOSTS=1` でプロキシにホスト名解決させる（v2.1.319+）。**`Bash` / `Bash(*)` の deny・ask ルールは WebSocket watch にも及ぶ**（v2.1.319+）: deny はセッション開始時なら Monitor ツール自体を外し、セッション中の追加なら次の呼び出しを拒否（`Permission to use Monitor has been denied: it runs code as Bash does, and a rule denies Bash.`）。ask はユーザー承認必須で、allow ルール / `PreToolUse` フック / bypassPermissions / auto 分類器では代替できず（`PermissionRequest` フックのみ可）、`dontAsk` 等で誰も答えられない場合は拒否される。回避するには `Bash(rm *)` のようにルールを狭める（2026-11-15 巡回で確認） |
 | `EnterPlanMode` | No | プランモードへ移行 |
 | `ExitPlanMode` | Yes | プランを提示して承認を求め、プランモードを抜ける |
 | `EnterWorktree` | Yes | 隔離 git worktree を作成して移動。`path` 指定で既存 worktree に入る |
-| `ExitWorktree` | No | worktree セッションを抜けて元ディレクトリへ戻る。`isolation: worktree` 等で既に自前の作業ディレクトリを持つサブエージェントには提供されない |
-| `Skill` | Yes | メイン会話内でスキルを実行 |
+| `ExitWorktree` | No | worktree セッションを抜けて元ディレクトリへ戻る。`isolation: worktree` 等で既に自前の作業ディレクトリを持つサブエージェントには提供されない。**`permissions.blockWritesOutsideWorkingDirectories` 有効時は `EnterWorktree` とともに除去（または呼び出し拒否）される** |
+| `Skill` | 一部のスキル | メイン会話内でスキルを実行。**`allowed-tools` / `disallowed-tools` / `hooks` を宣言するスキルは実行前に確認プロンプトが出うる**（v2.1.325。スケジュールタスクや `/loop` からの無人実行は `Skill(name)` の allow ルールで事前承認する — 2026-11-15 巡回で公式ツール一覧の権限列が「Some skills」に変更されたことを確認） |
 | `Workflow` | Yes | 動的ワークフロー（多数のサブエージェントをバックグラウンドで統率し統合結果を返すスクリプト）を実行。**v2.1.248 でツール説明が約 5.7k → 約 1k トークンに縮小**され、スクリプト作成リファレンスは同梱スキル `workflow-authoring` へ移動 |
 | `TaskCreate` / `TaskGet` / `TaskList` / `TaskUpdate` | No | タスクリストの作成・取得・列挙・更新。**モデルによっては既定で非提供**（§4 参照） |
 | `TodoWrite` | No | セッションのタスクチェックリスト。`TaskCreate` 系に置き換えられ既定で無効。`CLAUDE_CODE_ENABLE_TASKS=0` で復帰 |
@@ -218,6 +218,17 @@ Claude Code の組み込みツール一覧。**ここに書かれたツール名
 
 **`ultracode` キーワードの有効範囲（2026-10 ドキュメント改訂で「Where the keyword works」節新設）**: `ultracode` キーワード（および "use a workflow" / "run a workflow" 等の自然言語での直接依頼）がオプトインになるのは**ユーザーが自分でタイプしたプロンプトのみ** — 対話プロンプト・IDE 拡張パネル・Remote Control クライアント・キーボード入力の `origin` を `{kind: "human"}` とスタンプする Agent SDK アプリ。以下の経路ではワークフローを起動**しない**: `-p` で渡したプロンプト、human スタンプなしの SDK プロンプト、スケジュールタスクのプロンプト、webhook ペイロードや PR コメントのリレー。誤ってトリガーした場合は macOS で `Option+W`（Windows / Linux は `Alt+W`）、またはハイライトされたキーワード直後にカーソルがある状態で backspace を押して解除。キーワードトリガー自体を止めるには `/config` の「Ultracode keyword trigger」をオフにする。
 
+**ランタイム制約（2026-11-15 巡回で収載）**:
+
+- 同時実行エージェント数の既定は **16**（CPU の少ない環境・コンテナではさらに減る。`CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS` で 1〜256 に変更）
+- `parallel()` / `pipeline()` は 1 コールあたり **4,096 件**まで（超過はエラー）。1 ランの合計エージェント数は **1,000** まで
+- **`Large workflow` 警告の発火条件**: 25 エージェント超、または予測トークン 150 万超（サイズガイドラインを自分で選ぶとそのエージェント数が 25 の閾値を置き換える。ultracode 有効時は警告なし）
+- **スクリプト内で `Date.now()` / `Math.random()` / 引数なし `new Date()` は throw する**（再開時の再現性担保。タイムスタンプ等は `args` 経由で渡す）
+- **エージェントのストール自動再起動**: 出力が止まったエージェントはアテンプトを打ち切り同一プロンプトで再実行される（進捗ビューに `(retry 1)` 等と表示、**最大5回再起動**。6回とも失敗すると `agent stalled on all 6 attempts` 等のエラー）。判定時間は `agent(prompt, { stallMs })` か `CLAUDE_ASYNC_AGENT_STALL_TIMEOUT_MS`（ワークフロー外のサブエージェントにも適用）で延長できる
+- `agent()` は auto mode 分類器のブロックに加え、**停止操作・回復不能な API エラーでも `null` を返す**
+- **利用上限でランごと一時停止し、リセット後に自動再開する**（v2.1.271+、Desktop の Code タブは v2.1.319+。`autoContinueAtUsageLimit` に従う）。一時停止しないケース: `-p` / SDK / バックグラウンドセッション / Remote Control / agent team teammate / スケジュールタスク、`CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC` 設定時、リセットまで 24 時間超の場合。3 回目の上限到達でランは失敗する
+- **再開時、利用上限で失敗したエージェント（v2.1.318+）**は「失敗」と別扱いで、完了済みエージェントは保存結果を返し後続の全再実行を引き起こさない（失敗後に別エージェントが結果を返していた場合を除く）
+
 **保存と配布**: `/workflows` でランを選択して `s` を押すと保存ダイアログが開く（Tab で保存先切替）:
 
 - **プロジェクト**: `.claude/workflows/`（リポジトリをクローンした全員と共有）
@@ -270,7 +281,7 @@ Claude がこのツールを使うのは 2 つの場合のみ:
 
 一般的な苛立ち・罵倒・タスクの難航は該当しない。有害コンテンツの要求も該当せず、その場合は Claude は**拒否する**のであって会話を終了しない。
 
-終了後、対話セッションはロックされ、`/clear` / `/resume` / `/help` / `/exit` 以外は
+終了後、対話セッションはロックされ、`/clear` / `/resume` / `/help` / `/exit` / `/feedback` 以外は
 `Claude ended this conversation. Start a new session (or /clear) to continue.` を返す。
 `-p` の非対話モードで終了済みセッションを resume するとエラーで exit code 1 になる（スクリプトが成功と誤読しないため）。
 
