@@ -23,7 +23,7 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 | イベント | 発火タイミング | ブロック可能 | matcher対象 |
 |:--|:--|:--|:--|
 | `SessionStart` | セッション開始/再開 | No | `startup`, `resume`, `clear`, `compact`, `fork`（v2.1.214: フォーク開始時は `resume` ではなく `fork` を報告。`fork` の対象は `--fork-session`＋`--resume` / `--continue`、`/fork`、`/branch` に加え、**会話のバックグラウンド移行（`←` / `/background`）も含む**〈2026-10 ドキュメント改訂で明文化〉） |
-| `UserPromptSubmit` | プロンプト送信後、処理前。**ユーザー入力以外でも発火**（2026-10 ドキュメント改訂で明文化）: スケジュールタスクの発火（`/loop` イテレーション含む）、バックグラウンドサブエージェントの起動元への報告、クロスセッションメッセージ受信。**v2.1.299 からスキル / カスタムスラッシュコマンドの展開前に実行**され、プロンプトをブロックすると埋め込みシェルコマンドも止まる（スキル自身の frontmatter `UserPromptSubmit` フックは起動プロンプトの次のプロンプトから発火） | Yes | - |
+| `UserPromptSubmit` | プロンプト送信後、処理前。**ユーザー入力以外でも発火**（2026-10 ドキュメント改訂で明文化）: スケジュールタスクの発火（`/loop` イテレーション含む）、バックグラウンドサブエージェントの起動元への報告、クロスセッションメッセージ受信、**[Code Mode](https://code.claude.com/docs/en/code-mode.md) セッションでの Claude のコード出力**（command / http / mcp_tool フックのみ。コードがバックグラウンド実行可能な場合。2026-11-15 巡回で反映）。**v2.1.299 からスキル / カスタムスラッシュコマンドの展開前に実行**され、プロンプトをブロックすると埋め込みシェルコマンドも止まる（スキル自身の frontmatter `UserPromptSubmit` フックは起動プロンプトの次のプロンプトから発火） | Yes | - |
 | `UserPromptExpansion` | ユーザーが打ったコマンドがプロンプトへ展開される時（Claude に届く前） | Yes | `command_name`（スキル名 / コマンド名）。matcher 省略で全 prompt 型コマンドに発火 |
 | `PreToolUse` | ツール実行前 | Yes | **`EndConversation` 以外の全ツール名**（`Bash` / `PowerShell` / `Edit` / `Write` / `Read` / `Glob` / `Grep` / `Agent` / `Workflow` / `WebFetch` / `WebSearch` / `AskUserQuestion` / `ExitPlanMode` 等の組み込みツールと MCP ツール名） |
 | `PermissionRequest` | ツール使用の権限ダイアログ表示時 | Yes | ツール名 |
@@ -610,6 +610,8 @@ v2.1.133 以降、ツール実行コンテキストを持つイベント（`PreT
 
 **`suppressOutput` は効果なし（2026-11-05 巡回で修正）**: Claude Code はフィールドを受理するが動作しない。成功したフックの stdout はもともとトランスクリプトに表示されずデバッグログに記録される。
 
+**`continue: false` の適用範囲（2026-11-15 巡回で反映）**: `continue: false` は処理全体を停止するが、**`PreToolUse` のツール呼び出し自体はブロックしない**（ブロックするには `permissionDecision: "deny"` も併せて返す）。`PreToolUse` / `PostToolUse` ではツール呼び出しが失敗した場合やストリーミング中に完了した場合でも停止が適用されるが、**permission チェックが `PreToolUse` の呼び出しを拒否した場合は適用されない**。
+
 ### 6.4 主要イベントの出力詳細
 
 #### PreToolUse
@@ -654,6 +656,8 @@ v2.1.133 以降、ツール実行コンテキストを持つイベント（`PreT
 
 **ユーザー操作が必要なツール（AskUserQuestion / ExitPlanMode、2026-11-09 巡回で反映）**: `-p` 非対話モードでは両ツールは permission host（`--permission-prompt-tool` / SDK の `canUseTool`）がある場合のみ提供される。PreToolUse フックがユーザーの代わりに回答するには `permissionDecision: "allow"` に加えて**回答を入れた `updatedInput` が必須**（`allow` 単独では不十分）。`AskUserQuestion` では元の `questions` 配列をそのまま返しつつ `answers`（質問文→回答のマップ）を追加する。なお **`_meta["anthropic/requiresUserInteraction"]` 付きの MCP ツールは、フックの `allow` では承認プロンプトをスキップできない**（`updatedInput` の有無を問わず）。
 
+**Code Mode での挙動（2026-11-15 巡回で反映）**: [Code Mode](https://code.claude.com/docs/en/code-mode.md) セッションでは `PreToolUse` フックの**タイムアウトと失敗（`onFailure`）の扱いが異なる**（詳細は code-mode ページの "Tool call refused by a hook" 参照）。
+
 **ExitPlanMode / AskUserQuestion の入力詳細（2026-11-12 巡回で反映）**: `ExitPlanMode` は Claude がプランをファイルに書いてから呼ぶため**モデル由来の `tool_input` は通常空**で、Claude Code が `plan`（Markdown 本文）と `planFilePath` を注入してからフックに渡す。`allowedPrompts` は非推奨（受理されるが無視。v2.1.205 より前の prompt-based permissions の名残）。`PostToolUse` の `tool_response` は承認済みプランを `plan` / `filePath` に持つので、**ファイルを再読込せず `tool_response.plan` を読む**こと。`AskUserQuestion` の `questions[]` は各要素が `question` / `header` / `options[]`（`label` / `description`）/ 任意の `multiSelect` を持ち、`answers` は質問文→選択ラベルのマップ（複数選択はラベルをカンマ連結。Claude は設定しないため `updatedInput` で与える）。
 
 #### PostToolUse
@@ -670,6 +674,8 @@ v2.1.133 以降、ツール実行コンテキストを持つイベント（`PreT
 ```
 
 `updatedMCPToolOutput` は MCP ツール専用の出力差し替えフィールド（全ツール対応の `updatedToolOutput` を推奨）。組み込みツールでは出力スキーマに合わない差し替え値は無視され元の出力が使われるが、MCP ツール出力はスキーマ検証なしで通る（2026-11-05 巡回で反映）。例えば `Bash` の `tool_response` は `stdout` / `stderr` / `interrupted` / `isImage` を持つオブジェクトで、**差し替え値もこの形に一致させる必要がある**（2026-11-12 巡回で反映）。また **Cowork クラウドセッションでは `AskUserQuestion` / `ExitPlanMode` への `updatedToolOutput` は無視され**、Claude は元の回答・プランを読む。
+
+**書き換えできるのは成功した呼び出しの結果のみ（2026-11-15 巡回で反映）**: リダクション・変換用途では送信側を `PreToolUse`、受信側を `PostToolUse` でインターセプトするが、`PostToolUse` が書き換えられるのは**成功した呼び出しの結果**だけ。**`PostToolUseFailure` は結果を書き換えられない**ため、失敗したコマンドの出力はそのまま Claude に届く。
 
 `classifierContext`（v2.1.236+）: `hookSpecificOutput.classifierContext` で auto mode 分類器宛ての注記をツール結果に添付できる（**1ツール呼び出しあたり 2,000 文字上限**）。設定元により重み付けが異なり、Claude Code 設定由来は未検証コンテキスト扱い、in-process Agent SDK コールバック由来はユーザー意図として扱われうる。async フックでは無視、読み取り専用呼び出しでは破棄。`updatedToolOutput` と同時返却可。
 
@@ -721,6 +727,8 @@ v2.1.133 以降、ツール実行コンテキストを持つイベント（`PreT
 **タイムアウト時の挙動（2026-10 ドキュメント改訂で明文化）**: `async: true` の command フックを除き、command / http / mcp_tool の `UserPromptSubmit` フックがタイムアウトに達すると**キャンセルされ、`additionalContext` を含む出力は破棄される**。プロンプトはそのコンテキストなしで Claude に届く（トランスクリプトにフック名・発火したタイムアウト・出力破棄を示す通知が出る）。タイムアウトでプロンプトをブロックしたい場合は command / HTTP フックに `onFailure: "block"` を指定する（§8 参照）。**例外**: Agent SDK のコールバックフックが `UserPromptSubmit` でタイムアウトした場合は、フック名とタイムアウトを示すメッセージとともに**プロンプトをブロックする**（ポリシーゲートとして動くコールバックを fail-open にしないため。セッション自体は継続）。
 
 **プロンプトチェック中の `Esc`（2026-10 ドキュメント改訂で明文化）**: フックがプロンプトをチェックしている間に `Esc` やセッション割り込みを行うとチェックは停止し、プロンプトは Claude に届かない。入力したテキストは入力欄に戻り、再送時に改めてチェックされる。**例外**: 割り込みと同時にフックがブロックした場合、プロンプトはブロックされたまま（そのフックのブロックメッセージが表示される）でテキストは入力欄に戻らない。
+
+**`reason` の扱いと Code Mode（2026-11-15 巡回で反映）**: `decision: "block"` の `reason`（exit 2 の stderr も同じ経路）はユーザーに表示されるだけで Claude のコンテキストには追加されない。**例外はフックが [Code Mode のコード出力](https://code.claude.com/docs/en/code-mode.md#code-output-withheld-by-a-hook)をブロックした場合**で、このときは `reason` がコンテキストに追加される。
 
 **ブロックしたプロンプトの残留（2026-10 ドキュメント改訂で明文化）**: `decision: "block"`（または終了コード 2）でブロックしたプロンプトは Claude には届かないが、テキストが全消去されるわけではない:
 

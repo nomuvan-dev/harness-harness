@@ -1,5 +1,39 @@
 # harness-harness 更新履歴
 
+## 2026-11-16 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code**: 新バージョンなし（公式 changelog は v2.1.325 が最新のまま。11-15 巡回検出分を本巡回の PR で確定）。追跡対象の docs ページ 51 件はすべて不変。llms.txt の差分はインデックス再編のみ（`plugins.md` が索引から削除。ページ自体は 200 で存続、内容も不変。plugins/* 配下への再編の続き）で新規ドキュメントなし。
+
+**Codex CLI**: 新安定版なし（0.169.0 のまま。公式 changelog ページ不変）。GitHub プレリリースも 0.171.0-alpha.5（2026-11-14）から進行なし。releases API のハッシュ変化はダウンロード数等のノイズのみ。
+
+**スキルエコシステム（Phase 3.5）**: 前回巡回 2026-11-10 から7日以内のためスキップ（github skills / claude.com/plugins / skills.sh / agentskills.io のハッシュ変化はキャッシュのみ更新）。
+
+**巡回メモ**: 11-15 巡回は specs 更新まで完了していたが commit / PR が未了だったため、本巡回で 11-15 分（v2.1.325、Codex 新リリースなし確認、.codex/config.toml の model gpt-5.4→gpt-5.6、private registry 更新）を合流して 1 PR で確定。
+
+### 更新ファイル
+
+- specs/claude/changelog.md（最終更新ヘッダを 2026-11-16 に更新）
+- specs/codex/changelog.md（最終更新ヘッダを 2026-11-16 に更新）
+- kb/update-history.md（本記録と 11-15 分の記録を追加）
+
+## 2026-11-15 — 公式ドキュメント巡回（記録は 11-16 に追記）
+
+### 検出・更新
+
+**Claude Code**: **v2.1.325**（2026-11-13）リリース（大型・88 修正）。目玉: sandboxed Bash が既定で通常の権限フローに従うように（opt-out は `sandbox.autoAllowBashIfSandboxed: true`）、read-only git も信頼外リポジトリで確認要求、スケジュールタスク / `/loop` の `allowed-tools`・フック宣言スキル実行前確認（無人実行は `permissions.allow` に `Skill(name)`）、`pluginDigests` 非推奨、VSCode プロンプトサジェスト、ネストスキルのロード変更、zstd デコード・Bash 権限チェックの隙等のセキュリティ修正。
+
+**Codex CLI**: 新安定版なし（0.169.0 のまま）。プレリリースは 0.171.0-alpha.5（2026-11-14）まで進行。
+
+### 更新ファイル
+
+- specs/claude/changelog.md（v2.1.325 エントリ追加）
+- specs/claude/configuration.md / hooks.md / mcp.md / skills-and-commands.md / tools.md / best-practices.md（v2.1.325 と docs 差分を反映）
+- specs/codex/changelog.md（新リリースなしの巡回結果を反映）
+- .codex/config.toml（model を gpt-5.6 に更新）
+- private（registry: voice-server 追加のポインタ更新）
+
 ## 2026-11-14 — 公式ドキュメント巡回
 
 ### 検出・更新

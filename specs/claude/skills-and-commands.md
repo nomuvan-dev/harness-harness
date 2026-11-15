@@ -1,6 +1,6 @@
 # Claude Code Skills & コマンド仕様書
 
-最終更新: 2026-11-05（巡回更新）
+最終更新: 2026-11-15（巡回更新。v2.1.325 時点: スケジュールタスク/`/loop` のスキル実行前確認、フォークスキルが結果を待つケース、`--add-dir` 同名スキルのプレフィックス呼び出し（v2.1.309）、サブエージェントのネスト深度既定3・managed スコープ・permissionMode `auto` 等を反映）
 
 公式ドキュメント: https://code.claude.com/docs/en/skills / https://code.claude.com/docs/en/commands / https://code.claude.com/docs/en/sub-agents / https://code.claude.com/docs/en/scheduled-tasks / https://code.claude.com/docs/en/web-scheduled-tasks / https://code.claude.com/docs/en/plugins/install（2026-09-25 のドキュメント再編で discover-plugins から移動。プラグイン関連は https://code.claude.com/docs/en/plugins/overview 以下の約20ページ構成に分割された）
 
@@ -38,7 +38,7 @@ Skills は Claude の能力を拡張する仕組み。`SKILL.md` ファイルに
 - **`anthropic-skills:` 名前空間の保護（v2.1.282）**: この名前空間のスキルフォルダ・コマンドファイル・ワークフローコマンドはロードされない（同期スキルへのなりすまし防止）。同名プラグインはロードされるが名前衝突では同期スキルに譲る。`Skill(anthropic-skills:*)` の allow ルールは claude.ai から同期されたスキルのみに一致し、その名前を使うだけのプラグイン等には一致しない。この名前で設定された MCP サーバーはスキル / プロンプトを一覧しない（ツールは動作。一覧に戻すにはサーバーをリネーム）。**v2.1.283 で deny ルールを拡張**: `Skill(anthropic-skills:<name>)` の deny は Claude Desktop がプラグインとして配布する同スキルもブロックし、`Skill(skill:<name>)` の deny はスキルのエイリアス・表示名にも一致する。※v2.1.282 では `claude-ai:` 名前空間も同様に予約されたが、**v2.1.283 でリバート**（`claude-ai` 名のスキル・コマンド・ワークフロー・MCP サーバーのスキル / プロンプトは再びロードされ、`Skill(claude-ai:*)` ルールは通常のプレフィックスルール）
 - **`.claude/commands/`**: 旧形式だが引き続き動作する。`name` と `paths` を除き同じフロントマターに対応し、ファイル名で呼び出す。**サブディレクトリに置いたファイルは `commands/` からの相対パスの `/` を `:` に置き換えた名前になる**（例: `.claude/commands/frontend/component.md` → `/frontend:component`。2026-09-13 リファレンス改訂で命名表に明記）。**新規はスキル推奨**（スキルは補助ファイルを持てる）
 - **スキルフォルダをプラグイン化**: `.claude-plugin/plugin.json` を置くと `<name>@skills-dir` というプラグインとしてロードされ、agents / hooks / MCP サーバーを同梱できる（プロジェクトの `.claude/skills/` ではワークスペース信頼ダイアログの承認が必要）
-- **クラウドセッションへのスキル配布（2026-10 ドキュメント改訂で変更）**: クラウドセッションにスキルを届けるにはリポジトリの `.claude/skills/` にコミットする。**リポジトリの `.claude/settings.json` で宣言したプラグインも、user 設定で有効化したプラグインも、クラウドセッションではロードされない**（従来は repo 宣言プラグインはセッション開始時にインストールされるとされていた）
+- **クラウドセッションへのスキル配布（2026-10 ドキュメント改訂で変更）**: クラウドセッションにスキルを届けるにはリポジトリの `.claude/skills/` にコミットする。**リポジトリの `.claude/settings.json` で宣言したプラグインも、user 設定で有効化したプラグインも、クラウドセッションではロードされない**（従来は repo 宣言プラグインはセッション開始時にインストールされるとされていた）。**例外: [Claude プロジェクト](https://code.claude.com/docs/en/claude-projects)のクラウドスレッドでは、リポジトリにコミットした `.claude/skills/` も利用できない** — プロジェクトのスレッドに届けるには claude.ai アカウント側でスキルを有効化する（2026-11-15 巡回で確認）
 - **消えた personal スキルの復旧**: `~/.claude/skills/` の自作フォルダが消えた場合は `~/.claude/skills/.trash/` を確認する。v2.1.280 より前は `~/.claude/skills/` 直下に `manifest.json` があると、そこに列挙されたスキルフォルダがタイムスタンプ付きフォルダへ `.trash/` 退避されロードされなくなるバグがあった。retention sweep（既定30日）で消える前にフォルダを戻せば復旧できる
 
 > **プラグインスキルの frontmatter `name`**: `name` はコマンド名の**最終セグメント**（ディレクトリ名）を置き換える。`my-plugin/skills/review/SKILL.md` に `name: fancy` を書くと `/my-plugin:fancy` になり、他が使っていなければ素の `/fancy` でも呼べる。`name` が既にプラグイン接頭辞を含む場合（`name: my-plugin:fancy`）、**v2.1.246 以降は接頭辞を重ねない**（v2.1.216〜v2.1.245 は二重化していた）。v2.1.216 より前は `name` がコマンド名全体を置き換えていた。
@@ -53,6 +53,8 @@ Skills は Claude の能力を拡張する仕組み。`SKILL.md` ファイルに
 | スキル + `.claude/commands/` のファイル | スキルが優先 |
 | プロジェクトルートのスキル + Nested スキル | 両方ロードされる（後述の修飾名） |
 | プラグインスキル + 上記いずれか | 両方ロードされる（`/plugin-name:skill-name` で名前空間が分かれるため） |
+| Enterprise / Personal / Project のスキル + 追加ディレクトリ（`--add-dir`）のスキル | Enterprise / Personal / Project 側。追加ディレクトリのスキルはプレフィックス付き名（`/cli:verify` 等）で動く（v2.1.309+、§`--add-dir` からのスキル参照） |
+| 追加ディレクトリ同士 | `--add-dir` / `/add-dir` で**先に追加した**ディレクトリのスキル。他方はプレフィックス付き名で動く |
 | 上記いずれか + claude.ai 同期スキル | 素の `/<name>` は同期スキル以外が優先。**同期スキルは常に `/anthropic-skills:<name>` の完全名で呼び出せる**（v2.1.269 以降。それ以前は短縮名しか持たず、衝突時は完全にスキップされていた） |
 
 #### サブディレクトリの自動検出
@@ -66,6 +68,8 @@ v2.1.178 から、ネストされた `.claude/skills/` のスキルは配下の�
 #### `--add-dir` からのスキル
 
 `--add-dir` で追加したディレクトリの `.claude/skills/` は自動読み込みされ、ライブ変更検出も有効。同ディレクトリの `.claude/commands/` と `.claude/agents/` も読み込まれる（ただし**監視はされない**ため、追加・編集後はセッション再起動が必要）。
+
+**同名スキルのプレフィックス付き呼び出し（v2.1.309+）**: 追加ディレクトリのスキルが enterprise / personal / project、または先に追加したディレクトリのスキルと同名の場合、プレフィックス付きの `/<追加ディレクトリのフォルダ名>:<skill-name>` で呼び出す（例: `--add-dir ../cli` で project と `../cli` の両方に `verify` があるとき、`/verify` は project 側、`/cli:verify` が追加ディレクトリ側）。`/` メニューにもプレフィックス付き名で表示される。追加ディレクトリ同士で同名の場合は**先に追加した方**が素の `/<name>` を取り、もう一方がプレフィックス付きになる（2つの追加ディレクトリのフォルダ名まで同じ場合はプレフィックスが親フォルダ名から始まる）。
 
 この例外は `--add-dir` / `/add-dir` と、**Agent SDK が追加するディレクトリ**（TypeScript の `additionalDirectories` / Python の `add_dirs`。SDK が `--add-dir` として渡す）に適用される。settings.json の `permissions.additionalDirectories` はファイルアクセス権のみを与え、skills / commands / subagents を読み込まない（TypeScript のオプション名が同じでも意味が異なる）。
 
@@ -107,7 +111,7 @@ my-skill/
 | `when_to_use` | No | Claude がスキルを呼ぶべきタイミングの補足（トリガーフレーズ・リクエスト例等）。スキル一覧では `description` に連結され、合算 1,536 文字上限の対象。唯一アンダースコア区切りのフィールド |
 | `argument-hint` | No | 引数ヒント。例: `[issue-number]` |
 | `arguments` | No | 名前付き位置引数の宣言。スペース区切り文字列または YAML リスト。宣言順に引数位置へマップされ、本文の `$name` 置換で参照する |
-| `disable-model-invocation` | No | `true` で Claude の自動呼び出しを禁止。手動 `/name` のみ |
+| `disable-model-invocation` | No | `true` で Claude の自動呼び出しを禁止。手動 `/name` のみ。**サブエージェントへのプリロード（`skills` フィールド）対象からも外れ、セッションスコープのスケジュールタスクがそのスキルをプロンプトとして発火したときも実行されない**（2026-11-15 巡回で確認） |
 | `user-invocable` | No | `false` で `/` メニューから非表示。バックグラウンド知識用 |
 | `allowed-tools` | No | スキル有効時に許可なしで使えるツール |
 | `disallowed-tools` | No | スキル有効時にモデルから取り除くツール（v2.1.152）。スラッシュコマンドのフロントマターでも有効 |
@@ -118,7 +122,7 @@ my-skill/
 | `background` | No | `context: fork` スキルのバックグラウンド実行を `false` でオプトアウト（v2.1.218） |
 | `hooks` | No | スキルライフサイクルにスコープされたフック |
 | `paths` | No | スキル自動適用を限定するglobパターン。カンマ区切り文字列またはYAMLリスト。パスマッチ時のみ自動読み込み |
-| `shell` | No | インライン `` !`command` `` のシェル。`bash`（デフォルト）または `powershell`（Windows、`CLAUDE_CODE_USE_POWERSHELL_TOOL=1` 必要） |
+| `shell` | No | インライン `` !`command` `` と ` ```! ` ブロックのシェル。`bash`（デフォルト）または `powershell`。`powershell` は [PowerShell ツール](tools.md)が有効な場合に機能する（Git Bash なしの Windows では既定 ON、Git Bash ありの Windows は claude.ai / Console アカウントで既定 ON、Bedrock / Vertex / Foundry と macOS / Linux / WSL は `CLAUDE_CODE_USE_POWERSHELL_TOOL=1` が必要。`0` でオフ） |
 | `metadata` | No | 自由形式の YAML マップ（エンタイトルメント・カタログ情報等、自前ツーリングが読むためのデータ）。Claude Code は内容に基づく動作をせず、マップでない値は破棄。`paths` 等の既存フィールド名をキーに使わないこと |
 | `license` | No | スキルのライセンス表記。[Agent Skills 仕様](https://agentskills.io)由来。Claude Code は受理するが動作には影響しない |
 | `compatibility` | No | スキルの環境要件（想定プロダクト・システム前提等、最大500文字の文字列）。Agent Skills 仕様由来。Claude Code は受理するが動作には影響しない |
@@ -131,7 +135,7 @@ my-skill/
 | `disable-model-invocation: true` | Yes | No | 説明はコンテキスト外、全文はユーザー呼び出し時 |
 | `user-invocable: false` | No | Yes | 説明は常にコンテキスト内、全文は呼び出し時 |
 
-- **スタック呼び出し（v2.1.199）**: `/skill-a /skill-b do XYZ` のように先頭に並べたスキルは**最大6つ**まで全てロードされ、末尾テキストが各スキルの `$ARGUMENTS` になる
+- **スタック呼び出し（v2.1.199）**: `/skill-a /skill-b do XYZ` のように先頭に並べたスキルは**最大6つ**（先頭+5つ）まで全てロードされ、末尾テキストが各スキルの `$ARGUMENTS` になる。**端末プロンプト限定**で、Agent SDK / `claude -p` では最初のスキルのみロードされ残りは引数扱い。展開は「インラインのユーザー呼び出し可能スキルでない最初のトークン」で停止する — フォーク実行されるスキル（`/code-review` 等）や引数が別コマンドで始まりうるスキル（`/loop` 等）を挟むとそこで展開が終わり、以降は展開済みスキル全部の引数テキストになる（2026-11-15 巡回で確認）
 - **スラッシュ名を書く位置（2026-10 ドキュメント改訂で明文化）**: メッセージ**先頭**の `/name` は直接実行。**文中**に句読点なしの独立した語として書いた `/name`（例: `go ahead and /deploy to staging`）は直接実行されず、「そのメッセージ中で Claude がスキルを実行してよい」という**許可**として扱われる（実行するかは文脈から Claude が判断）。許可も与えたくない場合はスラッシュを付けずに言及する
 - **フロントマターキーの表記ゆれ許容（v2.1.186）**: `display-name` / `default-enabled` / `fallback` / `metadata.*` は kebab-case / snake_case / camelCase を受理。YAML フロントマターが壊れている場合も silent fail せず空メタデータで本文をロード
 
@@ -192,6 +196,16 @@ $ARGUMENTS を徹底的に調査してください。
 
 v2.1.218 から `context: fork` のスキルは既定でバックグラウンド実行される。フォアグラウンドで実行したい場合はフロントマターに `background: false` を指定する。
 
+**`background: false` を設定しなくても結果を待つケース**（2026-11-15 巡回で確認）:
+
+- 非対話モード（`-p` / Agent SDK）
+- `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1` 設定時
+- 同じフォークスキルの前回起動がまだ実行中のとき
+- **セッションスコープのスケジュールタスクがそのスキルをプロンプトとして発火したとき**
+- 動的ワークフロー内のエージェントがフォークスキルを呼んだとき（そのエージェントが待って結果を受け取る。**v2.1.295 より前**はバックグラウンド実行時に結果がメイン会話へ流れていた）
+
+バックグラウンドで走るフォークは[バックグラウンドサブエージェントの縮小ツールセット](https://code.claude.com/docs/en/sub-agents#run-subagents-in-foreground-or-background)で動く（会話フォークと違い除外されない）ため、セット外のツールに依存するスキルは `background: false` にする。また、バックグラウンドのフォークスキルの編集はセッションのチェックポイント対象外で、`/rewind` では戻らない（git で戻す）。
+
 > **注意（2026-09-13 リファレンス改訂で明文化）**: 名前に反して `context: fork` は「現在の会話のフォーク」（サブエージェントの fork 機能。会話履歴をすべて引き継ぐ）では**ない**。`agent` で指定したタイプの新規サブエージェントにスキル本文をプロンプトとして渡すだけで、会話履歴は見えない。タスクが会話履歴に依存する場合は `context: fork` ではなく会話のフォークを使う。
 
 > フロントマターの真偽値は v2.1.218 から `true`/`false` に加え `yes`/`no`/`on`/`off`/`1`/`0`（大文字小文字不問）も受理される（スキル・プラグイン共通）。
@@ -236,7 +250,7 @@ Claude Code に同梱されるスキル:
 | `/simplify [target]` | v2.1.152 で `/code-review --fix` のエイリアスとして復活。v2.1.154 でクリーンアップ専用レビュー（reuse / simplification / efficiency / altitude の**4エージェント並列**）に変更され、`/code-review --fix` のバグハンティングは行わなくなった。パスまたは PR 参照を渡して対象を指定可能（2026-11-05 commands リファレンスで確認） |
 | `/workflows` | Dynamic workflows の実行状況表示（v2.1.154）。Claude にワークフロー作成を依頼するとバックグラウンドで数十〜数百のエージェントを跨いだ作業をオーケストレーション。v2.1.160 でトリガーキーワードが `workflow` → `ultracode` にリネーム |
 | `/workflow-authoring` | 動的ワークフロースクリプト作成のリファレンスをロード（スクリプト API・再開挙動・品質パターン・実例）。通常は Claude がスクリプトを書く前に自動ロードするので、手で呼ぶのは保存済みスクリプトを手編集する前など。**動的ワークフローが有効な場合のみ利用可、要 v2.1.248 以降** |
-| `/less-permission-prompts` | 読み取り専用 bash/MCP 呼び出しを検出し許可リスト追加を提案（v2.1.111） |
+| `/fewer-permission-prompts` | 読み取り専用 bash/MCP 呼び出しをトランスクリプトから検出し、プロジェクト `.claude/settings.json` への優先度付き allowlist 追加を提案（v2.1.111 で `/less-permission-prompts` として導入、現行コマンド名は `/fewer-permission-prompts`） |
 | `/team-onboarding` | 新メンバー向けのプロジェクトオンボーディング資料生成（v2.1.101） |
 | `/build-eval` | Claude を使ったアプリ向けの eval セットを構築する（**v2.1.259 以降**） |
 | `/hillclimb` | 既存の eval に対してアプリを反復的に改善する（**v2.1.259 以降**） |
@@ -328,7 +342,7 @@ Claude Code に同梱されるスキル:
 | コマンド | 説明 |
 |:--|:--|
 | `/init` | CLAUDE.md の自動生成。`CLAUDE_CODE_NEW_INIT=1` でスキル・フック・個人メモリファイルも案内するインタラクティブフローに切替。OpenAI Codex / Google Gemini CLI の設定を検出した場合は `/import` での取り込みを提案する |
-| `/diff` | ワーキングツリーの変更（Claude の編集を含む）をレビューする。フルスクリーンレンダリング時は会話の横に **diff パネル**を開き、Claude の編集に追随して更新され続ける（`/diff` 再実行かヘッダの `✕` で閉じる）。要件はフルスクリーン・git リポジトリ・端末幅 110 桁以上・**v2.1.287 以降**（v2.1.260 で導入後、公式ドキュメントが要件バージョンを v2.1.287 に引き上げ）で、満たさない場合は従来の diff ビューア（プロンプト位置に開き Esc で閉じる）にフォールバックする。端末幅 144 桁以上なら Claude がファイル編集を始めた時点で自動的に開く。パネルでは行をマウス選択して次のプロンプトに添付でき、`Ctrl+X B`（`app:cycleDiffBase`）で比較基準を「今セッションの変更 → 未コミット全体 → 既定ブランチからの分岐点以降」と巡回する（プロジェクトごとに記憶）。テスト・生成ファイルと当セッション以前の変更は折りたたまれる |
+| `/diff` | ワーキングツリーの変更（Claude の編集を含む）をレビューする。フルスクリーンレンダリング時は会話の横に **diff パネル**を開き、Claude の編集に追随して更新され続ける（`/diff` 再実行かヘッダの `✕` で閉じる）。要件はフルスクリーン・git リポジトリ・端末幅 110 桁以上・**v2.1.287 以降**（v2.1.260 で導入後、公式ドキュメントが要件バージョンを v2.1.287 に引き上げ）で、満たさない場合（classic レンダラ等）は `cc-plugin-diff` mod 由来の **diff ダイアログ**（ソースピッカー・`ask` ボタン・Tab 操作付き）が開く。従来の diff ビューア（プロンプト位置に開き Esc で閉じる）になるのは mod を無効化した場合のみ（2026-11-15 巡回で記述更新）。端末幅 144 桁以上なら Claude がファイル編集を始めた時点で自動的に開く。パネルでは行をマウス選択して次のプロンプトに添付でき、`Ctrl+X B`（`app:cycleDiffBase`）で比較基準を「今セッションの変更 → 未コミット全体 → 既定ブランチからの分岐点以降」と巡回する（プロジェクトごとに記憶）。テスト・生成ファイルと当セッション以前の変更は折りたたまれる |
 | `/plan [description]` | プランモード開始。説明を渡すとそのタスクで即座に開始（例: `/plan fix the auth bug`。2026-11-05 commands リファレンスで確認） |
 | `/powerup` | Claude Code機能のインタラクティブレッスン＋アニメーションデモ |
 | `/security-review` | セキュリティ脆弱性分析 |
@@ -403,7 +417,7 @@ MCPサーバーが公開するプロンプトは `/mcp__<server>__<prompt>` 形�
 | `/auto-mode-setup` | プロジェクトと直近セッションから `autoMode.environment` エントリのドラフトを生成し、レビューしてユーザー設定へ保存する。Pro / Max / Ultra / Team プランかつ v2.1.228 以降（ネイティブ Windows は v2.1.233 以降）。**Enterprise プランまたは Claude Console API キーでは v2.1.283 以降**（2026-11 commands リファレンス改訂で収載） |
 | `/advisor [model\|off]` | Advisor ツール（タスク中の要所で第2のモデルに助言を求める）の有効化 / 無効化。`fable` / `opus` / `sonnet` / 完全なモデル ID を受け付ける。引数なしではピッカーが開く。**v2.1.260 以降はターミナルのピッカーが無い環境でも動作する** — `-p` の非対話モード、Agent SDK、デスクトップアプリ、Remote Control 経由。これらの環境では引数なしの `/advisor` が現在の advisor とエイリアス一覧をテキストで表示し、`/advisor <model>` で設定、`/advisor off` で無効化する。Remote Control クライアントやリモートワーカーに接続したセッションでの選択は**そのセッション限定**で `advisorModel` 設定は書き換えない |
 | `/autocompact [auto\|<tokens>]` | 自動コンパクション発動のコンテキスト使用量を設定（例 `500k`、`auto` でモデル既定に戻す） |
-| `/deep-research <question>` | **バンドルワークフロー**。Web 検索を fan-out し、ソースを取得・相互検証して引用付きレポートを合成 |
+| `/deep-research <question>` | **バンドルワークフロー**。Web 検索を fan-out し、ソースを取得・相互検証して引用付きレポートを合成。検証エージェントがレート制限・API エラー等で確認できなかった主張は「反証」ではなく **unverified** として報告される |
 | `/run` | **バンドルスキル**。テストだけでなく実アプリを起動・操作して変更の動作を確認 |
 | `/run-skill-generator` | **バンドルスキル**。プロジェクト固有のビルド / 起動 / 操作手順をスキルとして生成し、`/run` と `/verify` に教える |
 | `/design [brief]` | **バンドルスキル**（リサーチプレビュー、v2.1.234 以降）。Claude Design のアートボードワークフローを CLI / Claude Code Desktop に持ち込み、Artifacts 基盤で編集可能なアートボードのキャンバスを公開する。ブリーフを渡すと UI 案を複数生成し、ユーザーが選んだ案を Claude に実装させる流れ。Pro / Max / Team / Enterprise、かつ [Artifacts が利用可能なセッション](https://code.claude.com/docs/en/artifacts#availability)で利用可。アカウントで保存が有効ならキャンバス上でアートボードを編集して新バージョンを公開でき、無効ならドラフトの閲覧と PNG / PDF エクスポートのみ。2026-09-01 巡回で公式 commands リファレンスに収載されたことを確認。2026-09-30 の commands リファレンス改訂で「Design artifact」の呼称が「**Claude Design** artifact」に変更。**2026-11 commands リファレンス改訂で要件が「v2.1.265 以降＋[Design テンプレートが利用可能なアカウント](https://code.claude.com/docs/en/artifacts#start-from-a-slides-design-or-docs-template)」に変更**: 組織が Design テンプレートをオフにしていると `/design` はデザインを作らない。Artifacts が無い Bedrock / Vertex / Foundry / AWS 上の Claude Platform では利用不可。**サブコマンド `/design consent` / `/design revoke`**: Claude Design へのアクセスを許可 / 取り消す。Claude の応答が `/design consent` の実行を求めてきたら自分でタイプする（2026-11-05 commands リファレンスで確認） |
@@ -413,7 +427,7 @@ MCPサーバーが公開するプロンプトは `/mcp__<server>__<prompt>` 形�
 | `/fewer-permission-prompts` | **バンドルスキル**。トランスクリプトから頻出の読み取り専用 Bash / MCP 呼び出しを抽出し、プロジェクト `.claude/settings.json` に優先度付き allowlist を追加 |
 | `/import [codex\|gemini\|cursor] [--dry-run] [--yes]` | 他のコーディングエージェント（OpenAI Codex / Google Gemini CLI / **Cursor**）の設定（指示ファイル・MCP サーバー・コマンド・サブエージェント・スキル）を Claude Code に取り込む。**Cursor からの取り込みは v2.1.265 以降**（2026-11 commands リファレンス改訂で収載）。`-p` の非対話モードでは検出結果と確認用コマンドを表示する。Bedrock / Vertex / Foundry / AWS 上の Claude Platform / Claude apps gateway 経由、および feature flag 取得を止めたセッションでは利用不可 |
 | `/statusline` | ステータスラインの設定。引数なしでシェルプロンプトから自動構成 |
-| `/keybindings` | キーボードショートカット設定ファイル（`~/.claude/keybindings.json`）を開く。キー名は**大文字小文字を区別しない**（`K` は `k` と同一。Shift 併用は `shift+k` と明記する必要がある）。`wheelup` / `wheeldown` がマウスホイールイベントとして指定でき、既定で `scroll:lineUp` / `scroll:lineDown` にバインドされている。未知のアクション名を指定したバインドは v2.1.246 からスキップされ（既定バインドが維持され `--debug` で警告）、以前はそのキーが無効化されていた。v2.1.247 で `chat:queueSubmit`（既定 `Ctrl+X Enter`。作業中でも割り込まずキューに積む送信。オートコンプリート表示中でも送信される）と `select:pageUp` / `select:pageDown` / `select:first` / `select:last`（PageUp / PageDown / Home / End。適用は `/skills` メニュー。`/model` 等では既定の PageUp / PageDown が使われ Home / End は無視）を追加。キー名に `pageup` / `pagedown` / `home` / `end` が使えるようになった。`ctrl+x` を単独キーとして奪うには `ctrl+x ctrl+k` / `ctrl+x ctrl+e` / `ctrl+x enter`（Chat）と `ctrl+x ctrl+b`（Task）を全て `null` にする。再バインド不可: `Ctrl+C` / `Ctrl+D` / `Ctrl+M`（Enter として届く）/ `Ctrl+[`（Escape として届く）/ `Ctrl+I`（Tab として届く）/ `Ctrl+H`（ASCII backspace）/ Caps Lock。非 Latin レイアウト（キリル等）では Kitty キーボードプロトコル対応端末なら US 配列の物理位置でマッチし、AZERTY 等の Latin 系再配置レイアウトでは「そのキーが打つ文字」でマッチする（v2.1.247 以前は Kitty プロトコル端末の非 Latin レイアウトで Ctrl ショートカットが発火しなかった）。**2026-09-10 時点のリファレンスで 2 つのコンテキストが追加**: `EffortSlider`（`/effort` を引数なしで実行したときのスライダ。`effortSlider:thisSessionOnly`、既定 `s` = 選択中の effort をそのセッションのみに適用。要 v2.1.257 以降。**v2.1.284 で `effortSlider:decreaseEffort`（既定 Left）/ `effortSlider:increaseEffort`（既定 Right）/ `effortSlider:toggleUltracode`（既定 Tab。ultracode が利用可能な場合のセッション単位トグル）が追加され矢印・Tab キーも再バインド可能に**。再バインド不可は Enter / Escape のみとなった）と `Agents`（`claude agents` のエージェントビュー。`agents:switchView` 既定 `Ctrl+S` = セッションのグルーピングを state / directory で切替、`agents:togglePin` 既定 `Ctrl+T` = 選択セッションのピン留め。要 v2.1.257 以降。**エージェントビュー表示中は `Agents` のバインドが `Chat` / `Global` の同一キーより優先**され、例えば `Ctrl+S` は `chat:stash` ではなくグルーピング切替になる。またエージェントビューでは単打のみ発火するため、`chat:externalEditor` の `Ctrl+X Ctrl+E` チョードは効かず `Ctrl+G` を使う） |
+| `/keybindings` | キーボードショートカット設定ファイル（`~/.claude/keybindings.json`）を開く。キー名は**大文字小文字を区別しない**（`K` は `k` と同一。Shift 併用は `shift+k` と明記する必要がある）。`wheelup` / `wheeldown` がマウスホイールイベントとして指定でき、既定で `scroll:lineUp` / `scroll:lineDown` にバインドされている。未知のアクション名を指定したバインドは v2.1.246 からスキップされ（既定バインドが維持され `--debug` で警告）、以前はそのキーが無効化されていた。v2.1.247 で `chat:queueSubmit`（既定 `Ctrl+X Enter`。作業中でも割り込まずキューに積む送信。オートコンプリート表示中でも送信される）と `select:pageUp` / `select:pageDown` / `select:first` / `select:last`（PageUp / PageDown / Home / End。適用は `/skills` メニュー。`/model` 等では既定の PageUp / PageDown が使われ Home / End は無視）を追加。キー名に `pageup` / `pagedown` / `home` / `end` が使えるようになった。`ctrl+x` を単独キーとして奪うには `ctrl+x` で始まる既定チョードを**全て** `null` にする必要がある（現行既定は Chat の `ctrl+x ctrl+k` / `ctrl+x ctrl+e` / `ctrl+x enter` / `ctrl+x ctrl+a` / `ctrl+x ctrl+s` / `ctrl+x tab` / `ctrl+x ctrl+=` / `ctrl+x ctrl+-` / `ctrl+x ctrl+_` / `ctrl+x =` / `ctrl+x -`、Task の `ctrl+x ctrl+b`、DiffPanel の `ctrl+x b`、Pane の `ctrl+x left/right/up/down/x`、PaneField の `ctrl+x x` と増えており、公式 keybindings ページの既定一覧で確認するのが確実。2026-11-15 巡回で更新）。再バインド不可: `Ctrl+C` / `Ctrl+D` / `Ctrl+M`（Enter として届く）/ `Ctrl+[`（Escape として届く）/ `Ctrl+I`（Tab として届く）/ `Ctrl+H`（ASCII backspace）/ Caps Lock。非 Latin レイアウト（キリル等）では Kitty キーボードプロトコル対応端末なら US 配列の物理位置でマッチし、AZERTY 等の Latin 系再配置レイアウトでは「そのキーが打つ文字」でマッチする（v2.1.247 以前は Kitty プロトコル端末の非 Latin レイアウトで Ctrl ショートカットが発火しなかった）。**2026-09-10 時点のリファレンスで 2 つのコンテキストが追加**: `EffortSlider`（`/effort` を引数なしで実行したときのスライダ。`effortSlider:thisSessionOnly`、既定 `s` = 選択中の effort をそのセッションのみに適用。要 v2.1.257 以降。**v2.1.284 で `effortSlider:decreaseEffort`（既定 Left）/ `effortSlider:increaseEffort`（既定 Right）/ `effortSlider:toggleUltracode`（既定 Tab。ultracode が利用可能な場合のセッション単位トグル）が追加され矢印・Tab キーも再バインド可能に**。再バインド不可は Enter / Escape のみとなった）と `Agents`（`claude agents` のエージェントビュー。`agents:switchView` 既定 `Ctrl+S` = セッションのグルーピングを state / directory で切替、`agents:togglePin` 既定 `Ctrl+T` = 選択セッションのピン留め。要 v2.1.257 以降。**エージェントビュー表示中は `Agents` のバインドが `Chat` / `Global` の同一キーより優先**され、例えば `Ctrl+S` は `chat:stash` ではなくグルーピング切替になる。またエージェントビューでは単打のみ発火するため、`chat:externalEditor` の `Ctrl+X Ctrl+E` チョードは効かず `Ctrl+G` を使う） |
 | `/theme` | カラーテーマ変更（`auto`・light/dark・色覚多様性対応（daltonized）・ANSI テーマ等）。**`~/.claude/themes/` またはプラグイン由来の[カスタムテーマ](https://code.claude.com/docs/en/terminal-config#create-a-custom-theme)も選択でき、「New custom theme…」から新規作成できる**（2026-11 commands リファレンス改訂で収載） |
 | `/scroll-speed` | マウスホイールのスクロール速度をインタラクティブ調整（フルスクリーン描画時） |
 | `/terminal-setup` | Shift+Enter 等の端末キーバインド設定（VS Code / Cursor / Alacritty / Zed 等、必要な端末でのみ表示） |
@@ -425,7 +439,7 @@ MCPサーバーが公開するプロンプトは `/mcp__<server>__<prompt>` 形�
 | `/feedback [report]` | Claude Code へのプロダクトフィードバック送信（`/bug` と同じダイアログ・同意フロー）。Claude 起草フィードバック（`SendFeedback` ツール）が有効なセッションでは、**引数なしの `/feedback` はドラフトキュー**を開き、Claude がキューしたドラフトのレビュー・編集・送信・破棄ができる（`w` で通常ダイアログ）。引数付き `/feedback` と `/bug` は常にダイアログを直接開く（v2.1.247） |
 | `/privacy-settings` | プライバシー設定の確認・更新（Pro / Max / Ultra プランのみ） |
 | `/restart` (`/update`) | **v2.1.288 で追加（2026-10-30 コマンドリファレンス収載）**。Claude Code を再起動して同セッションを再開する — インストール済みアップデートの適用用（アップデート完了後にフッターが促したときに実行）。Pro / Max / Ultra プラン＋macOS / Linux のネイティブインストールが必要（WSL 不可） |
-| `/upgrade` | 上位プランへのアップグレードページをブラウザで開く |
+| `/upgrade` | 上位プランへのアップグレードページをブラウザで開く。ブラウザを開けない環境（SSH 等）ではサインインプロンプトの上にページ URL をテキスト表示する（URL 表示は v2.1.323+） |
 | `/rate-limit-options` | claude.ai の利用上限でリクエストが止まった際の選択肢メニュー（リセットまで待って自動継続 / usage credits 追加 / プランのアップグレード）を開く。自分の端末で上限に達した場合は Claude Code 側から自動的に開くこともある。自動継続の ON/OFF は `autoContinueAtUsageLimit` 設定。**自動継続は 3 回連続で停止**し `Automatic continue stopped after repeated usage-limit hits` 通知が表示される（`/rate-limit-options` で次の行動を選択。新しいプロンプト送信かメニューでの待機選択でカウントはリセット。`/goal` / セッションスコープのスケジュールタスクの継続も同じ 3 回制限。2026-11-04 ドキュメント改訂で収載）。待機のキャンセルは空プロンプトで `Esc` / `Ctrl+C`、またはメニューの Don't continue automatically |
 | `/passes` | Claude Code の1週間無料パスを友人に共有（対象アカウントのみ表示） |
 | `/mobile` | Claude モバイルアプリのダウンロード QR を表示。エイリアス `/ios`・`/android` |
@@ -470,6 +484,7 @@ MCPサーバーが公開するプロンプトは `/mcp__<server>__<prompt>` 形�
 - 間隔構文: `30m`, `2h`, `every 2 hours`, 省略時10分
 - 単位: `s`（秒→分に丸め）, `m`（分）, `h`（時間）, `d`（日）
 - 内部ツール: `CronCreate`, `CronList`, `CronDelete`
+- **スキル実行前の確認（v2.1.325）**: スケジュールタスク / `/loop` が `allowed-tools`・`disallowed-tools`・`hooks` を宣言するスキルを実行する前に確認を求めるようになった。無人実行させたい場合は `Skill(name)` の allow ルールを設定しておく。また `disable-model-invocation: true` のスキルは、スケジュールタスクのプロンプトとして発火しても実行されない（§1.3 参照）
 - セッションあたり最大50タスク
 - 繰り返しタスクは3日で自動期限切れ
 - ジッター: 繰り返しタスクは周期の10%（最大15分）遅延、一発タスクは最大90秒早期発火
@@ -722,7 +737,7 @@ first-mod/
 
 **組織管理**（詳細は plugins/mods/admin ページ）: managed 設定の **`appendPlugins` / `prependPlugins`**（プラグイン ID のリスト。ユーザー mod の後 / 前に配置）、**`allowManagedModsOnly`**（組織の mod と組み込み mod のみロード。settings hooks は動き続ける）、**`allowModsToOverrideDenyRules`**（ユーザー mod が deny ルールの拒否を覆すのを許可）、**`allowManagedHooksOnly`**（組織以外のフック・インストール mod をブロック）、**`disableSideloadFlags`**（`--plugin-dir` / `--plugin-url` を起動時に拒否）、**`pluginConfigs`**（mod の `userConfig` 値をプラグイン ID で配布）。ポリシー強制 mod の実装例として `sec-default` が参照実装（managed 設定があるマシン、または Team / Enterprise サインインのユーザーで全ユーザー mod より先にロード）。
 
-**イベントカタログ（reference ページの要約。完全版は `mods/types/claude-code.d.ts`）**:
+**イベントカタログ（reference ページの要約。完全版は mod の `.claude-plugin/types/claude-code/index.d.ts`。`--plugin-dir` の対話ロード時や Claude が mod を書いた時に実行中バージョンの型定義一式〔`claude-code-tools` / `claude-code-mcp` / 依存プラグインごとの `index.d.ts`・`tsconfig.json` 含む〕が生成され、ドキュメントと食い違う場合は型定義が正。2026-11-15 巡回で反映）**:
 
 | グループ | 主なイベント |
 |:--|:--|
@@ -737,11 +752,15 @@ first-mod/
 | テレメトリ | `telemetry.log` / `telemetry.mark`（インストール mod は `{ to: 'collector' }` フィルタ必須） |
 | settings hooks | `classic.<Event>`（`classic.Stop` 等。`e` は settings hook の stdin JSON） |
 
-mods API の各メソッド（`fs.read` 等）もイベントとして後続 mod の呼び出しをインターセプトできる。フックの実行順は tier（`prepend` → `user` → `append` → `builtin`）で、`next.to(e, tier)` による後続スキップは prepend / append 配置の mod のみ可能。
+mods API の各メソッド（`fs.read` 等）もイベントとして後続 mod の呼び出しをインターセプトできる。フックの実行順は tier（`prepend` → `user` → `append` → `builtin`）で、`next.to(e, tier)` による後続スキップは prepend / append 配置の mod のみ可能。**v2.1.321+ では Claude Code 自身のアクションにも一部のイベントが発火**する（`next.origin.plugin` が `engine` かで判別。拒否する前に確認すること）。特に `http.fetch` イベントは `next.origin` が `{plugin: 'engine', tier: 'core'}` のときモデルリクエスト等 Claude Code 自身のリクエストで、`e.init.compress`（フック後にボディ圧縮。`e.init.body` は非圧縮）や `value.isStreaming`（Claude Code 自身がボディを読むため `value.text` は空。`status` / `headers` を読む）を持つ。組み込みガードがロードされている環境では**組織の mod でない限りこれらのイベントは届かない**（2026-11-15 巡回で反映）。また **`{plugin: '*'}` フィルタは v2.1.323+**（それ以前は `plugin` なしが全 mod にマッチし `{plugin: '*'}` は動かない。両バージョン対応は `ui.press` / `ui.input` / `ui.select` では `{plugin: /./}`、`ui.focus` / `ui.render` では `on('ui.*', hook)` で `next.event` を確認する）。
 
 **mods API（`$`）の名前空間**: `$.plugin`（name / root）、`$.ui`（open / close / toast / notice / ask / status / invalidate 等）、`$.command` / `$.tool` / `$.agent`（register / run・call / spawn / list）、`$.model`（complete / fork / classify）、`$.prompt`（submit / fill / suggest 等。`submit({text, asUser: true})` でユーザー発話として送信）、`$.turn.abort`、`$.session`（messages / usage / send / compact 等）、`$.config` / `$.settings` / `$.env`、`$.fs`（read / write / list 等。1ファイル4 MiB）、`$.store`（全セッション共有 KV、合計 4 MiB）、`$.state`（リアクティブ状態）、`$.clock`（sleep / after / every）、`$.http.fetch`、`$.process`（run は既定30秒・最大10分）、`$.mcp`（call / connect）、`$.audio`、`$.telemetry`。
 
 **render site / 要素 / 制限の要点**: 描画先は `Pane`（dock / inline）・`AbovePrompt`（バンド）のほか、`UserMessage` / `AssistantMessage` / `ToolUse` / `Spinner` / `AskUserQuestion` など Claude Code 自身の UI 置換ポイント。要素は `Box` / `Text` / `Button` / `Input` / `Select` / `Markdown` / `Code` / `Link` / `Client` に加え、ターミナル限定の `Raster`（最大 512×256 セル）/ `Image`（2 MiB）、Desktop 限定の `Svg`。**Text の typography props（v2.1.299+）**: `size`（caption / footnote / body / heading / title）/ `weight`（regular / medium / semibold / bold）/ `mono` / `tabular` の 4 種。v2.1.299 より前のバージョンではこれらを設定したツリーは描画されない。端末・VS Code 拡張では無視され、`weight` の semibold / bold のみ太字描画。従来の `bold` prop は `weight` に置換され**非推奨**（動作は継続。`bold: true` ≒ `weight: 'semibold'`、両方設定時は `bold` 無効。2026-11-12 mods リファレンスで確認）。フック実行時間は 1 イベント 10 秒（`prompt.edit` は 50ms）、`$.model.complete` の maxTokens は既定 1024（最大 64,000。v2.1.292 からプロンプトキャッシュ対応: `prompt` / `system` がテキストブロックの配列を受け、ブロックに `cache: true` を付けるとそこまでのリクエストをキャッシュ）、再描画は秒 10 回（可視ペインは 30 回）にスロットル。テストは `*.test.ts(x)` を `claude plugin test <dir>` で実行（1 テスト既定 5 秒）。`CLAUDE_CODE_PLUGIN_DIR_WATCH=1` で長時間の非対話セッションでも `--plugin-dir` mod を保存時リロード。
+
+**バンドの mod ごと行化と関連 render site（v2.1.323、2026-11-15 巡回で反映）**: v2.1.323 から `AbovePrompt`（バンド）は **mod ごとに自分の行を描く**方式になり（`{ component: 'AbovePrompt' }` でフィルタして自分のツリーを返す。描かないなら `next(e)`）、行のスタックを表す render site **`AbovePromptList`**（`rows` に mod ごとの `{plugin, tree}` リスト）が追加された。v2.1.323 より前は全 mod がバンドの1つの描画を共有し、`next(e)` の結果を `Box` の children に入れないと後続 mod の描画を消していた（両対応にはその書き方を維持。v2.1.323+ ではその child は他 mod の行を描かない）。ほか render site として `Placed`（`$.ui.place` でトランスクリプトに行を配置、ターミナルのみ）と `Backdrop`（Desktop / モバイル。`$.theme.set`/`$.theme.clear` は v2.1.319+、**v2.1.323 で props が `id`→`scene`、`colorScheme`→`overrideColorScheme` に改名**）がある。**バンドの折りたたみ検知 `e.props.isCollapsed` は v2.1.321+**（ユーザーが折りたたんだバンドは mod から展開できず、`/clear` 後も折りたたみ維持・次回起動で展開。回答が必要な UI をバンドだけに置かないこと）。**Desktop アプリ Code タブの配色を変える colors mod は v2.1.324+**（Claude に作らせるか自分で書く。ターミナルの配色は変わらない）。
+
+**テストキットの更新（v2.1.321/323、2026-11-15 巡回で反映）**: `expect` のマッチャ一覧はドキュメント列挙から**ビルドの型定義 `claude-code/index.d.ts` の `type Matchers` を検索する方式**に変更（`.not` / `.resolves` / `.rejects` は従来どおり）。`ui.render` フックが `next(e)` を返す場合、**v2.1.321+ はスタブなしでも mount が成功**し（それ以前は `no implementation for ui.render` で失敗するためスタブ必須）、`next(e)` の返す要素を選ぶにはスタブを登録する。**バンドでは v2.1.323+ でスタブの `on` に `{ plugin: '<mod名>' }` を第2引数として渡さないとスタブが応答しない**。新アサーション **`keepsBeneath()`**（v2.1.321+）: `ui.render` スタブなしのテストで、描画に `next(e)` の結果が含まれれば `true`、フックが落としていれば `false` に解決する（スタブ登録済みのテストでは `find` で確認）。
 
 **実行環境の詳細（overview の表）**: フックは VS Code 拡張チャットパネル・`claude -p`・Agent SDK・Remote Control（ローカル側）・クラウドセッション（プラグインが届く場合）でも動くが、**描画されるのはターミナルと Desktop アプリの Code タブのみ**（Desktop の WSL セッションはプラグイン自体が不可）。mod はサンドボックス対象外（sandbox は Claude の Bash コマンドのみ隔離）。
 
@@ -763,6 +782,11 @@ mods API の各メソッド（`fs.read` 等）もイベントとして後続 mod
 |:--|:--|:--|
 | **Explore** | メインセッションのモデルを継承。**メインが Fable のとき**（2026-10 ドキュメント改訂で「Opus 上限」から記述変更）: サブスクリプション / Console / `ANTHROPIC_BASE_URL` の LLM ゲートウェイでは `opus` エイリアスが解決する Opus モデルで実行、Bedrock / Agent Platform / Foundry / Claude Platform on AWS / Claude apps gateway ではメインのモデルのまま | 読み取り専用のコードベース探索。quick/medium/very thorough の3段階 |
 | **Plan** | 継承 | プランモード時のリサーチ。読み取り専用 |
+
+> **ビルトインの上書き**: `Explore` という名前の user / project サブエージェントはビルトインを上書きし、自身の `model` フィールドを保持する（`model: haiku` を定義すれば探索を安価なモデルで実行できる）。全サブエージェントを単一モデルに強制するには `CLAUDE_CODE_SUBAGENT_MODEL` + `CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1`（§5.5 参照）。
+
+| エージェント | モデル | 用途 |
+|:--|:--|:--|
 | **general-purpose** | 継承 | 探索と変更の両方が必要な複雑タスク |
 | **Bash** | 継承 | 別コンテキストでのターミナルコマンド実行 |
 | **statusline-setup** | Sonnet 固定 | ステータスライン設定用の専用エージェント |
@@ -792,10 +816,14 @@ model: sonnet
 
 | 場所 | スコープ | 優先度 |
 |:--|:--|:--|
-| `--agents` CLIフラグ | 現在のセッションのみ | 1（最高） |
-| `.claude/agents/` | プロジェクト | 2 |
-| `~/.claude/agents/` | 全プロジェクト | 3 |
-| プラグインの `agents/` | プラグイン有効時 | 4（最低） |
+| Managed settings（[managed settings ディレクトリ](https://code.claude.com/docs/en/managed-settings#delivery-mechanisms)内の `.claude/agents/`） | 組織全体 | 1（最高） |
+| `--agents` CLIフラグ | 現在のセッションのみ | 2 |
+| `.claude/agents/` | プロジェクト | 3 |
+| `~/.claude/agents/` | 全プロジェクト | 4 |
+| プラグインの `agents/` | プラグイン有効時 | 5（最低） |
+
+- **再帰スキャン**: `.claude/agents/` と `~/.claude/agents/` はサブフォルダも再帰的にスキャンされる（`agents/review/` 等で整理可能）。サブディレクトリパスは識別に影響せず、識別子は `name` フィールドのみ。**プラグインの `agents/` のサブフォルダはスコープ識別子の一部になる**（`my-plugin` の `agents/review/security.md` → `my-plugin:review:security`）
+- **同名の解決**: 同一ディレクトリ（サブフォルダ含む）内の同名はファイルシステムの読み取り順で 1 つだけロードされる（`/doctor` が検出・リネーム提案）。ネストしたプロジェクトディレクトリ間では作業ディレクトリに最も近い定義が勝つ
 
 **`--agents` の JSON 形式（2026-10 ドキュメント改訂で詳細化）**: トップレベルキーがエージェント名（`-` 始まり不可）、値が定義。`prompt`（システムプロンプト、file-based の本文に相当）＋frontmatter 相当フィールド（`description` / `tools` / `disallowedTools` / `model` / `permissionMode` / `mcpServers` / `hooks` / `maxTurns` / `skills` / `initialPrompt` / `memory` / `effort` / `background` / `omitClaudeMd` / `isolation`、v2.1.296 以降は `autoCompactWindow` も）。`color` / `experimental` は受理されず黙って無視。**v2.1.281 以降**: ①非対話モード（`-p`）では JSON ファイルのパスも渡せる（コマンドラインに載らない大型定義用。対話セッションではファイルパスは拒否）、②`prompt` は空でもよく、空 `prompt`＋`memory` なしのエージェントを `--agent` でセッションエージェントにするとシステムプロンプトは既定のまま変わらない。
 
@@ -808,12 +836,13 @@ model: sonnet
 | `tools` | No | 許可ツール。省略時は全ツール継承 |
 | `disallowedTools` | No | 拒否ツール |
 | `model` | No | `sonnet` / `opus` / `haiku` / `fable` / `inherit` / フルモデルID（`claude-opus-5` 等）。**省略時は下記のサブエージェントモデル優先順位に従う**（v2.1.251 以前は `inherit` が既定扱い） |
-| `permissionMode` | No | `default` / `acceptEdits` / `dontAsk` / `bypassPermissions` / `plan`（`manual` は `default` のエイリアス）。**メイン会話の権限モードによって、この指定が使われるかどうかが決まる**（下記） |
+| `permissionMode` | No | `default` / `acceptEdits` / **`auto`** / `dontAsk` / `bypassPermissions` / `plan`（`manual` は `default` のエイリアス）。**プラグインサブエージェントでは無視される**（`hooks` / `mcpServers` も同様）。**メイン会話の権限モードによって、この指定が使われるかどうかが決まる**（下記） |
 
 > **サブエージェントの `permissionMode` の解決（v2.1.267 で挙動変更）**
 >
 > - メイン会話が `bypassPermissions` / `acceptEdits` / **Auto Mode** のとき: サブエージェントも同じモードで走り、**frontmatter の `permissionMode` は無視される**。Auto Mode ではメイン会話の block / allow ルールで分類器がサブエージェントのツール呼び出しを評価する
-> - メイン会話が `default` / `dontAsk` / `plan` のとき: frontmatter で指定したモードで走る。**ただし `bypassPermissions` は例外で、v2.1.267 以降はメイン会話のモードが使われる**（サブエージェントが単独で権限プロンプトを飛ばすことはできなくなった）
+> - メイン会話が **`plan`** のとき: `permissionMode` の指定にかかわらずサブエージェントも plan モードのまま（agent team のチームメイトが[チームの計画ルール](agent-teams.md)で走る場合を除く）。`dontAsk` を指定した場合はプロンプトも出さず、plan モードが確認を求めるはずの操作は拒否される
+> - メイン会話が `default` / `dontAsk` のとき: frontmatter で指定したモードで走る。**ただし `bypassPermissions` は例外で、v2.1.267 以降はメイン会話のモードが使われる**（サブエージェントが単独で権限プロンプトを飛ばすことはできなくなった）。また `auto` を指定しても auto mode がサブエージェントに利用不可の場合（`disableAutoMode` 設定、モデル非対応等）はメイン会話のモードを維持する
 > - `permissions.disableBypassPermissionsMode` で bypass が無効化されている場合も frontmatter の `bypassPermissions` は無視され、親セッションのモードで走る（v2.1.223 以降）
 >
 > **ハーネス影響**: `permissionMode: bypassPermissions` を宣言していたサブエージェント定義は、v2.1.267 以降は通常の権限プロンプトを受けるようになる。自律実行を前提にした定義は、メイン会話側のモード（`--dangerously-skip-permissions` や Auto Mode）で担保する設計に切り替える。
@@ -859,11 +888,11 @@ model: sonnet
 
 ### 5.7.1 ネスト実行（v2.1.172+）
 
-サブエージェントは自身のサブエージェントをスポーン可能（最大5階層。v2.1.181 でフォアグラウンドにも同じ深度制限を適用）。サブエージェントとコンパクションはセッションの拡張思考設定を継承する（v2.1.198）。
+サブエージェントは自身のサブエージェントをスポーン可能。**既定の深度はメイン会話の下に3階層**（`CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` で変更、`1` でネスト無効化。v2.1.219〜）。深度上限に達したサブエージェントからは `Agent` ツールが取り除かれる（**fork は例外でツールは残るが、呼ぶとスポーンせずエラーを返す**）。同時実行は既定 20（`CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS`。ultracode 有効セッションは上限なし。`/subtask` の fork と完了済みサブエージェントの resume はスロットを占有するが上限チェックを受けない）。サブエージェントとコンパクションはセッションの拡張思考設定を継承する（v2.1.198）。
 
 ### 5.8 サブエージェントの再開
 
-完了したサブエージェントは `SendMessage` ツールで再開可能。会話履歴が保持される。
+完了したサブエージェントは `SendMessage` ツールで再開可能。会話履歴が保持される（スポーンした子サブエージェントが届けた結果も含む。**v2.1.304 より前**は、完了直後にメッセージ / resume すると直近の作業を忘れることがあった）。再開されたランは**最初に走った場所のツールセット**を保持し、元のランが温めたプロンプトキャッシュを引き続き読める。**再起動後の名前指定（v2.1.299+）**: メイン会話の最後のコンパクション以降に付けた名前は `--resume` 後も有効。それ以前の名前はエージェントIDで1回メッセージを送れば再び名前で届く（IDは `~/.claude/projects/{project}/{sessionId}/subagents/` の `agent-{agentId}.meta.json` で探せる）。
 
 - 完了時に Claude はエージェントIDを受け取る。組み込みの Explore / Plan は one-shot でエージェントIDを返さないため再開できない（継続が必要なら `general-purpose` かカスタムサブエージェントを使う）
 - **`maxTurns` の上限で停止した場合**、Claude Code は返却出力を「部分的（partial）」とマークする（v2.1.246 以降）。エージェントIDを返すサブエージェントでは「メッセージを送れば停止地点から継続できる」旨も結果に付く

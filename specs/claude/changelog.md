@@ -3,7 +3,9 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-11-14（**v2.1.323**（2026-11-12）を反映。大型リリース。ハーネス観点の目玉は **(1) Code Mode（実験的 opt-in。Claude が JavaScript を書いてツールを呼ぶ。docs/en/code-mode で有効化・組織単位の無効化。ページ自体は本巡回時点で404＝未公開）**、**(2) `plugin.json` に `engines["claude-code"]`（バージョン範囲外のプラグインはインストール・更新・ロードされず、インストール/更新は範囲に合う最新版を選ぶ）**、**(3) `subagentStatusLine` 設定の削除**と**プラグイン `agent` 設定の非推奨化**、**(4) `claude plugin validate` の強化（TypeScript フックモジュールの型チェック〔警告、`--strict` で fail〕、mod の `engine.create` が足す/除く `$` 名詞の表示）**、**(5) セッション間メッセージ上限が約20→100,000 に大幅緩和**、**(6) 未知モデルIDのコンテキストウィンドウ既定が 200K→1M に変更（`CLAUDE_CODE_DISABLE_1M_CONTEXT=1` で 200K 維持）**、**(7) 権限・サンドボックス硬化多数（sudo/env ラッパー経由の deny/ask すり抜け修正、`Bash(ls*)` 型 allow ルールの抜け修正、symlink 経由の書き込み許可無効化、worktree の git 操作制限、秘密らしき allow ルールはセッション限り等）**、**(8) PreToolUse が allow 後に権限チェックが失敗した場合は「フック未回答」として再判定、PermissionRequest の書き換え入力での失敗は再確認**、**(9) managed プラグインの PreModelSwitch フックロード失敗時は切替拒否→許可に変更**。ドキュメント側も追随（subagentStatusLine 削除、components の Default settings 節削除、ConfigChange の発火しない変更の明文化、sandbox denyWrite の Linux/WSL2 未存在パス無効、keybindings に `ctrl+x =` 系チャットチョード追加等）。スキルエコシステム巡回（Phase 3.5）は前回 2026-11-10 から7日以内のためスキップ。Codex CLI は **0.168.0 / 0.169.0 安定版**（ともに 2026-11-13。specs/codex/changelog.md 参照）。前回2026-11-13の巡回要約は下記参照。）
+最終更新: 2026-11-16（**v2.1.325**（2026-11-13）を反映（2026-11-15 巡回で検出・本巡回で確定。2026-11-16 時点で公式 changelog に新エントリなし）。ハーネス観点の目玉は **(1) sandboxed Bash コマンドが既定で通常の権限フローに従うように変更**（従来のプロンプトなし実行は `sandbox.autoAllowBashIfSandboxed: true` で opt-in。managed settings でサンドボックス有効化する組織は最上位 managed ソースに同キー設定が必要）、**(2) read-only git コマンドも信頼外リポジトリでは確認を要求**（プロンプトなしは `--add-dir` で名指し。`additionalDirectories` 設定では不可）、**(3) スケジュールタスク / `/loop` が `allowed-tools` やフックを宣言するスキルの実行前に確認を要求**（無人実行には `Skill(name)` を `permissions.allow` に追加）、**(4) `pluginDigests` 非推奨・無視**（managed の `prependPlugins` / `appendPlugins` 宣言プラグインは組織のものとして扱う）、**(5) VSCode のプロンプトサジェスト**（Tab 受諾。`promptSuggestionEnabled: false` で無効化）、**(6) セキュリティ修正多数**（zstd 圧縮レスポンスのデコード問題、Bash 権限チェックの隙〔複合コマンドの確認なし実行・allow ルールの別プログラム実行〕、相対 deny/ask ルールの `cd` 後カバー漏れ、プラグイン MCP ルールの大文字小文字すり抜け等。88 修正）。詳細は下記 v2.1.325 セクション参照。llms.txt はインデックス再編のみ（plugins.md が plugins/* 配下再編で索引から削除。ページ自体は存続）で新規ドキュメントなし。スキルエコシステム巡回（Phase 3.5）は前回 2026-11-10 から7日以内のためスキップ。Codex CLI は新安定版なし（0.169.0 のまま。specs/codex/changelog.md 参照）。前回2026-11-14の巡回要約は下記参照。）
+
+前回: 2026-11-14（**v2.1.323**（2026-11-12）を反映。大型リリース。ハーネス観点の目玉は **(1) Code Mode（実験的 opt-in。Claude が JavaScript を書いてツールを呼ぶ。docs/en/code-mode で有効化・組織単位の無効化。ページ自体は本巡回時点で404＝未公開）**、**(2) `plugin.json` に `engines["claude-code"]`（バージョン範囲外のプラグインはインストール・更新・ロードされず、インストール/更新は範囲に合う最新版を選ぶ）**、**(3) `subagentStatusLine` 設定の削除**と**プラグイン `agent` 設定の非推奨化**、**(4) `claude plugin validate` の強化（TypeScript フックモジュールの型チェック〔警告、`--strict` で fail〕、mod の `engine.create` が足す/除く `$` 名詞の表示）**、**(5) セッション間メッセージ上限が約20→100,000 に大幅緩和**、**(6) 未知モデルIDのコンテキストウィンドウ既定が 200K→1M に変更（`CLAUDE_CODE_DISABLE_1M_CONTEXT=1` で 200K 維持）**、**(7) 権限・サンドボックス硬化多数（sudo/env ラッパー経由の deny/ask すり抜け修正、`Bash(ls*)` 型 allow ルールの抜け修正、symlink 経由の書き込み許可無効化、worktree の git 操作制限、秘密らしき allow ルールはセッション限り等）**、**(8) PreToolUse が allow 後に権限チェックが失敗した場合は「フック未回答」として再判定、PermissionRequest の書き換え入力での失敗は再確認**、**(9) managed プラグインの PreModelSwitch フックロード失敗時は切替拒否→許可に変更**。ドキュメント側も追随（subagentStatusLine 削除、components の Default settings 節削除、ConfigChange の発火しない変更の明文化、sandbox denyWrite の Linux/WSL2 未存在パス無効、keybindings に `ctrl+x =` 系チャットチョード追加等）。スキルエコシステム巡回（Phase 3.5）は前回 2026-11-10 から7日以内のためスキップ。Codex CLI は **0.168.0 / 0.169.0 安定版**（ともに 2026-11-13。specs/codex/changelog.md 参照）。前回2026-11-13の巡回要約は下記参照。）
 
 前回: 2026-11-13（**Claude Code 本体の新バージョンなし。v2.1.322 まで反映済みのまま**（公式 changelog ページも前回から変更なし）。ドキュメント側の実質的差分は skills / commands ページの1点のみ: **`/claude-api` に新サブコマンド `latency-optimize`**（v2.1.319+。既存の Claude API コードのどこで時間を消費しているかを特定し、待ち時間を減らす変更を提案。specs/claude/skills-and-commands.md に反映）。スキルエコシステム巡回（Phase 3.5）は前回から7日以内のためスキップ。Codex CLI は **0.167.2 安定版**（2026-11-11。specs/codex/changelog.md 参照）。前回2026-11-12の巡回要約は下記参照。）
 
@@ -41,6 +43,67 @@
 
 
 ---
+
+## v2.1.325 (2026-11-13)
+
+### 新機能
+
+- [VSCode] **プロンプトサジェスト**: ターミナルと同様の次プロンプト提案を表示（Tab で受諾）。`promptSuggestionEnabled: false` で無効化
+- [VSCode] API キーを作成しない Console サインイン
+- [VSCode] SSH / WSL / コンテナウィンドウで MCP サーバーサインイン時にリダイレクト URL を貼り付ける欄を追加
+- sandboxed な `git checkout` / `git stash` / autostash pull が `.claude` 等の保護ファイルを更新できない場合、Claude にその旨を通知
+
+### 変更
+
+- **sandboxed Bash コマンドが既定で通常の権限フローに従うように**: 従来のプロンプトなし実行を維持するには `sandbox.autoAllowBashIfSandboxed: true`。managed settings でサンドボックスを有効化する組織は最上位 managed ソースに同キーを設定
+- **read-only git コマンドも信頼外リポジトリでは確認を要求**: プロジェクト外・未信頼のリポジトリが対象。プロンプトなしで実行するには `--add-dir` で名指し（`additionalDirectories` 設定では不可）
+- **スケジュールタスク / `/loop` が `allowed-tools` やフックを宣言するスキルの実行前に確認を要求**: 無人実行には `Skill(name)` を `permissions.allow` に追加
+- **`pluginDigests` は非推奨・無視**: managed settings が `prependPlugins` / `appendPlugins` で宣言・有効化・列挙するリモートマーケットプレイスのプラグインは組織のものとして扱われる
+- **ネストスキルのロード変更**: `--plugin-dir` プラグイン内の `.claude/skills` は上位ディレクトリから開始したセッションではロードされない（プラグインフォルダ内で起動する）
+- 「Always allow」（Desktop / IDE / SDK ホスト）: ルール保存がそのコマンドを再許可する場合のみルール単独を提示（ルール頼みのスケジュールタスクは待機しうる）
+- サンドボックスが追加ディレクトリの `.claude` settings / skills / agents / commands / hooks への sandboxed 書き込みを拒否（起動フォルダと同様）
+- worktree 分離: 分離 worktree セッション / エージェントは `git bisect run`・`git maintenance register|start`・`scalar` のセットアップコマンドを拒否
+- プラグイン MCP バンドル（`.mcpb` / `.dxt`）は plugins ディレクトリ配下に展開（読み取り専用プラグインフォルダでもロード可能に）
+- プラグインロードが一部の unsafe なパス / リンクをスキップし、`claude plugin validate` が報告
+- EnterWorktree が `WorktreeCreate` フックのプロジェクト内 symlink 経由パスを拒否（フックは実体パスを返すこと）
+- `CLAUDE_CODE_MAX_CONTEXT_TOKENS` が `claude-` で始まる未知モデル ID（gateway の `claude-sonnet-latest` 等）のコンテキストウィンドウも設定
+- tmux / iTerm2 チームメイトと agents ビュー（←）からの新セッションは、シェルの最終 cd 先でなくセッションのフォルダで開始
+- `/login` がプライバシー設定の変更前に許可を要求
+- `/cost` / `$.session.usage()` / `--max-budget-usd` / コスト・トークンメトリクスが mod の `$.model.complete` / `$.model.classify` 呼び出しをカウント
+- Claude Code 自身が使うプログラム（ネットワークブリッジ等）をサインイントークン・API キーなしの環境で実行。ripgrep / ローカル git / サンドボックスヘルパーから mTLS クライアントキーのパスフレーズも除去
+- Remote Control: `/resume` / `/teleport` は接続先セッションに共有リンクがある（または確認できない）場合、先に切断
+- クラウドセッション（web / cloud scheduled / Cowork）は `sandbox.failIfUnavailable` でも起動（ホストコンテナにコマンドサンドボックスなし）
+- クラウド / self-hosted セッション接続経由の settings・権限ルール・フック・ステータス情報のリクエストは縮小または拒否
+- marketplace `ref` がブランチ / タグ上の任意コミットのフル ID を受理（この版より前のクライアントはそうピンされたマーケットプレイスをロード不可）
+- `ALL_PROXY` 単独設定時、マーケットプレイス / プラグインのダウンロードは CONNECT トンネルを使用
+- `-p` / SDK のコンテナにマウントされた worktree / submodule では、フォルダ信頼後にのみ `.claude/settings.local.json` の allow ルールを適用
+- self-hosted runner はセッションフォルダ / リポジトリパスが symlink のセッションを拒否
+
+### 改善（抜粋）
+
+- 出力トークン上限で切れたサブエージェントに、末尾だけ返す代わりに全回答を簡潔に再要求
+- アカウントメールのチェックを拡大: コマンドが実行するスクリプト・ファイル書き込み・WebFetch・MCP 呼び出しでもクライアント識別子としてのメール送信を拒否
+- マーケットプレイス追加確認・プラグイン推薦・インストール警告に「プラグインはファイル・シェルにアクセスしてコードを実行できる」旨を明記
+- `claude remote-control` が自己停止時 exit 4・登録不可時 exit 69（サービスマネージャの再起動判定用）
+- MCP タスクが回答待ちのとき Claude に通知され `/tasks` へ誘導可能
+
+### セキュリティ・重要修正（抜粋、88 修正から）
+
+- **zstd 圧縮レスポンスのデコードに関するセキュリティ問題を修正**
+- **Bash 権限チェックの隙を修正**: 一部の複合コマンドが確認なしで実行できた問題、allow ルールが名指しと別のプログラムを実行しうるケース
+- 相対 deny / ask ルール（`Read(./.env)` 等）が `cd` 後にプロジェクトをカバーしなくなる問題を修正（added directories にも適用）
+- `mcp__plugin_*_` で始まる deny / ask ルールが別の大文字小文字表記のプラグイン MCP サーバー / ツールを見逃す問題を修正
+- コミットされた `.claude/settings.local.json` がリポジトリの特定サブフォルダ起動時にユーザー自身のものとして扱われるケースを修正
+- サンドボックスが worktree の settings / hooks、linked worktree の共有 git フォルダを完全に保護しないケースを修正
+- 独自モデルを持つサブエージェントが `opusplan` / `haiku` 設定で plan-mode モデルへ移動する問題、別モデルのサブエージェントがメインモデル基準でファイル読み / MCP 結果をサイズ判定する問題を修正
+- サードパーティ gateway / Foundry でコンパクションせず毎ターンコンテキスト長エラーになる問題を修正
+- 不完全終了後の resume で直近ターンが消えることがある問題を修正
+- 保存済み `sonnet[1m]` モデル設定が新規インストールで API が拒否する ID に書き換わる問題を修正
+- Code Mode の修正多数: EnterWorktree の worktree 無視・`~` パスのプロジェクト書き込み・スクリプト中断セッションの resume 時に勝手に作業開始・権限ダイアログの Yes に添えた言葉が届かない等
+- スラッシュコマンドの `allowed-tools` 付与がターン中 / 後に起きたバックグラウンドエージェントに適用される問題を修正
+- バックグラウンドセッションが起動元シェルの API キー / トークンで実行（課金）される問題、別サインインへの移動を修正（移動は拒否しメッセージ表示に）
+- Bedrock のトークンカウントが `allowedProviders` 不許可でも会話を Bedrock へ送る問題を修正
+- サブエージェントの計画承認後にセッションが以前の権限モードへ戻ることがある問題を修正
 
 ## v2.1.323 (2026-11-12)
 
