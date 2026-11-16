@@ -1,5 +1,27 @@
 # harness-harness 更新履歴
 
+## 2026-11-17 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code**: 新バージョンなし（公式 changelog は v2.1.325 が最新のまま）。docs 側の差分は hooks.md の1点のみ: elicitation フック検証手順のデバッグログ確認文言の緩和（仕様変更なし）。他の追跡 docs ページ・llms.txt は不変。
+
+**Codex CLI**: 新安定版なし（0.169.0 のまま。公式 changelog ページの差分はサイト共通ナビの変更のみ）。GitHub プレリリースは 0.171.0-alpha.8（2026-11-16）まで進行。**app-server ドキュメントに実質更新**: `model/list` の `modelProvider` パラメータ（未設定プロバイダは `-32600` + `modelProviderNotConfigured`）と、gateway OAuth のプロバイダ別サインイン（`capabilities.explicitGatewayOauth`、`account/gatewayOAuth/read` / `login`（`deviceAuth`）/ `changed` のフロー）→ specs/codex/changelog.md に反映。
+
+**スキルエコシステム（Phase 3.5、前回 2026-11-10 から7日経過で実施）**:
+- claude.com/plugins: 532 プラグイン（+2）。**Anthropic verified「Code Review」プラグイン新掲載**（複数専門エージェント＋確信度スコアリングの PR 自動レビュー）。組み込み `/code-review` と機能重複のため推薦には載せず追跡のみ
+- anthropics/skills: 195.9K stars、スキル追加・削除なし。Office 系スキル（docx/pptx/xlsx/pdf）の保守更新のみ（#2217 / #2221）
+- skills.sh: find-skills 4.4M トップ継続。hyperframes-cli 1.6M で 2 位に浮上。**design-mobile-apps 1.5M で 7 位 — 継続性確認につき Tier B 追加**（recommended.md、ルーブリック 8 点・観測 2 回のため Tier B 開始）
+- openai/skills・openai/plugins・codex-plugin-cc・agentskills.io: 実質変化なし（stars / PR 数のノイズのみ）
+
+### 更新ファイル
+
+- specs/claude/changelog.md（最終更新ヘッダを 2026-11-17 に更新）
+- specs/codex/changelog.md（最終更新ヘッダを 2026-11-17 に更新。app-server の modelProvider / gateway OAuth を記録）
+- kb/skills/_index.md（last_patrol 2026-11-17、各参照先の観測値更新）
+- kb/skills/recommended.md（design-mobile-apps を Tier B 追加、installs / stars 更新、分野カバレッジ表更新）
+- kb/update-history.md（本記録）
+
 ## 2026-11-16 — 公式ドキュメント巡回
 
 ### 検出・更新
