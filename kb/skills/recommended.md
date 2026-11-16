@@ -1,8 +1,8 @@
 ---
 title: 推薦スキル一覧
-last_checked: "2026-11-03"
+last_checked: "2026-11-17"
 tier_a_count: 12
-tier_b_count: 10
+tier_b_count: 11
 policy: 特定分野に偏らず、多様な分野からバランスよく推薦する
 ---
 
@@ -23,9 +23,9 @@ harness-harness各機能で活用可能なスキル。分野の偏りを避け�
 | **dispatching-parallel-agents** | エージェント協調 | obra/superpowers | research-kb, create-harness | 並列調査・クロスレビューの設計パターン |
 | **using-git-worktrees** | Git運用 | obra/superpowers | 全般 | worktree日常運用のベストプラクティス |
 | **postgres-best-practices** | データベース | コミュニティ | create-harness | インデックス、クエリ最適化、接続プール |
-| **find-skills** | ディスカバリー | vercel-labs (**4.2M** installs、skills.sh トップ継続) | create-harness, patrol-docs | スキル検索・発見ユーティリティ |
-| **agent-browser** | ブラウザ自動化 | vercel-labs/agent-browser (**1.3M** installs、skills.sh 5 位) | create-harness, diagnose-harness | エージェントからのブラウザ操作 CLI（開く・クリック・入力・スクリーンショット）。**2026-11-03 に Tier A 昇格**: ルーブリック = 関連性 2 + 互換性 3 + 採用シグナル 2 + 鮮度 2 + リスク -1（ブラウザ操作・外部 CLI 依存）= **8 点**。3 巡回連続で installs 伸長・上位維持を確認。E2E 検証・Web 操作を伴うプロジェクトのハーネスに推薦 |
-| **codex-plugin-cc** | エージェント間連携 | [openai/codex-plugin-cc](https://github.com/openai/codex-plugin-cc)（OpenAI 公式、**33.1K stars**） | 全般（Claude⇔Codex クロスレビュー） | Claude Code から Codex を呼ぶ公式プラグイン。`/codex:review`・`/codex:adversarial-review`・`/codex:rescue`・`/codex:transfer`・`/codex:status`・`/codex:result`・`/codex:cancel` と `codex:codex-rescue` サブエージェント。2026-08-24 の Codex 公式 changelog が `codex mcp-server` 非推奨の移行先として明示 |
+| **find-skills** | ディスカバリー | vercel-labs (**4.4M** installs、skills.sh トップ継続。2026-11-17 確認) | create-harness, patrol-docs | スキル検索・発見ユーティリティ |
+| **agent-browser** | ブラウザ自動化 | vercel-labs/agent-browser (**1.5M** installs、skills.sh 5 位。2026-11-17 確認) | create-harness, diagnose-harness | エージェントからのブラウザ操作 CLI（開く・クリック・入力・スクリーンショット）。**2026-11-03 に Tier A 昇格**: ルーブリック = 関連性 2 + 互換性 3 + 採用シグナル 2 + 鮮度 2 + リスク -1（ブラウザ操作・外部 CLI 依存）= **8 点**。3 巡回連続で installs 伸長・上位維持を確認。E2E 検証・Web 操作を伴うプロジェクトのハーネスに推薦 |
+| **codex-plugin-cc** | エージェント間連携 | [openai/codex-plugin-cc](https://github.com/openai/codex-plugin-cc)（OpenAI 公式、**35.2K stars**。2026-11-17 確認） | 全般（Claude⇔Codex クロスレビュー） | Claude Code から Codex を呼ぶ公式プラグイン。`/codex:review`・`/codex:adversarial-review`・`/codex:rescue`・`/codex:transfer`・`/codex:status`・`/codex:result`・`/codex:cancel` と `codex:codex-rescue` サブエージェント。2026-08-24 の Codex 公式 changelog が `codex mcp-server` 非推奨の移行先として明示 |
 
 ## Tier B: ウォッチリスト（条件付き推薦）
 
@@ -40,7 +40,8 @@ harness-harness各機能で活用可能なスキル。分野の偏りを避け�
 | **discernment-nudge** | 回答品質/検証 | anthropics/skills（2026-08-17 追加） | 実行可能な回答・ドラフト・見積り・分析の直後に、根拠確認/前提の吟味/欠落文脈を突く短いフォローアップ質問を2〜3個付ける（会話あたり1回まで） | 診断・提案系ハーネス（diagnose-harness 等）でユーザーが結果を鵜呑みにするリスクを下げたい場合。**2026-09-08 巡回で採用シグナルを実測: 4.0K installs（anthropics/skills 内で最下位級。frontend-design 863.4K・skill-creator 374.8K と 2 桁違い）**。ルーブリックの「採用・評判シグナル」は 0 点相当で合計 5 点となり、**Tier A 昇格は見送り・Tier B 据え置き**とする。内容自体は診断系ハーネスと相性が良いため削除はせず、次回以降も installs を追跡する |
 | **microsoft/azure-skills** | クラウド基盤 | microsoft/azure-skills（skills.sh、表示分 17 スキル合計 **7.6M** installs。2026-10-06 に増勢へ回復） | Azure 各サービス（Foundry / messaging ほか）のベストプラクティスをスキル化したベンダー公式クラスタ | **2026-09-01 巡回で新規追跡、2026-09-08 に合計 installs 微減を確認**。分野カバレッジで空白だった「クラウド基盤」を埋める候補。ベンダー固有色が強く harness-harness 本体への寄与は限定的なため、Azure を使うプロジェクトのハーネス作成時にのみ提案する。個別スキルの精査は未実施 |
 | **academy-guide** | 教育/オンボーディング | anthropics/skills（2026-08-17 追加、2026-08-18 に `claude-academy-guide` からリネーム。**3.7K installs**） | Claude 製品の使い方を尋ねられた際に Claude Academy（academy.claude.com）の該当コース/チュートリアルを推薦 | Claude 製品の社内展開・教育コンテンツを扱うプロジェクト。ハーネス構築そのものへの寄与は小さいため Tier B 据え置き |
-| **reddit-automation** | マーケティング/SNS自動化 | flowkit-labs/skills（skills.sh **1.2M** installs で 9 位。2026-11-03 に継続性を確認） | Reddit の調査と返信ドラフト作成を支援（SKILL.md は自動投稿を行わず、人が確認して投稿する運用を明記） | **2026-10-06 巡回で新規追跡（Tier B）**。ルーブリック: 関連性 1 + 互換性 3 + 採用シグナル 2 + 鮮度 2 + リスク -2（Reddit 規約・スパム判定リスク、運用は自己責任）= **6 点で Tier B 据え置き**。SNS マーケティングを扱うプロジェクトでのみ提案し、提案時は必ず規約リスクを明示する。リスク -2 が効いており installs が伸びても機械的には昇格しない |
+| **design-mobile-apps** | UI/UX（モバイル） | designed-by-ai/skills（skills.sh **1.5M** installs で 7 位。2026-11-10 初観測→2026-11-17 に継続性確認） | モバイルアプリの UI/UX 設計をガイドするデザインスキル（frontend-design の Web 中心に対しモバイル特化） | **2026-11-17 巡回で新規追跡（Tier B）**。ルーブリック: 関連性 1（harness-harness 本体への寄与は小、モバイル系プロジェクトのハーネス作成時に提案）+ 互換性 3 + 採用シグナル 2（2 巡回連続トップ 10）+ 鮮度 2 + リスク 0 = **8 点だが観測 2 回のみのため Tier B 開始**。モバイルアプリ系プロジェクトでのみ提案。内容の精査は未実施のため、提案前に SKILL.md を確認すること |
+| **reddit-automation** | マーケティング/SNS自動化 | flowkit-labs/skills（skills.sh **1.4M** installs で 8 位。2026-11-17 確認） | Reddit の調査と返信ドラフト作成を支援（SKILL.md は自動投稿を行わず、人が確認して投稿する運用を明記） | **2026-10-06 巡回で新規追跡（Tier B）**。ルーブリック: 関連性 1 + 互換性 3 + 採用シグナル 2 + 鮮度 2 + リスク -2（Reddit 規約・スパム判定リスク、運用は自己責任）= **6 点で Tier B 据え置き**。SNS マーケティングを扱うプロジェクトでのみ提案し、提案時は必ず規約リスクを明示する。リスク -2 が効いており installs が伸びても機械的には昇格しない |
 
 ## 分野カバレッジ
 
@@ -50,7 +51,7 @@ harness-harness各機能で活用可能なスキル。分野の偏りを避け�
 |------|--------|--------|----|
 | メタ/全般 | 2 | 0 | 2 |
 | テスト/デバッグ | 2 | 0 | 2 |
-| UI/UX | 1 | 1 | 2 |
+| UI/UX | 1 | 2 | 3 |
 | セキュリティ | 1 | 0 | 1 |
 | ドキュメント | 1 | 1 | 2 |
 | エージェント協調 | 1 | 0 | 1 |
