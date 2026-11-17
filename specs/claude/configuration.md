@@ -874,10 +874,11 @@ Claude がツール呼び出し（Bash / Read / Edit 等）を 1 件ずつ要求
 ### 要件
 
 - **バージョン**: v2.1.323 以降（release channel は不問）＋**ネイティブビルド**。Windows は Git for Windows 必須
-- **アカウント**: Claude サブスクリプションまたは Console。**ゲートウェイ / Bedrock / Claude Platform on AWS / Google Cloud Agent Platform / Foundry では不可**。HIPAA 構成・zero data retention の組織も不可
+- **アカウント**: Claude サブスクリプションまたは Console。**ゲートウェイ / Bedrock / Claude Platform on AWS / Google Cloud Agent Platform / Foundry / Claude Models on Google Cloud (Anthropic managed) では不可**（2026-11-18 巡回で最後の1つ追加）。HIPAA 構成・zero data retention の組織も不可
 - **モデル**: Opus 5.5 / Sonnet 5.5 / Haiku 5.5 / Fable 5.2
 - **サーフェス**: ターミナルの対話 `claude` セッションのみ（`-p` / Agent SDK / VS Code パネル / Desktop / クラウドセッション不可）
-- 併用不可の設定: `apiKeyHelper`（`ANTHROPIC_AUTH_TOKEN` や `ANTHROPIC_CUSTOM_HEADERS` の認証ヘッダ含む）、agent teams（`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`）、OpenTelemetry エクスポート、機能フラグ取得を止める変数（`DISABLE_TELEMETRY` 等）、ツール呼び出しを検査する mod、`--restricted` / `REPL` を外した `--tools` / `REPL` の deny ルール。起動できなかった場合は `Code Mode (experimental) isn't available` の行と `/status` に理由が表示される
+- 併用不可の設定: `apiKeyHelper`（`ANTHROPIC_AUTH_TOKEN` や `ANTHROPIC_CUSTOM_HEADERS` の認証ヘッダ含む）、OpenTelemetry エクスポート、機能フラグ取得を止める変数（`DISABLE_TELEMETRY` 等）、ツール呼び出しを検査する mod、`--restricted` / `REPL` を外した `--tools` / `REPL` の deny ルール。起動できなかった場合は `Code Mode (experimental) isn't available` の行と `/status` に理由が表示される
+- **agent teams との併用は v2.1.326 から可能に**（それ以前は併用不可）: チームメイトは既定の in-process 表示モードで Code Mode 実行、split pane のチームメイトは Code Mode なしで開始（2026-11-18 巡回で反映）
 
 ### 制限
 

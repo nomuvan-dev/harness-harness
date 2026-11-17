@@ -571,12 +571,16 @@ hooks = true
 
 | レイヤー | ファイル |
 |----------|----------|
-| ユーザー | `~/.codex/hooks.json` または `~/.codex/config.toml` |
-| プロジェクト | `<repo>/.codex/hooks.json` または `<repo>/.codex/config.toml` |
+| System（macOS / Linux） | `/etc/codex/hooks.json`（2026-11-18 巡回で公式スコープ表の明文化を確認） |
+| System（Windows） | `%ProgramData%\OpenAI\Codex\hooks.json` |
+| ユーザー | `$CODEX_HOME/hooks.json`（未設定時 `~/.codex/hooks.json`、Windows は `%USERPROFILE%\.codex\hooks.json`）または `config.toml` |
+| プロジェクト（trusted のみ） | `<repo>/.codex/hooks.json` または `<repo>/.codex/config.toml` |
 | プラグイン | プラグイン同梱の `hooks/hooks.json` またはマニフェストのエントリ |
 | Managed | `requirements.toml` / managed config レイヤー（`managed_dir` / `windows_managed_dir` で配置先指定可） |
 
 > 同一ディレクトリに `hooks.json` と `config.toml` の両方の hooks 定義があると警告が出る。どちらか一方に寄せること。
+>
+> 探索の詳細（2026-11-18 巡回で公式 hooks ドキュメントの明文化を確認）: **standalone の `hooks.json` は隣に `config.toml` や `requirements.toml` の参照がなくても発見される**。system ファイルを移動・削除すると次回ロード時にそのソースはスキップされる（編集権限はファイル / ディレクトリのパーミッションで制御。管理者は `requirements.toml` に直接宣言も可）。プロジェクトの `.codex` ディレクトリは**プロジェクトルートから作業ディレクトリまで**チェックされ、**trusted なプロジェクトレイヤーからのみロード**される（user / system hooks は untrusted プロジェクトでもロードされる）。linked git worktree ではプロジェクトレイヤーがメインチェックアウト側の対応ディレクトリから hooks を読める。
 >
 > Managed のみ: `requirements.toml` に `allow_managed_hooks_only = true` を置くと、user / project / session の hook 設定を無視し managed hooks のみを実行する。**`config.toml` に書いても効かない**。
 >

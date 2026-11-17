@@ -31,7 +31,7 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 | `PostToolUseFailure` | ツール失敗後。**未知ツール名・スキーマ / ツール固有検証に落ちた入力は `tool_use_error` としてフック実行前に返されるため `PreToolUse` も本イベントも発火しない**。権限拒否は `PreToolUse` は発火するが本イベントは発火せず `PermissionDenied` が担当（2026-11-12 巡回で反映） | No | ツール名 |
 | `PostToolBatch` | 並列ツール呼び出しのバッチ全体が解決した後、次のモデル呼び出し前 | Yes | matcher非サポート（全バッチで発火） |
 | `Stop` | Claude の応答完了時（**ユーザー割り込みによる停止では発火しない**。API エラーは `StopFailure`） | Yes | - |
-| `StopFailure` | APIエラー発生時 | No | `rate_limit`, `overloaded`, `authentication_failed`, `oauth_org_not_allowed`, `account_on_hold`, `billing_error`, `invalid_request`, `model_not_found`, `server_error`, `cloud_credential_error`, `max_output_tokens`, `unknown`（`account_on_hold` は 2026-09-02 の公式ドキュメント改訂で追加。`cloud_credential_error` のマッチは **v2.1.267+** — それ以前は credential ロード失敗が `server_error` / `unknown` で報告されていた。2026-11-12 巡回で反映） |
+| `StopFailure` | APIエラー発生時 | No | `rate_limit`, `authentication_failed`, `oauth_org_not_allowed`, `account_on_hold`, `billing_error`, `invalid_request`, `model_not_found`, `server_error`, `cloud_credential_error`, `max_output_tokens`, `unknown`（`account_on_hold` は 2026-09-02 の公式ドキュメント改訂で追加。`cloud_credential_error` のマッチは **v2.1.267+** — それ以前は credential ロード失敗が `server_error` / `unknown` で報告されていた。**`overloaded` は 2026-11-18 巡回で公式リストから削除を確認**〔過負荷はおそらく `server_error` 等に統合〕） |
 | `PermissionDenied` | Auto Mode分類器が拒否した後（verdict なしの拒否を含む） | No | ツール名 |
 | `SessionEnd` | セッション終了時 | No | `clear`, `resume`, `logout`, `prompt_input_exit`, `other`（**v2.1.234 で `bypass_permissions_disabled` を廃止**。Claude Code は送出しなくなったため matcher から削除すること） |
 
@@ -220,11 +220,12 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 
 | stdout | exit 0 | exit 2 | その他 |
 |:--|:--|:--|:--|
-| スキーマ検証を通る JSON | 成功（フィールド適用） | ブロック（フィールドは読むがブロックを覆せない。`permissionDecision: "allow"` でも通らない） | **成功扱い**（exit code は無視されフィールドだけで決まる。`onFailure: "block"` のフックでは失敗扱い） |
+| スキーマ検証を通る JSON | 成功（フィールド適用） | ブロック（フィールドは読むが、`PreToolUse` は `"allow"` や `continue: false` を返してもブロック維持。他イベントは下記例外参照） | **成功扱い**（exit code は無視されフィールドだけで決まる。`onFailure: "block"` のフックでは失敗扱い） |
 | パース/検証失敗の JSON | 非ブロッキングエラー | ブロック（stderr が理由） | 非ブロッキングエラー |
 | プレーンテキスト / 無出力 | 成功 | ブロック（stderr が理由） | 非ブロッキングエラー |
 
 **例外的な終了コード挙動（2026-11-05 巡回で反映）**:
+- **`continue: false` を含む JSON は exit 2 に優先する**（2026-11-18 巡回で公式ドキュメント明文化を確認）: `Stop` / `SubagentStop` 等では、exit 2 でも JSON が `continue: false` を設定していれば Claude / サブエージェントはターンを終了する（継続させたいならフィールドを出さない）。`PreToolUse` はフィールドの有無に関わらずツール呼び出しのブロックを維持
 - `Stop` / `SubagentStop` / `TaskCompleted` / プラグインの `UserPromptSubmit`: exit 2 で stdout 無し・stderr が `No such file or directory` 等のファイル欠落メッセージの場合は**非ブロッキングエラー**として扱われる（存在しないスクリプトのフックが永遠にブロックし続けるのを防ぐ）
 - `PermissionRequest`: exit 2 は無効（`decision` オブジェクトで deny する）
 - `Elicitation` / `ElicitationResult`: `hookSpecificOutput` は exit 0 のときのみ適用
@@ -548,7 +549,7 @@ v2.1.133 以降、ツール実行コンテキストを持つイベント（`PreT
 | `PostToolBatch` | `tool_calls`（各要素は `tool_name`, `tool_input`, `tool_use_id`, `tool_response`）。`tool_response` は `PostToolUse` と形が異なりモデルが見る `tool_result` のシリアライズ |
 | `PermissionDenied` | `tool_name`, `tool_input`, `tool_use_id`, `reason`。`reason` の形式が改訂され、**分類器の判定はマッチしたルール名を角括弧で示す**（例 `[Data Exfiltration]`、`[Irreversible Local Destruction]`）。従来の固定文言 `Blocked by classifier` ではなくなった。no-verdict 拒否は従来どおり `Auto mode could not evaluate this action and is blocking it for safety` で始まる。**分類器モデルが利用不能だった拒否は固定文言 `Classifier unavailable`**（2026-11-05 巡回で反映） |
 | `Stop` | `stop_hook_active`, `last_assistant_message`, `background_tasks`, `session_crons`（v2.1.145+）。`background_tasks` の各要素は `id` / `type`（`shell`, `subagent`, `monitor`, `workflow`, `teammate`, `cloud session`, `MCP task` 等のラベル） / `status` / `description`（1000字上限） / `command`（shell のみ） / `agent_type`（subagent のみ） / `server`・`tool`（monitor / MCP task のみ） / `name`（workflow のみ）。`session_crons` の各要素は `id` / `schedule`（cron 式） / `recurring` / `prompt`（1000字上限）。「セッション完了」と「バックグラウンド作業の起床待ち」を区別できる（2026-11-05 巡回でフィールド詳細を反映）。`session_crons` の発生源は `CronCreate` / `ScheduleWakeup` / `/loop`（2026-11-12 巡回で反映） |
-| `StopFailure` | `error`（`rate_limit` / `overloaded` / `authentication_failed` / `oauth_org_not_allowed` / `account_on_hold` / `billing_error` / `invalid_request` / `model_not_found` / `server_error` / `cloud_credential_error` / `max_output_tokens` / `unknown`）, `error_details`, `last_assistant_message` |
+| `StopFailure` | `error`（`rate_limit` / `authentication_failed` / `oauth_org_not_allowed` / `account_on_hold` / `billing_error` / `invalid_request` / `model_not_found` / `server_error` / `cloud_credential_error` / `max_output_tokens` / `unknown`）, `error_details`, `last_assistant_message` |
 | `Notification` | `message`, `title`, `notification_type` |
 | `SubagentStart` | `agent_id`, `agent_type` |
 | `SubagentStop` | `stop_hook_active`, `agent_id`, `agent_type`, `agent_transcript_path`, `last_assistant_message`, `background_tasks`, `session_crons`（v2.1.145+）。**内部エージェントでも発火**（2026-09-22 ドキュメント改訂で明文化）: prompt suggestions や `/btw` 等の Claude Code 内部機能のエージェント完了時にも発火し、その場合 `agent_type` はセッション自身のエージェント名（`--agent` / `agent` 設定。未設定なら空文字列）。エージェントタイプを名指しする matcher は空 `agent_type` にマッチしない（matcher 省略 / `""` / `"*"` / 空文字にマッチする正規表現は発火する） |
