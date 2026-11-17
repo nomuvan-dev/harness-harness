@@ -1,5 +1,24 @@
 # harness-harness 更新履歴
 
+## 2026-11-18 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code**: **v2.1.326**（2026-11-16）リリースを検出・反映。改善59件・バグ修正233件の大規模な品質・堅牢化リリース。ハーネス観点の目玉: (1) Code Mode と agent teams の併用対応、(2) 権限・サンドボックス硬化の大波（auto モードの一部シェルコマンド停止、`"decision": "block"` の維持強化、sandboxed コマンドの機微ホームフォルダ書き込み不可、`cp`/`mv` の確認、ワイルドカード allow ルールの無視等）、(3) サインインファイル（`.credentials.json`）保護、(4) worktree 隔離サブエージェントの git ブランチ書き換え拒否＋`ExitWorktree` の実行中削除拒否、(5) auto モード既定化の拡大、(6) malformed `plugin.json` プラグインがロードされるように（管理者要確認）、(7) plan mode コンパクションが応答モデル使用（コスト注意）、(8) `/update-config` の 93K→13K トークン削減。docs 側: hooks の `StopFailure` から `overloaded` 削除＋exit 2 と `continue: false` の優先順位明文化、code-mode の対応外アカウント追加、iPhone Duo シミュレータ対応。
+
+**Codex CLI**: 新安定版なし（0.169.0 のまま。プレリリースは 0.171.0-alpha.12〔2026-11-17〕まで進行）。docs 側の実質更新: hooks ページの `hooks.json` 探索スコープ表の明文化（System `/etc/codex/hooks.json` / Windows `%ProgramData%` / User `$CODEX_HOME` / trusted project の4スコープ、standalone 発見、trusted のみロード、linked worktree の扱い）→ specs/codex/configuration.md に反映。app-server に stdio コード例追加。サイトナビが「Using GPT-6.2 Astra」に差し替え（新モデル案内の模様）。
+
+**スキルエコシステム（Phase 3.5）**: 前回 2026-11-17 から7日以内のためスキップ。
+
+### 更新ファイル
+
+- specs/claude/changelog.md（v2.1.326 セクション追加、最終更新ヘッダを 2026-11-18 に更新）
+- specs/claude/hooks.md（StopFailure の `overloaded` 削除、exit 2 × `continue: false` の優先順位、判定マトリクス更新）
+- specs/claude/configuration.md（Code Mode: agent teams 併用可〔v2.1.326+〕、対応外アカウントに Google Cloud Anthropic managed 追加）
+- specs/codex/configuration.md（hooks.json 探索スコープ表を4スコープに拡充＋探索詳細の注記）
+- specs/codex/changelog.md（最終更新ヘッダを 2026-11-18 に更新）
+- kb/update-history.md（本記録）
+
 ## 2026-11-17 — 公式ドキュメント巡回
 
 ### 検出・更新
