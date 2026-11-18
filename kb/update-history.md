@@ -1,5 +1,23 @@
 # harness-harness 更新履歴
 
+## 2026-11-19 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code**: **v2.1.327**（2026-11-17）リリースを検出・反映。改善26件・バグ修正100件の品質リリース。ハーネス観点の目玉: (1) 権限・パスチェックの継続硬化（シンボリックリンク拒否、`blockReadsOutsideWorkingDirectories` 強化、auto モードがパッケージ実行系 allow ルール〔`pnpm dlx` 等〕も無視、PowerShell の追加確認）、(2) `ExitWorktree` が未保存作業を持ち得る worktree の削除前に確認、(3) サブエージェント挙動変更（兄弟メッセージでの再開がセッション権限設定に従う、`/model` 後も開始時モデル維持、Bedrock/Vertex/Foundry の進捗サマリ軽量化）、(4) `claude mcp add-json <name> -`（stdin 読込）＋ `.mcp.json` 保護強化、(5) auto モード classifier フォールバック課金の廃止予告、(6) `/status` の壊れた設定ファイル一覧、(7) Code Mode が mod のツールフックと共存可能に、(8) Bash 初回コマンド高速化（shell head start）。重要修正: 出力上限カット直後のコンパクションのツール呼び出し喪失、`--agents` エージェントのプラグインロード時喪失、コンパクション後 Edit の「File has not been read yet」、異モデル teammates のコンパクション誤動作、Remote Control worktree 停止時の `.env` 削除。docs 側: mods `$.agent` に `call`/`limits`（v2.1.326+）、mod コマンドの `isTextDisplayOnly`（v2.1.326+）、HTTP フック allowlist の managed settings 適用方法変更、`requiredVersionRange` と Desktop アプリの注記、sub-agents `memory` 説明改訂。
+
+**Codex CLI**: **安定版 0.169.1（2026-11-17）と 0.170.0（2026-11-18）リリースを検出・反映**。0.169.1 はハイライトなしのメンテナンス。0.170.0 の目玉: TUI realtime 音声通話の WebRTC 対応、OTLP HTTP エクスポータの認証ヘッダ自動リフレッシュ、環境をまたぐ同名 MCP サーバーの実験的対応。修正は WebSocket→HTTP 即時フォールバック、MCP OAuth 競合、Cloud 会話再接続、Windows サンドボックス関連等。docs は sandbox ページが permission profiles 説明に更新。プレリリースは 0.172.0-alpha.1 まで進行。hooks / build-plugins / app-server / skills ページはナビノイズのみ。
+
+**スキルエコシステム（Phase 3.5）**: 前回 2026-11-17 から7日以内のためスキップ。
+
+### 更新ファイル
+
+- specs/claude/changelog.md（v2.1.327 セクション追加、最終更新ヘッダを 2026-11-19 に更新）
+- specs/claude/hooks.md（HTTP フック allowlist の managed settings 適用方法変更を反映）
+- specs/claude/skills-and-commands.md（mods API `$.agent` に `call`/`limits` 追加〔v2.1.326+〕）
+- specs/codex/changelog.md（0.169.1 / 0.170.0 を反映、最終更新ヘッダを 2026-11-19 に更新）
+- kb/update-history.md（本記録）
+
 ## 2026-11-18 — 公式ドキュメント巡回
 
 ### 検出・更新
