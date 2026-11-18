@@ -3,7 +3,9 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-11-18（**v2.1.326**（2026-11-16）を反映。改善59件・バグ修正233件を含む大規模な品質・堅牢化リリース。ハーネス観点の目玉は **(1) Code Mode が agent teams と併用可能に**（v2.1.326+。チームメイトは既定の in-process 表示モードで Code Mode 実行、split pane は Code Mode なしで開始）、**(2) 権限・サンドボックス硬化の大波** — auto モードが従来実行していた一部シェルコマンドを停止 / macOS の一部 Bash コマンドが確認要求または拒否に / フックの `"decision": "block"` がより多くのケースで維持（常に block を出すフックは従来素通りだった呼び出しもブロックし始める）/ sandboxed コマンドが機微なホームフォルダへ既定で書き込み不可（`sandbox.filesystem.allowWrite` で個別許可。user / managed settings のみ）/ Bash サンドボックスが `/sandbox`・`/cd` まで状態を保持 / `cp`・`mv` の一部が確認要求に / bypassPermissions モードでも一部ツール呼び出しが確認要求・無人なら拒否に / auto モードがプログラム名なし・`$HOME` 始まり等のワイルドカード allow ルールを無視、**(3) サインインファイル保護**（ファイルツールが `.credentials.json` 等 Claude Code のサインインファイルへの書き込みを拒否、Bash 権限チェックも到達前に確認）、**(4) worktree 隔離サブエージェントが共有ブランチを書き換え得る git コマンドを全リポジトリで拒否**＋`ExitWorktree` はバックグラウンドサブエージェント / シェル実行中の worktree 削除を拒否（`discard_changes` 指定時を除く）、**(5) auto モード既定化の拡大**（モード未設定のターミナル / VS Code セッションは Manual でなく auto で開始〔組織ポリシー未ロード時〕。HIPAA 構成組織も auto 既定・`disableAutoMode` でオフ）、**(6) 不正な `--allowedTools` / `--disallowedTools` / `--tools` 値への起動時警告**、**(7) プラグイン変更**（malformed な `plugin.json` 表示フィールドで拒否されていたプラグインがフック・MCP サーバー込みでロードされるように〔管理者はデプロイ済みプラグイン要確認〕/ アンインストールが MCP バンドル展開ファイルも削除）、**(8) plan mode の自動コンパクションが応答モデル（opusplan なら Opus）を使用**（コスト増に注意）、**(9) self-hosted runner に built-in `gh api`**（Linux / macOS で `gh` なし時に Anthropic 経由で既定提供。`--use-anthropic-gh false` でオフ）、**(10) `/update-config` のコンテキスト使用を 93K→13K トークンに削減**、**(11) `OTEL_RESOURCE_INCLUDE_HOST`**（`host.name` / `host.id` を OTel リソース属性に追加。既定オフ）。ドキュメント側の改訂: hooks の `StopFailure` エラータイプから **`overloaded` が削除**＋ **exit code 2 と JSON の優先順位を明文化**（`continue: false` を含む JSON は `Stop` / `SubagentStop` 等で exit 2 に優先しターン終了。`PreToolUse` はフィールド有無に関わらずブロック維持）、code-mode の対応外アカウントに Claude Models on Google Cloud (Anthropic managed) 追加、model-config のレジューム時モデル復元節が削除（整理）、sub-agents の @-mention 表現緩和（「実行を保証」→「実行を指示」）、desktop-ios-simulator に iPhone Duo フォルダブル対応（Xcode 27.1+）。スキルエコシステム巡回（Phase 3.5）は前回 2026-11-17 から7日以内のためスキップ。Codex CLI は新安定版なし（0.169.0 のまま。プレリリースは 0.171.0-alpha.12〔2026-11-17〕まで進行。docs 側は hooks の **`hooks.json` 探索スコープ表の明文化**〔System `/etc/codex/hooks.json`・Windows `%ProgramData%\OpenAI\Codex\hooks.json`・User `$CODEX_HOME/hooks.json`・trusted project `.codex/hooks.json`。specs/codex/configuration.md に反映〕と app-server の stdio トランスポート例追加、ナビの「Using GPT-6」→「Using GPT-6.2 Astra」差し替え）。前回2026-11-17の巡回要約は下記参照。）
+最終更新: 2026-11-19（**v2.1.327**（2026-11-17）を反映。改善26件・バグ修正100件を含む品質リリース。ハーネス観点の目玉は **(1) 権限・パスチェックの継続硬化** — 一部シンボリックリンクをパスチェックが拒否 / 「作業ディレクトリ内」の判定変更で一部パスが確認要求に / `permissions.blockReadsOutsideWorkingDirectories` が bypass・auto モードでもより多くの Bash コマンドを確認（auto では一部拒否）＋ Read / Edit deny ルール該当パスを名指しする Bash コマンドの拒否拡大 / auto モードが `Bash(pnpm dlx *)` 等のパッケージ実行系 allow ルールとそのパス・バージョン形（`/usr/bin/npm run:*`）も無視 / 変数展開で非常に長くなるコマンドは拒否 / PowerShell ツールはルール名指しでももう1段確認、**(2) `ExitWorktree` が未保存作業を持ち得る worktree の削除前に確認**（don't-ask モード・無人では allow ルール / auto / bypass がない限り拒否）、**(3) サブエージェントの挙動変更** — 兄弟のメッセージで再開されたサブエージェントはセッションの権限設定に従う / モデル未指定サブエージェントは `/model` 後の再開でも開始時モデルを維持 / Bedrock・Vertex・Foundry の進捗サマリは短いノートから生成（トークン大幅削減）、**(4) MCP 関連** — `claude mcp add-json <name> -` で stdin から JSON 読込（トークンをコマンドラインに残さない）/ `claude mcp add --scope project` が `mcpServers` キーなしの `.mcp.json` を上書きせず停止 / `mcp add`・`mcp remove` が `.mcp.json` の他のトップレベルキーを消すバグ修正 / MCP サーバーログは elicitation の mode・action・フィールド名のみ記録（中身は記録しない）、**(5) auto モードの classifier フォールバック課金の廃止予告**（今後のリリースで削除。チェック対象アクションは確認要求または拒否に）、**(6) `/status` に壊れた agent / skill / command / output style ファイル・keybinding エラー・利用不可 sandbox・無視された権限設定・マッチしないフックマッチャの一覧**、**(7) Code Mode がツール呼び出しをフックする mod と共存可能に**（起動拒否を解消）、**(8) 最初の Bash コマンド高速化**（承認前にシェル起動ファイルを先行実行。`CLAUDE_CODE_DISABLE_SHELL_HEAD_START=1` でオフ）、**(9) 重要修正: 出力トークン上限カット直後のコンパクションがツール呼び出しを失う / `--agents` のエージェントがプラグインロードで消える / コンパクション後の既読全文ファイルで Edit が「File has not been read yet」/ 異モデル teammates が lead のコンテキスト上限・モデルでコンパクション / Remote Control worktree モードの停止が実行中セッションの `.env` 等 git-ignored ファイルを削除**。ドキュメント側の実質改訂: **mods API の `$.agent` に `call` / `limits` 追加**（v2.1.326+。specs/claude/skills-and-commands.md に反映）＋ **mod コマンドの `{ text, isTextDisplayOnly: true }`**（v2.1.326+。`next` を呼ばないフックから返すと Claude に読ませずテキスト表示）、**HTTP フック allowlist の managed settings 適用方法変更の明文化**（specs/claude/hooks.md に反映）、settings-reference の `requiredVersionRange` に Desktop アプリ同梱 Claude Code は上限を超え得る旨の注記、sub-agents の `memory` フィールド説明がコードベースパターンから「ユーザーの好み・訂正・プロジェクト決定」中心に改訂。スキルエコシステム巡回（Phase 3.5）は前回 2026-11-17 から7日以内のためスキップ。Codex CLI は**安定版 0.169.1（2026-11-17）と 0.170.0（2026-11-18）がリリース**（0.170.0 の目玉は TUI の realtime 音声通話 WebRTC 対応・OTLP HTTP エクスポータの認証ヘッダ自動更新・環境をまたぐ同名 MCP サーバーの実験的対応。specs/codex/changelog.md 参照）。前回2026-11-18の巡回要約は下記参照。）
+
+前回: 2026-11-18（**v2.1.326**（2026-11-16）を反映。改善59件・バグ修正233件を含む大規模な品質・堅牢化リリース。ハーネス観点の目玉は **(1) Code Mode が agent teams と併用可能に**（v2.1.326+。チームメイトは既定の in-process 表示モードで Code Mode 実行、split pane は Code Mode なしで開始）、**(2) 権限・サンドボックス硬化の大波** — auto モードが従来実行していた一部シェルコマンドを停止 / macOS の一部 Bash コマンドが確認要求または拒否に / フックの `"decision": "block"` がより多くのケースで維持（常に block を出すフックは従来素通りだった呼び出しもブロックし始める）/ sandboxed コマンドが機微なホームフォルダへ既定で書き込み不可（`sandbox.filesystem.allowWrite` で個別許可。user / managed settings のみ）/ Bash サンドボックスが `/sandbox`・`/cd` まで状態を保持 / `cp`・`mv` の一部が確認要求に / bypassPermissions モードでも一部ツール呼び出しが確認要求・無人なら拒否に / auto モードがプログラム名なし・`$HOME` 始まり等のワイルドカード allow ルールを無視、**(3) サインインファイル保護**（ファイルツールが `.credentials.json` 等 Claude Code のサインインファイルへの書き込みを拒否、Bash 権限チェックも到達前に確認）、**(4) worktree 隔離サブエージェントが共有ブランチを書き換え得る git コマンドを全リポジトリで拒否**＋`ExitWorktree` はバックグラウンドサブエージェント / シェル実行中の worktree 削除を拒否（`discard_changes` 指定時を除く）、**(5) auto モード既定化の拡大**（モード未設定のターミナル / VS Code セッションは Manual でなく auto で開始〔組織ポリシー未ロード時〕。HIPAA 構成組織も auto 既定・`disableAutoMode` でオフ）、**(6) 不正な `--allowedTools` / `--disallowedTools` / `--tools` 値への起動時警告**、**(7) プラグイン変更**（malformed な `plugin.json` 表示フィールドで拒否されていたプラグインがフック・MCP サーバー込みでロードされるように〔管理者はデプロイ済みプラグイン要確認〕/ アンインストールが MCP バンドル展開ファイルも削除）、**(8) plan mode の自動コンパクションが応答モデル（opusplan なら Opus）を使用**（コスト増に注意）、**(9) self-hosted runner に built-in `gh api`**（Linux / macOS で `gh` なし時に Anthropic 経由で既定提供。`--use-anthropic-gh false` でオフ）、**(10) `/update-config` のコンテキスト使用を 93K→13K トークンに削減**、**(11) `OTEL_RESOURCE_INCLUDE_HOST`**（`host.name` / `host.id` を OTel リソース属性に追加。既定オフ）。ドキュメント側の改訂: hooks の `StopFailure` エラータイプから **`overloaded` が削除**＋ **exit code 2 と JSON の優先順位を明文化**（`continue: false` を含む JSON は `Stop` / `SubagentStop` 等で exit 2 に優先しターン終了。`PreToolUse` はフィールド有無に関わらずブロック維持）、code-mode の対応外アカウントに Claude Models on Google Cloud (Anthropic managed) 追加、model-config のレジューム時モデル復元節が削除（整理）、sub-agents の @-mention 表現緩和（「実行を保証」→「実行を指示」）、desktop-ios-simulator に iPhone Duo フォルダブル対応（Xcode 27.1+）。スキルエコシステム巡回（Phase 3.5）は前回 2026-11-17 から7日以内のためスキップ。Codex CLI は新安定版なし（0.169.0 のまま。プレリリースは 0.171.0-alpha.12〔2026-11-17〕まで進行。docs 側は hooks の **`hooks.json` 探索スコープ表の明文化**〔System `/etc/codex/hooks.json`・Windows `%ProgramData%\OpenAI\Codex\hooks.json`・User `$CODEX_HOME/hooks.json`・trusted project `.codex/hooks.json`。specs/codex/configuration.md に反映〕と app-server の stdio トランスポート例追加、ナビの「Using GPT-6」→「Using GPT-6.2 Astra」差し替え）。前回2026-11-17の巡回要約は下記参照。）
 
 前回: 2026-11-17（**新リリースなし。v2.1.325 のまま**（公式 changelog ページも前回から変更なし）。ドキュメント側の差分は hooks.md の1点のみ: elicitation フック検証手順のデバッグログ確認文言を緩和（「`Elicitation resolved by hook: {"action":"accept",...}` で終わる行」→「`Elicitation resolved by hook:` と `accept` を含む行」）で仕様変更なし。追跡対象の他の docs ページ・llms.txt はすべて不変。**スキルエコシステム巡回（Phase 3.5）を実施**（前回 2026-11-10 から7日経過）: claude.com/plugins に **Anthropic verified「Code Review」プラグイン新掲載**（複数専門エージェント＋確信度スコアリングの PR 自動レビュー。計 532 プラグイン）、anthropics/skills はスキル追加なし（Office 系スキルの保守更新のみ）、skills.sh は design-mobile-apps が 7 位 1.5M で継続性確認（Tier B 追加）。詳細は kb/skills/_index.md・recommended.md 参照。Codex CLI は新安定版なし（0.169.0 のまま。プレリリースは 0.171.0-alpha.8〔2026-11-16〕まで進行。app-server docs に `model/list` の `modelProvider` と gateway OAuth のプロバイダ別サインインを追記。specs/codex/changelog.md 参照）。前回2026-11-16の巡回要約は下記参照。）
 
@@ -47,6 +49,80 @@
 
 
 ---
+
+## v2.1.327 (2026-11-17)
+
+改善26件・バグ修正100件を含む品質リリース。
+
+### 新機能
+
+- `claude mcp add-json <name> -`: サーバーの JSON を stdin から読み込み（トークンをコマンドラインに残さない。Claude Code セッション内では利用不可）
+- `/status` に壊れた agent / skill / command / output style ファイル、keybinding エラー、利用不可 sandbox、無視された権限設定、マッチしないフックマッチャの一覧を表示
+- `/config` に他の設定が行をオーバーライドしている旨の注記
+- `/install-github-app` がリポジトリを変更する前に確認を表示
+- `attributionProject` 設定でセッションの billing group に名前を付与（`admin.billing_group_tag` を設定する Claude apps gateway 向け）
+- gateway hint ヘッダに `x-claude-code-managed-settings-checksum` 追加（`CLAUDE_CODE_GATEWAY_HINT_HEADERS=1` 時）
+- `/tui classic`: 非フルスクリーンレンダラの新名称（`/tui default` も継続）
+- [VSCode] Explorer 右クリックに「Claude Code: Add to Chat」（選択ファイル / フォルダを @-mention）
+
+### 変更（権限・サンドボックス硬化）
+
+- **一部シンボリックリンクをパスチェックが拒否**。「作業ディレクトリ内」の判定が変更され一部パスが確認要求に
+- **`permissions.blockReadsOutsideWorkingDirectories` の強化**: bypass / auto モードでもより多くの Bash コマンドを確認（auto では一部拒否）。Read / Edit deny ルール該当パスを名指しする Bash コマンドの拒否拡大（従来は確認）
+- **auto モードが `Bash(pnpm dlx *)` 等の任意パッケージ実行系 allow ルールとそのパス・バージョン形（`/usr/bin/npm run:*`）も無視**（安全チェックが判定）
+- 変数展開で非常に長いテキストになる Bash コマンドは拒否（短い値かファイルを使うようメッセージ）
+- PowerShell ツールはルール名指しでももう1段確認（無人なら whole-tool ルール / auto / bypass がない限り拒否）
+- **`ExitWorktree` が未保存作業を持ち得る worktree の削除前に確認**（don't-ask モード・無人では allow ルール / auto / bypass がない限り拒否）
+- **兄弟のメッセージで再開されたサブエージェントはセッションの権限設定に従う**（確認が発生し得る。無人では拒否され得る）
+- auto モードの classifier フォールバック課金について、今後のリリースで削除する旨の予告を表示（チェック対象アクションは確認要求または拒否に）
+- Claude in Chrome が一部クレデンシャルファイルのアップロードを拒否
+- 矢印キーが権限プロンプトで No で停止（ラップアラウンド廃止）。最後の選択肢より大きい数字は No へ
+
+### 変更（その他）
+
+- `claude mcp add --scope project` が、`.mcp.json` が `mcpServers` キーなしでトップレベルにサーバーを列挙している場合に上書きせず停止
+- MCP サーバーログは elicitation リクエスト / フック応答の mode・action・フィールド名のみ記録（中身は記録しない）
+- **Code Mode がツール呼び出しをフックする mod インストール時も起動拒否しない**（managed settings でのオフは継続可）
+- モデル未指定サブエージェントは `/model` 後の再開でも開始時モデルを維持
+- モデル初回のサブエージェントは Anthropic からのモデル設定を最大1.5秒（`claude -p` は10秒）待機
+- Bedrock / Vertex / Foundry のターミナルセッションのサブエージェント進捗サマリを短いノートから生成（トークン大幅削減）
+- `claude plugin eval` がプラグインの permission フックより deny ルールを優先維持し、フックが通した呼び出しをフラグ
+- Anthropic ホストのクラウドセッションはリポジトリの flag / プラグイン配信設定をより無視（`CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC` は最大でも `DISABLE_TELEMETRY` 扱い）
+- 非対話（`-p`）モードは最初のリクエスト前の git コマンド実行を削減
+
+### 改善（抜粋・26件）
+
+- **セッション最初の Bash コマンド高速化**: 承認前にシェル起動ファイルを先行実行（拒否されても実行）。`CLAUDE_CODE_DISABLE_SHELL_HEAD_START=1` でオフ
+- 新しめのモデル・PowerShell でのコミット時、シークレットを含みそうなファイルをコミットしないよう Claude に指示
+- 未認識モデルで 32,000 出力トークンでカットされた応答は 128,000 上限で継続
+- 出力トークン上限に2回達したサブエージェント応答は、完全な形か「部分的」と明示して返る
+- トランスクリプト検索が編集・書き込みファイル内のテキストもヒット
+- コンパクション後にエージェント出力ファイルを読めない場合、`SendMessage` で尋ねるようリマインド
+- [VSCode] `rg` があれば大規模ワークスペースの @-mention ファイル検索が高速化
+
+### バグ修正（抜粋・100件）
+
+- **出力トークン上限カット直後のコンパクションがそのツール呼び出しと結果を失う問題**
+- **`--agents` で渡したエージェントがプラグインの（再）ロードで消える問題**＋ resume ピッカーからの再開でプラグインのエージェントが落ちる問題
+- **コンパクション後、プロジェクト外の既読全文ファイルへの Edit が「File has not been read yet」で拒否される問題**
+- **異モデルの in-process teammates が lead のコンテキスト上限・モデルでコンパクションする問題**（自モデルの上限・レートを使用）
+- **Remote Control worktree モードのサーバー停止が実行中セッションの git-ignored ファイル（`.env` 等）を削除する問題**
+- `claude mcp add` / `remove`（project スコープ）が `.mcp.json` の他のトップレベルキー（`$schema` 等）を削除する問題
+- `/export` が既存ファイルを確認なしで上書きする問題
+- Grep の `head_limit` + `offset` ページングで結果が重複・欠落する問題（ファイルパスでソート）
+- headless セッションがプロセス kill 後の同一 UUID 再送でメッセージを失う問題
+- 長時間 WebFetch URL・大量未閉タグのコンパクション応答のストール（WebFetch は 2,000 文字超 URL を事前拒否）
+- メッセージ中の数千個の @ mention によるストール（先頭100件のみファイル解決）
+- リモート MCP サーバーが長時間障害（VPN 切断等）後も切断のままになる問題（約1日バックグラウンド再試行）
+
+### ドキュメント改訂（2026-11-19 巡回で検出）
+
+- **mods API: `$.agent` に `call` / `limits` 追加**（v2.1.326+。specs/claude/skills-and-commands.md に反映）
+- **mod コマンドの `{ text, isTextDisplayOnly: true }`**（v2.1.326+）: `next` を呼ばないフックから返し `immediate` を付けない登録で、コマンドのテキストを Claude に読ませず表示のみにできる
+- HTTP フック allowlist（`allowedHttpHookUrls` / `httpHookAllowedEnvVars`）の managed settings 適用方法変更の明文化（specs/claude/hooks.md に反映）
+- settings-reference: `requiredVersionRange` の上限は native / npm インストールに適用。Desktop アプリ同梱の Claude Code は上限を超え得る（Code タブのローカルセッションが起動しなくなる。macOS / Windows は Desktop の自動更新をオフに）
+- sub-agents: `memory` フィールドの説明がコードベースパターン中心から「ユーザーの好み・訂正・プロジェクト決定」中心に改訂
+- tools-reference: 作業ディレクトリ外でもプロンプトされない例外として「Claude Code 自身が必要とするファイル」を明記
 
 ## v2.1.326 (2026-11-16)
 

@@ -269,7 +269,7 @@ JSON POST リクエストをURLエンドポイントに送信。
 - `2xx` その他ボディ（プレーンテキスト等）: **非ブロッキングエラー**。テキストは Claude のコンテキストに追加されない（従来「成功 + コンテキスト」と記載していたが、現行 docs では非2xx と同じ扱い。2026-11-05 巡回で修正）
 - 非2xx / 接続失敗: 非ブロッキングエラー
 
-**HTTP フックの allowlist 設定（2026-11-05 巡回で反映）**: 設定の `allowedHttpHookUrls` が（どのレベルでも）定義されていると、URL がマージ済み allowlist にマッチする HTTP フックのみ実行される。`httpHookAllowedEnvVars` が定義されていると、ヘッダへ補間できる環境変数はそのリスト上のものに限定される。両者は managed policy settings を含む全ソースのフックに適用される。
+**HTTP フックの allowlist 設定（2026-11-05 巡回で反映、2026-11-19 改訂）**: 設定の `allowedHttpHookUrls` が定義されていると、URL がマージ済み allowlist（全設定ファイルをマージ）にマッチする HTTP フックのみ実行される。`httpHookAllowedEnvVars` が定義されていると、ヘッダへ補間できる環境変数は「フック自身の `allowedEnvVars`」と「この allowlist（マージ済み）」の両方に載っているものに限定される。**v2.1.326 で managed settings への適用方法が変更**され、現行 docs は「組織がデプロイするフックをカバーするには managed settings に、それ以外のフックはどの設定ファイルでも可」という設定指針に改訂された（従来の「どのレベルで定義しても managed 含む全ソースに適用」という記述は削除）。
 
 ### 3.3 Prompt ハンドラ
 
