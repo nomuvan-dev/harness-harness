@@ -1,5 +1,24 @@
 # harness-harness 更新履歴
 
+## 2026-11-20 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code**: **v2.1.328**（2026-11-19）リリースを検出・反映。改善19件・バグ修正91件の大規模リリース。ハーネス観点の目玉: (1) サードパーティプロバイダ（Bedrock / Agent Platform / Foundry / apps gateway）の Opus 4.6・Sonnet 4.6 に auto モード展開＋plan mode / Bash プロンプトも auto 使用（`disableAutoMode` でオフ）、(2) `mcp_tool` フックの `onFailure: "block"` 対応、(3) `/code-review` のレビュー方針変更（バグ＋CLAUDE.md 違反のみ報告・Important/Pre-existing/Nit の重要度付与・クリーンアップは `/simplify` へ分離）、(4) Code Mode 改善多数（UserPromptSubmit フックがスクリプト出力に走らない・0.75秒ポーズ削除・MCP 接続状態通知等）、(5) `deniedMcpServers` の `claude.ai <name>` 形式がクラウド / runner セッションにも適用、(6) managed PostToolUse が実行前拒否で発火しない、(7) `CLAUDE_CODE_DISABLE_DEFERRED_TOOL_RESUME` 追加。重要修正: zsh の `=` 始まり語での Bash 失敗、自動コンパクションの古いシステムプロンプト再利用、`anyOf` 始まりスキーマの MCP ツール消失。docs 側: MCP 切断通知の2種分化（`still retrying`＝最長約1日リトライ）、`autoCompactWindow` の上限 1M 記載撤廃（100000 以上に）、サブエージェント `autoCompactWindow` と環境変数併設時は最小値使用の明文化、`CLAUDE_CODE_DISABLE_PROXY_SCHEME_REPAIR`・`OTEL_RESOURCE_INCLUDE_HOST` 収載、`/tui classic` 正式名化、PermissionRequest `allow` と deny ルール・mod の優先順位明文化。
+
+**Codex CLI**: 新安定版なし（0.170.0 のまま。プレリリースは 0.172.0-alpha.2〔2026-11-19〕まで進行）。changelog ページに ChatGPT for iOS 1.2026.314 の Codex タスク関連項目（side chats のペアリング先保存、プロジェクトピッカー等）が追加されたが CLI 仕様への影響なし。hooks / build-plugins / app-server / codex-plugin-cc ページは行番号・Star 数等のノイズのみ。
+
+**スキルエコシステム（Phase 3.5）**: 前回 2026-11-17 から7日以内のためスキップ。
+
+### 更新ファイル
+
+- specs/claude/changelog.md（v2.1.328 セクション追加、最終更新ヘッダを 2026-11-20 に更新）
+- specs/claude/mcp.md（MCP 切断通知の2種分化・バックグラウンドリトライ最長約1日を反映）
+- specs/claude/hooks.md（`mcp_tool` フックの `onFailure: "block"`〔v2.1.328+〕、PermissionRequest と mod の優先順位を反映）
+- specs/claude/configuration.md（`autoCompactWindow` 上限撤廃、`CLAUDE_CODE_DISABLE_PROXY_SCHEME_REPAIR` 追加）
+- specs/claude/skills-and-commands.md（`/code-review` 方針変更、`/tui classic`、サブエージェント `autoCompactWindow` の最小値ルール）
+- kb/update-history.md（本記録）
+
 ## 2026-11-19 — 公式ドキュメント巡回
 
 ### 検出・更新

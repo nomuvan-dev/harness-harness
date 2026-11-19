@@ -534,7 +534,7 @@ v2.1.133 以降、ツール実行コンテキストを持つイベント（`PreT
 >
 > | フィールド | 制約 | 説明 |
 > |:--|:--|:--|
-> | `behavior` | 必須 | `allow` / `deny`。**allow でも deny / ask ルールは評価され、マッチする deny ルールを上書きできない** |
+> | `behavior` | 必須 | `allow` / `deny`。**allow でも deny / ask ルールは評価され、マッチする deny ルールを上書きできない**（**mod がルールを上書きする場合は例外**。優先順位は公式 permissions ページの "Precedence among rules, hooks, and mods" 参照。2026-11-20 改訂で明文化） |
 > | `updatedInput` | allow 専用 | ツール入力を丸ごと置換。**変更後の入力は deny / ask ルールで再評価される**。`AskUserQuestion` / `ExitPlanMode` では必須 |
 > | `updatedPermissions` | allow 専用 | 権限更新（下記エントリ型参照） |
 > | `message` | deny 専用 | Claude に渡す拒否理由 |
@@ -898,7 +898,7 @@ svn checkout https://svn.example.com/repo/trunk "$DIR" >&2 && echo "$DIR"
 | `once` | **初回の成功実行後**にフックを取り除く。失敗・exit code 2 によるブロック・タイムアウトの場合はフックが残り、次の一致イベントで再実行される。スキル frontmatter で宣言したフックのみ有効（settings ファイルとエージェント frontmatter では無視） | `false` |
 | `statusMessage` | スピナーメッセージ | - |
 | `if` | ツールイベント専用の条件フィルタ（permission rule構文） | - |
-| `onFailure` | **`"block"` を指定すると、フックが起動できない・タイムアウトした・想定外の exit code で終わった場合にアクションをブロックする**（command / HTTP フック。v2.1.295+）。既定ではこれらは非ブロッキングエラー扱いで素通りするため、ポリシーフックを fail-closed にしたい場合に指定する（2026-10-11 巡回で公式 hooks ページに「Block the action when a hook fails」節として正式収載を確認。PreToolUse のタイムアウトは既定で通常の権限フローに流れて素通りするため、タイムアウト時もブロックしたい場合に有効） | 非ブロッキング（fail-open） |
+| `onFailure` | **`"block"` を指定すると、フックが起動できない・タイムアウトした・想定外の exit code で終わった場合にアクションをブロックする**（command / HTTP フック。v2.1.295+。**v2.1.328 以降は mcp_tool フックでも指定可**＝フックの MCP ツール呼び出しが失敗したらアクションをブロック）。既定ではこれらは非ブロッキングエラー扱いで素通りするため、ポリシーフックを fail-closed にしたい場合に指定する（2026-10-11 巡回で公式 hooks ページに「Block the action when a hook fails」節として正式収載を確認。PreToolUse のタイムアウトは既定で通常の権限フローに流れて素通りするため、タイムアウト時もブロックしたい場合に有効） | 非ブロッキング（fail-open） |
 
 ### 8.0 実行上限・fail-closed 化（2026-10 の変更）
 
