@@ -72,6 +72,10 @@ Claude Code の組み込みツール一覧。**ここに書かれたツール名
 | `ListAgents` | No | `SendMessage` の宛先になりうるエージェント一覧（セッション内サブエージェント、チームメイト、他のローカルセッション、Remote Control 接続中は他マシン／クラウドのセッション） |
 | `SendMessage` | No | 他エージェント（チームメイト、agent ID / 名前で再開するサブエージェント、自分の他セッション）へメッセージ送信 |
 | `SubagentHandback` | No | **v2.1.271+**。サブエージェントの最終レポートを親会話へ納品するツール。**auto モード限定**で、Agent ツールがローカル実行する非フォークのサブエージェントに提供される（`tools` から外しても `disallowedTools` に入れても付与される）。このツール経由の納品では親の `tool_response.content` はレポートではなく短い注記になる。レポート本文はフック（`PreToolUse` / `PostToolUse` を `SubagentHandback` にマッチ）の `tool_input.message` で読める。端末 CLI / IDE 拡張 / クラウドセッション / **Agent SDK** で利用可。**納品前に auto モードの分類器がレポートをレビューする**（2026-11-03 ドキュメント改訂で確認） |
+| `ListPlugins` / `SearchPlugins` | No | claude.ai アカウントで有効なプラグインの一覧 / プラグインカタログ検索。**クラウドセッションまたはデスクトップアプリが必要**（サードパーティプロバイダでは非提供）。2026-11-21 巡回で tools-reference 収載を確認 |
+| `ListSkills` / `SearchSkills` | No | claude.ai アカウントで有効なスキルの一覧 / claude.ai スキル検索。提供条件は `ListPlugins` と同じ |
+| `SuggestPluginInstall` / `SuggestSkills` | No | 追加可能なプラグイン / スキルの提案カードを表示。提供条件は `ListPlugins` と同じ |
+| `propose_skills` | No | 提案スキルのカードを表示し、ユーザーがレビューして claude.ai アカウントに保存できる。クラウド Cowork セッション等の一部クラウドセッションで提供 |
 | `SendUserFile` | No | セッションからユーザーへファイル送信（任意のキャプション付き）。v2.1.196 以降 `display` パラメータあり |
 | `PushNotification` | No | デスクトップ通知（Remote Control 接続時はスマートフォンへのプッシュも）を送る |
 | `ScheduleWakeup` | No | 自己ペースの `/loop` の次イテレーション時刻を 1 分〜1 時間の範囲で再スケジュール。**v2.1.319 以降、ターンが再スケジュールせずに終了したらループ終了**（従来はフォールバック wakeup をスケジュール。`CLAUDE_CODE_LOOP_KEEPALIVE=1` で旧挙動） |
@@ -174,6 +178,7 @@ Claude Code の組み込みツール一覧。**ここに書かれたツール名
 - ファイル編集ごとに型エラー・警告を自動報告するため、別途ビルドを走らせずに Claude が修正できる
 - セッション中に一度でも言語サーバーが使えた場合、そのセッションの残りではツールはアクティブなまま。起動できないファイルへの LSP 呼び出しは個別にエラー結果を返す
 - **v2.1.280 以降、バックグラウンドサブエージェントも LSP を使用可能**（バックグラウンドサブエージェントが保持する組み込みツールリストに LSP が追加された）
+- 2026-11-21 の sub-agents ページ改訂で、バックグラウンドサブエージェントが保持する組み込みツールに **`ListPlugins` / `ListSkills` / `SearchPlugins` / `SearchSkills`** が追加された（保持リスト: Read, Grep, Glob, LSP, Bash, PowerShell, Edit, Write, NotebookEdit, WebFetch, WebSearch, TodoWrite, Skill, ToolSearch, EnterWorktree, ExitWorktree, Monitor, TaskStop, SendMessage, Artifact ＋これら4種。MCP ツールは全保持、`SubagentHandback` は報告経路なら保持）。また tools-reference 改訂で **`tools` のみ指定のサブエージェントでも `memory` 有効時は Read / Write / Edit が自動付与**されることが明文化された
 
 ---
 

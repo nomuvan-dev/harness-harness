@@ -1,5 +1,26 @@
 # harness-harness 更新履歴
 
+## 2026-11-21 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code**: **v2.1.329**（2026-11-19）リリースを検出・反映。改善10件・バグ修正91件の大規模リリース。ハーネス観点の目玉: (1) `/code-review` ターゲット無指定時はブランチ全体をデフォルトブランチと比較、(2) スケジュールタスクの保存仕様変更（新しいサインイン済みセッションでは旧バージョン保存タスクの多くが要再登録。「Exit and stop tasks」がスケジュールタスクも終了）、(3) Code Mode の挙動変更多数（エラーになった PreToolUse フックが既定で拒否しなくなり `onFailure: "block"` で制御・テレメトリ等オフでも起動・OTel 併用可）、(4) auto モードの `git status` 実行頻度削減、(5) `/tasks` 拡充（スケジュールタスク・`/loop` wakeup・goal・フォークを一覧）、(6) background_tasks で Monitor が `monitor` として列挙、(7) 2.1.326 の `max_tokens` 自動リトライ撤回。docs 側: サブエージェント effort 解決順序の明文化、claude.ai カタログ系ツール7種収載（ListPlugins / ListSkills / SearchPlugins / SearchSkills / SuggestPluginInstall / SuggestSkills / propose_skills）、終了済みサブエージェントのトランスクリプト再表示（v2.1.319+）、`onFailure: "block"` の MCP failure 定義、不正スキーマ MCP ツール除外が flag 取得オフでも実行（v2.1.328+）、sandbox の objects / refs 保護が削除→quarantine リネームに（v2.1.315+）、`CLAUDE_CODE_SUBAGENT_EFFORT` / `CLAUDE_CODE_SUBAGENT_HISTORY` / `CLAUDE_CODE_DISABLE_DEFERRED_TOOL_RESUME` の env-vars 収載、skills `paths` の相対基準明文化。
+
+**Codex CLI**: **安定版 0.171.0（2026-11-20）リリースを検出・反映**。目玉: GPT-6.2 Sol / Astra のカタログ追加（Sol が既定）、TUI workspace の既定有効化、`codex exec --remote`、`/rc` / `/remote`、コンポーザー undo / redo、`/statusline`。公式 changelog ページは 0.167 系までで GitHub releases が先行。プレリリースは 0.173.0-alpha.1 まで進行。hooks / build-plugins / app-server / codex-plugin-cc ページはノイズのみ。
+
+**スキルエコシステム（Phase 3.5）**: 前回 2026-11-17 から7日以内のためスキップ。
+
+### 更新ファイル
+
+- specs/claude/changelog.md（v2.1.329 セクション追加、最終更新ヘッダを 2026-11-21 に更新）
+- specs/claude/hooks.md（UserPromptSubmit の Code Mode 出力発火は v2.1.328 より前のみ、background_tasks の monitor 列挙、`onFailure: "block"` の MCP failure 定義）
+- specs/claude/configuration.md（`CLAUDE_CODE_SUBAGENT_EFFORT` の解決順序と正式収載、`CLAUDE_CODE_SUBAGENT_HISTORY`・`CLAUDE_CODE_DISABLE_DEFERRED_TOOL_RESUME` 追加）
+- specs/claude/tools.md（claude.ai カタログ系ツール7種、バックグラウンドサブエージェントの保持ツール追加、`memory` 時の Read/Write/Edit 自動付与）
+- specs/claude/mcp.md（不正スキーマツール除外の v2.1.328 挙動変更）
+- specs/claude/skills-and-commands.md（`/code-review` ターゲット変更、`paths` の相対基準）
+- specs/codex/changelog.md（0.171.0 セクション追加、最終更新ヘッダを 2026-11-21 に更新）
+- kb/update-history.md（本記録）
+
 ## 2026-11-20 — 公式ドキュメント巡回
 
 ### 検出・更新
