@@ -1,6 +1,6 @@
 # Claude Code Hooks 仕様書
 
-最終更新: 2026-11-12（巡回更新）
+最終更新: 2026-11-22（巡回更新。スキルフックのライフサイクル明文化、managed PostToolUse の失敗呼び出し後実行、web-fetch サブエージェントの SubagentStart/Stop 制限を反映）
 
 公式ドキュメント: https://code.claude.com/docs/en/hooks
 
@@ -27,7 +27,7 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 | `UserPromptExpansion` | ユーザーが打ったコマンドがプロンプトへ展開される時（Claude に届く前） | Yes | `command_name`（スキル名 / コマンド名）。matcher 省略で全 prompt 型コマンドに発火 |
 | `PreToolUse` | ツール実行前 | Yes | **`EndConversation` 以外の全ツール名**（`Bash` / `PowerShell` / `Edit` / `Write` / `Read` / `Glob` / `Grep` / `Agent` / `Workflow` / `WebFetch` / `WebSearch` / `AskUserQuestion` / `ExitPlanMode` 等の組み込みツールと MCP ツール名） |
 | `PermissionRequest` | ツール使用の権限ダイアログ表示時 | Yes | ツール名 |
-| `PostToolUse` | ツール成功後（`EndConversation` の呼び出しは PreToolUse 同様スキップ） | No | ツール名 |
+| `PostToolUse` | ツール成功後（`EndConversation` の呼び出しは PreToolUse 同様スキップ）。**メイン会話では managed settings 由来の PostToolUse フックは一部の失敗した呼び出し後にも実行される**ため、managed フックは両方を扱えるよう書く。失敗呼び出しの `tool_response` は文字列のエラーテキスト（2026-11-22 巡回で反映） | No | ツール名 |
 | `PostToolUseFailure` | ツール失敗後。**未知ツール名・スキーマ / ツール固有検証に落ちた入力は `tool_use_error` としてフック実行前に返されるため `PreToolUse` も本イベントも発火しない**。権限拒否は `PreToolUse` は発火するが本イベントは発火せず `PermissionDenied` が担当（2026-11-12 巡回で反映） | No | ツール名 |
 | `PostToolBatch` | 並列ツール呼び出しのバッチ全体が解決した後、次のモデル呼び出し前 | Yes | matcher非サポート（全バッチで発火） |
 | `Stop` | Claude の応答完了時（**ユーザー割り込みによる停止では発火しない**。API エラーは `StopFailure`） | Yes | - |
@@ -39,8 +39,8 @@ CLAUDE.md の指示は助言的だが、Hooks は**決定論的**であり確実
 
 | イベント | 発火タイミング | ブロック可能 | matcher対象 |
 |:--|:--|:--|:--|
-| `SubagentStart` | サブエージェント起動時。**加えて Claude がサブエージェントを resume したとき、およびインプロセスのエージェントチームのチームメイトが新しいメッセージを処理するたびにも発火する**（公式ドキュメント明文化） | No | エージェントタイプ名 |
-| `SubagentStop` | サブエージェント完了時 | Yes | エージェントタイプ名 |
+| `SubagentStart` | サブエージェント起動時。**加えて Claude がサブエージェントを resume したとき、およびインプロセスのエージェントチームのチームメイトが新しいメッセージを処理するたびにも発火する**（公式ドキュメント明文化）。**組み込み `web-fetch` サブエージェントに対しては managed settings のフックのみ実行**——他の場所のフックは `WebFetch` マッチの `PreToolUse` で代替（2026-11-22 巡回で反映） | No | エージェントタイプ名 |
+| `SubagentStop` | サブエージェント完了時。**組み込み `web-fetch` サブエージェントに対しては managed settings のフックのみ実行**——他の場所のフックは `WebFetch` マッチの `PostToolUse` で代替 | Yes | エージェントタイプ名 |
 | `TeammateIdle` | チームメイトがアイドル状態になる直前 | Yes | matcherなし |
 | `TaskCompleted` | タスク完了マーク時 | Yes | matcherなし |
 
@@ -904,6 +904,7 @@ svn checkout https://svn.example.com/repo/trunk "$DIR" >&2 && echo "$DIR"
 
 - **prompt / agent フックは同一イベント最大 12 並列**で実行され、残りは順番待ちになる（v2.1.302）
 - **スキルフックの上限**: 1 ソース（リポジトリ / 自分のフォルダ / プラグイン）のスキル群はセッションあたり最大 1,024 フック・16,384 matcher 文字まで登録可能（v2.1.304）
+- **スキルフックのライフサイクル（2026-11-22 ドキュメント改訂で明文化）**: スキル frontmatter のフックは**スキルを起動するまで実行されず**、起動後はセッション終了・`/clear`・`/resume` での離脱時に**解除される**（従来の「セッションの残り全体で実行され続ける」という記述から改訂）。より早く取り除くには `once: true`
 - **プラグインフックがブロック可能なアクションは、フックにイベントを渡せない / 回答を受け取れない場合に素通りでなく拒否される**（実行済みツールは結果が差し止められる）（v2.1.299）
 - プラグインフック・ワークフロースクリプトが返す値は 28,000 レベル超のネストを拒否（v2.1.299）
 - **観測性（v2.1.296+、2026-11-05 巡回で反映）**: command フックは完了時にデバッグログへ `Hooks: PostToolUse:Write [.claude/hooks/log-write.sh] finished with status 0 (31ms)` 形式の行を残す（`timed out after <N>ms` / `cancelled` / `moved to the background` / `failed to start` もあり）。遅いフックの特定には `Hooks:` 行を検索する。`CLAUDE_CODE_DEBUG_LOG_LEVEL=verbose` で matcher マッチングの詳細も出力される。スキルフックが上限超過で登録されなかった場合はデバッグログに `registers none of its hooks` が出る

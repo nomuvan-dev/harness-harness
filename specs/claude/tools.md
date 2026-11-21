@@ -1,6 +1,6 @@
 # Claude Code ツール仕様書
 
-最終更新: 2026-11-15（巡回更新。v2.1.325 時点: Skill ツールの権限列「Some skills」化、Monitor の WebSocket watch への Bash deny/ask ルール適用とプロキシ解決（v2.1.319）、Workflow のランタイム制約・ストール再起動・利用上限一時停止を反映）
+最終更新: 2026-11-22（巡回更新。v2.1.330 時点: tools-reference の WebFetch 節全面改稿に伴い「web-fetch サブエージェント」を新設反映）
 
 公式ドキュメント: https://code.claude.com/docs/en/tools-reference
 
@@ -160,6 +160,21 @@ Claude Code の組み込みツール一覧。**ここに書かれたツール名
 - WebSearch の入力に **`mode` フィールド**（v2.1.282+、2026-10-30 hooks リファレンス改訂で収載）: `"standard"` で軽量検索、`"extended"`（既定）でフル検索。`mode` を送らないセッションもあり、その場合はフル検索
 - **WebFetch の可用性（2026-10 ドキュメント改訂で「WebFetch availability」節新設）**: v2.1.285 以降 `CLAUDE_CODE_DISABLE_WEB_FETCH=1` でオフにできる。Team / Enterprise の claude.ai アカウントで LLM ゲートウェイを経由しないセッション（およびプランを判別できないセッション）では、セッション開始時に `api.anthropic.com` から取得する**組織ポリシー**にも依存し、ポリシーが読めるまで WebFetch は保留される。欠けている場合は `/status` の `Organization policy` 行を確認（セッション外では `claude doctor`）。許可ポリシーがロードされ次第、再起動なしでツールが戻る
 - **WebFetch と artifact リンク**: URL が claude.ai の artifact リンクの場合、artifact 自体を読む承認を求めることがある
+
+#### web-fetch サブエージェント（2026-11-22 tools-reference 全面改稿で新設収載）
+
+- **v2.1.287 以降、claude.ai アカウントでサインインしたセッションでは、組み込みの `web-fetch` サブエージェントがページを読む**。Claude は Agent ツールで `web-fetch` に URL と質問を渡し、サブエージェントが WebFetch を呼んでページを読み、答えを返す
+- このモードでは**メイン会話・フォーク・agent teams の teammates は `WebFetch` ツール自体を持たない**（Agent ツールで起動した他のサブエージェントは WebFetch を呼べる）。`system/init` イベントでは `agents` に `web-fetch` が載り `tools` に `WebFetch` が載らない
+- **実行モデルは既定で `haiku` エイリアスの指すモデル**。使えない場合（`availableModels` で除外等）は起動元会話と同じモデル。`availableModels` のフォールバック順序ルールの対象外
+- サブエージェントが読むのは**約 48,000 文字まで全文**（Claude 自身が WebFetch を呼ぶ場合は先頭 100,000 文字）
+- **オフになる構成**: `Agent(web-fetch)` の deny ルールで明示オフ / **LLM ゲートウェイ経由（v2.1.330+）** / feature flags を取得しない構成（Bedrock、`DISABLE_TELEMETRY` 等）。オフ時は Claude 自身が WebFetch を呼び、バックグラウンドタスク用モデルがページを読む
+- **ハーネス設計上の注意**:
+  - `WebFetch` の権限ルールと `WebFetch` マッチの `PreToolUse` / `PostToolUse` フックはサブエージェント経由の取得にも適用される
+  - **`SubagentStart` / `SubagentStop` フックは managed settings のもののみ実行**。それ以外の場所のフックは `WebFetch` マッチの `PreToolUse` / `PostToolUse` で代替する
+  - サブエージェントは **CLAUDE.md（managed 含む）なしで起動**。取得先の制限は CLAUDE.md 指示でなく `WebFetch` 権限ルールで行う
+  - `PostToolUse` で `WebFetch` 結果をパースするフックは、**サブエージェント経由だと結果がページ本文、Claude 直呼びだと質問への回答**になるため両対応が必要
+  - `Agent` 呼び出しを一律ブロックする `PreToolUse` フックがあるとページが取得されない → サブエージェントをオフにする
+  - ターミナルでは権限プロンプトのタイトルが `Fetch · from the web-fetch agent`、`Received` 行はサイズのみ表示
 
 ### 3.6 Agent（サブエージェント）
 

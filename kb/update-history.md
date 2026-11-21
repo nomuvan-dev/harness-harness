@@ -1,5 +1,25 @@
 # harness-harness 更新履歴
 
+## 2026-11-22 — 公式ドキュメント巡回
+
+### 検出・更新
+
+**Claude Code**: **v2.1.330**（2026-11-20）リリースを検出・反映。改善14件・バグ修正98件の大規模リリース。ハーネス観点の目玉: (1) Enterprise Admin Console サインイン対応＋managed settings 新キー `enforceAnthropicSignIn`（v2.1.329+）、(2) 組み込み mod「easel」（チャート描画、`cc-plugin-easel`）、(3) スケジュールタスク・`/loop` の実行期間 7日→30日、(4) ルート / ホーム等宛 `rm` の承認要求拡大、(5) `deniedMcpServers` name エントリの適用範囲縮小（名指しコネクタのみ）、(6) スキル `model` 設定の波及縮小（サブエージェント・フォーク・コンパクション・`/recap` はセッションモデル維持）、(7) 2.1.329 の `max_tokens` 自動リトライ撤回を再撤回（復活）、(8) `CLAUDE_CODE_FULL_SIGN_IN_LINK`、(9) 重要修正多数（`ExitWorktree` の他セッション worktree 削除、user settings 同時保存喪失、WebFetch フリーズ等）。docs 側の大物: **tools-reference の WebFetch 節全面改稿＋ web-fetch サブエージェント新設収載**（v2.1.287+ で claude.ai サインイン時はメイン会話が WebFetch ツールを持たず組み込みサブエージェントが読む。`Agent(web-fetch)` deny でオフ、SubagentStart/Stop は managed のみ）、**Claude プロジェクトのクラウドスレッドがリポジトリの skills / agents / commands をロードする大転換**（例外: 2026-10-01 以前のスレッド・ドット始まりリポジトリ名・self-hosted。`.mcp.json` と settings.json の hooks / permissions / env は引き続き非ロード）、MCP タスクのクラウドセッション対応（アカウント / 組織単位有効化）＋サーバー実装者向け ttlMs / pollIntervalMs 推奨の新節、スキルフックのライフサイクル明文化（起動前は実行されず `/clear` / `/resume` で解除）、managed PostToolUse の失敗呼び出し後実行、code-mode のフック失敗挙動（v2.1.329+ は fail-open 既定）、auto モードのサブエージェント最終レポート審査、mods の v2.1.326+ 機能収載（`tool.judge` / `tool.run` / `session.stop`、`$.wasm.compile`、`AgentRow` 等）。前回巡回で `## v2.1.329` セクションが changelog 本文に追加漏れしていたため今回補完。
+
+**Codex CLI**: 新安定版なし（0.171.0 のまま。プレリリースは 0.173.0-alpha.4〔2026-11-21〕まで進行）。公式 changelog ページは 0.171.0 まで収載に追いつき、過去版（0.143〜0.144 系）の詳細をバックフィル。hooks / build-plugins / app-server ページはノイズのみで docs 側の実質差分なし。
+
+**スキルエコシステム（Phase 3.5）**: 前回 2026-11-17 から7日以内のためスキップ。
+
+### 更新ファイル
+
+- specs/claude/changelog.md（v2.1.330 セクション追加＋v2.1.329 セクション補完、最終更新ヘッダを 2026-11-22 に更新）
+- specs/claude/tools.md（web-fetch サブエージェント節新設）
+- specs/claude/hooks.md（スキルフックのライフサイクル、managed PostToolUse の失敗後実行、web-fetch の SubagentStart/Stop 制限）
+- specs/claude/mcp.md（MCP タスクのクラウドセッション対応、ttlMs / pollIntervalMs 推奨値）
+- specs/claude/configuration.md（`enforceAnthropicSignIn`、`CLAUDE_CODE_FULL_SIGN_IN_LINK`）
+- specs/claude/skills-and-commands.md（クラウドスレッドの skills / agents / commands ロード、スキル `model` 波及縮小、auto モード最終レポート審査）
+- kb/update-history.md（本記録）
+
 ## 2026-11-21 — 公式ドキュメント巡回
 
 ### 検出・更新

@@ -1,6 +1,6 @@
 # Claude Code Skills & コマンド仕様書
 
-最終更新: 2026-11-15（巡回更新。v2.1.325 時点: スケジュールタスク/`/loop` のスキル実行前確認、フォークスキルが結果を待つケース、`--add-dir` 同名スキルのプレフィックス呼び出し（v2.1.309）、サブエージェントのネスト深度既定3・managed スコープ・permissionMode `auto` 等を反映）
+最終更新: 2026-11-22（巡回更新。v2.1.330 時点: Claude プロジェクトのクラウドスレッドがリポジトリの skills / agents / commands をロードする変更、スキル `model` 設定の波及縮小、auto モードのサブエージェント最終レポート審査を反映）
 
 公式ドキュメント: https://code.claude.com/docs/en/skills / https://code.claude.com/docs/en/commands / https://code.claude.com/docs/en/sub-agents / https://code.claude.com/docs/en/scheduled-tasks / https://code.claude.com/docs/en/web-scheduled-tasks / https://code.claude.com/docs/en/plugins/install（2026-09-25 のドキュメント再編で discover-plugins から移動。プラグイン関連は https://code.claude.com/docs/en/plugins/overview 以下の約20ページ構成に分割された）
 
@@ -38,7 +38,8 @@ Skills は Claude の能力を拡張する仕組み。`SKILL.md` ファイルに
 - **`anthropic-skills:` 名前空間の保護（v2.1.282）**: この名前空間のスキルフォルダ・コマンドファイル・ワークフローコマンドはロードされない（同期スキルへのなりすまし防止）。同名プラグインはロードされるが名前衝突では同期スキルに譲る。`Skill(anthropic-skills:*)` の allow ルールは claude.ai から同期されたスキルのみに一致し、その名前を使うだけのプラグイン等には一致しない。この名前で設定された MCP サーバーはスキル / プロンプトを一覧しない（ツールは動作。一覧に戻すにはサーバーをリネーム）。**v2.1.283 で deny ルールを拡張**: `Skill(anthropic-skills:<name>)` の deny は Claude Desktop がプラグインとして配布する同スキルもブロックし、`Skill(skill:<name>)` の deny はスキルのエイリアス・表示名にも一致する。※v2.1.282 では `claude-ai:` 名前空間も同様に予約されたが、**v2.1.283 でリバート**（`claude-ai` 名のスキル・コマンド・ワークフロー・MCP サーバーのスキル / プロンプトは再びロードされ、`Skill(claude-ai:*)` ルールは通常のプレフィックスルール）
 - **`.claude/commands/`**: 旧形式だが引き続き動作する。`name` と `paths` を除き同じフロントマターに対応し、ファイル名で呼び出す。**サブディレクトリに置いたファイルは `commands/` からの相対パスの `/` を `:` に置き換えた名前になる**（例: `.claude/commands/frontend/component.md` → `/frontend:component`。2026-09-13 リファレンス改訂で命名表に明記）。**新規はスキル推奨**（スキルは補助ファイルを持てる）
 - **スキルフォルダをプラグイン化**: `.claude-plugin/plugin.json` を置くと `<name>@skills-dir` というプラグインとしてロードされ、agents / hooks / MCP サーバーを同梱できる（プロジェクトの `.claude/skills/` ではワークスペース信頼ダイアログの承認が必要）
-- **クラウドセッションへのスキル配布（2026-10 ドキュメント改訂で変更）**: クラウドセッションにスキルを届けるにはリポジトリの `.claude/skills/` にコミットする。**リポジトリの `.claude/settings.json` で宣言したプラグインも、user 設定で有効化したプラグインも、クラウドセッションではロードされない**（従来は repo 宣言プラグインはセッション開始時にインストールされるとされていた）。**例外: [Claude プロジェクト](https://code.claude.com/docs/en/claude-projects)のクラウドスレッドでは、リポジトリにコミットした `.claude/skills/` も利用できない** — プロジェクトのスレッドに届けるには claude.ai アカウント側でスキルを有効化する（2026-11-15 巡回で確認）
+- **クラウドセッションへのスキル配布（2026-10 ドキュメント改訂で変更）**: クラウドセッションにスキルを届けるにはリポジトリの `.claude/skills/` にコミットする。**リポジトリの `.claude/settings.json` で宣言したプラグインも、user 設定で有効化したプラグインも、クラウドセッションではロードされない**（従来は repo 宣言プラグインはセッション開始時にインストールされるとされていた）
+- **Claude プロジェクトのクラウドスレッドもリポジトリの skills / agents / commands をロードするように（2026-11-22 ドキュメント改訂で大転換）**: 従来「プロジェクトのスレッドではリポジトリコミットの `.claude/skills/` は利用不可」だったが、**全リポジトリから skills・agents・commands がロードされる**ようになった。**例外（スキップされるケース）**: ①2026-10-01 より前に開始したスレッド（新スレッドを開始すれば解消）、②リポジトリ名がドット始まり（`.github` 等。Remote Control セッションとして実行するか、スキルは claude.ai アカウント有効化で代替）、③self-hosted 環境(runner イメージに追加する)。**引き続き非ロード**: `.mcp.json` のサーバーと `.claude/settings.json` の hooks / permission rules / `env`。path-specific rules はスレッド開始時にはロードされない
 - **消えた personal スキルの復旧**: `~/.claude/skills/` の自作フォルダが消えた場合は `~/.claude/skills/.trash/` を確認する。v2.1.280 より前は `~/.claude/skills/` 直下に `manifest.json` があると、そこに列挙されたスキルフォルダがタイムスタンプ付きフォルダへ `.trash/` 退避されロードされなくなるバグがあった。retention sweep（既定30日）で消える前にフォルダを戻せば復旧できる
 
 > **プラグインスキルの frontmatter `name`**: `name` はコマンド名の**最終セグメント**（ディレクトリ名）を置き換える。`my-plugin/skills/review/SKILL.md` に `name: fancy` を書くと `/my-plugin:fancy` になり、他が使っていなければ素の `/fancy` でも呼べる。`name` が既にプラグイン接頭辞を含む場合（`name: my-plugin:fancy`）、**v2.1.246 以降は接頭辞を重ねない**（v2.1.216〜v2.1.245 は二重化していた）。v2.1.216 より前は `name` がコマンド名全体を置き換えていた。
@@ -115,7 +116,7 @@ my-skill/
 | `user-invocable` | No | `false` で `/` メニューから非表示。バックグラウンド知識用 |
 | `allowed-tools` | No | スキル有効時に許可なしで使えるツール |
 | `disallowed-tools` | No | スキル有効時にモデルから取り除くツール（v2.1.152）。スラッシュコマンドのフロントマターでも有効 |
-| `model` | No | スキル有効時のモデル指定。上書きは当該ターンの残りにのみ適用され設定には保存されない（次のプロンプトでセッションのモデルに戻る）。`/model` と同じ値、または `inherit`。組織の `availableModels` 許可リストで除外された値は使われずセッションは現行モデルを維持する。**Auto Mode、および plan モードで分類器がコマンドをレビューする間は、auto mode が非対応のモデルも同様に使われない**（公式ドキュメント明文化）。`context: fork` と併用した場合はフォークされたサブエージェントのモデルを指す |
+| `model` | No | スキル有効時のモデル指定。上書きは当該ターンの残りにのみ適用され設定には保存されない（次のプロンプトでセッションのモデルに戻る）。`/model` と同じ値、または `inherit`。組織の `availableModels` 許可リストで除外された値は使われずセッションは現行モデルを維持する。**Auto Mode、および plan モードで分類器がコマンドをレビューする間は、auto mode が非対応のモデルも同様に使われない**（公式ドキュメント明文化）。`context: fork` と併用した場合はフォークされたサブエージェントのモデルを指す。**v2.1.330 以降、（`context: fork` 以外の）`model` 付きスキル実行中でも、サブエージェント・フォーク・コンパクション・`/recap` はセッションのモデルのまま**（スキルのモデルが波及しない） |
 | `effort` | No | エフォートレベル (`low` / `medium` / `high` / `xhigh` / `max`。対応レベルはモデル依存)。**現在のターンの残りに適用**され、セッションの effort を上書きする（`CLAUDE_CODE_EFFORT_LEVEL` 環境変数は上書きしない。`context: fork` の場合はフォークされたサブエージェントの effort になる — 2026-10-30 ドキュメント改訂で適用範囲が明確化）。**v2.1.267 以降は Fable 5 / Opus 4.8 / Opus 4.7 のように既定 effort が固定されているモデルでも frontmatter の effort が適用される**（それ以前は固定が優先され frontmatter は無視されていた）。`maxEffortLevel` のキャップは引き続き適用される |
 | `context` | No | `fork` でフォークサブエージェントコンテキストで実行。v2.1.218 から fork スキルは既定でバックグラウンド実行 |
 | `agent` | No | `context: fork` 時のサブエージェントタイプ指定 |
@@ -840,7 +841,7 @@ model: sonnet
 
 > **サブエージェントの `permissionMode` の解決（v2.1.267 で挙動変更）**
 >
-> - メイン会話が `bypassPermissions` / `acceptEdits` / **Auto Mode** のとき: サブエージェントも同じモードで走り、**frontmatter の `permissionMode` は無視される**。Auto Mode ではメイン会話の block / allow ルールで分類器がサブエージェントのツール呼び出しを評価する
+> - メイン会話が `bypassPermissions` / `acceptEdits` / **Auto Mode** のとき: サブエージェントも同じモードで走り、**frontmatter の `permissionMode` は無視される**。Auto Mode ではメイン会話の block / allow ルールで分類器がサブエージェントのツール呼び出しを評価する。**加えて、Agent ツールで起動したサブエージェントの終了時には分類器が作業内容と最終レポートを審査してから配信する**（agent team のチームメイトは対象外。2026-11-22 ドキュメント改訂で明文化）
 > - メイン会話が **`plan`** のとき: `permissionMode` の指定にかかわらずサブエージェントも plan モードのまま（agent team のチームメイトが[チームの計画ルール](agent-teams.md)で走る場合を除く）。`dontAsk` を指定した場合はプロンプトも出さず、plan モードが確認を求めるはずの操作は拒否される
 > - メイン会話が `default` / `dontAsk` のとき: frontmatter で指定したモードで走る。**ただし `bypassPermissions` は例外で、v2.1.267 以降はメイン会話のモードが使われる**（サブエージェントが単独で権限プロンプトを飛ばすことはできなくなった）。また `auto` を指定しても auto mode がサブエージェントに利用不可の場合（`disableAutoMode` 設定、モデル非対応等）はメイン会話のモードを維持する
 > - `permissions.disableBypassPermissionsMode` で bypass が無効化されている場合も frontmatter の `bypassPermissions` は無視され、親セッションのモードで走る（v2.1.223 以降）
