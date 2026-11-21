@@ -1,6 +1,6 @@
 # Claude Code 設定仕様書
 
-最終更新: 2026-11-05（巡回更新）
+最終更新: 2026-11-22（巡回更新。`enforceAnthropicSignIn`（v2.1.329+）と `CLAUDE_CODE_FULL_SIGN_IN_LINK`（v2.1.330+）を反映）
 
 公式ドキュメント: https://code.claude.com/docs/en/settings / https://code.claude.com/docs/en/memory
 
@@ -229,6 +229,7 @@ Claude Code は設定ファイルを監視し、変更を検知するとセッ�
 | `companyAnnouncements` | 起動時通知メッセージ |
 | `forceLoginMethod` | ログイン方式強制（`claudeai` / `console`）。v2.1.146〜v2.1.160 で Bedrock / Vertex / Foundry / Mantle のサードパーティプロバイダセッションが組織 pin と並んでブロックされるリグレッションあり。**v2.1.161 で修正済** |
 | `forceLoginOrgUUID` | 組織UUID強制選択。同上のリグレッションが v2.1.146〜v2.1.160 にあり、**v2.1.161 で修正済**。**ログインキーの供給元ルール（2026-10-30 managed-settings 改訂で新設）**: MDM ポリシーまたは managed settings ファイルがあるマシンでは、`forceLoginOrgUUID` と `forceLoginMethod`（`"claudeai"` / `"console"`）はリモート設定（claude.ai admin コンソール）が同キーを設定していても MDM ポリシー / ファイル側から読む。両方ある場合は MDM ポリシーを使う（ポリシーが何かポリシーキーを設定していればファイル側のログインキーは `managedSourcesBehavior: "merge"` でも無視）。ポリシー / ファイルがキーを省略していればリモート設定の値が適用される。全クライアントが v2.1.299+ になるまでは server-managed settings 側にも併記を推奨。ゲートウェイログインキーはリモート設定の値を一切使わない |
+| `enforceAnthropicSignIn` | **Anthropic API 上の claude.ai ログインまたは Enterprise Admin Console サインインを強制**（v2.1.329+、2026-11-22 巡回で settings-reference 収載を確認）。Admin Console サインインは `forceLoginOrgUUID` が自組織を名指しし `policyHelper` 未設定の場合のみ有効と数える。**Managed スコープ専用**: managed settings ファイル（MDM ポリシーがあればそちら）に置く。server-managed settings・HKCU・policy helper 出力では無視される。Claude Desktop のクラウドプロバイダ / ゲートウェイセッションも停止するため、Admin Console ガイドの優先順位を先に確認すること |
 | `enableAllProjectMcpServers` | プロジェクトMCPサーバー全自動承認 |
 | `enabledMcpjsonServers` | 承認するMCPサーバーリスト |
 | `disabledMcpjsonServers` | 拒否するMCPサーバーリスト |
@@ -835,6 +836,7 @@ Claude が自動的にセッション間の学習を蓄積する仕組み。v2.1
 | `CLAUDE_CODE_SUBAGENT_EFFORT` | サブエージェント・workflow エージェントの既定 effort レベル（`low` / `medium` / `high` / `xhigh` / `max`）。**fork / forked skill / teammate には適用されない**。v2.1.315 以降（2026-11-21 巡回で env-vars ページへの正式収載を確認）。**解決順序**（2026-11-21 の sub-agents ページ改訂で明文化）: ① `CLAUDE_CODE_EFFORT_LEVEL` → ② 起動元サブエージェントの `effort` またはターン限定レベル（スキルの `effort` 等）→ ③ 本変数 → ④ いずれもなければ、メイン会話と同一モデルのサブエージェントはセッション選択（`/effort` / `--effort`）のレベルで実行。別モデルではそのレベルは適用されない（レベルを与えるには定義側の `effort` を使う） |
 | `CLAUDE_CODE_SUBAGENT_HISTORY` | `0` で `/tasks` の「Earlier in this session」行（終了済みサブエージェントのトランスクリプト再表示。v2.1.319+）を非表示にする（2026-11-21 巡回で反映） |
 | `CLAUDE_CODE_DISABLE_DEFERRED_TOOL_RESUME` | `1` で `-p` の resume / continue 時に deferred ツール呼び出しをスキップする（Claude は呼び出しを繰り返し可能）。settings の `env` ブロックでは無視される。v2.1.328 以降（2026-11-21 巡回で env-vars 収載を確認） |
+| `CLAUDE_CODE_FULL_SIGN_IN_LINK` | `1` で短縮版でなくフルの claude.ai ログイン URL を表示する。短縮 URL でエラーが出る場合や、スクリプトが URL から値を読む場合に使用。シェルまたは user settings で設定。v2.1.330 以降（2026-11-22 巡回で反映） |
 | `CLAUDE_CODE_DISABLE_LOOPED_CROSS_CERT_DROP` | ループ状に相互認証するシステムクロス証明書の除去を無効化して保持。プライベート CA がそれを必要とするサーバー向け（v2.1.316。env-vars ページ未収載＝changelog 先行、2026-11-05 時点も未収載） |
 | `CLAUDE_CODE_GATEWAY_HINT_HEADERS` | `1` でゲートウェイヒントヘッダ（`x-claude-code-request-class` / `x-claude-code-compaction` 等）をカスタムプロキシや Bedrock / Claude Platform on AWS などサードパーティプロバイダにも送信。`0` で（既定で送信する Anthropic API 直結を含め）全接続で送信を停止。v2.1.273 以降 |
 | `CLAUDE_CODE_EMIT_SESSION_STATE_EVENTS` | `1` でセッション状態を運ぶ `session_state_changed` メッセージをメッセージストリームに追加。Agent SDK か、`--print` ＋ `--output-format stream-json` ＋ `--verbose` が必要 |

@@ -3,7 +3,9 @@
 公式changelogを端的にまとめたもの。マイナーバグ修正は省略。
 公式: https://code.claude.com/docs/en/changelog
 
-最終更新: 2026-11-21（**v2.1.329**（2026-11-19）を反映。改善10件・バグ修正91件を含む大規模リリース。ハーネス観点の目玉は **(1) `/code-review` のターゲット変更** — ターゲット無指定時はほとんどのモデルでブランチ全体をデフォルトブランチと比較してレビュー（マルチコミットブランチで diff を失うバグも修正。PR 番号 / URL 指定時は `gh pr diff` 失敗でレビューせず停止）、**(2) スケジュールタスクの保存仕様変更** — 新しいサインイン済みセッションでは旧バージョン保存のタスクの多くが再登録必要（自セッションの `--resume` では従来通り実行）。「Exit and stop tasks」がスケジュールタスクも終了し resume 後に走らなくなった、**(3) Code Mode の挙動変更多数** — エラーになった PreToolUse フックが既定でスクリプトのツール呼び出しを拒否しなくなった（拒否必須のフックは `onFailure: "block"` を設定。Code Mode 外と同じ fail-open に統一）/ テレメトリ・nonessential traffic・feature flags オフでも起動可（managed settings でオフ維持可）/ OTel イベント・メトリクスと併用可 / 256 MiB 超の行レンジ読み取り拒否 / `log`・`preview`・`sleep` を自前宣言するスクリプトも実行可 / 暴走ループをメモリ上限で停止 / 4,096 ツール超セッションでの `tools` アクセス喪失修正、**(4) auto モードの `git status` 実行頻度削減**（大規模リポジトリでの待ち時間減。作業ツリー未確認の間は変更破棄系 git コマンドがブロックされうる）、**(5) `/tasks` の拡充** — スケジュールタスク・`/loop` wakeup・goal・会話のフォークを一覧し x で停止可。ヘッダ / フッタのバックグラウンド数がシェル・モニター・MCP 呼び出し・エージェント・ワークフロー・スケジュールタスクを合算した1つの数字に、**(6) Stop / SubagentStop フックの `background_tasks` で Monitor のスクリプトが `shell` でなく `monitor` として列挙**、**(7) 2.1.326 の `max_tokens` エラー時自動リトライを撤回**（出力トークンが少ないゲートウェイ配下は `CLAUDE_CODE_MAX_OUTPUT_TOKENS` で対応）、**(8) macOS computer use の安全ルール更新**（一部アクション拒否・一部アプリのアクセス縮小）、**(9) 重要修正: `~/.claude.json` がネットワーク停滞・ファイルロックで既定値にリセットされる問題 / macOS Keychain 書き込み不可時の繰り返しサインアウト / `/terminal-setup` の VS Code 設定破壊 / IDE diff 受理ファイルの最終改行・BOM 喪失 / ステータスライン無限出力のフリーズ / バックグラウンドシェル・Remote Control の旧会話メモリ保持 / Agent ツール `effort` パラメータの named teammates 無視 / `--add-dir` が作業ディレクトリ・ホーム起動時に新規 skills / commands / agents フォルダを見落とす問題 / pre-warmed プロセス起動セッションの `autoCompactWindow` 無視**。ドキュメント側の実質改訂: **サブエージェント effort の解決順序を明文化**（`CLAUDE_CODE_EFFORT_LEVEL` → 起動元サブエージェントの `effort` / ターン限定レベル〔スキルの `effort` 等〕→ `CLAUDE_CODE_SUBAGENT_EFFORT` → セッションレベル〔メイン会話と同一モデル時のみ〕。fork / forked skill / teammate は対象外。specs/claude/configuration.md に反映）、**claude.ai カタログ系ツール7種を tools-reference に収載**（`ListPlugins` / `ListSkills` / `SearchPlugins` / `SearchSkills` / `SuggestPluginInstall` / `SuggestSkills` / `propose_skills`。バックグラウンドサブエージェントも List* / Search* 系を保持。specs/claude/tools.md に反映）、**終了済みサブエージェントのトランスクリプト再表示**（v2.1.319+。`/tasks` →「Earlier in this session」。`CLAUDE_CODE_SUBAGENT_HISTORY=0` で行を非表示）、**`onFailure: "block"` の MCP failure 定義**（サーバー未接続またはツールのエラー応答。PreToolUse / UserPromptSubmit 等では `{}` か `reason` 以外のフック出力フィールドを設定する JSON を除く非空応答も失敗扱い。specs/claude/hooks.md に反映）、**UserPromptSubmit の Code Mode コード出力発火は v2.1.328 より前のみ**（以後は PostToolUse の `updatedToolOutput` でリダクション）、**不正スキーマ MCP ツールの除外が feature flag 取得オフでも実行**（v2.1.328+。specs/claude/mcp.md に反映）、**sandbox の `objects` / `refs` フォルダ保護が削除からリネームに**（v2.1.315+。`<name>.claude-sandbox-quarantine-<hex>` に隔離、内容は保持）、**code-mode ページに「Require approval for a command」「Approve each piece of code first」節**（auto / bypass でもプロンプトさせたいコマンドは `ask` ルール、コード自体の事前承認は `REPL` への `ask` ルール）、**cli-reference に `--correlation-id` / `--metadata`**（v2.1.328+。`--environment` 用）と **`claude auth status` の `loginExpiresAt`**（v2.1.318+）、**`--settings` はリスト設定がファイル側とマージされる旨明記**、**skills の `paths` 相対基準明文化**（メイン会話では同一 worktree 内の `cd` 後も primary working directory 基準。specs/claude/skills-and-commands.md に反映）。前回2026-11-20の巡回要約は下記参照。）
+最終更新: 2026-11-22（**v2.1.330**（2026-11-20）を反映。改善14件・バグ修正98件の大規模リリース。ハーネス観点の目玉は **(1) Enterprise Admin Console サインイン対応** — `claude auth login` 後に組織の設定・クラウドプロバイダ / ゲートウェイを適用。managed settings に新キー **`enforceAnthropicSignIn`**（v2.1.329+。claude.ai ログインまたは Admin Console サインインを強制。specs/claude/configuration.md に反映）、**(2) 組み込み mod「easel」** — チャート描画ツールと MCP 時系列結果下の自動チャート（`cc-plugin-easel`。Pro / Max / 一部 Team・Enterprise、macOS / Linux。`/config` の Auto charts でオフ、`/plugin` で無効化可）、**(3) スケジュールタスク・`/loop` の実行期間が 7 日→30 日に延長**（本リリース以前作成のタスクは 7 日のまま）、**(4) ルート / ホーム / トップレベルフォルダ / 作業フォルダ宛の `rm` の承認要求拡大**（無人なら拒否）、**(5) `deniedMcpServers` の name エントリが同一 URL の他コネクタを隠さなくなった**（全部ブロックするには URL を deny）、**(6) スキルの `model` 設定の波及縮小** — `context: fork` 以外のスキルではサブエージェント・フォーク・コンパクション・`/recap` はセッションモデルのまま、**(7) prompt フックの `model` フィールドがモデルエイリアス（`haiku` 等）を受理**、**(8) 2.1.329 の `max_tokens` 自動リトライ削除を撤回**（リトライ復活）、**(9) 認識されないモデル名に "sonnet" / "haiku" を含む場合も短いシステムプロンプトを使用**（`CLAUDE_CODE_SIMPLE_SYSTEM_PROMPT=0` で全モデルにフルプロンプト）、**(10) `CLAUDE_CODE_FULL_SIGN_IN_LINK=1`**（短縮サインインリンクでなくフル URL を表示）、**(11) 重要修正: `ExitWorktree` が別の実行中セッションの worktree を削除し得る問題 / 複数プロセス同時保存での user settings 喪失 / WebFetch の数分フリーズ・空結果 / コンパクション直後の数分フリーズ / 不正スキーマ MCP ツール多数での「JSON schema is invalid」とセッションファイル肥大 / `/rewind` が古いファイル版を復元し得る問題 / サブエージェント宣言 MCP サーバーの早期シャットダウン**。ドキュメント側の実質改訂: **tools-reference の WebFetch 節全面改稿＋「web-fetch サブエージェント」節新設**（v2.1.287+ で claude.ai サインイン時は組み込み `web-fetch` サブエージェントがページを読む。メイン会話・フォーク・teammates は WebFetch ツール自体を持たない。既定 Haiku で実行。`Agent(web-fetch)` の deny ルールでオフ。SubagentStart / SubagentStop フックは managed settings のもののみ実行、他は `WebFetch` マッチの PreToolUse / PostToolUse で代替。LLM ゲートウェイ経由は v2.1.330+ でサブエージェントオフ。specs/claude/tools.md に反映）、**Claude プロジェクトのクラウドスレッドがリポジトリの skills / agents / commands をロードするように**（従来「ロードされない」から大転換。例外: 2026-10-01 以前開始のスレッド・ドット始まりリポジトリ名・self-hosted 環境。`.mcp.json` サーバーと `.claude/settings.json` の hooks / permission rules / `env` は引き続き非ロード。specs/claude/skills-and-commands.md に反映）、**MCP タスクのクラウドセッション対応**（アカウント / 組織単位で Anthropic が有効化。設定での確認・切替不可。specs/claude/mcp.md に反映）＋ MCP タスクサーバー実装者向け `ttlMs` / `pollIntervalMs` 推奨値の新節、**スキルフックのライフサイクル明文化**（スキル起動前は実行されず、exit や `/clear` / `/resume` で解除。specs/claude/hooks.md に反映）、**PostToolUse が managed settings 由来ならメイン会話で一部の失敗呼び出し後にも実行**（`tool_response` は文字列のエラーテキスト）、**code-mode のフック失敗挙動の v2.1.329+ 明文化**（`the hook did not finish`〔タイムアウト / agent フック無裁定〕以外のフック失敗はコードからの呼び出しが既定で実行される。ガード用フックは `onFailure: "block"` 必須）、**mods の v2.1.326+ 機能の docs 収載**（`tool.judge` / `tool.run` / `session.stop` イベント、`$.wasm.compile`、`$.process.hookEnv`、`$.session.info`、`AgentRow` 要素、`$.fs.read` の offset / length 部分読み、`$.clock` API）、**subagent の auto モード最終レポート審査の明文化**（Agent ツール起動のサブエージェント終了時、classifier が作業と最終レポートを審査してから配信。agent team teammate は対象外）、goal の評価トークンは「メインターン支出に加えて課金」に表現変更。Codex CLI は新安定版なし（0.171.0 のまま。プレリリースは 0.173.0-alpha.4〔2026-11-21〕まで進行。公式 changelog ページは 0.171.0 まで収載に追いつき、過去版 0.143〜0.144 系の詳細もバックフィル。docs 側の実質差分なし）。スキルエコシステム巡回（Phase 3.5）は前回 2026-11-17 から7日以内のためスキップ。前回2026-11-21の巡回要約は下記参照。）
+
+前回: 2026-11-21（**v2.1.329**（2026-11-19）を反映。改善10件・バグ修正91件を含む大規模リリース。ハーネス観点の目玉は **(1) `/code-review` のターゲット変更** — ターゲット無指定時はほとんどのモデルでブランチ全体をデフォルトブランチと比較してレビュー（マルチコミットブランチで diff を失うバグも修正。PR 番号 / URL 指定時は `gh pr diff` 失敗でレビューせず停止）、**(2) スケジュールタスクの保存仕様変更** — 新しいサインイン済みセッションでは旧バージョン保存のタスクの多くが再登録必要（自セッションの `--resume` では従来通り実行）。「Exit and stop tasks」がスケジュールタスクも終了し resume 後に走らなくなった、**(3) Code Mode の挙動変更多数** — エラーになった PreToolUse フックが既定でスクリプトのツール呼び出しを拒否しなくなった（拒否必須のフックは `onFailure: "block"` を設定。Code Mode 外と同じ fail-open に統一）/ テレメトリ・nonessential traffic・feature flags オフでも起動可（managed settings でオフ維持可）/ OTel イベント・メトリクスと併用可 / 256 MiB 超の行レンジ読み取り拒否 / `log`・`preview`・`sleep` を自前宣言するスクリプトも実行可 / 暴走ループをメモリ上限で停止 / 4,096 ツール超セッションでの `tools` アクセス喪失修正、**(4) auto モードの `git status` 実行頻度削減**（大規模リポジトリでの待ち時間減。作業ツリー未確認の間は変更破棄系 git コマンドがブロックされうる）、**(5) `/tasks` の拡充** — スケジュールタスク・`/loop` wakeup・goal・会話のフォークを一覧し x で停止可。ヘッダ / フッタのバックグラウンド数がシェル・モニター・MCP 呼び出し・エージェント・ワークフロー・スケジュールタスクを合算した1つの数字に、**(6) Stop / SubagentStop フックの `background_tasks` で Monitor のスクリプトが `shell` でなく `monitor` として列挙**、**(7) 2.1.326 の `max_tokens` エラー時自動リトライを撤回**（出力トークンが少ないゲートウェイ配下は `CLAUDE_CODE_MAX_OUTPUT_TOKENS` で対応）、**(8) macOS computer use の安全ルール更新**（一部アクション拒否・一部アプリのアクセス縮小）、**(9) 重要修正: `~/.claude.json` がネットワーク停滞・ファイルロックで既定値にリセットされる問題 / macOS Keychain 書き込み不可時の繰り返しサインアウト / `/terminal-setup` の VS Code 設定破壊 / IDE diff 受理ファイルの最終改行・BOM 喪失 / ステータスライン無限出力のフリーズ / バックグラウンドシェル・Remote Control の旧会話メモリ保持 / Agent ツール `effort` パラメータの named teammates 無視 / `--add-dir` が作業ディレクトリ・ホーム起動時に新規 skills / commands / agents フォルダを見落とす問題 / pre-warmed プロセス起動セッションの `autoCompactWindow` 無視**。ドキュメント側の実質改訂: **サブエージェント effort の解決順序を明文化**（`CLAUDE_CODE_EFFORT_LEVEL` → 起動元サブエージェントの `effort` / ターン限定レベル〔スキルの `effort` 等〕→ `CLAUDE_CODE_SUBAGENT_EFFORT` → セッションレベル〔メイン会話と同一モデル時のみ〕。fork / forked skill / teammate は対象外。specs/claude/configuration.md に反映）、**claude.ai カタログ系ツール7種を tools-reference に収載**（`ListPlugins` / `ListSkills` / `SearchPlugins` / `SearchSkills` / `SuggestPluginInstall` / `SuggestSkills` / `propose_skills`。バックグラウンドサブエージェントも List* / Search* 系を保持。specs/claude/tools.md に反映）、**終了済みサブエージェントのトランスクリプト再表示**（v2.1.319+。`/tasks` →「Earlier in this session」。`CLAUDE_CODE_SUBAGENT_HISTORY=0` で行を非表示）、**`onFailure: "block"` の MCP failure 定義**（サーバー未接続またはツールのエラー応答。PreToolUse / UserPromptSubmit 等では `{}` か `reason` 以外のフック出力フィールドを設定する JSON を除く非空応答も失敗扱い。specs/claude/hooks.md に反映）、**UserPromptSubmit の Code Mode コード出力発火は v2.1.328 より前のみ**（以後は PostToolUse の `updatedToolOutput` でリダクション）、**不正スキーマ MCP ツールの除外が feature flag 取得オフでも実行**（v2.1.328+。specs/claude/mcp.md に反映）、**sandbox の `objects` / `refs` フォルダ保護が削除からリネームに**（v2.1.315+。`<name>.claude-sandbox-quarantine-<hex>` に隔離、内容は保持）、**code-mode ページに「Require approval for a command」「Approve each piece of code first」節**（auto / bypass でもプロンプトさせたいコマンドは `ask` ルール、コード自体の事前承認は `REPL` への `ask` ルール）、**cli-reference に `--correlation-id` / `--metadata`**（v2.1.328+。`--environment` 用）と **`claude auth status` の `loginExpiresAt`**（v2.1.318+）、**`--settings` はリスト設定がファイル側とマージされる旨明記**、**skills の `paths` 相対基準明文化**（メイン会話では同一 worktree 内の `cd` 後も primary working directory 基準。specs/claude/skills-and-commands.md に反映）。前回2026-11-20の巡回要約は下記参照。）
 
 前回: 2026-11-20（**v2.1.328**（2026-11-19）を反映。改善19件・バグ修正91件を含む大規模リリース。ハーネス観点の目玉は **(1) サードパーティプロバイダへの auto モード展開** — Bedrock / Google Cloud Agent Platform / Microsoft Foundry / Claude apps gateway の Opus 4.6・Sonnet 4.6 で auto モード追加。モード未設定の対話セッションは auto で開始し、plan mode / Bash プロンプトも auto を使用・提案（`disableAutoMode` で両方オフ）、**(2) `mcp_tool` フックの `onFailure: "block"` 対応**（command / HTTP と同様、フック呼び出し失敗でアクションをブロック可能に。specs/claude/hooks.md に反映）、**(3) `/code-review` のレビュー方針変更** — ほとんどのモデルでバグと CLAUDE.md 違反のみ報告（クリーンアップは `/simplify` へ）、指摘に Important / Pre-existing / Nit の重要度付与、サマリ末尾に修正案（specs/claude/skills-and-commands.md に反映）、**(4) Code Mode の改善多数** — UserPromptSubmit フック（managed 含む）がスクリプト出力に走らなくなった（リダクションは PostToolUse の `updatedToolOutput` で）/ auto・bypass モードで 0.75 秒ポーズ削除 / MCP サーバー接続中・サーバー一覧変化の通知 / 実行中コマンドと出力の表示 / 失敗時に実行中だったツール呼び出しを通知ほか修正多数、**(5) `deniedMcpServers` の `claude.ai <name>` 形式がクラウド / self-hosted runner セッションにも適用**、**(6) managed PostToolUse フックが実行前拒否の呼び出しで発火しなくなった**（ログ・書き換え・ブロックなし。PostToolBatch には届く）、**(7) PermissionRequest フックで sandbox 除外コマンドに書き換えられたシェルコマンドはサンドボックス外で実行**、**(8) `CLAUDE_CODE_DISABLE_DEFERRED_TOOL_RESUME` 追加**（`claude -p --resume` / `--continue` がフック保留のツール呼び出しを実行するのを停止）、**(9) 重要修正: zsh の `=` で始まる語での Bash 失敗（`echo ====` 等）/ 自動コンパクションが古いシステムプロンプトを再利用 / スケジュールタスクファイル読めず他のタスクを消す / `anyOf` 始まりスキーマの MCP ツール消失 / トークンカウントの二重計上**。ドキュメント側の実質改訂: **MCP 切断通知の2種分化**（`still retrying`＝最長約1日バックグラウンドリトライ継続。specs/claude/mcp.md に反映）、**`autoCompactWindow` の上限 1M 記載撤廃**（「100000 以上」に。settings-reference / sub-agents / env-vars / model-config 一斉改訂。specs/claude/configuration.md ほかに反映）、**サブエージェント `autoCompactWindow` と環境変数併設時は最小値を使用**（v2.1.312+ の挙動を明文化）、**`CLAUDE_CODE_DISABLE_PROXY_SCHEME_REPAIR`**（v2.1.327+）と **`OTEL_RESOURCE_INCLUDE_HOST`** の env-vars / settings-reference 収載、**`/tui` の `classic` 正式名化**（v2.1.327+）、PermissionRequest の `behavior: "allow"` は deny ルールを上書きできないが **mod は上書きし得る**旨の明文化。スキルエコシステム巡回（Phase 3.5）は前回 2026-11-17 から7日以内のためスキップ。Codex CLI は新安定版なし（0.170.0 のまま。プレリリースは 0.172.0-alpha.2〔2026-11-19〕まで進行。docs 側の実質差分なし）。前回2026-11-19の巡回要約は下記参照。）
 
@@ -51,6 +53,79 @@
 
 前回: 2026-10-10（**v2.1.295**（2026-10-08）を反映。ハーネス観点では **(1) command / HTTP フックに `onFailure: "block"` 追加（フックが起動不可・タイムアウト・想定外 exit code の場合にアクションを通さずブロック＝ポリシーフックの fail-closed 化が可能に。従来は非ブロッキング扱いで素通り）**、**(2) サブエージェントの `skills` フィールドからのプリロードが最大32スキル・各1回に制限（Skill ツールがあれば残りは呼び出し可能）**、**(3) tool search 経由でモデルがロードする MCP ツール説明の切り詰めが 2,048→16,384 文字に拡大**、**(4) `CLAUDE_CODE_RETRY_WATCHDOG_MAX_WAIT_MS`（永続リトライ時の 429/529 待機の上限）**、**(5) `forceLoginMethod: "gateway"` / `forceLoginGatewayUrl` が managed settings なしのユーザー settings でも設定可能に**、**(6) OSC 7501（Program Status Protocol）対応（対応端末に作業中/入力待ち/完了を表示）**、**(7) 重要修正: `[1m]` モデルで context-1m beta を拒否するゲートウェイ/Bedrock/Vertex/Foundry 宛リクエストが全失敗する問題（beta なしで再送）、`claude -p` のテキスト出力がバックグラウンド作業による別ターン開始時に前のレスポンスを落とす問題、スキルの `allowed-tools` / `effort` が `-p` で落ちて Bash が拒否される問題、リモート MCP の長時間断後の未再接続/タイトループ再接続（バックオフ化・最大30秒）、Edit が mtime 不変のまま内容が変わったファイルを既読扱いする問題、複数行 JSON を出力する async フックの出力無視、Grep の `-l`/`-c`/`-r` フラグ付き呼び出し失敗**。Ctrl+C（アタッチ済みバックグラウンドセッションのアイドルプロンプト）は保留 `/loop` wakeup を残し2度押しでデタッチ・Esc で停止に変更。ドキュメント改訂: env-vars に `CLAUDE_CODE_RETRY_WATCHDOG_MAX_WAIT_MS` 収載（hooks ページの `onFailure` は本巡回時点で未収載＝changelog 先行）。Codex CLI は **0.162.0 安定版**（2026-10-08。managed worktree ツール、Command Center タスクピン留め、`/copy` トランスクリプトコピー、カスタムプロバイダの capability オーバーライド等。下記 specs/codex/changelog.md 参照）。前回2026-10-09の巡回要約は下記参照。）
 
+
+---
+
+## v2.1.330 (2026-11-20)
+
+改善14件・バグ修正98件を含む大規模リリース。
+
+### 新機能
+
+- **Enterprise Admin Console 管理組織へのサインイン**: `claude auth login` 後に組織の設定を適用し、組織のクラウドプロバイダ / ゲートウェイを使用
+- **easel（組み込み mod）**: 依頼時と MCP メトリクス結果の下にチャートを描画。Pro / Max と一部の Team / Enterprise、macOS / Linux。自動チャートは `/config` でオフ
+- `CLAUDE_CODE_FULL_SIGN_IN_LINK=1`: 短縮サインインリンクでエラーが出る場合やスクリプトが URL から値を読む場合にフルリンクを表示
+- `claude plugin install --json` の結果に `commandPrinted` / `commandFailed` を追加
+- Self-hosted runner: `--start-dir` / `SELF_HOSTED_RUNNER_START_DIR`（リポジトリ内の指定フォルダで作業開始。settings / hooks のロードは従来どおり）、orchestrator メトリクス2種追加ほか
+- [VSCode] `/fork`（最後の返信後からの会話フォーク）、`/workflows`（実行中ワークフローのエージェントマップ）、`escapeStopsClaude` / `pinPrompt` / `contextUsageThreshold` 設定
+
+### 変更
+
+- **2.1.329 の `max_tokens` 上限超過時自動リトライ削除を撤回**（リトライ復活）
+- **定期スケジュールタスクと `/loop` がセッション継続中は 7 日→30 日実行**（終了時に通知。本リリース以前作成のタスクは 7 日のまま）
+- **ルート / ホーム / トップレベルフォルダ / 作業フォルダ宛のより多くの `rm` コマンドが承認要求に**（誰も答えられない場では拒否）
+- **`deniedMcpServers` の name エントリは名指しの claude.ai コネクタのみ隠す**（同一 URL の他コネクタは隠さない。全部ブロックするには正確な URL を deny）
+- `claude --teleport` が一部セットアップでブランチ切替の git コマンドを実行せず表示に（`-p` では切替まで exit 1）
+- **認識されないモデル名に "sonnet" / "haiku" を含む場合も短いシステムプロンプトを使用**（他の未認識名と同様。`CLAUDE_CODE_SIMPLE_SYSTEM_PROMPT=0` で全モデルにフルプロンプト）
+- **`model` 設定を持つスキル（`context: fork` 以外)の実行でも、サブエージェント・フォーク・コンパクション・`/recap` はセッションのモデルのまま**
+- サブエージェントのモデルフォールバックが引き継がれる（モデル未指定のエージェントとその後のフォークはフォールバックで実行、起動されたエージェントは同じ Bedrock リージョンを使用）
+- prompt フックの `model` フィールドがモデルエイリアス（`haiku` / `sonnet` 等）を受理
+- サードパーティゲートウェイ配下ターミナルセッションのサブエージェント進捗サマリを短いノートから生成（トークン大幅削減）
+- Self-hosted runner: `spawn-runner` フックの並行実行（`--hook-concurrency`、既定4）、Bash の不要なファイル diff スキップ（`bashEditDiffEnabled` で全 diff 復活）、checkout フック exit 108 で他 runner を試さず即停止
+
+### 改善（抜粋・14件）
+
+- claude.ai サインインリンクの大幅短縮
+- Windows: ローカルパスの Grep / Glob 高速化（ripgrep ごとのコンソールホスト起動を廃止）
+- ファイル diff の高速化
+- `/config` 検索の改善（前方一致優先、"effort"→Model、"dark"/"light"→Theme）
+- `/resume`: 画面を開いただけのセッションを一覧から除外
+- Code Mode: 画像 / PDF の読み方を Claude に指示、Esc 後の表示改善、大量ツール呼び出し後のフリーズ軽減
+
+### バグ修正（抜粋・98件）
+
+- **`ExitWorktree` / worktree 終了ダイアログが別の実行中セッションの worktree を削除し得た**
+- **複数の Claude Code プロセスが同時保存すると user settings の変更が失われた**
+- **WebFetch が一部ページで数分フリーズ・空結果を返した**
+- **非常に長い会話のコンパクション直後に数分フリーズした**
+- **API が拒否する入力スキーマの MCP ツール多数で「JSON schema is invalid」ターン失敗・セッションファイル数 MB 肥大**
+- `/rewind` が直前ターンでファイルを変更した場合に古い版を復元し得た（キュー済みプロンプト / スタックされたスキルの同時実行時）
+- サブエージェント宣言の MCP サーバーが、他のサブエージェントやセッションが使用中でも 1 つの終了でシャットダウンされた
+- `--continue` / `--resume` が最後の保存メッセージのタイムスタンプ不正で空セッションを開く / 失敗する問題
+- claude.ai コネクタが同一サーバー URL を共有すると別名コネクタが脱落した
+- 複数 `claude plugin` コマンド同時実行でインストール済み一覧からプラグインが消えた / タスクの依存関係・メタデータが同時更新で失われた
+- SessionStart フックが書いた環境変数が `claude -p --continue` で失われた
+- `/mcp` でプラグインサーバーが built-in と表示された（「Plugin MCPs」に分類、サーバーページにプラグイン名表示）
+- Grep が複数行モードなしの改行入りパターンで「no matches」を返した（パターン拒否を報告するように）
+- 読み終えた Monitor が終了まで旧会話をメモリに保持した
+- [VSCode] 多数（コードブロックコピーの末尾改行で貼り付け時実行、Enter 長押しでの誤送信、Cmd+A/C/V/X/Z 不能ほか）
+
+---
+
+## v2.1.329 (2026-11-19)
+
+改善10件・バグ修正91件を含む大規模リリース（詳細は上記 2026-11-21 巡回要約を参照）。
+
+### 主な変更
+
+- **`/code-review` ターゲット無指定時はブランチ全体をデフォルトブランチと比較**（従来の「現在の diff」から変更）
+- **スケジュールタスクの保存仕様変更**: 新しいサインイン済みセッションでは旧バージョン保存タスクの多くが要再登録。「Exit and stop tasks」がスケジュールタスクも終了
+- **Code Mode**: エラーになった PreToolUse フックが既定で拒否しなくなり `onFailure: "block"` で制御 / テレメトリ等オフでも起動 / OTel 併用可
+- auto モードの `git status` 実行頻度削減
+- `/tasks` 拡充（スケジュールタスク・`/loop` wakeup・goal・フォークを一覧）
+- Stop / SubagentStop フックの `background_tasks` で Monitor が `monitor` として列挙
+- 2.1.326 の `max_tokens` 自動リトライ撤回（2.1.330 で再撤回＝復活）
+- `enforceAnthropicSignIn`（managed settings キー）はこのバージョンから有効
 
 ---
 

@@ -1,6 +1,6 @@
 # Claude Code MCP 仕様書
 
-最終更新: 2026-10-28（巡回更新）
+最終更新: 2026-11-22（巡回更新。MCPタスクのクラウドセッション対応とサーバー実装者向け ttlMs / pollIntervalMs 推奨を反映）
 
 公式ドキュメント: https://code.claude.com/docs/en/mcp
 
@@ -502,13 +502,15 @@ MCP サーバー自身がレポートエクスポートやビルドのような�
 - サーバーがタスクをサポートしている
 - HTTP / stdio / claude.ai コネクタのサーバーで、プロトコルリビジョン 2026-07-28 で接続している（`MCP_SDK_GENERATION=v1` / `MCP_PROTOCOL_NEGOTIATION=legacy` では不可）
 - セッションが機能フラグを取得している — **ただし v2.1.319 以降、ターミナル CLI では feature-flag 取得不要になった**（Bedrock / Vertex / Foundry / LLM gateway / `DISABLE_TELEMETRY` 下でも動作。changelog 由来、公式 mcp ページは旧条件のまま未追随）。`CLAUDE_CODE_DISABLE_MCP_TASKS=1` で機能ごと無効化できる
-- Anthropic がそのサーフェスで MCP タスクを有効化している（v2.1.304 時点: ターミナル CLI・Agent SDK・GitHub Actions。VS Code 拡張や Desktop アプリは対象外）
+- Anthropic がそのサーフェスで MCP タスクを有効化している（2026-11-22 ドキュメント改訂時点: ターミナル CLI・Agent SDK・GitHub Actions は v2.1.304+ で対象。**クラウドセッション（Desktop アプリから開くものを含む）はアカウント / 組織単位で Anthropic が有効化した場合のみ対象**——設定での確認・切替は不可。VS Code 拡張と Desktop アプリのローカルセッションは対象外）
 - メイン会話からの呼び出し（サブエージェントは不可）
 - 対話セッションであるか、Agent SDK / `--input-format stream-json` の `claude -p` で `CLAUDE_AUTO_BACKGROUND_TASKS=1`、かつ `CLAUDE_CODE_DISABLE_MCP_TASK_BACKGROUND` が `1` でなく、`CLAUDE_CODE_MCP_AUTO_BACKGROUND_MS` が `0` でないこと（ワンショットの `claude -p "<prompt>"` は MCP タスクを得られない）
 
 **タスクからの質問に後で答える（v2.1.324+、2026-11-15 巡回で反映）**: 実行中タスクが elicitation ダイアログで入力を求めた場合（`/tasks` を開いている間はダイアログが隠れるので閉じて答える）、結果を待機させる設定にしていなければ**ダイアログで `Esc` を押して後で回答できる**。質問を再表示するには `/tasks` でタスクの詳細を開いて `Enter`。Decline はサーバーへの回答であり、タスクを続けるかはサーバーが決める。
 
 **非対話セッションでの入力要求**: 実行中タスクが elicitation で入力を求めた場合、非対話セッションでは **`Elicitation` フックの実行も Agent SDK の `onElicitation` 呼び出しも行わずに**サーバーへタスクのキャンセルを要求する。
+
+**サーバー実装者向け: `ttlMs` / `pollIntervalMs` の推奨値（2026-11-22 ドキュメント改訂で新設）**: `tools/call` の応答と `tasks/get` のレスポンスでミリ秒単位で指定する。`ttlMs` はタスク作成時点から数えてサーバーがタスクを保持する時間を報告する——最長実行時間＋結果保持時間（例: 30分ジョブ＋1時間保持なら `5400000`）、無期限保持なら `null`。**完了結果は最低1時間は保持すること**（ユーザーがセッションを抜けて後で resume したとき、サーバーがタスクを覚えていないと Claude は結果を得られない）。`pollIntervalMs` は1分超のジョブなら 10000〜30000（ステータス確認を減らす）、短いジョブなら 2000（結果を早く受け取る）。公式サンプルの推奨値は 10000 に改訂された（従来 5000）。
 
 **時間制限とステータス（2026-11-09 巡回で反映)**: バックグラウンド化したタスクに Claude Code 側の時間制限はない（待機時はツール呼び出しの制限が全期間に適用される）。切断時は `reconnecting…` → 300 秒以内に再接続できなければ `did not reconnect within 300s` 等のステータスで報告され、**`outcome unknown.` で終わったタスクは再呼び出しすると二重実行のリスク**がある点に注意。
 
